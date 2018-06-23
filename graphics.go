@@ -11,8 +11,9 @@ type Vertex struct {
 
 type Renderer struct {
 	prog Program
-	vboId, vaoId, iboId uint32
-	vboSize, iboSize int
+	vbo *Buffer
+	ibo *Buffer
+	vaoId uint32
 	posLoc uint32
 	verts []Vertex
 	inds []int32
@@ -42,13 +43,11 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.GenVertexArrays(1, &r.vaoId)
 	gl.BindVertexArray(r.vaoId)
 
-	gl.GenBuffers(1, &r.vboId)
-	gl.BindBuffer(gl.ARRAY_BUFFER, r.vboId)
-	r.vboSize = 0
+	r.vbo = NewBuffer(gl.ARRAY_BUFFER)
+	r.vbo.bind()
 
-	gl.GenBuffers(1, &r.iboId)
-	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.iboId)
-	r.iboSize = 0
+	r.ibo = NewBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	r.ibo.bind()
 
 	stride := int32(unsafe.Sizeof(Vertex{}))
 	offset := gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.pos)))
@@ -82,35 +81,10 @@ func (r *Renderer) Render(m *Mesh) {
 */
 
 func (r *Renderer) Flush() {
-	// if > 0 tests necessary since gl.Ptr() fails on slices with zero length
+	r.vbo.SetData(r.verts, 0)
+	r.ibo.SetData(r.inds, 0)
+	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
 
-	//gl.BindBuffer(gl.ARRAY_BUFFER, r.vboId)
-	//gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, r.iboId)
-
-	size := int(unsafe.Sizeof(Vertex{})) * len(r.verts)
-	if size > r.vboSize {
-		// reallocate TODO: improve reallocation (*2)?
-		gl.BufferData(gl.ARRAY_BUFFER, size, nil, gl.STREAM_DRAW)
-		r.vboSize = size
-	}
-	println("VBO size", size, "bytes")
-	if size > 0 {
-		gl.BufferSubData(gl.ARRAY_BUFFER, 0, size, gl.Ptr(r.verts))
-	}
-
-	size = int(unsafe.Sizeof(int(0))) * len(r.inds)
-	if size > r.iboSize {
-		// reallocate
-		// TODO: improve reallocation (*2)?
-		gl.BufferData(gl.ELEMENT_ARRAY_BUFFER, size, nil, gl.STREAM_DRAW)
-		r.iboSize = size
-	}
-	println("IBO size", size, "bytes")
-	if size > 0 {
-		gl.BufferSubData(gl.ELEMENT_ARRAY_BUFFER, 0, size, gl.Ptr(r.inds))
-		gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
-		println("drawing", len(r.inds))
-	}
 }
 
 /*

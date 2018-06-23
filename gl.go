@@ -137,13 +137,14 @@ func (p Program) uniformLocation(name string) (uint32, error) {
 type Buffer struct {
 	typ uint32
 	id uint32
-	size uint32
+	size int
 }
 
 func NewBuffer(typ uint32) *Buffer {
 	var b Buffer
 	b.typ = typ
 	gl.GenBuffers(1, &b.id)
+	b.size = 0
 	return &b
 }
 
@@ -152,7 +153,13 @@ func (b *Buffer) bind() {
 	gl.BindBuffer(b.typ, b.id)
 }
 
-func (b *Buffer) setData(data interface{}, byteOffset int) {
+func (b *Buffer) allocate(size int) {
+	b.bind()
+	b.size = size
+	gl.BufferData(b.typ, b.size, nil, gl.STREAM_DRAW)
+}
+
+func (b *Buffer) SetData(data interface{}, byteOffset int) {
 	// assumes all entries in data are of the same type
 
 	val := reflect.ValueOf(data)
@@ -160,6 +167,10 @@ func (b *Buffer) setData(data interface{}, byteOffset int) {
 		if val.Len() > 0 {
 			b.bind()
 			size := val.Len() * int(val.Type().Elem().Size())
+			if size > b.size {
+				b.allocate(size)
+			}
+			println("setting", size, "bytes")
 			gl.BufferSubData(b.typ, byteOffset, size, gl.Ptr(data))
 		}
 	} else {
