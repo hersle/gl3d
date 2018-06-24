@@ -10,6 +10,7 @@ import (
 type Mat4 [4*4]float64
 
 var dummyMat Mat4
+var dummyMat2 Mat4
 
 func NewMat4Zero() *Mat4 {
 	return &Mat4{}

@@ -5,10 +5,9 @@ in vec3 position;
 in vec4 colorV;
 out vec4 colorF;
 
-uniform mat4 modelMatrix;
-uniform mat4 viewProjectionMatrix;
+uniform mat4 projectionViewModelMatrix;
 
 void main() {
-	gl_Position = viewProjectionMatrix * modelMatrix * vec4(position, 1.0);
+	gl_Position = projectionViewModelMatrix * vec4(position, 1.0);
 	colorF = colorV;
 }
