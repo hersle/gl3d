@@ -90,12 +90,18 @@ func (r *Renderer) RenderTriangle(p1, p2, p3 Vec3, color RGBAColor) {
 	r.verts = append(r.verts, Vertex{p3, color})
 }
 
-func (r *Renderer) RenderMesh(m *Mesh) {
+func (r *Renderer) renderMesh(m *Mesh) {
 	for _, i := range m.faces {
 		r.inds = append(r.inds, int32(len(r.verts) + i))
 	}
 	for _, vert := range m.verts {
 		r.verts = append(r.verts, vert)
+	}
+}
+
+func (r *Renderer) Render(s *Scene) {
+	for _, m := range s.meshes {
+		r.renderMesh(m)
 	}
 }
 
