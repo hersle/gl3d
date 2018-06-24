@@ -9,12 +9,27 @@ import (
 
 type Mat4 [4*4]float64
 
+var dummyMat Mat4
+
 func NewMat4Zero() *Mat4 {
 	return &Mat4{}
 }
 
 func NewMat4Identity() *Mat4 {
-	a := NewMat4Zero()
+	return NewMat4Zero().Identity()
+}
+
+func (a *Mat4) Zero() *Mat4 {
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			a.Set(i, j, 0)
+		}
+	}
+	return a
+}
+
+func (a *Mat4) Identity() *Mat4 {
+	a.Zero()
 	a.Set(0, 0, 1)
 	a.Set(1, 1, 1)
 	a.Set(2, 2, 1)
@@ -22,19 +37,26 @@ func NewMat4Identity() *Mat4 {
 	return a
 }
 
-func NewMat4Translate(d Vec3) *Mat4 {
-	a := NewMat4Identity()
+func (a *Mat4) Translation(d Vec3) *Mat4 {
+	a.Identity()
 	a.SetCol(3, d.Vec4(1))
 	return a
 }
 
-func NewMat4Scale(factorX, factorY, factorZ float64) *Mat4 {
-	a := NewMat4Identity()
+func (a *Mat4) MultTranslation(d Vec3) *Mat4 {
+	return a.Mult(dummyMat.Translation(d))
+}
+
+func (a *Mat4) Scaling(factorX, factorY, factorZ float64) *Mat4 {
+	a.Identity()
 	a.Set(0, 0, factorX)
 	a.Set(1, 1, factorY)
 	a.Set(2, 2, factorZ)
-	a.Set(3, 3, 1)
 	return a
+}
+
+func (a *Mat4) MultScaling(factorX, factorY, factorZ float64) *Mat4 {
+	return a.Mult(dummyMat.Scaling(factorX, factorY, factorZ))
 }
 
 func (a *Mat4) index(i, j int) int {
