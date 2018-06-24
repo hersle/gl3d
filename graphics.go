@@ -122,6 +122,10 @@ func (r *Renderer) Flush() {
 	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
 }
 
+func (r *Renderer) SetViewport(l, b, w, h int) {
+	gl.Viewport(int32(l), int32(b), int32(w), int32(h))
+}
+
 /*
 func drawTriangle(point1, point2, point3 glmath.Vec2, clr color) {
 	points := []glmath.Vec2{point1, point2, point3}
@@ -131,11 +135,6 @@ func drawTriangle(point1, point2, point3 glmath.Vec2, clr color) {
 func aspectRatio() float64 {
 	w, h := window.GetSize()
 	return float64(w) / float64(h)
-}
-
-func setMatrix(m *glmath.Mat3) {
-	// simply upload to GPU
-	gl.UniformMatrix3dv(int32(matLoc), 1, true, &m[0])
 }
 
 func setViewport(l, b, r, t int) {
