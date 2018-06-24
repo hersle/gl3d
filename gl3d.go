@@ -12,7 +12,7 @@ func main() {
 	}
 
 	s := NewScene()
-	s.AddMesh(&triangleMesh)
+	s.AddMesh(&mesh1)
 
 	c := NewCamera()
 
