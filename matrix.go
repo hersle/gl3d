@@ -95,16 +95,13 @@ func (a *Mat4) MultRotationZ(ang float64) *Mat4 {
 	return a.Mult(dummyMat.RotationZ(ang))
 }
 
-func (a *Mat4) Ortho(min, max Vec3) *Mat4 {
+func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
 	// TODO: flip Z-axis to make right handed?
-	mid := min.Add(max).Scale(0.5)
-	a.Scaling(2 / (max.X - min.X), 2 / (max.Y - min.Y), 2 / (max.Z - min.Z))
-	a.MultTranslation(mid.Scale(-1))
-	return a
+	return a.Scaling(2 / size.X, 2 / size.Y, 2 / size.Z)
 }
 
-func (a *Mat4) MultOrtho(min, max Vec3) *Mat4 {
-	return a.Mult(dummyMat.Ortho(min, max))
+func (a *Mat4) MultOrthoCentered(size Vec3) *Mat4 {
+	return a.Mult(dummyMat.OrthoCentered(size))
 }
 
 func (a *Mat4) index(i, j int) int {
