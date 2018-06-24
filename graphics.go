@@ -19,6 +19,8 @@ type Renderer struct {
 	vaoId uint32
 	posLoc uint32
 	colorLoc uint32
+	modelMatLoc uint32
+	viewProjMatLoc uint32
 	verts []Vertex
 	inds []int32
 }
@@ -52,6 +54,14 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
+	r.modelMatLoc, err = r.prog.uniformLocation("modelMatrix")
+	if err != nil {
+		return nil, err
+	}
+	r.viewProjMatLoc, err = r.prog.uniformLocation("viewProjectionMatrix")
+	if err != nil {
+		return nil, err
+	}
 
 	gl.GenVertexArrays(1, &r.vaoId)
 	gl.BindVertexArray(r.vaoId)
@@ -80,16 +90,6 @@ func (r *Renderer) Clear() {
 	r.inds = r.inds[:0]
 }
 
-func (r *Renderer) RenderTriangle(p1, p2, p3 Vec3, color RGBAColor) {
-	r.inds = append(r.inds, int32(len(r.verts) + 0))
-	r.inds = append(r.inds, int32(len(r.verts) + 1))
-	r.inds = append(r.inds, int32(len(r.verts) + 2))
-
-	r.verts = append(r.verts, Vertex{p1, color})
-	r.verts = append(r.verts, Vertex{p2, color})
-	r.verts = append(r.verts, Vertex{p3, color})
-}
-
 func (r *Renderer) renderMesh(m *Mesh) {
 	for _, i := range m.faces {
 		r.inds = append(r.inds, int32(len(r.verts) + i))
@@ -99,10 +99,34 @@ func (r *Renderer) renderMesh(m *Mesh) {
 	}
 }
 
-func (r *Renderer) Render(s *Scene) {
+func (r *Renderer) Render(s *Scene, c *Camera) {
+	dummyMat.Identity()
+	r.SetModelMatrix(dummyMat.Identity())
+	r.SetViewProjectionMatrix(c.ViewProjectionMatrix())
+
 	for _, m := range s.meshes {
 		r.renderMesh(m)
 	}
+}
+
+var f32mat4 [16]float32
+func (f64mat4 *Mat4) Float32Mat4() *float32 {
+	for i := 0; i < 4; i++ {
+		for j := 0; j < 4; j++ {
+			f32mat4[i*4+j] = float32(f64mat4.At(i, j))
+		}
+	}
+	return &f32mat4[0]
+}
+
+func (r *Renderer) SetModelMatrix(m *Mat4) {
+	// TODO: make everything float32
+	gl.UniformMatrix4fv(int32(r.modelMatLoc), 1, true, m.Float32Mat4())
+}
+
+func (r *Renderer) SetViewProjectionMatrix(m *Mat4) {
+	// TODO: make everything float32
+	gl.UniformMatrix4fv(int32(r.viewProjMatLoc), 1, true, m.Float32Mat4())
 }
 
 func (r *Renderer) Flush() {

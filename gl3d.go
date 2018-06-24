@@ -11,15 +11,16 @@ func main() {
 		panic(err)
 	}
 
-	for !win.ShouldClose() {
-		v1 := Vec3{0.5, 0.5, 0}
-		v2 := Vec3{0.0, 0.0, 0}
-		v3 := Vec3{0.5, 0.0, 0}
-		color := NewColor(0xff, 0xff, 0xff, 0x80)
+	s := NewScene()
+	s.AddMesh(&triangleMesh)
 
+	c := NewCamera()
+
+	for !win.ShouldClose() {
 		renderer.Clear()
-		renderer.RenderTriangle(v1, v2, v3, color)
+		renderer.Render(s, c)
 		renderer.Flush()
 		win.Update()
+		c.Move(Vec3{0.001, 0.0, 0.0})
 	}
 }
