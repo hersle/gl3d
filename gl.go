@@ -170,7 +170,6 @@ func (b *Buffer) SetData(data interface{}, byteOffset int) {
 			if size > b.size {
 				b.allocate(size)
 			}
-			println("setting", size, "bytes")
 			gl.BufferSubData(b.typ, byteOffset, size, gl.Ptr(data))
 		}
 	} else {

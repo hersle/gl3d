@@ -5,8 +5,11 @@ import (
 	"unsafe"
 )
 
+type RGBAColor [4]uint8
+
 type Vertex struct {
 	pos Vec3
+	color RGBAColor
 }
 
 type Renderer struct {
@@ -15,8 +18,14 @@ type Renderer struct {
 	ibo *Buffer
 	vaoId uint32
 	posLoc uint32
+	colorLoc uint32
 	verts []Vertex
 	inds []int32
+}
+
+func NewColor(r, g, b, a uint8) RGBAColor {
+	return RGBAColor{r, g, b, a}
+	//return RGBAColor((a << 0) | (b << 8) | (g << 16) | (r << 24))
 }
 
 func NewRenderer(win *Window) (*Renderer, error) {
@@ -39,6 +48,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
+	r.colorLoc, err = r.prog.attribLocation("colorV")
+	if err != nil {
+		return nil, err
+	}
 
 	gl.GenVertexArrays(1, &r.vaoId)
 	gl.BindVertexArray(r.vaoId)
@@ -54,6 +67,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.VertexAttribPointer(r.posLoc, 3, gl.DOUBLE, false, stride, offset)
 	gl.EnableVertexAttribArray(r.posLoc)
 
+	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.color)))
+	gl.VertexAttribPointer(r.colorLoc, 4, gl.UNSIGNED_BYTE, true, stride, offset)
+	gl.EnableVertexAttribArray(r.colorLoc)
+
 	return &r, nil
 }
 
@@ -63,28 +80,29 @@ func (r *Renderer) Clear() {
 	r.inds = r.inds[:0]
 }
 
-func (r *Renderer) DrawTriangle(p1, p2, p3 Vec3) {
+func (r *Renderer) RenderTriangle(p1, p2, p3 Vec3, color RGBAColor) {
 	r.inds = append(r.inds, int32(len(r.verts) + 0))
 	r.inds = append(r.inds, int32(len(r.verts) + 1))
 	r.inds = append(r.inds, int32(len(r.verts) + 2))
 
-	r.verts = append(r.verts, Vertex{p1})
-	r.verts = append(r.verts, Vertex{p2})
-	r.verts = append(r.verts, Vertex{p3})
-
-	println(len(r.inds), len(r.verts))
+	r.verts = append(r.verts, Vertex{p1, color})
+	r.verts = append(r.verts, Vertex{p2, color})
+	r.verts = append(r.verts, Vertex{p3, color})
 }
 
-/*
-func (r *Renderer) Render(m *Mesh) {
+func (r *Renderer) RenderMesh(m *Mesh) {
+	for _, i := range m.faces {
+		r.inds = append(r.inds, int32(len(r.verts) + i))
+	}
+	for _, vert := range m.verts {
+		r.verts = append(r.verts, vert)
+	}
 }
-*/
 
 func (r *Renderer) Flush() {
 	r.vbo.SetData(r.verts, 0)
 	r.ibo.SetData(r.inds, 0)
 	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
-
 }
 
 /*
