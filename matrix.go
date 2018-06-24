@@ -67,6 +67,10 @@ func (a *Mat4) RotationX(ang float64) *Mat4 {
 	return a
 }
 
+func (a *Mat4) MultRotationX(ang float64) *Mat4 {
+	return a.Mult(dummyMat.RotationX(ang))
+}
+
 func (a *Mat4) RotationY(ang float64) *Mat4 {
 	a.SetCol(0, NewVec4(math.Cos(ang), 0, -math.Sin(ang), 0))
 	a.SetCol(1, NewVec4(0, 1, 0, 0))
@@ -75,12 +79,32 @@ func (a *Mat4) RotationY(ang float64) *Mat4 {
 	return a
 }
 
+func (a *Mat4) MultRotationY(ang float64) *Mat4 {
+	return a.Mult(dummyMat.RotationY(ang))
+}
+
 func (a *Mat4) RotationZ(ang float64) *Mat4 {
 	a.SetCol(0, NewVec4(math.Cos(ang), math.Sin(ang), 0, 0))
 	a.SetCol(1, NewVec4(-math.Sin(ang), math.Cos(ang), 0, 0))
 	a.SetCol(2, NewVec4(0, 0, 1, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
 	return a
+}
+
+func (a *Mat4) MultRotationZ(ang float64) *Mat4 {
+	return a.Mult(dummyMat.RotationZ(ang))
+}
+
+func (a *Mat4) Ortho(min, max Vec3) *Mat4 {
+	// TODO: flip Z-axis to make right handed?
+	mid := min.Add(max).Scale(0.5)
+	a.Scaling(2 / (max.X - min.X), 2 / (max.Y - min.Y), 2 / (max.Z - min.Z))
+	a.MultTranslation(mid.Scale(-1))
+	return a
+}
+
+func (a *Mat4) MultOrtho(min, max Vec3) *Mat4 {
+	return a.Mult(dummyMat.Ortho(min, max))
 }
 
 func (a *Mat4) index(i, j int) int {
