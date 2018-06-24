@@ -4,7 +4,7 @@ package main
 // TODO: Mat3
 
 import (
-	// "math"
+	"math"
 )
 
 type Mat4 [4*4]float64
@@ -57,6 +57,30 @@ func (a *Mat4) Scaling(factorX, factorY, factorZ float64) *Mat4 {
 
 func (a *Mat4) MultScaling(factorX, factorY, factorZ float64) *Mat4 {
 	return a.Mult(dummyMat.Scaling(factorX, factorY, factorZ))
+}
+
+func (a *Mat4) RotationX(ang float64) *Mat4 {
+	a.SetCol(0, NewVec4(1, 0, 0, 0))
+	a.SetCol(1, NewVec4(0, math.Cos(ang), math.Sin(ang), 0))
+	a.SetCol(2, NewVec4(0, -math.Sin(ang), math.Cos(ang), 0))
+	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) RotationY(ang float64) *Mat4 {
+	a.SetCol(0, NewVec4(math.Cos(ang), 0, -math.Sin(ang), 0))
+	a.SetCol(1, NewVec4(0, 1, 0, 0))
+	a.SetCol(2, NewVec4(math.Sin(ang), 0, math.Cos(ang), 0))
+	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) RotationZ(ang float64) *Mat4 {
+	a.SetCol(0, NewVec4(math.Cos(ang), math.Sin(ang), 0, 0))
+	a.SetCol(1, NewVec4(-math.Sin(ang), math.Cos(ang), 0, 0))
+	a.SetCol(2, NewVec4(0, 0, 1, 0))
+	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
 }
 
 func (a *Mat4) index(i, j int) int {

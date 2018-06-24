@@ -91,6 +91,7 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh) {
+	r.SetModelMatrix(dummyMat.Identity())
 	for _, i := range m.faces {
 		r.inds = append(r.inds, int32(len(r.verts) + i))
 	}
@@ -100,10 +101,7 @@ func (r *Renderer) renderMesh(m *Mesh) {
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
-	dummyMat.Identity()
-	r.SetModelMatrix(dummyMat.Identity())
 	r.SetViewProjectionMatrix(c.ViewProjectionMatrix())
-
 	for _, m := range s.meshes {
 		r.renderMesh(m)
 	}
