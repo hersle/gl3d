@@ -98,11 +98,36 @@ func (a *Mat4) MultRotationZ(ang float64) *Mat4 {
 
 func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
 	// TODO: flip Z-axis to make right handed?
-	return a.Scaling(2 / size.X, 2 / size.Y, 2 / size.Z)
+	return a.Scaling(2 / size.X, 2 / size.Y, -2 / size.Z)
 }
 
 func (a *Mat4) MultOrthoCentered(size Vec3) *Mat4 {
 	return a.Mult(dummyMat.OrthoCentered(size))
+}
+
+func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
+	// TODO: correct?? understand math behind
+	a.Zero()
+	a.Set(0, 0, 2 * n / (r - l))
+	a.Set(1, 1, 2 * n / (t - b))
+	a.Set(0, 2, (r + l) / (r - l))
+	a.Set(1, 2, (t + b) / (t - b))
+	a.Set(2, 2, (f + n) / (f - n))
+	a.Set(2, 3, 2 * f * n / (f - n))
+	a.Set(3, 2, -1)
+	return a
+}
+
+func (a *Mat4) MultFrustum(l, b, r, t, n, f float64) *Mat4 {
+	return a.Mult(dummyMat.Frustum(l, b, r, t, n, f))
+}
+
+func (a *Mat4) FrustumCentered(w, h, n, f float64) *Mat4 {
+	return a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
+}
+
+func (a *Mat4) MultFrustumCentered(w, h, n, f float64) *Mat4 {
+	return a.Mult(dummyMat.FrustumCentered(w, h, n, f))
 }
 
 func (a *Mat4) index(i, j int) int {
