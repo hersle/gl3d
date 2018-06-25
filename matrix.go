@@ -5,6 +5,7 @@ package main
 
 import (
 	"math"
+	"fmt"
 )
 
 type Mat4 [4*4]float64
@@ -220,4 +221,8 @@ func (a *Mat4) Transpose() *Mat4 {
 	a.SetCol(2, r2)
 	a.SetCol(3, r3)
 	return a
+}
+
+func (a *Mat4) String() string {
+	return fmt.Sprintf("%v\n%v\n%v\n%v\n", a.Row(0), a.Row(1), a.Row(2), a.Row(3))
 }

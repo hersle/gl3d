@@ -34,6 +34,7 @@ func (c *Camera) MoveBy(displacement Vec3) {
 func (c *Camera) ProjectionViewMatrix() *Mat4 {
 	c.viewProjMat.Identity()
 	c.viewProjMat.MultOrthoCentered(Vec3{10, 10, 10})
+	println(c.viewProjMat.String())
 	c.viewProjMat.MultTranslation(c.pos.Scale(-1))
 	c.viewProjMat.MultRotationY(c.yawAng)
 	c.viewProjMat.MultRotationX(c.pitchAng)
