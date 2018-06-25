@@ -130,6 +130,16 @@ func (a *Mat4) MultFrustumCentered(w, h, n, f float64) *Mat4 {
 	return a.Mult(dummyMat.FrustumCentered(w, h, n, f))
 }
 
+func (a *Mat4) Perspective(fovY, aspect, n, f float64) *Mat4 {
+	h := 2 * n * math.Tan(fovY / 2)
+	w := aspect * h
+	return a.FrustumCentered(w, h, n, f)
+}
+
+func (a *Mat4) MultPerspective(fovY, aspect, n, f float64) *Mat4 {
+	return a.Mult(dummyMat.Perspective(fovY, aspect, n, f))
+}
+
 func (a *Mat4) index(i, j int) int {
 	return i * 4 + j
 }
