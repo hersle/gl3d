@@ -12,12 +12,12 @@ func NewCamera() *Camera {
 	return &c
 }
 
-func (c *Camera) Place(pos Vec3) {
+func (c *Camera) MoveTo(pos Vec3) {
 	c.pos = pos
 }
 
-func (c *Camera) Move(displacement Vec3) {
-	c.pos = c.pos.Add(displacement)
+func (c *Camera) MoveBy(displacement Vec3) {
+	c.MoveTo(c.pos.Add(displacement))
 }
 
 func (c *Camera) ProjectionViewMatrix() *Mat4 {

@@ -19,7 +19,7 @@ func main() {
 	q := NewEventQueue(win)
 
 	for !win.ShouldClose() {
-		c.Move(Vec3{0.001, 0.0, 0.0})
+		c.MoveBy(Vec3{0.001, 0.0, 0.0})
 
 		renderer.Clear()
 		renderer.Render(s, c)
@@ -32,7 +32,6 @@ func main() {
 				case *ResizeEvent:
 					e := e.(*ResizeEvent)
 					renderer.SetViewport(0, 0, e.Width, e.Height)
-					println("resize event")
 			}
 		}
 	}

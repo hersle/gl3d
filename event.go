@@ -15,6 +15,8 @@ const (
 )
 
 type MoveEvent struct {
+	dir Direction
+	start bool
 }
 
 type ResizeEvent struct {
@@ -33,6 +35,31 @@ func NewEventQueue(w *Window) *EventQueue {
 	q.head = 0
 	q.tail = 0
 	q.length = 0
+
+	w.glfwWin.SetKeyCallback(func(_ *glfw.Window, k glfw.Key, _ int, a glfw.Action, _ glfw.ModifierKey) {
+		var start bool
+		switch a {
+			case glfw.Release:
+				start = false
+			case glfw.Press:
+				start = true
+			default:
+				return
+		}
+
+		var dir Direction
+		switch k {
+			case glfw.KeyW:
+				dir = DirectionForward
+			case glfw.KeyA:
+				dir = DirectionLeft
+			case glfw.KeyS:
+				dir = DirectionBackward
+			case glfw.KeyD:
+				dir = DirectionRight
+		}
+		q.AddMoveEvent(dir, start)
+	})
 
 	w.glfwWin.SetSizeCallback(func(_ *glfw.Window, width, height int) {
 		q.AddResizeEvent(width, height)
@@ -86,5 +113,12 @@ func (q *EventQueue) AddResizeEvent(width, height int) {
 	var e ResizeEvent
 	e.Width = width
 	e.Height = height
+	q.AddEvent(&e)
+}
+
+func (q *EventQueue) AddMoveEvent(dir Direction, start bool) {
+	var e MoveEvent
+	e.dir = dir
+	e.start = start
 	q.AddEvent(&e)
 }
