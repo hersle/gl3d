@@ -16,11 +16,24 @@ func main() {
 
 	c := NewCamera()
 
+	q := NewEventQueue(win)
+
 	for !win.ShouldClose() {
+		c.Move(Vec3{0.001, 0.0, 0.0})
+
 		renderer.Clear()
 		renderer.Render(s, c)
 		renderer.Flush()
 		win.Update()
-		c.Move(Vec3{0.001, 0.0, 0.0})
+
+		for !q.empty() {
+			e := q.PopEvent()
+			switch e.(type) {
+				case *ResizeEvent:
+					e := e.(*ResizeEvent)
+					renderer.SetViewport(0, 0, e.Width, e.Height)
+					println("resize event")
+			}
+		}
 	}
 }
