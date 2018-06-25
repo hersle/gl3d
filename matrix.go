@@ -112,8 +112,8 @@ func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
 	a.Set(1, 1, 2 * n / (t - b))
 	a.Set(0, 2, (r + l) / (r - l))
 	a.Set(1, 2, (t + b) / (t - b))
-	a.Set(2, 2, (f + n) / (f - n))
-	a.Set(2, 3, 2 * f * n / (f - n))
+	a.Set(2, 2, -(f + n) / (f - n))
+	a.Set(2, 3, -2 * f * n / (f - n))
 	a.Set(3, 2, -1)
 	return a
 }
