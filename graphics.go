@@ -39,6 +39,8 @@ func NewRenderer(win *Window) (*Renderer, error) {
 		return nil, err
 	}
 
+	gl.Enable(gl.DEPTH_TEST)
+
 	r.prog, err = NewProgramFromFiles("vshader.glsl", "fshader.glsl")
 	if err != nil {
 		return nil, err
@@ -80,7 +82,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 }
 
 func (r *Renderer) Clear() {
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 	r.verts = r.verts[:0]
 	r.inds = r.inds[:0]
 }

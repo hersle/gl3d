@@ -52,15 +52,31 @@ func main() {
 					}
 					switch e.dir {
 						case DirectionLeft:
-							println("left")
 							c.Accelerate(c.right.Scale(sign * +1))
 						case DirectionRight:
 							c.Accelerate(c.right.Scale(sign * -1))
-							println("right")
 						case DirectionForward:
 							c.Accelerate(c.fwd.Scale(sign * +1))
 						case DirectionBackward:
 							c.Accelerate(c.fwd.Scale(sign * -1))
+					}
+				case *LookEvent:
+					e := e.(*LookEvent)
+					var sign float64
+					if e.start {
+						sign = +1
+					} else {
+						sign = -1
+					}
+					switch e.dir {
+						case DirectionLeft:
+							c.yawAngVel += sign * -1
+						case DirectionRight:
+							c.yawAngVel += sign * +1
+						case DirectionUp:
+							c.pitchAngVel += sign * +1
+						case DirectionDown:
+							c.pitchAngVel += sign * -1
 					}
 			}
 		}
