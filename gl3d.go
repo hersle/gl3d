@@ -52,9 +52,9 @@ func main() {
 					}
 					switch e.dir {
 						case DirectionLeft:
-							c.Accelerate(c.right.Scale(sign * +1))
-						case DirectionRight:
 							c.Accelerate(c.right.Scale(sign * -1))
+						case DirectionRight:
+							c.Accelerate(c.right.Scale(sign * +1))
 						case DirectionForward:
 							c.Accelerate(c.fwd.Scale(sign * +1))
 						case DirectionBackward:

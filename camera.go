@@ -1,5 +1,7 @@
 package main
 
+// TODO: connect fwd, up, right with viewProjection matrix
+
 type Camera struct {
 	pos, vel Vec3
 	yawAng, yawAngVel float64
@@ -36,9 +38,9 @@ func (c *Camera) ProjectionViewMatrix() *Mat4 {
 	//c.viewProjMat.MultOrthoCentered(Vec3{10, 10, 10})
 	c.viewProjMat.MultPerspective(3.1415 / 2, 1, 0.001, 1000)
 	println(c.viewProjMat.String())
-	c.viewProjMat.MultTranslation(c.pos.Scale(-1))
 	c.viewProjMat.MultRotationY(c.yawAng)
 	c.viewProjMat.MultRotationX(c.pitchAng)
+	c.viewProjMat.MultTranslation(c.pos.Scale(-1))
 	return c.viewProjMat
 }
 
