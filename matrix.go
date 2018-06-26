@@ -1,8 +1,5 @@
 package main
 
-// TODO: translation matrix, rotation matrix, other transformation matrices
-// TODO: Mat3
-
 import (
 	"math"
 	"fmt"

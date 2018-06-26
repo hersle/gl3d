@@ -26,7 +26,6 @@ type Renderer struct {
 
 func NewColor(r, g, b, a uint8) RGBAColor {
 	return RGBAColor{r, g, b, a}
-	//return RGBAColor((a << 0) | (b << 8) | (g << 16) | (r << 24))
 }
 
 func NewRenderer(win *Window) (*Renderer, error) {
@@ -127,19 +126,3 @@ func (r *Renderer) Flush() {
 func (r *Renderer) SetViewport(l, b, w, h int) {
 	gl.Viewport(int32(l), int32(b), int32(w), int32(h))
 }
-
-/*
-func drawTriangle(point1, point2, point3 glmath.Vec2, clr color) {
-	points := []glmath.Vec2{point1, point2, point3}
-	drawConvexPolygon(points, clr)
-}
-
-func aspectRatio() float64 {
-	w, h := window.GetSize()
-	return float64(w) / float64(h)
-}
-
-func setViewport(l, b, r, t int) {
-	gl.Viewport(int32(l), int32(b), int32(r), int32(t))
-}
-*/
