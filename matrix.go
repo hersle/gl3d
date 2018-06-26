@@ -10,6 +10,7 @@ import (
 
 type Mat4 [4*4]float64
 
+// TODO: fucks up if any of these used once simultaneously
 var dummyMat Mat4
 var dummyMat2 Mat4
 
@@ -157,7 +158,7 @@ func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
 	fwd := target.Sub(eye).Norm()
 	up = up.Norm()
 	right := fwd.Cross(up)
-	a.Orientation(right, up, fwd).MultTranslation(eye.Scale(-1))
+	a.Orientation(right, up, fwd).Mult(dummyMat2.Translation(eye.Scale(-1)))
 	return a
 }
 
