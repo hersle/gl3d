@@ -3,9 +3,7 @@ package main
 // TODO: connect fwd, up, right with viewProjection matrix
 
 type Camera struct {
-	pos, vel Vec3
-	yawAngVel float64
-	pitchAngVel float64
+	pos Vec3
 	fwd, up, right Vec3
 	viewProjMat *Mat4
 }
@@ -13,12 +11,9 @@ type Camera struct {
 func NewCamera() *Camera {
 	var c Camera
 	c.MoveTo(NewVec3(0, 0, 0))
-	c.vel = NewVec3(0, 0, 0)
 	c.fwd = NewVec3(0, 0, 1)
 	c.right = NewVec3(1, 0, 0)
 	c.up = NewVec3(0, 1, 0)
-	c.yawAngVel = 0
-	c.pitchAngVel = 0
 	c.viewProjMat = NewMat4Identity()
 	return &c
 }
@@ -42,8 +37,4 @@ func (c *Camera) ProjectionViewMatrix() *Mat4 {
 	c.viewProjMat.MultPerspective(3.1415 / 2, 1, 0.001, 1000)
 	c.viewProjMat.MultLookAt(c.pos, c.pos.Add(c.fwd), c.up)
 	return c.viewProjMat
-}
-
-func (c *Camera) Accelerate(dvel Vec3) {
-	c.vel = c.vel.Add(dvel)
 }
