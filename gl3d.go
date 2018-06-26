@@ -23,7 +23,7 @@ func main() {
 
 	//q := NewEventQueue(win)
 
-	var dt float64
+	//var dt float64
 	var time1, time2 time.Time
 	time1 = time.Now()
 
@@ -34,7 +34,7 @@ func main() {
 		win.Update()
 
 		time2 = time.Now()
-		dt = time2.Sub(time1).Seconds()
+		_ = time2.Sub(time1).Seconds()
 		time1 = time2
 
 		if win.glfwWin.GetKey(glfw.KeyW) == glfw.Press {
@@ -61,7 +61,5 @@ func main() {
 		if win.glfwWin.GetKey(glfw.KeyRight) == glfw.Press {
 			c.Rotate(c.up, -0.05)
 		}
-
-		c.Update(dt)
 	}
 }

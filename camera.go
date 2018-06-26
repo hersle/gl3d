@@ -47,9 +47,3 @@ func (c *Camera) ProjectionViewMatrix() *Mat4 {
 func (c *Camera) Accelerate(dvel Vec3) {
 	c.vel = c.vel.Add(dvel)
 }
-
-func (c *Camera) Update(dt float64) {
-	c.Rotate(c.up, c.yawAngVel * dt)
-	c.Rotate(c.right, c.pitchAngVel * dt)
-	c.MoveBy(c.vel.Scale(dt))
-}
