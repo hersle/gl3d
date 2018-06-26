@@ -2,6 +2,7 @@ package main
 
 import (
 	"time"
+	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 func main() {
@@ -20,7 +21,7 @@ func main() {
 
 	c := NewCamera()
 
-	q := NewEventQueue(win)
+	//q := NewEventQueue(win)
 
 	var dt float64
 	var time1, time2 time.Time
@@ -36,49 +37,29 @@ func main() {
 		dt = time2.Sub(time1).Seconds()
 		time1 = time2
 
-		for !q.empty() {
-			e := q.PopEvent()
-			switch e.(type) {
-				case *ResizeEvent:
-					e := e.(*ResizeEvent)
-					renderer.SetViewport(0, 0, e.Width, e.Height)
-				case *MoveEvent:
-					e := e.(*MoveEvent)
-					var sign float64
-					if e.start {
-						sign = +1
-					} else {
-						sign = -1
-					}
-					switch e.dir {
-						case DirectionLeft:
-							c.Accelerate(c.right.Scale(sign * -1))
-						case DirectionRight:
-							c.Accelerate(c.right.Scale(sign * +1))
-						case DirectionForward:
-							c.Accelerate(c.fwd.Scale(sign * +1))
-						case DirectionBackward:
-							c.Accelerate(c.fwd.Scale(sign * -1))
-					}
-				case *LookEvent:
-					e := e.(*LookEvent)
-					var sign float64
-					if e.start {
-						sign = +1
-					} else {
-						sign = -1
-					}
-					switch e.dir {
-						case DirectionLeft:
-							c.yawAngVel += sign * -1
-						case DirectionRight:
-							c.yawAngVel += sign * +1
-						case DirectionUp:
-							c.pitchAngVel += sign * +1
-						case DirectionDown:
-							c.pitchAngVel += sign * -1
-					}
-			}
+		if win.glfwWin.GetKey(glfw.KeyW) == glfw.Press {
+			c.MoveBy(c.fwd.Scale(+0.1))
+		}
+		if win.glfwWin.GetKey(glfw.KeyS) == glfw.Press {
+			c.MoveBy(c.fwd.Scale(-0.1))
+		}
+		if win.glfwWin.GetKey(glfw.KeyD) == glfw.Press {
+			c.MoveBy(c.right.Scale(+0.1))
+		}
+		if win.glfwWin.GetKey(glfw.KeyA) == glfw.Press {
+			c.MoveBy(c.right.Scale(-0.1))
+		}
+		if win.glfwWin.GetKey(glfw.KeyUp) == glfw.Press {
+			c.Rotate(c.right, +0.05)
+		}
+		if win.glfwWin.GetKey(glfw.KeyDown) == glfw.Press {
+			c.Rotate(c.right, -0.05)
+		}
+		if win.glfwWin.GetKey(glfw.KeyLeft) == glfw.Press {
+			c.Rotate(c.up, +0.05)
+		}
+		if win.glfwWin.GetKey(glfw.KeyRight) == glfw.Press {
+			c.Rotate(c.up, -0.05)
 		}
 
 		c.Update(dt)

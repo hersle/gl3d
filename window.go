@@ -36,7 +36,6 @@ func (w *Window) updateGraphics() {
 
 func (w *Window) updateEvents() {
 	glfw.PollEvents()
-	//w.glfwWin.PollEvents()
 }
 
 func (w *Window) Update() {
