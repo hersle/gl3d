@@ -99,6 +99,14 @@ func (a Vec3) Cross(b Vec3) Vec3 {
 	return NewVec3(x, y, z)
 }
 
+func (a Vec3) Rotate(axis Vec3, ang float64) Vec3 {
+	axis = axis.Norm()
+	v1 := axis.Scale((1 - math.Cos(ang)) * a.Dot(axis))
+	v2 := a.Scale(math.Cos(ang))
+	v3 := axis.Cross(a).Scale(math.Sin(ang))
+	return v1.Add(v2).Add(v3)
+}
+
 func (a Vec3) String() string {
 	return fmt.Sprintf("(%v, %v, %v)", a.X, a.Y, a.Z)
 }
