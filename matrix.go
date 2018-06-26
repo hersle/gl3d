@@ -141,6 +141,30 @@ func (a *Mat4) MultPerspective(fovY, aspect, n, f float64) *Mat4 {
 	return a.Mult(dummyMat.Perspective(fovY, aspect, n, f))
 }
 
+func (a *Mat4) Orientation(unitX, unitY, unitZ Vec3) *Mat4 {
+	a.SetCol(0, unitX.Vec4(0))
+	a.SetCol(1, unitY.Vec4(0))
+	a.SetCol(2, unitZ.Vec4(0))
+	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultOrientation(unitX, unitY, unitZ Vec3) *Mat4 {
+	return a.Mult(dummyMat.Orientation(unitX, unitY, unitZ))
+}
+
+func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
+	fwd := target.Sub(eye).Norm()
+	up = up.Norm()
+	right := fwd.Cross(up)
+	a.Orientation(right, up, fwd).MultTranslation(eye.Scale(-1))
+	return a
+}
+
+func (a *Mat4) MultLookAt(eye, target, up Vec3) *Mat4 {
+	return a.Mult(dummyMat.LookAt(eye, target, up))
+}
+
 func (a *Mat4) index(i, j int) int {
 	return i * 4 + j
 }
