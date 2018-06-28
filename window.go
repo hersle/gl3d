@@ -30,6 +30,15 @@ func (w *Window) ShouldClose() bool {
 	return w.glfwWin.ShouldClose()
 }
 
+func (w *Window) Size() (int, int) {
+	return w.glfwWin.GetSize()
+}
+
+func (w *Window) Aspect() float64 {
+	width, height := w.Size()
+	return float64(width) / float64(height)
+}
+
 func (w *Window) updateGraphics() {
 	w.glfwWin.SwapBuffers()
 }

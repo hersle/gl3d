@@ -20,7 +20,7 @@ func NewCamera(pos, fwd, up Vec3, fovYDeg, aspect, near, far float64) *Camera {
 	c.up = up
 	c.right = c.fwd.Cross(c.up)
 	c.fovY = fovYDeg / 360.0 * 2.0 * math.Pi
-	c.aspect = aspect
+	c.SetAspect(aspect)
 	c.near = near
 	c.far = far
 	c.viewMat = NewMat4Identity()
@@ -41,6 +41,10 @@ func (c *Camera) Rotate(axis Vec3, ang float64) {
 	c.fwd = c.fwd.Rotate(axis, ang).Norm()
 	c.up = c.up.Rotate(axis, ang).Norm()
 	c.right = c.fwd.Cross(c.up).Norm()
+}
+
+func (c *Camera) SetAspect(aspect float64) {
+	c.aspect = aspect
 }
 
 func (c *Camera) ProjectionViewMatrix() *Mat4 {

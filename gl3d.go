@@ -27,6 +27,8 @@ func main() {
 	time1 = time.Now()
 
 	for !win.ShouldClose() {
+		c.SetAspect(win.Aspect())
+		renderer.SetFullViewport(win)
 		renderer.Clear()
 		renderer.Render(s, c)
 		renderer.Flush()

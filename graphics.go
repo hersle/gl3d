@@ -126,3 +126,8 @@ func (r *Renderer) Flush() {
 func (r *Renderer) SetViewport(l, b, w, h int) {
 	gl.Viewport(int32(l), int32(b), int32(w), int32(h))
 }
+
+func (r *Renderer) SetFullViewport(win *Window) {
+	w, h := win.Size()
+	r.SetViewport(0, 0, w, h)
+}
