@@ -34,10 +34,10 @@ func (a *Mat4) Col(j int) Vec4 {
 }
 
 func (a *Mat4) SetCol(j int, col Vec4) {
-	a.Set(0, j, col.X)
-	a.Set(1, j, col.Y)
-	a.Set(2, j, col.Z)
-	a.Set(3, j, col.W)
+	a.Set(0, j, col.X())
+	a.Set(1, j, col.Y())
+	a.Set(2, j, col.Z())
+	a.Set(3, j, col.W())
 }
 
 func (a *Mat4) Row(i int) Vec4 {
@@ -45,10 +45,10 @@ func (a *Mat4) Row(i int) Vec4 {
 }
 
 func (a *Mat4) SetRow(i int, row Vec4) {
-	a.Set(i, 0, row.X)
-	a.Set(i, 1, row.Y)
-	a.Set(i, 2, row.Z)
-	a.Set(i, 3, row.W)
+	a.Set(i, 0, row.X())
+	a.Set(i, 1, row.Y())
+	a.Set(i, 2, row.Z())
+	a.Set(i, 3, row.W())
 }
 
 func (a *Mat4) Add(b *Mat4) *Mat4 {
@@ -155,7 +155,7 @@ func (a *Mat4) RotationZ(ang float64) *Mat4 {
 }
 
 func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
-	return a.Scaling(2 / size.X, 2 / size.Y, -2 / size.Z)
+	return a.Scaling(2 / size.X(), 2 / size.Y(), -2 / size.Z())
 }
 
 func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
