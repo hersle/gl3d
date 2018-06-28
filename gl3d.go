@@ -18,6 +18,7 @@ func main() {
 
 	s := NewScene()
 	s.AddMesh(&mesh1)
+	s.AddMesh(&mesh2)
 
 	c := NewCamera()
 

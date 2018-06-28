@@ -14,6 +14,7 @@ func NewMesh(verts []Vertex, faces []int) *Mesh {
 }
 
 var mesh1 Mesh
+var mesh2 Mesh
 
 func init() {
 	p0 := NewVec3(-0.5, -0.5, -0.5)
@@ -24,6 +25,7 @@ func init() {
 	p5 := NewVec3(+0.5, -0.5, +0.5)
 	p6 := NewVec3(+0.5, +0.5, +0.5)
 	p7 := NewVec3(-0.5, +0.5, +0.5)
+
 
 	c0 := NewColor(0x20, 0x20, 0x20, 0xff)
 	c1 := NewColor(0xff, 0x00, 0x00, 0xff)
@@ -58,4 +60,17 @@ func init() {
 		2, 3, 6,
 		3, 6, 7,
 	}
+
+	p8  := NewVec3(-10, -10, -10)
+	p9  := NewVec3(+10, -10, -10)
+	p10 := NewVec3(+10, -10, +10)
+	p11 := NewVec3(-10, -10, +10)
+
+	v8 := Vertex{p8, c1}
+	v9 := Vertex{p9, c2}
+	v10 := Vertex{p10, c3}
+	v11 := Vertex{p11, c4}
+
+	mesh2.verts = []Vertex{v8, v9, v10, v11}
+	mesh2.faces = []int{0, 1, 2, 0, 2, 3}
 }
