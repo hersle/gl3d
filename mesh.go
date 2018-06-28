@@ -1,5 +1,12 @@
 package main
 
+import (
+	"os"
+	"bufio"
+	"fmt"
+	"errors"
+)
+
 type Mesh struct {
 	verts []Vertex
 	faces []int
@@ -13,64 +20,65 @@ func NewMesh(verts []Vertex, faces []int) *Mesh {
 	return &m
 }
 
-var mesh1 Mesh
-var mesh2 Mesh
-
-func init() {
-	p0 := NewVec3(-0.5, -0.5, -0.5)
-	p1 := NewVec3(+0.5, -0.5, -0.5)
-	p2 := NewVec3(+0.5, +0.5, -0.5)
-	p3 := NewVec3(-0.5, +0.5, -0.5)
-	p4 := NewVec3(-0.5, -0.5, +0.5)
-	p5 := NewVec3(+0.5, -0.5, +0.5)
-	p6 := NewVec3(+0.5, +0.5, +0.5)
-	p7 := NewVec3(-0.5, +0.5, +0.5)
-
-
-	c0 := NewColor(0x20, 0x20, 0x20, 0xff)
-	c1 := NewColor(0xff, 0x00, 0x00, 0xff)
-	c2 := NewColor(0x00, 0xff, 0x00, 0xff)
-	c3 := NewColor(0x00, 0x00, 0xff, 0xff)
-	c4 := NewColor(0xff, 0xff, 0x00, 0xff)
-	c5 := NewColor(0xff, 0x00, 0xff, 0xff)
-	c6 := NewColor(0x00, 0xff, 0xff, 0xff)
-	c7 := NewColor(0xff, 0xff, 0xff, 0xff)
-
-	v0 := Vertex{p0, c0}
-	v1 := Vertex{p1, c1}
-	v2 := Vertex{p2, c2}
-	v3 := Vertex{p3, c3}
-	v4 := Vertex{p4, c4}
-	v5 := Vertex{p5, c5}
-	v6 := Vertex{p6, c6}
-	v7 := Vertex{p7, c7}
-
-	mesh1.verts = []Vertex{v0, v1, v2, v3, v4, v5, v6, v7}
-	mesh1.faces = []int{
-		0, 1, 2,
-		0, 2, 3,
-		1, 2, 5,
-		2, 5, 6,
-		4, 5, 6,
-		4, 6, 7,
-		0, 4, 3,
-		3, 4, 7,
-		0, 1, 5,
-		0, 5, 4,
-		2, 3, 6,
-		3, 6, 7,
+func ReadMesh(filename string) (*Mesh, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		panic(err)
 	}
 
-	p8  := NewVec3(-10, -10, -10)
-	p9  := NewVec3(+10, -10, -10)
-	p10 := NewVec3(+10, -10, +10)
-	p11 := NewVec3(-10, -10, +10)
+	var m Mesh
 
-	v8 := Vertex{p8, c1}
-	v9 := Vertex{p9, c2}
-	v10 := Vertex{p10, c3}
-	v11 := Vertex{p11, c4}
+	s := bufio.NewScanner(file)
+	var x, y, z float64
+	var r, g, b uint8
+	var i1, i2, i3 int
+	errMsg := ""
+	lineNo := 1
+	for s.Scan() {
+		line := s.Text()
 
-	mesh2.verts = []Vertex{v8, v9, v10, v11}
-	mesh2.faces = []int{0, 1, 2, 0, 2, 3}
+		if len(line) == 0 {
+			continue
+		}
+
+		switch line[0] {
+		case '#':
+			continue
+		case 'v':
+			line = line[1:]
+			n, err := fmt.Sscanf(line, "%f %f %f %02x%02x%02x", &x, &y, &z, &r, &g, &b)
+			if n == 6 && err == nil {
+				pos := NewVec3(x, y, z)
+				color := NewColor(r, g, b, 0xff)
+				vert := Vertex{pos, color}
+				m.verts = append(m.verts, vert)
+			} else {
+				errMsg = "vertex data error"
+			}
+		case 'f':
+			line = line[1:]
+			n, err := fmt.Sscanf(line, "%d %d %d", &i1, &i2, &i3)
+			if n == 3 && err == nil {
+				m.faces = append(m.faces, i1 - 1, i2 - 1, i3 - 1)
+			} else {
+				errMsg = "face data error"
+			}
+		default:
+			errMsg = "unexpected first character"
+		}
+
+		if errMsg != "" {
+			err = errors.New(fmt.Sprintf("%s:%d: %s", filename, lineNo, errMsg))
+			return nil, err
+		}
+
+		lineNo++
+	}
+
+	err = file.Close()
+	if err != nil {
+		panic(err)
+	}
+
+	return &m, nil
 }
