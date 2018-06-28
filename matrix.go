@@ -7,10 +7,6 @@ import (
 
 type Mat4 [4*4]float64
 
-// TODO: fucks up if any of these used once simultaneously
-var dummyMat Mat4
-var dummyMat2 Mat4
-
 func NewMat4Zero() *Mat4 {
 	var a Mat4
 	a.Zero()
@@ -126,20 +122,12 @@ func (a *Mat4) Translation(d Vec3) *Mat4 {
 	return a
 }
 
-func (a *Mat4) MultTranslation(d Vec3) *Mat4 {
-	return a.Mult(dummyMat.Translation(d))
-}
-
 func (a *Mat4) Scaling(factorX, factorY, factorZ float64) *Mat4 {
 	a.SetRow(0, NewVec4(factorX, 0, 0, 0))
 	a.SetRow(1, NewVec4(0, factorY, 0, 0))
 	a.SetRow(2, NewVec4(0, 0, factorZ, 0))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
 	return a
-}
-
-func (a *Mat4) MultScaling(factorX, factorY, factorZ float64) *Mat4 {
-	return a.Mult(dummyMat.Scaling(factorX, factorY, factorZ))
 }
 
 func (a *Mat4) RotationX(ang float64) *Mat4 {
@@ -150,20 +138,12 @@ func (a *Mat4) RotationX(ang float64) *Mat4 {
 	return a
 }
 
-func (a *Mat4) MultRotationX(ang float64) *Mat4 {
-	return a.Mult(dummyMat.RotationX(ang))
-}
-
 func (a *Mat4) RotationY(ang float64) *Mat4 {
 	a.SetCol(0, NewVec4(math.Cos(ang), 0, -math.Sin(ang), 0))
 	a.SetCol(1, NewVec4(0, 1, 0, 0))
 	a.SetCol(2, NewVec4(math.Sin(ang), 0, math.Cos(ang), 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
 	return a
-}
-
-func (a *Mat4) MultRotationY(ang float64) *Mat4 {
-	return a.Mult(dummyMat.RotationY(ang))
 }
 
 func (a *Mat4) RotationZ(ang float64) *Mat4 {
@@ -174,16 +154,8 @@ func (a *Mat4) RotationZ(ang float64) *Mat4 {
 	return a
 }
 
-func (a *Mat4) MultRotationZ(ang float64) *Mat4 {
-	return a.Mult(dummyMat.RotationZ(ang))
-}
-
 func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
 	return a.Scaling(2 / size.X, 2 / size.Y, -2 / size.Z)
-}
-
-func (a *Mat4) MultOrthoCentered(size Vec3) *Mat4 {
-	return a.Mult(dummyMat.OrthoCentered(size))
 }
 
 func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
@@ -198,26 +170,14 @@ func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
 	return a
 }
 
-func (a *Mat4) MultFrustum(l, b, r, t, n, f float64) *Mat4 {
-	return a.Mult(dummyMat.Frustum(l, b, r, t, n, f))
-}
-
 func (a *Mat4) FrustumCentered(w, h, n, f float64) *Mat4 {
 	return a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
-}
-
-func (a *Mat4) MultFrustumCentered(w, h, n, f float64) *Mat4 {
-	return a.Mult(dummyMat.FrustumCentered(w, h, n, f))
 }
 
 func (a *Mat4) Perspective(fovY, aspect, n, f float64) *Mat4 {
 	h := 2 * n * math.Tan(fovY / 2)
 	w := aspect * h
 	return a.FrustumCentered(w, h, n, f)
-}
-
-func (a *Mat4) MultPerspective(fovY, aspect, n, f float64) *Mat4 {
-	return a.Mult(dummyMat.Perspective(fovY, aspect, n, f))
 }
 
 func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
@@ -229,10 +189,6 @@ func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
 	a.SetRow(2, fwd.Scale(-1).Vec4(+fwd.Dot(eye)))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
 	return a
-}
-
-func (a *Mat4) MultLookAt(eye, target, up Vec3) *Mat4 {
-	return a.Mult(dummyMat.LookAt(eye, target, up))
 }
 
 func (a *Mat4) String() string {
