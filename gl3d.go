@@ -22,8 +22,6 @@ func main() {
 
 	c := NewCamera()
 
-	//q := NewEventQueue(win)
-
 	//var dt float64
 	var time1, time2 time.Time
 	time1 = time.Now()

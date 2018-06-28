@@ -1,7 +1,5 @@
 package main
 
-// TODO: connect fwd, up, right with viewProjection matrix
-
 type Camera struct {
 	pos Vec3
 	fwd, up, right Vec3
