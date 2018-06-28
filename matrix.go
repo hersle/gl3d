@@ -12,147 +12,13 @@ var dummyMat Mat4
 var dummyMat2 Mat4
 
 func NewMat4Zero() *Mat4 {
-	return &Mat4{}
+	var a Mat4
+	a.Zero()
+	return &a
 }
 
 func NewMat4Identity() *Mat4 {
 	return NewMat4Zero().Identity()
-}
-
-func (a *Mat4) Zero() *Mat4 {
-	for i := 0; i < 4; i++ {
-		for j := 0; j < 4; j++ {
-			a.Set(i, j, 0)
-		}
-	}
-	return a
-}
-
-func (a *Mat4) Identity() *Mat4 {
-	a.Zero()
-	a.Set(0, 0, 1)
-	a.Set(1, 1, 1)
-	a.Set(2, 2, 1)
-	a.Set(3, 3, 1)
-	return a
-}
-
-func (a *Mat4) Translation(d Vec3) *Mat4 {
-	a.Identity()
-	a.SetCol(3, d.Vec4(1))
-	return a
-}
-
-func (a *Mat4) MultTranslation(d Vec3) *Mat4 {
-	return a.Mult(dummyMat.Translation(d))
-}
-
-func (a *Mat4) Scaling(factorX, factorY, factorZ float64) *Mat4 {
-	a.Identity()
-	a.Set(0, 0, factorX)
-	a.Set(1, 1, factorY)
-	a.Set(2, 2, factorZ)
-	return a
-}
-
-func (a *Mat4) MultScaling(factorX, factorY, factorZ float64) *Mat4 {
-	return a.Mult(dummyMat.Scaling(factorX, factorY, factorZ))
-}
-
-func (a *Mat4) RotationX(ang float64) *Mat4 {
-	a.SetCol(0, NewVec4(1, 0, 0, 0))
-	a.SetCol(1, NewVec4(0, math.Cos(ang), math.Sin(ang), 0))
-	a.SetCol(2, NewVec4(0, -math.Sin(ang), math.Cos(ang), 0))
-	a.SetCol(3, NewVec4(0, 0, 0, 1))
-	return a
-}
-
-func (a *Mat4) MultRotationX(ang float64) *Mat4 {
-	return a.Mult(dummyMat.RotationX(ang))
-}
-
-func (a *Mat4) RotationY(ang float64) *Mat4 {
-	a.SetCol(0, NewVec4(math.Cos(ang), 0, -math.Sin(ang), 0))
-	a.SetCol(1, NewVec4(0, 1, 0, 0))
-	a.SetCol(2, NewVec4(math.Sin(ang), 0, math.Cos(ang), 0))
-	a.SetCol(3, NewVec4(0, 0, 0, 1))
-	return a
-}
-
-func (a *Mat4) MultRotationY(ang float64) *Mat4 {
-	return a.Mult(dummyMat.RotationY(ang))
-}
-
-func (a *Mat4) RotationZ(ang float64) *Mat4 {
-	a.SetCol(0, NewVec4(math.Cos(ang), math.Sin(ang), 0, 0))
-	a.SetCol(1, NewVec4(-math.Sin(ang), math.Cos(ang), 0, 0))
-	a.SetCol(2, NewVec4(0, 0, 1, 0))
-	a.SetCol(3, NewVec4(0, 0, 0, 1))
-	return a
-}
-
-func (a *Mat4) MultRotationZ(ang float64) *Mat4 {
-	return a.Mult(dummyMat.RotationZ(ang))
-}
-
-func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
-	// TODO: flip Z-axis to make right handed?
-	return a.Scaling(2 / size.X, 2 / size.Y, -2 / size.Z)
-}
-
-func (a *Mat4) MultOrthoCentered(size Vec3) *Mat4 {
-	return a.Mult(dummyMat.OrthoCentered(size))
-}
-
-func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
-	// TODO: correct?? understand math behind
-	a.Zero()
-	a.Set(0, 0, 2 * n / (r - l))
-	a.Set(1, 1, 2 * n / (t - b))
-	a.Set(0, 2, (r + l) / (r - l))
-	a.Set(1, 2, (t + b) / (t - b))
-	a.Set(2, 2, -(f + n) / (f - n))
-	a.Set(2, 3, -2 * f * n / (f - n))
-	a.Set(3, 2, -1)
-	return a
-}
-
-func (a *Mat4) MultFrustum(l, b, r, t, n, f float64) *Mat4 {
-	return a.Mult(dummyMat.Frustum(l, b, r, t, n, f))
-}
-
-func (a *Mat4) FrustumCentered(w, h, n, f float64) *Mat4 {
-	return a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
-}
-
-func (a *Mat4) MultFrustumCentered(w, h, n, f float64) *Mat4 {
-	return a.Mult(dummyMat.FrustumCentered(w, h, n, f))
-}
-
-func (a *Mat4) Perspective(fovY, aspect, n, f float64) *Mat4 {
-	h := 2 * n * math.Tan(fovY / 2)
-	w := aspect * h
-	return a.FrustumCentered(w, h, n, f)
-}
-
-func (a *Mat4) MultPerspective(fovY, aspect, n, f float64) *Mat4 {
-	return a.Mult(dummyMat.Perspective(fovY, aspect, n, f))
-}
-
-func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
-	fwd := target.Sub(eye).Norm()
-	up = up.Norm()
-	right := fwd.Cross(up).Norm()
-	a.SetRow(0, right.Vec4(0))
-	a.SetRow(1, up.Vec4(0))
-	a.SetRow(2, fwd.Scale(-1).Vec4(0))
-	a.SetRow(3, NewVec4(0, 0, 0, 1))
-	a.Mult(dummyMat2.Translation(eye.Scale(-1)))
-	return a
-}
-
-func (a *Mat4) MultLookAt(eye, target, up Vec3) *Mat4 {
-	return a.Mult(dummyMat.LookAt(eye, target, up))
 }
 
 func (a *Mat4) index(i, j int) int {
@@ -211,15 +77,16 @@ func (a *Mat4) Sub(b *Mat4) *Mat4 {
 
 func (a *Mat4) Mult(b *Mat4) *Mat4 {
 	for i := 0; i < 4; i++ {
-		ai := a.Row(i)
+		aRow := a.Row(i)
 		for j := 0; j < 4; j++ {
-			bj := b.Col(j)
-			a.Set(i, j, ai.Dot(bj))
+			bCol := b.Col(j)
+			a.Set(i, j, aRow.Dot(bCol))
 		}
 	}
 	return a
 }
 
+// TODO: replace with func (a Vec3/4) Transform(m *Mat4)?
 func (a *Mat4) MultVec(v Vec4) Vec4 {
 	x := a.Row(0).Dot(v)
 	y := a.Row(1).Dot(v)
@@ -235,6 +102,137 @@ func (a *Mat4) Transpose() *Mat4 {
 	a.SetCol(2, r2)
 	a.SetCol(3, r3)
 	return a
+}
+
+func (a *Mat4) Zero() *Mat4 {
+	a.SetRow(0, NewVec4(0, 0, 0, 0))
+	a.SetRow(1, NewVec4(0, 0, 0, 0))
+	a.SetRow(2, NewVec4(0, 0, 0, 0))
+	a.SetRow(3, NewVec4(0, 0, 0, 0))
+	return a
+}
+
+func (a *Mat4) Identity() *Mat4 {
+	a.SetRow(0, NewVec4(1, 0, 0, 0))
+	a.SetRow(1, NewVec4(0, 1, 0, 0))
+	a.SetRow(2, NewVec4(0, 0, 1, 0))
+	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) Translation(d Vec3) *Mat4 {
+	a.Identity()
+	a.SetCol(3, d.Vec4(1))
+	return a
+}
+
+func (a *Mat4) MultTranslation(d Vec3) *Mat4 {
+	return a.Mult(dummyMat.Translation(d))
+}
+
+func (a *Mat4) Scaling(factorX, factorY, factorZ float64) *Mat4 {
+	a.SetRow(0, NewVec4(factorX, 0, 0, 0))
+	a.SetRow(1, NewVec4(0, factorY, 0, 0))
+	a.SetRow(2, NewVec4(0, 0, factorZ, 0))
+	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultScaling(factorX, factorY, factorZ float64) *Mat4 {
+	return a.Mult(dummyMat.Scaling(factorX, factorY, factorZ))
+}
+
+func (a *Mat4) RotationX(ang float64) *Mat4 {
+	a.SetCol(0, NewVec4(1, 0, 0, 0))
+	a.SetCol(1, NewVec4(0, math.Cos(ang), math.Sin(ang), 0))
+	a.SetCol(2, NewVec4(0, -math.Sin(ang), math.Cos(ang), 0))
+	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultRotationX(ang float64) *Mat4 {
+	return a.Mult(dummyMat.RotationX(ang))
+}
+
+func (a *Mat4) RotationY(ang float64) *Mat4 {
+	a.SetCol(0, NewVec4(math.Cos(ang), 0, -math.Sin(ang), 0))
+	a.SetCol(1, NewVec4(0, 1, 0, 0))
+	a.SetCol(2, NewVec4(math.Sin(ang), 0, math.Cos(ang), 0))
+	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultRotationY(ang float64) *Mat4 {
+	return a.Mult(dummyMat.RotationY(ang))
+}
+
+func (a *Mat4) RotationZ(ang float64) *Mat4 {
+	a.SetCol(0, NewVec4(math.Cos(ang), math.Sin(ang), 0, 0))
+	a.SetCol(1, NewVec4(-math.Sin(ang), math.Cos(ang), 0, 0))
+	a.SetCol(2, NewVec4(0, 0, 1, 0))
+	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultRotationZ(ang float64) *Mat4 {
+	return a.Mult(dummyMat.RotationZ(ang))
+}
+
+func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
+	return a.Scaling(2 / size.X, 2 / size.Y, -2 / size.Z)
+}
+
+func (a *Mat4) MultOrthoCentered(size Vec3) *Mat4 {
+	return a.Mult(dummyMat.OrthoCentered(size))
+}
+
+func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
+	a.Zero()
+	a.Set(0, 0, 2 * n / (r - l))
+	a.Set(1, 1, 2 * n / (t - b))
+	a.Set(0, 2, (r + l) / (r - l))
+	a.Set(1, 2, (t + b) / (t - b))
+	a.Set(2, 2, -(f + n) / (f - n))
+	a.Set(2, 3, -2 * f * n / (f - n))
+	a.Set(3, 2, -1)
+	return a
+}
+
+func (a *Mat4) MultFrustum(l, b, r, t, n, f float64) *Mat4 {
+	return a.Mult(dummyMat.Frustum(l, b, r, t, n, f))
+}
+
+func (a *Mat4) FrustumCentered(w, h, n, f float64) *Mat4 {
+	return a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
+}
+
+func (a *Mat4) MultFrustumCentered(w, h, n, f float64) *Mat4 {
+	return a.Mult(dummyMat.FrustumCentered(w, h, n, f))
+}
+
+func (a *Mat4) Perspective(fovY, aspect, n, f float64) *Mat4 {
+	h := 2 * n * math.Tan(fovY / 2)
+	w := aspect * h
+	return a.FrustumCentered(w, h, n, f)
+}
+
+func (a *Mat4) MultPerspective(fovY, aspect, n, f float64) *Mat4 {
+	return a.Mult(dummyMat.Perspective(fovY, aspect, n, f))
+}
+
+func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
+	fwd := target.Sub(eye).Norm()
+	up = up.Norm()
+	right := fwd.Cross(up).Norm()
+	a.SetRow(0, right.Vec4(-right.Dot(eye)))
+	a.SetRow(1, up.Vec4(-up.Dot(eye)))
+	a.SetRow(2, fwd.Scale(-1).Vec4(+fwd.Dot(eye)))
+	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultLookAt(eye, target, up Vec3) *Mat4 {
+	return a.Mult(dummyMat.LookAt(eye, target, up))
 }
 
 func (a *Mat4) String() string {
