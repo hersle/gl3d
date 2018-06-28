@@ -51,16 +51,16 @@ func main() {
 			c.MoveBy(c.right.Scale(-0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyUp) == glfw.Press {
-			c.Rotate(c.right, +0.05)
+			c.Rotate(c.right, +0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeyDown) == glfw.Press {
-			c.Rotate(c.right, -0.05)
+			c.Rotate(c.right, -0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeyLeft) == glfw.Press {
-			c.Rotate(NewVec3(0, 1, 0), +0.05)
+			c.Rotate(NewVec3(0, 1, 0), +0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeyRight) == glfw.Press {
-			c.Rotate(NewVec3(0, 1, 0), -0.05)
+			c.Rotate(NewVec3(0, 1, 0), -0.03)
 		}
 	}
 }
