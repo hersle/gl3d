@@ -56,10 +56,10 @@ func main() {
 			c.Rotate(c.right, -0.05)
 		}
 		if win.glfwWin.GetKey(glfw.KeyLeft) == glfw.Press {
-			c.Rotate(c.up, +0.05)
+			c.Rotate(NewVec3(0, 1, 0), +0.05)
 		}
 		if win.glfwWin.GetKey(glfw.KeyRight) == glfw.Press {
-			c.Rotate(c.up, -0.05)
+			c.Rotate(NewVec3(0, 1, 0), -0.05)
 		}
 	}
 }
