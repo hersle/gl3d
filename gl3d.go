@@ -20,7 +20,7 @@ func main() {
 	s.AddMesh(&mesh1)
 	s.AddMesh(&mesh2)
 
-	c := NewCamera()
+	c := NewCamera(NewVec3(0, 0, 0), NewVec3(0, 0, 1), NewVec3(0, 1, 0), 90, 1, 0.01, 100)
 
 	//var dt float64
 	var time1, time2 time.Time
