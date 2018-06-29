@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"reflect"
+	"fmt"
 )
 
 type ShaderType uint32
@@ -117,7 +118,7 @@ func (p Program) attribLocation(name string) (uint32, error) {
 	loc := gl.GetAttribLocation(uint32(p), gl.Str(name + "\x00"))
 	err := error(nil)
 	if loc == -1 {
-		err = errors.New("attribute location -1")
+		err = errors.New(fmt.Sprint(name, " attribute location -1"))
 	}
 	return uint32(loc), err
 
@@ -127,7 +128,7 @@ func (p Program) uniformLocation(name string) (uint32, error) {
 	loc := gl.GetUniformLocation(uint32(p), gl.Str(name + "\x00"))
 	err := error(nil)
 	if loc == -1 {
-		err = errors.New("uniform location -1")
+		err = errors.New(fmt.Sprint(name, " uniform location -1"))
 	}
 	return uint32(loc), err
 }

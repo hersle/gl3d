@@ -50,19 +50,19 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	r.posLoc, err = r.prog.attribLocation("position")
 	if err != nil {
-		return nil, err
+		println(err.Error())
 	}
 	r.colorLoc, err = r.prog.attribLocation("colorV")
 	if err != nil {
-		return nil, err
+		println(err.Error())
 	}
 	r.texCoordLoc, err = r.prog.attribLocation("texCoordV")
 	if err != nil {
-		return nil, err
+		println(err.Error())
 	}
 	r.projViewModelMatLoc, err = r.prog.uniformLocation("projectionViewModelMatrix")
 	if err != nil {
-		return nil, err
+		println(err.Error())
 	}
 
 	gl.GenVertexArrays(1, &r.vaoId)
