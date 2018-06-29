@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-type Mat4 [4*4]float64
+type Mat4 [4*4]float32
 
 func NewMat4Zero() *Mat4 {
 	var a Mat4
@@ -21,11 +21,11 @@ func (a *Mat4) index(i, j int) int {
 	return i * 4 + j
 }
 
-func (a *Mat4) At(i, j int) float64 {
+func (a *Mat4) At(i, j int) float32 {
 	return a[a.index(i, j)]
 }
 
-func (a *Mat4) Set(i, j int, aij float64) {
+func (a *Mat4) Set(i, j int, aij float32) {
 	a[a.index(i, j)] = aij
 }
 
@@ -58,7 +58,7 @@ func (a *Mat4) Add(b *Mat4) *Mat4 {
 	return a
 }
 
-func (a *Mat4) Scale(factor float64) *Mat4 {
+func (a *Mat4) Scale(factor float32) *Mat4 {
 	for i := 0; i < 4; i++ {
 		a.SetRow(i, a.Row(i).Scale(factor))
 	}
@@ -122,7 +122,7 @@ func (a *Mat4) Translation(d Vec3) *Mat4 {
 	return a
 }
 
-func (a *Mat4) Scaling(factorX, factorY, factorZ float64) *Mat4 {
+func (a *Mat4) Scaling(factorX, factorY, factorZ float32) *Mat4 {
 	a.SetRow(0, NewVec4(factorX, 0, 0, 0))
 	a.SetRow(1, NewVec4(0, factorY, 0, 0))
 	a.SetRow(2, NewVec4(0, 0, factorZ, 0))
@@ -130,25 +130,31 @@ func (a *Mat4) Scaling(factorX, factorY, factorZ float64) *Mat4 {
 	return a
 }
 
-func (a *Mat4) RotationX(ang float64) *Mat4 {
+func (a *Mat4) RotationX(ang float32) *Mat4 {
+	cos := float32(math.Cos(float64(ang)))
+	sin := float32(math.Sin(float64(ang)))
 	a.SetCol(0, NewVec4(1, 0, 0, 0))
-	a.SetCol(1, NewVec4(0, math.Cos(ang), math.Sin(ang), 0))
-	a.SetCol(2, NewVec4(0, -math.Sin(ang), math.Cos(ang), 0))
+	a.SetCol(1, NewVec4(0, cos, sin, 0))
+	a.SetCol(2, NewVec4(0, -sin, cos, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
 	return a
 }
 
-func (a *Mat4) RotationY(ang float64) *Mat4 {
-	a.SetCol(0, NewVec4(math.Cos(ang), 0, -math.Sin(ang), 0))
+func (a *Mat4) RotationY(ang float32) *Mat4 {
+	cos := float32(math.Cos(float64(ang)))
+	sin := float32(math.Sin(float64(ang)))
+	a.SetCol(0, NewVec4(cos, 0, -sin, 0))
 	a.SetCol(1, NewVec4(0, 1, 0, 0))
-	a.SetCol(2, NewVec4(math.Sin(ang), 0, math.Cos(ang), 0))
+	a.SetCol(2, NewVec4(sin, 0, cos, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
 	return a
 }
 
-func (a *Mat4) RotationZ(ang float64) *Mat4 {
-	a.SetCol(0, NewVec4(math.Cos(ang), math.Sin(ang), 0, 0))
-	a.SetCol(1, NewVec4(-math.Sin(ang), math.Cos(ang), 0, 0))
+func (a *Mat4) RotationZ(ang float32) *Mat4 {
+	cos := float32(math.Cos(float64(ang)))
+	sin := float32(math.Sin(float64(ang)))
+	a.SetCol(0, NewVec4(cos, sin, 0, 0))
+	a.SetCol(1, NewVec4(-sin, cos, 0, 0))
 	a.SetCol(2, NewVec4(0, 0, 1, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
 	return a
@@ -158,7 +164,7 @@ func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
 	return a.Scaling(2 / size.X(), 2 / size.Y(), -2 / size.Z())
 }
 
-func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
+func (a *Mat4) Frustum(l, b, r, t, n, f float32) *Mat4 {
 	a.Zero()
 	a.Set(0, 0, 2 * n / (r - l))
 	a.Set(1, 1, 2 * n / (t - b))
@@ -170,12 +176,12 @@ func (a *Mat4) Frustum(l, b, r, t, n, f float64) *Mat4 {
 	return a
 }
 
-func (a *Mat4) FrustumCentered(w, h, n, f float64) *Mat4 {
+func (a *Mat4) FrustumCentered(w, h, n, f float32) *Mat4 {
 	return a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
 }
 
-func (a *Mat4) Perspective(fovY, aspect, n, f float64) *Mat4 {
-	h := 2 * n * math.Tan(fovY / 2)
+func (a *Mat4) Perspective(fovY, aspect, n, f float32) *Mat4 {
+	h := 2 * n * float32(math.Tan(float64(fovY / 2)))
 	w := aspect * h
 	return a.FrustumCentered(w, h, n, f)
 }

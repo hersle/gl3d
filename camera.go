@@ -7,13 +7,13 @@ import (
 type Camera struct {
 	pos Vec3
 	fwd, up, right Vec3
-	fovY float64
-	aspect float64
-	near, far float64
+	fovY float32
+	aspect float32
+	near, far float32
 	viewMat, projMat, viewProjMat *Mat4
 }
 
-func NewCamera(pos, fwd, up Vec3, fovYDeg, aspect, near, far float64) *Camera {
+func NewCamera(pos, fwd, up Vec3, fovYDeg, aspect, near, far float32) *Camera {
 	var c Camera
 	c.MoveTo(pos)
 	c.fwd = fwd
@@ -37,13 +37,13 @@ func (c *Camera) MoveBy(displacement Vec3) {
 	c.MoveTo(c.pos.Add(displacement))
 }
 
-func (c *Camera) Rotate(axis Vec3, ang float64) {
+func (c *Camera) Rotate(axis Vec3, ang float32) {
 	c.fwd = c.fwd.Rotate(axis, ang).Norm()
 	c.up = c.up.Rotate(axis, ang).Norm()
 	c.right = c.fwd.Cross(c.up).Norm()
 }
 
-func (c *Camera) SetAspect(aspect float64) {
+func (c *Camera) SetAspect(aspect float32) {
 	c.aspect = aspect
 }
 

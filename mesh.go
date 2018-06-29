@@ -29,8 +29,8 @@ func ReadMesh(filename string) (*Mesh, error) {
 	var m Mesh
 
 	s := bufio.NewScanner(file)
-	var x, y, z float64
-	var u, v float64
+	var x, y, z float32
+	var u, v float32
 	var r, g, b uint8
 	var i1, i2, i3 int
 	errMsg := ""

@@ -76,7 +76,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	stride := int32(unsafe.Sizeof(Vertex{}))
 	offset := gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.pos)))
-	gl.VertexAttribPointer(r.posLoc, 3, gl.DOUBLE, false, stride, offset)
+	gl.VertexAttribPointer(r.posLoc, 3, gl.FLOAT, false, stride, offset)
 	gl.EnableVertexAttribArray(r.posLoc)
 
 	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.color)))
@@ -84,7 +84,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.EnableVertexAttribArray(r.colorLoc)
 
 	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.texCoord)))
-	gl.VertexAttribPointer(r.texCoordLoc, 2, gl.DOUBLE, false, stride, offset)
+	gl.VertexAttribPointer(r.texCoordLoc, 2, gl.FLOAT, false, stride, offset)
 	gl.EnableVertexAttribArray(r.texCoordLoc)
 
 	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
@@ -131,19 +131,8 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	}
 }
 
-var f32mat4 [16]float32
-func (f64mat4 *Mat4) Float32Mat4() *float32 {
-	for i := 0; i < 4; i++ {
-		for j := 0; j < 4; j++ {
-			f32mat4[i*4+j] = float32(f64mat4.At(i, j))
-		}
-	}
-	return &f32mat4[0]
-}
-
 func (r *Renderer) SetProjectionViewModelMatrix(m *Mat4) {
-	// TODO: make everything float32
-	gl.UniformMatrix4fv(int32(r.projViewModelMatLoc), 1, true, m.Float32Mat4())
+	gl.UniformMatrix4fv(int32(r.projViewModelMatLoc), 1, true, &m[0])
 }
 
 func (r *Renderer) Flush() {

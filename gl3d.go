@@ -25,7 +25,7 @@ func main() {
 
 	c := NewCamera(NewVec3(0, 0, 0), NewVec3(0, 0, 1), NewVec3(0, 1, 0), 60, 1, 0.01, 100)
 
-	//var dt float64
+	//var dt float32
 	var time1, time2 time.Time
 	time1 = time.Now()
 
