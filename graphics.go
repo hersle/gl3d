@@ -3,6 +3,8 @@ package main
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"unsafe"
+	"image"
+	"image/color"
 )
 
 type RGBAColor [4]uint8
@@ -87,24 +89,13 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.VertexAttribPointer(r.texCoordLoc, 2, gl.FLOAT, false, stride, offset)
 	gl.EnableVertexAttribArray(r.texCoordLoc)
 
-	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-	img := []uint8{
-		0xff, 0x00, 0x00, 0xff,
-		0x00, 0xff, 0x00, 0xff,
-		0x00, 0x00, 0xff, 0xff,
-		0xff, 0xff, 0x00, 0xff,
-	}
-	w, h := 2, 2
-	var texId uint32
-	gl.GenTextures(1, &texId)
-	gl.BindTexture(gl.TEXTURE_2D, texId)
-	gl.ActiveTexture(gl.TEXTURE0)
-
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
-	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img))
+	tex := NewTexture2D()
+	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
+	img.Set(0, 0, color.RGBA{0xff, 0x00, 0xff, 0xff})
+	img.Set(0, 1, color.RGBA{0x00, 0xff, 0x00, 0xff})
+	img.Set(1, 0, color.RGBA{0x00, 0x00, 0xff, 0xff})
+	img.Set(1, 1, color.RGBA{0xff, 0xff, 0x00, 0xff})
+	tex.SetImage(img)
 
 	return &r, nil
 }

@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"reflect"
 	"fmt"
+	"image"
+	"image/draw"
 )
 
 type ShaderType uint32
@@ -178,3 +180,36 @@ func (b *Buffer) SetData(data interface{}, byteOffset int) {
 	}
 }
 
+
+
+type Texture2D struct {
+	id uint32
+}
+
+func NewTexture2D() *Texture2D {
+	var t Texture2D
+	gl.GenTextures(1, &t.id)
+	t.bind()
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	return &t
+}
+
+func (t *Texture2D) bind() {
+	gl.BindTexture(gl.TEXTURE_2D, t.id)
+}
+
+func (t *Texture2D) SetImage(img image.Image) {
+	switch img.(type) {
+		case *image.RGBA:
+			img := img.(*image.RGBA)
+			t.bind()
+			gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+			w, h := img.Bounds().Size().X, img.Bounds().Size().Y
+			gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img.Pix))
+		default:
+			imgRGBA := image.NewRGBA(img.Bounds())
+			draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
+			t.SetImage(imgRGBA)
+	}
+}
