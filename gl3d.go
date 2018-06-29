@@ -16,17 +16,12 @@ func main() {
 		panic(err)
 	}
 
+	s := NewScene()
 	cube, err := ReadMesh("objects/cube.3d")
 	if err != nil {
 		panic(err)
 	}
-	floor, err := ReadMesh("objects/floor.3d")
-	if err != nil {
-		panic(err)
-	}
-	s := NewScene()
 	s.AddMesh(cube)
-	s.AddMesh(floor)
 
 	c := NewCamera(NewVec3(0, 0, 0), NewVec3(0, 0, 1), NewVec3(0, 1, 0), 60, 1, 0.01, 100)
 

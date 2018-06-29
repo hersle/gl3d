@@ -30,6 +30,7 @@ func ReadMesh(filename string) (*Mesh, error) {
 
 	s := bufio.NewScanner(file)
 	var x, y, z float64
+	var u, v float64
 	var r, g, b uint8
 	var i1, i2, i3 int
 	errMsg := ""
@@ -46,11 +47,12 @@ func ReadMesh(filename string) (*Mesh, error) {
 			continue
 		case 'v':
 			line = line[1:]
-			n, err := fmt.Sscanf(line, "%f %f %f %02x%02x%02x", &x, &y, &z, &r, &g, &b)
-			if n == 6 && err == nil {
+			n, err := fmt.Sscanf(line, "%f %f %f %02x%02x%02x %f %f", &x, &y, &z, &r, &g, &b, &u, &v)
+			if n == 8 && err == nil {
 				pos := NewVec3(x, y, z)
 				color := NewColor(r, g, b, 0xff)
-				vert := Vertex{pos, color}
+				texCoord := NewVec2(u, v)
+				vert := Vertex{pos, color, texCoord}
 				m.verts = append(m.verts, vert)
 			} else {
 				errMsg = "vertex data error"

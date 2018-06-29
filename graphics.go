@@ -10,6 +10,7 @@ type RGBAColor [4]uint8
 type Vertex struct {
 	pos Vec3
 	color RGBAColor
+	texCoord Vec2
 }
 
 type Renderer struct {
@@ -19,6 +20,7 @@ type Renderer struct {
 	vaoId uint32
 	posLoc uint32
 	colorLoc uint32
+	texCoordLoc uint32
 	projViewModelMatLoc uint32
 	verts []Vertex
 	inds []int32
@@ -54,6 +56,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
+	r.texCoordLoc, err = r.prog.attribLocation("texCoordV")
+	if err != nil {
+		return nil, err
+	}
 	r.projViewModelMatLoc, err = r.prog.uniformLocation("projectionViewModelMatrix")
 	if err != nil {
 		return nil, err
@@ -76,6 +82,29 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.color)))
 	gl.VertexAttribPointer(r.colorLoc, 4, gl.UNSIGNED_BYTE, true, stride, offset)
 	gl.EnableVertexAttribArray(r.colorLoc)
+
+	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.texCoord)))
+	gl.VertexAttribPointer(r.texCoordLoc, 2, gl.DOUBLE, false, stride, offset)
+	gl.EnableVertexAttribArray(r.texCoordLoc)
+
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	img := []uint8{
+		0xff, 0x00, 0x00, 0xff,
+		0x00, 0xff, 0x00, 0xff,
+		0x00, 0x00, 0xff, 0xff,
+		0xff, 0xff, 0x00, 0xff,
+	}
+	w, h := 2, 2
+	var texId uint32
+	gl.GenTextures(1, &texId)
+	gl.BindTexture(gl.TEXTURE_2D, texId)
+	gl.ActiveTexture(gl.TEXTURE0)
+
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img))
 
 	return &r, nil
 }
