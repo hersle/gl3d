@@ -38,6 +38,8 @@ func main() {
 	var time1, time2 time.Time
 	time1 = time.Now()
 
+	var camFactor float32
+
 	for !win.ShouldClose() {
 		c.SetAspect(win.Aspect())
 		renderer.SetFullViewport(win)
@@ -49,29 +51,35 @@ func main() {
 		_ = time2.Sub(time1).Seconds()
 		time1 = time2
 
+		if win.glfwWin.GetKey(glfw.KeyLeftShift) == glfw.Press {
+			camFactor = 0.1 // for precise camera controls
+		} else {
+			camFactor = 1.0
+		}
+
 		if win.glfwWin.GetKey(glfw.KeyW) == glfw.Press {
-			c.MoveBy(c.fwd.Scale(+0.1))
+			c.MoveBy(c.fwd.Scale(camFactor * +0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyS) == glfw.Press {
-			c.MoveBy(c.fwd.Scale(-0.1))
+			c.MoveBy(c.fwd.Scale(camFactor * -0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyD) == glfw.Press {
-			c.MoveBy(c.right.Scale(+0.1))
+			c.MoveBy(c.right.Scale(camFactor * +0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyA) == glfw.Press {
-			c.MoveBy(c.right.Scale(-0.1))
+			c.MoveBy(c.right.Scale(camFactor * -0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyUp) == glfw.Press {
-			c.Rotate(c.right, +0.03)
+			c.Rotate(c.right, camFactor * +0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeyDown) == glfw.Press {
-			c.Rotate(c.right, -0.03)
+			c.Rotate(c.right, camFactor * -0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeyLeft) == glfw.Press {
-			c.Rotate(NewVec3(0, 1, 0), +0.03)
+			c.Rotate(NewVec3(0, 1, 0), camFactor * +0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeyRight) == glfw.Press {
-			c.Rotate(NewVec3(0, 1, 0), -0.03)
+			c.Rotate(NewVec3(0, 1, 0), camFactor * -0.03)
 		}
 	}
 }
