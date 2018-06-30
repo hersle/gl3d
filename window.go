@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
+	"runtime"
 )
 
 type Window struct {
@@ -50,4 +51,8 @@ func (w *Window) updateEvents() {
 func (w *Window) Update() {
 	w.updateGraphics()
 	w.updateEvents()
+}
+
+func init() {
+	runtime.LockOSThread()
 }
