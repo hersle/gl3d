@@ -17,7 +17,7 @@ func main() {
 	}
 
 	s := NewScene()
-	cube, err := ReadMesh("objects/african_head.obj")
+	model, err := ReadMesh("objects/head.obj")
 	if err != nil {
 		panic(err)
 	}
@@ -25,7 +25,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	s.AddMesh(cube)
+	s.AddMesh(model)
 	s.AddMesh(floor)
 
 	c := NewCamera(NewVec3(0, 0, 0), NewVec3(0, 0, 1), NewVec3(0, 1, 0), 60, 1, 0.01, 100)
