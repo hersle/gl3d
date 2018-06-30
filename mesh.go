@@ -46,8 +46,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	var x, y, z float32
 	var u, v float32
-	var v1, v2, v3 int
-	var vt1, vt2, vt3 int
+	var v1, vt1 int
 	var positions []Vec3
 	var texCoords []Vec2
 
@@ -74,18 +73,20 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				errMsg = "vertex data error"
 			}
 		} else if strings.HasPrefix(line, "f") {
-			n, err := fmt.Sscanf(line, "f %d/%d %d/%d %d/%d", &v1, &vt1, &v2, &vt2, &v3, &vt3)
-			if n == 6 && err == nil {
-				i1 := len(m.verts) + 0
-				i2 := len(m.verts) + 1
-				i3 := len(m.verts) + 2
-				vert1 := Vertex{positions[v1-1], RGBAColor{}, texCoords[vt1-1]}
-				vert2 := Vertex{positions[v2-1], RGBAColor{}, texCoords[vt2-1]}
-				vert3 := Vertex{positions[v3-1], RGBAColor{}, texCoords[vt3-1]}
-				m.faces = append(m.faces, i1, i2, i3)
-				m.verts = append(m.verts, vert1, vert2, vert3)
-			} else {
-				errMsg = "face data error"
+			vertSpecs := strings.Fields(line)[1:]
+			i1 := len(m.verts)
+			for _, vertSpec := range vertSpecs {
+				n, err := fmt.Sscanf(vertSpec, "%d/%d", &v1, &vt1)
+				if n == 2 && err == nil {
+					vert1 := Vertex{positions[v1-1], RGBAColor{}, texCoords[vt1-1]}
+					i2 := len(m.verts) - 1
+					i3 := len(m.verts)
+					m.faces = append(m.faces, i1, i2, i3)
+					m.verts = append(m.verts, vert1)
+				} else {
+					errMsg = "face data error"
+					break
+				}
 			}
 		} else {
 			errMsg = "unknown line prefix"
