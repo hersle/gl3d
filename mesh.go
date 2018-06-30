@@ -16,6 +16,8 @@ type Mesh struct {
 	verts []Vertex
 	faces []int
 	tex *Texture2D
+	modelMat *Mat4
+	tmpMat *Mat4
 	// TODO: transformation matrix, etc.
 }
 
@@ -24,6 +26,8 @@ func NewMesh(verts []Vertex, faces []int, tex *Texture2D) *Mesh {
 	m.verts = verts
 	m.faces = faces
 	m.tex = tex
+	m.modelMat = NewMat4Identity()
+	m.tmpMat = NewMat4Zero()
 	return &m
 }
 
@@ -129,6 +133,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		return nil, err
 	}
 
+	m.modelMat = NewMat4Identity()
+	m.tmpMat = NewMat4Zero()
+
 	return &m, nil
 }
 
@@ -223,5 +230,35 @@ func ReadMeshCustom(filename string) (*Mesh, error) {
 		panic(err)
 	}
 
+	m.modelMat = NewMat4Identity()
+	m.tmpMat = NewMat4Zero()
+
 	return &m, nil
+}
+
+// TODO: implement matrix left multiplication, 
+// TODO: so transformations can be done in a natural order
+
+func (m *Mesh) ResetTransformations() {
+	m.modelMat.Identity()
+}
+
+func (m *Mesh) Translate(d Vec3) {
+	m.modelMat.Mult(m.tmpMat.Translation(d))
+}
+
+func (m *Mesh) Scale(factorX, factorY, factorZ float32) {
+	m.modelMat.Mult(m.tmpMat.Scaling(factorX, factorY, factorZ))
+}
+
+func (m *Mesh) RotateX(ang float32) {
+	m.modelMat.Mult(m.tmpMat.RotationX(ang))
+}
+
+func (m *Mesh) RotateY(ang float32) {
+	m.modelMat.Mult(m.tmpMat.RotationY(ang))
+}
+
+func (m *Mesh) RotateZ(ang float32) {
+	m.modelMat.Mult(m.tmpMat.RotationZ(ang))
 }

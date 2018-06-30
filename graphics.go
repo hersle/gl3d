@@ -21,6 +21,7 @@ type Renderer struct {
 	posLoc uint32
 	colorLoc uint32
 	texCoordLoc uint32
+	projViewModelMat *Mat4
 	projViewModelMatLoc uint32
 	verts []Vertex
 	inds []int32
@@ -39,6 +40,8 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	r.projViewModelMat = NewMat4Zero()
 
 	gl.Enable(gl.DEPTH_TEST)
 
@@ -95,7 +98,10 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
-	r.SetProjectionViewModelMatrix(c.ProjectionViewMatrix())
+	r.projViewModelMat.Identity()
+	r.projViewModelMat.Mult(c.ProjectionViewMatrix())
+	r.projViewModelMat.Mult(m.modelMat)
+	r.SetProjectionViewModelMatrix(r.projViewModelMat)
 	m.tex.bind()
 	for _, i := range m.faces {
 		r.inds = append(r.inds, int32(len(r.verts) + i))
