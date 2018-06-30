@@ -102,8 +102,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 func (r *Renderer) Clear() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-	r.verts = r.verts[:0]
-	r.inds = r.inds[:0]
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
@@ -118,6 +116,8 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.vbo.SetData(r.verts, 0)
 	r.ibo.SetData(r.inds, 0)
 	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
+	r.verts = r.verts[:0]
+	r.inds = r.inds[:0]
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
