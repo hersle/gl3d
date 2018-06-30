@@ -117,6 +117,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				m.faces = append(m.faces, i1, i2, i3)
 				m.verts = append(m.verts, vert)
 			}
+		case "#":
+			continue
 		default:
 			println("warning: ignoring line with unknown prefix", fields[0])
 		}

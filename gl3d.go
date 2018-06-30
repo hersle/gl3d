@@ -24,6 +24,8 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+		model.RotateX(-3.1415/2)
+		model.Scale(0.1, 0.1, 0.1)
 		s.AddMesh(model)
 	}
 	floor, err := ReadMesh("objects/floor.3d")
