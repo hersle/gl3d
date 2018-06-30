@@ -87,16 +87,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.VertexAttribPointer(r.texCoordLoc, 2, gl.FLOAT, false, stride, offset)
 	gl.EnableVertexAttribArray(r.texCoordLoc)
 
-	/*
-	tex := NewTexture2D()
-	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
-	img.Set(0, 0, color.RGBA{0xff, 0x00, 0xff, 0xff})
-	img.Set(0, 1, color.RGBA{0x00, 0xff, 0x00, 0xff})
-	img.Set(1, 0, color.RGBA{0x00, 0x00, 0xff, 0xff})
-	img.Set(1, 1, color.RGBA{0xff, 0xff, 0x00, 0xff})
-	tex.SetImage(img)
-	*/
-
 	return &r, nil
 }
 

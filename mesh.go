@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"path"
 	"bufio"
 	"fmt"
 	"errors"
@@ -27,11 +28,12 @@ func NewMesh(verts []Vertex, faces []int, tex *Texture2D) *Mesh {
 }
 
 func ReadMesh(filename string) (*Mesh, error) {
-	if strings.HasSuffix(filename, ".3d") {
+	switch path.Ext(filename) {
+	case ".3d":
 		return ReadMeshCustom(filename)
-	} else if strings.HasSuffix(filename, ".obj") {
+	case ".obj":
 		return ReadMeshObj(filename)
-	} else {
+	default:
 		return nil, errors.New(fmt.Sprintf("%s has unknown format", filename))
 	}
 }
@@ -120,7 +122,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			return nil, err
 		}
 	}
-
 
 	m.tex = NewTexture2D()
 	err = m.tex.ReadImage(strings.TrimSuffix(filename, ".obj") + "_texture.png")

@@ -165,7 +165,6 @@ func (b *Buffer) allocate(size int) {
 
 func (b *Buffer) SetData(data interface{}, byteOffset int) {
 	// assumes all entries in data are of the same type
-
 	val := reflect.ValueOf(data)
 	if val.Kind() == reflect.Slice {
 		if val.Len() > 0 {
