@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 	"github.com/go-gl/glfw/v3.2/glfw"
 )
@@ -17,15 +18,18 @@ func main() {
 	}
 
 	s := NewScene()
-	model, err := ReadMesh("objects/head.obj")
-	if err != nil {
-		panic(err)
+	if len(os.Args) == 2{
+		filename := os.Args[1]
+		model, err := ReadMesh(filename)
+		if err != nil {
+			panic(err)
+		}
+		s.AddMesh(model)
 	}
 	floor, err := ReadMesh("objects/floor.3d")
 	if err != nil {
 		panic(err)
 	}
-	s.AddMesh(model)
 	s.AddMesh(floor)
 
 	c := NewCamera(NewVec3(0, 0, 0), NewVec3(0, 0, 1), NewVec3(0, 1, 0), 60, 1, 0.01, 100)
