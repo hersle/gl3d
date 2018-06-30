@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	"strconv"
 	"image"
 	_ "image/png"
 )
@@ -44,62 +45,81 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	var m Mesh
 
-	var x, y, z float32
-	var u, v float32
-	var v1, vt1, vn1 int
+	var pos [3]float32
+	var texCoord [2]float32
+	var inds [3]int
 	var positions []Vec3
 	var texCoords []Vec2
 
 	errMsg := ""
-	lineNo := 1
+	lineNo := 0
 	s := bufio.NewScanner(file)
 	for s.Scan() {
 		line := s.Text()
+		lineNo++
+		fields := strings.Fields(line)
+		if len(fields) == 0 {
+			continue
+		}
 
-		if len(line) == 0 || strings.HasPrefix(line, "#") {
-			// empty line or comment
-		} else if strings.HasPrefix(line, "vn") {
-		} else if strings.HasPrefix(line, "vt") {
-			n, err := fmt.Sscanf(line, "vt %f %f", &u, &v)
-			if n == 2 && err == nil {
-				texCoords = append(texCoords, NewVec2(u, v))
-			} else {
-				errMsg = "texture data error"
-			}
-		} else if strings.HasPrefix(line, "v") {
-			n, err := fmt.Sscanf(line, "v %f %f %f", &x, &y, &z)
-			if n == 3 && err == nil {
-				positions = append(positions, NewVec3(x, y, z))
-			} else {
+		switch fields[0] {
+		case "v":
+			if len(fields[1:]) < 3 {
 				errMsg = "vertex data error"
 			}
-		} else if strings.HasPrefix(line, "f") {
-			vertSpecs := strings.Fields(line)[1:]
-			i1 := len(m.verts)
-			for _, vertSpec := range vertSpecs {
-				n, _ := fmt.Sscanf(vertSpec, "%d/%d/%d", &v1, &vt1, &vn1)
-				if (n == 2 || n == 3) {
-					vert := Vertex{positions[v1-1], RGBAColor{}, texCoords[vt1-1]}
-					i2 := len(m.verts) - 1
-					i3 := len(m.verts)
-					m.faces = append(m.faces, i1, i2, i3)
-					m.verts = append(m.verts, vert)
-				} else {
-					errMsg = "face data error"
+			for i := 0; i < 3; i++ {
+				_, err := fmt.Sscan(fields[1+i], &pos[i])
+				if err != nil {
+					errMsg = "vertex data error"
 					break
 				}
 			}
-		} else {
-			fmt.Printf("warning: unknown line prefix: %s\n", strings.Fields(line)[0])
+			positions = append(positions, NewVec3(pos[0], pos[1], pos[2]))
+		case "vt":
+			if len(fields[1:]) < 2 || len(fields[1:]) > 3 {
+				errMsg = "texture coordinate data error"
+			}
+			for i := 0; i < 2; i++ {
+				_, err := fmt.Sscan(fields[1+i], &texCoord[i])
+				if err != nil {
+					errMsg = "texture coordinate data error"
+					break
+				}
+			}
+			texCoords = append(texCoords, NewVec2(texCoord[0], texCoord[1]))
+		case "f":
+			i1 := len(m.verts)
+			for _, field := range fields[1:] {
+				indStrs := strings.Split(field, "/")
+				for i, indStr := range indStrs {
+					if indStr == "" {
+						inds[i] = 0
+					} else {
+						inds[i], err = strconv.Atoi(indStr)
+						if err != nil {
+							break
+						}
+					}
+				}
+				if err != nil || inds[0] == 0 || inds[1] == 0 {
+					errMsg = "face data error"
+					break
+				}
+				vert := Vertex{positions[inds[0]-1], RGBAColor{}, texCoords[inds[1]-1]}
+				i2 := len(m.verts) - 1
+				i3 := len(m.verts)
+				m.faces = append(m.faces, i1, i2, i3)
+				m.verts = append(m.verts, vert)
+			}
+		default:
 		}
 
 		if errMsg != "" {
 			err = errors.New(fmt.Sprintf("%s:%d: %s", filename, lineNo, errMsg))
 			return nil, err
 		}
-
-		lineNo++
 	}
+
 
 	m.tex = NewTexture2D()
 	err = m.tex.ReadImage(strings.TrimSuffix(filename, ".obj") + "_texture.png")
