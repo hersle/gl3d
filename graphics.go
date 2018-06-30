@@ -115,6 +115,9 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	for _, vert := range m.verts {
 		r.verts = append(r.verts, vert)
 	}
+	r.vbo.SetData(r.verts, 0)
+	r.ibo.SetData(r.inds, 0)
+	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
@@ -125,12 +128,6 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 
 func (r *Renderer) SetProjectionViewModelMatrix(m *Mat4) {
 	gl.UniformMatrix4fv(int32(r.projViewModelMatLoc), 1, true, &m[0])
-}
-
-func (r *Renderer) Flush() {
-	r.vbo.SetData(r.verts, 0)
-	r.ibo.SetData(r.inds, 0)
-	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
 }
 
 func (r *Renderer) SetViewport(l, b, w, h int) {

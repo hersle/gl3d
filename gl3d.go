@@ -39,7 +39,6 @@ func main() {
 		renderer.SetFullViewport(win)
 		renderer.Clear()
 		renderer.Render(s, c)
-		renderer.Flush()
 		win.Update()
 
 		time2 = time.Now()
