@@ -17,7 +17,7 @@ func main() {
 	}
 
 	s := NewScene()
-	cube, err := ReadMesh("objects/cube.obj")
+	cube, err := ReadMesh("objects/african_head.obj")
 	if err != nil {
 		panic(err)
 	}
