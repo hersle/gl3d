@@ -5,18 +5,22 @@ import (
 	"bufio"
 	"fmt"
 	"errors"
+	"image"
+	_ "image/png"
 )
 
 type Mesh struct {
 	verts []Vertex
 	faces []int
+	tex *Texture2D
 	// TODO: transformation matrix, etc.
 }
 
-func NewMesh(verts []Vertex, faces []int) *Mesh {
+func NewMesh(verts []Vertex, faces []int, tex *Texture2D) *Mesh {
 	var m Mesh
 	m.verts = verts
 	m.faces = faces
+	m.tex = tex
 	return &m
 }
 
@@ -65,6 +69,30 @@ func ReadMesh(filename string) (*Mesh, error) {
 			} else {
 				errMsg = "face data error"
 			}
+		case 't':
+			if m.tex != nil {
+				errMsg = "multiple textures specified"
+			} else {
+				line = line[1:]
+				var texFilename string
+				n, err := fmt.Sscanf(line, "%s", &texFilename)
+				if n == 1 && err == nil {
+					m.tex = NewTexture2D()
+					file, err := os.Open(texFilename)
+					if err != nil {
+						errMsg = err.Error()
+					}
+					defer file.Close()
+					img, _, err := image.Decode(file)
+					if err != nil {
+						errMsg = err.Error()
+					} else {
+						m.tex.SetImage(img)
+					}
+				} else {
+					errMsg = "texture specification error"
+				}
+			}
 		default:
 			errMsg = "unexpected first character"
 		}
@@ -75,6 +103,11 @@ func ReadMesh(filename string) (*Mesh, error) {
 		}
 
 		lineNo++
+	}
+
+	if m.tex == nil {
+		err = errors.New("no texture specified")
+		return nil, err
 	}
 
 	err = file.Close()

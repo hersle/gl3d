@@ -3,8 +3,6 @@ package main
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"unsafe"
-	"image"
-	"image/color"
 )
 
 type RGBAColor [4]uint8
@@ -89,6 +87,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.VertexAttribPointer(r.texCoordLoc, 2, gl.FLOAT, false, stride, offset)
 	gl.EnableVertexAttribArray(r.texCoordLoc)
 
+	/*
 	tex := NewTexture2D()
 	img := image.NewRGBA(image.Rect(0, 0, 2, 2))
 	img.Set(0, 0, color.RGBA{0xff, 0x00, 0xff, 0xff})
@@ -96,6 +95,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	img.Set(1, 0, color.RGBA{0x00, 0x00, 0xff, 0xff})
 	img.Set(1, 1, color.RGBA{0xff, 0xff, 0x00, 0xff})
 	tex.SetImage(img)
+	*/
 
 	return &r, nil
 }
@@ -108,6 +108,7 @@ func (r *Renderer) Clear() {
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.SetProjectionViewModelMatrix(c.ProjectionViewMatrix())
+	m.tex.bind()
 	for _, i := range m.faces {
 		r.inds = append(r.inds, int32(len(r.verts) + i))
 	}
