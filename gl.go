@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"reflect"
 	"fmt"
+	"os"
 	"image"
 	"image/draw"
 )
@@ -214,4 +215,19 @@ func (t *Texture2D) SetImage(img image.Image) {
 			draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
 			t.SetImage(imgRGBA)
 	}
+}
+
+func (t *Texture2D) ReadImage(filename string) error {
+	file, err := os.Open(filename)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return err
+	}
+	t.SetImage(img)
+	return nil
 }

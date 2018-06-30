@@ -5,6 +5,7 @@ import (
 	"bufio"
 	"fmt"
 	"errors"
+	"strings"
 	"image"
 	_ "image/png"
 )
@@ -25,6 +26,89 @@ func NewMesh(verts []Vertex, faces []int, tex *Texture2D) *Mesh {
 }
 
 func ReadMesh(filename string) (*Mesh, error) {
+	if strings.HasSuffix(filename, ".3d") {
+		return ReadMeshCustom(filename)
+	} else if strings.HasSuffix(filename, ".obj") {
+		return ReadMeshObj(filename)
+	} else {
+		return nil, errors.New(fmt.Sprintf("%s has unknown format", filename))
+	}
+}
+
+func ReadMeshObj(filename string) (*Mesh, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var m Mesh
+
+	var x, y, z float32
+	var u, v float32
+	var v1, v2, v3 int
+	var vt1, vt2, vt3 int
+	var positions []Vec3
+	var texCoords []Vec2
+
+	errMsg := ""
+	lineNo := 1
+	s := bufio.NewScanner(file)
+	for s.Scan() {
+		line := s.Text()
+
+		if len(line) == 0 || strings.HasPrefix(line, "#") {
+			// empty line or comment
+		} else if strings.HasPrefix(line, "vt") {
+			n, err := fmt.Sscanf(line, "vt %f %f", &u, &v)
+			if n == 2 && err == nil {
+				texCoords = append(texCoords, NewVec2(u, v))
+			} else {
+				errMsg = "texture data error"
+			}
+		} else if strings.HasPrefix(line, "v") {
+			n, err := fmt.Sscanf(line, "v %f %f %f", &x, &y, &z)
+			if n == 3 && err == nil {
+				positions = append(positions, NewVec3(x, y, z))
+			} else {
+				errMsg = "vertex data error"
+			}
+		} else if strings.HasPrefix(line, "f") {
+			n, err := fmt.Sscanf(line, "f %d/%d %d/%d %d/%d", &v1, &vt1, &v2, &vt2, &v3, &vt3)
+			if n == 6 && err == nil {
+				i1 := len(m.verts) + 0
+				i2 := len(m.verts) + 1
+				i3 := len(m.verts) + 2
+				vert1 := Vertex{positions[v1-1], RGBAColor{}, texCoords[vt1-1]}
+				vert2 := Vertex{positions[v2-1], RGBAColor{}, texCoords[vt2-1]}
+				vert3 := Vertex{positions[v3-1], RGBAColor{}, texCoords[vt3-1]}
+				m.faces = append(m.faces, i1, i2, i3)
+				m.verts = append(m.verts, vert1, vert2, vert3)
+			} else {
+				errMsg = "face data error"
+			}
+		} else {
+			errMsg = "unknown line prefix"
+		}
+
+		if errMsg != "" {
+			err = errors.New(fmt.Sprintf("%s:%d: %s", filename, lineNo, errMsg))
+			return nil, err
+		}
+
+		lineNo++
+	}
+
+	m.tex = NewTexture2D()
+	err = m.tex.ReadImage(strings.TrimSuffix(filename, ".obj") + "_texture.png")
+	if err != nil {
+		return nil, err
+	}
+
+	return &m, nil
+}
+
+func ReadMeshCustom(filename string) (*Mesh, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		panic(err)
