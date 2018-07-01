@@ -117,14 +117,15 @@ func (p Program) use() {
 	gl.UseProgram(uint32(p))
 }
 
-func (p Program) attribLocation(name string) (uint32, error) {
+func (p Program) attrib(name string) (*Attrib, error) {
+	var a Attrib
 	loc := gl.GetAttribLocation(uint32(p), gl.Str(name + "\x00"))
-	err := error(nil)
 	if loc == -1 {
-		err = errors.New(fmt.Sprint(name, " attribute location -1"))
+		return nil, errors.New(fmt.Sprint(name, " attribute location -1"))
+	} else {
+		a.id = uint32(loc)
+		return &a, nil
 	}
-	return uint32(loc), err
-
 }
 
 func (p Program) uniformLocation(name string) (uint32, error) {
@@ -229,4 +230,10 @@ func (t *Texture2D) ReadImage(filename string) error {
 	}
 	t.SetImage(img)
 	return nil
+}
+
+
+
+type Attrib struct {
+	id uint32
 }

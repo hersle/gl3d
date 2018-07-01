@@ -18,9 +18,9 @@ type Renderer struct {
 	vbo *Buffer
 	ibo *Buffer
 	vaoId uint32
-	posLoc uint32
-	colorLoc uint32
-	texCoordLoc uint32
+	posAttr *Attrib
+	colorAttr *Attrib
+	texCoordAttr *Attrib
 	projViewModelMat *Mat4
 	projViewModelMatLoc uint32
 	verts []Vertex
@@ -51,15 +51,15 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	}
 	r.prog.use()
 
-	r.posLoc, err = r.prog.attribLocation("position")
+	r.posAttr, err = r.prog.attrib("position")
 	if err != nil {
 		println(err.Error())
 	}
-	r.colorLoc, err = r.prog.attribLocation("colorV")
+	r.colorAttr, err = r.prog.attrib("colorV")
 	if err != nil {
 		println(err.Error())
 	}
-	r.texCoordLoc, err = r.prog.attribLocation("texCoordV")
+	r.texCoordAttr, err = r.prog.attrib("texCoordV")
 	if err != nil {
 		println(err.Error())
 	}
@@ -79,16 +79,16 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	stride := int32(unsafe.Sizeof(Vertex{}))
 	offset := gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.pos)))
-	gl.VertexAttribPointer(r.posLoc, 3, gl.FLOAT, false, stride, offset)
-	gl.EnableVertexAttribArray(r.posLoc)
+	gl.VertexAttribPointer(r.posAttr.id, 3, gl.FLOAT, false, stride, offset)
+	gl.EnableVertexAttribArray(r.posAttr.id)
 
 	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.color)))
-	gl.VertexAttribPointer(r.colorLoc, 4, gl.UNSIGNED_BYTE, true, stride, offset)
-	gl.EnableVertexAttribArray(r.colorLoc)
+	gl.VertexAttribPointer(r.colorAttr.id, 4, gl.UNSIGNED_BYTE, true, stride, offset)
+	gl.EnableVertexAttribArray(r.colorAttr.id)
 
 	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.texCoord)))
-	gl.VertexAttribPointer(r.texCoordLoc, 2, gl.FLOAT, false, stride, offset)
-	gl.EnableVertexAttribArray(r.texCoordLoc)
+	gl.VertexAttribPointer(r.texCoordAttr.id, 2, gl.FLOAT, false, stride, offset)
+	gl.EnableVertexAttribArray(r.texCoordAttr.id)
 
 	return &r, nil
 }
