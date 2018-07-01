@@ -128,13 +128,15 @@ func (p Program) attrib(name string) (*Attrib, error) {
 	}
 }
 
-func (p Program) uniformLocation(name string) (uint32, error) {
+func (p Program) uniform(name string) (*Uniform, error) {
+	var u Uniform
 	loc := gl.GetUniformLocation(uint32(p), gl.Str(name + "\x00"))
-	err := error(nil)
 	if loc == -1 {
-		err = errors.New(fmt.Sprint(name, " uniform location -1"))
+		return nil, errors.New(fmt.Sprint(name, " uniform location -1"))
+	} else {
+		u.id = uint32(loc)
+		return &u, nil
 	}
-	return uint32(loc), err
 }
 
 
@@ -235,5 +237,11 @@ func (t *Texture2D) ReadImage(filename string) error {
 
 
 type Attrib struct {
+	id uint32
+}
+
+
+
+type Uniform struct {
 	id uint32
 }

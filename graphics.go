@@ -22,7 +22,7 @@ type Renderer struct {
 	colorAttr *Attrib
 	texCoordAttr *Attrib
 	projViewModelMat *Mat4
-	projViewModelMatLoc uint32
+	projViewModelMatUfm *Uniform
 	verts []Vertex
 	inds []int32
 }
@@ -63,7 +63,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
-	r.projViewModelMatLoc, err = r.prog.uniformLocation("projectionViewModelMatrix")
+	r.projViewModelMatUfm, err = r.prog.uniform("projectionViewModelMatrix")
 	if err != nil {
 		println(err.Error())
 	}
@@ -123,7 +123,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 }
 
 func (r *Renderer) SetProjectionViewModelMatrix(m *Mat4) {
-	gl.UniformMatrix4fv(int32(r.projViewModelMatLoc), 1, true, &m[0])
+	gl.UniformMatrix4fv(int32(r.projViewModelMatUfm.id), 1, true, &m[0])
 }
 
 func (r *Renderer) SetViewport(l, b, w, h int) {
