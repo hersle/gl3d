@@ -135,6 +135,7 @@ func (p Program) uniform(name string) (*Uniform, error) {
 		return nil, errors.New(fmt.Sprint(name, " uniform location -1"))
 	} else {
 		u.id = uint32(loc)
+		gl.GetActiveUniform(uint32(p), u.id, 0, nil, nil, &u.typ, nil)
 		return &u, nil
 	}
 }
@@ -240,8 +241,34 @@ type Attrib struct {
 	id uint32
 }
 
+func (a *Attrib) SetFormat(dim int, typ int, normalize bool) {
+	gl.VertexAttribFormat(a.id, int32(dim), uint32(typ), normalize, 0)
+}
+
+func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
+	gl.VertexAttribBinding(a.id, a.id)
+	gl.BindVertexBuffer(a.id, b.id, offset, int32(stride))
+	gl.EnableVertexAttribArray(a.id)
+}
+
 
 
 type Uniform struct {
 	id uint32
+	typ uint32
+}
+
+func (u *Uniform) Set(val interface{}) {
+	switch u.typ {
+	case gl.FLOAT_MAT4:
+		switch val.(type) {
+		case *Mat4:
+			val := val.(*Mat4)
+			gl.UniformMatrix4fv(int32(u.id), 1, true, &val[0])
+		default:
+			panic("tried to set uniform from unknown type")
+		}
+	default:
+		panic("tried to set uniform of unknown type")
+	}
 }

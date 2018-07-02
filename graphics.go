@@ -72,23 +72,21 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.BindVertexArray(r.vaoId)
 
 	r.vbo = NewBuffer(gl.ARRAY_BUFFER)
-	r.vbo.bind()
-
 	r.ibo = NewBuffer(gl.ELEMENT_ARRAY_BUFFER)
-	r.ibo.bind()
 
-	stride := int32(unsafe.Sizeof(Vertex{}))
-	offset := gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.pos)))
-	gl.VertexAttribPointer(r.posAttr.id, 3, gl.FLOAT, false, stride, offset)
-	gl.EnableVertexAttribArray(r.posAttr.id)
+	stride := int(unsafe.Sizeof(Vertex{}))
 
-	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.color)))
-	gl.VertexAttribPointer(r.colorAttr.id, 4, gl.UNSIGNED_BYTE, true, stride, offset)
-	gl.EnableVertexAttribArray(r.colorAttr.id)
+	offset := int(unsafe.Offsetof(Vertex{}.pos))
+	r.posAttr.SetFormat(3, gl.FLOAT, true)
+	r.posAttr.SetSource(r.vbo, offset, stride)
 
-	offset = gl.PtrOffset(int(unsafe.Offsetof(Vertex{}.texCoord)))
-	gl.VertexAttribPointer(r.texCoordAttr.id, 2, gl.FLOAT, false, stride, offset)
-	gl.EnableVertexAttribArray(r.texCoordAttr.id)
+	offset = int(unsafe.Offsetof(Vertex{}.color))
+	r.colorAttr.SetFormat(4, gl.UNSIGNED_BYTE, true)
+	r.colorAttr.SetSource(r.vbo, offset, stride)
+
+	offset = int(unsafe.Offsetof(Vertex{}.texCoord))
+	r.texCoordAttr.SetFormat(2, gl.FLOAT, false)
+	r.texCoordAttr.SetSource(r.vbo, offset, stride)
 
 	return &r, nil
 }
@@ -111,7 +109,10 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	}
 	r.vbo.SetData(r.verts, 0)
 	r.ibo.SetData(r.inds, 0)
+
+	r.ibo.bind()
 	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
+
 	r.verts = r.verts[:0]
 	r.inds = r.inds[:0]
 }
@@ -123,7 +124,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 }
 
 func (r *Renderer) SetProjectionViewModelMatrix(m *Mat4) {
-	gl.UniformMatrix4fv(int32(r.projViewModelMatUfm.id), 1, true, &m[0])
+	r.projViewModelMatUfm.Set(m)
 }
 
 func (r *Renderer) SetViewport(l, b, w, h int) {
