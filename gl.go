@@ -11,22 +11,16 @@ import (
 	"image/draw"
 )
 
-type ShaderType uint32
 type Shader uint32
 
-const (
-	VertexShader ShaderType = gl.VERTEX_SHADER
-	FragmentShader ShaderType = gl.FRAGMENT_SHADER
-)
-
-func NewShaderFromString(typ ShaderType, src string) (Shader, error) {
-	s := Shader(gl.CreateShader(uint32(typ)))
+func NewShaderFromString(typ uint32, src string) (Shader, error) {
+	s := Shader(gl.CreateShader(typ))
 	s.setSource(src)
 	err := s.compile()
 	return s, err
 }
 
-func NewShaderFromFile(typ ShaderType, filename string) (Shader, error) {
+func NewShaderFromFile(typ uint32, filename string) (Shader, error) {
 	src, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return Shader(0), err
@@ -78,11 +72,11 @@ func NewProgramFromShaders(vShader, fShader Shader) (Program, error) {
 }
 
 func NewProgramFromFiles(vShaderFilename, fShaderFilename string) (Program, error) {
-	vShader, err := NewShaderFromFile(VertexShader, vShaderFilename)
+	vShader, err := NewShaderFromFile(gl.VERTEX_SHADER, vShaderFilename)
 	if err != nil {
 		return Program(0), err
 	}
-	fShader, err := NewShaderFromFile(FragmentShader, fShaderFilename)
+	fShader, err := NewShaderFromFile(gl.FRAGMENT_SHADER, fShaderFilename)
 	if err != nil {
 		return Program(0), err
 	}
