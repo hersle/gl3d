@@ -70,8 +70,8 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	r.vao = NewVertexArray()
 
-	r.vbo = NewBuffer(gl.ARRAY_BUFFER)
-	r.ibo = NewBuffer(gl.ELEMENT_ARRAY_BUFFER)
+	r.vbo = NewBuffer()
+	r.ibo = NewBuffer()
 
 	r.vao.SetIndexBuffer(r.ibo)
 

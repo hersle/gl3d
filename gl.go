@@ -143,15 +143,13 @@ func (p *Program) uniform(name string) (*Uniform, error) {
 
 
 type Buffer struct {
-	typ uint32
 	id uint32
 	size int
 }
 
 // TODO: type not needed
-func NewBuffer(typ uint32) *Buffer {
+func NewBuffer() *Buffer {
 	var b Buffer
-	b.typ = typ
 	gl.CreateBuffers(1, &b.id)
 	b.size = 0
 	return &b
