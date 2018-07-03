@@ -140,6 +140,22 @@ func (p *Program) uniform(name string) (*Uniform, error) {
 	}
 }
 
+func (p *Program) SetUniform(u *Uniform, val interface{}) {
+	// TODO: set more types
+	switch u.typ {
+	case gl.FLOAT_MAT4:
+		switch val.(type) {
+		case *Mat4:
+			val := val.(*Mat4)
+			gl.ProgramUniformMatrix4fv(p.id, int32(u.id), 1, true, &val[0])
+		default:
+			panic("tried to set uniform from unknown type")
+		}
+	default:
+		panic("tried to set uniform of unknown type")
+	}
+}
+
 
 
 type Buffer struct {
@@ -236,22 +252,6 @@ type Attrib struct {
 type Uniform struct {
 	id uint32
 	typ uint32
-}
-
-func (u *Uniform) Set(val interface{}) {
-	// TODO: set more types
-	switch u.typ {
-	case gl.FLOAT_MAT4:
-		switch val.(type) {
-		case *Mat4:
-			val := val.(*Mat4)
-			gl.UniformMatrix4fv(int32(u.id), 1, true, &val[0])
-		default:
-			panic("tried to set uniform from unknown type")
-		}
-	default:
-		panic("tried to set uniform of unknown type")
-	}
 }
 
 

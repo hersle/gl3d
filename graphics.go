@@ -5,7 +5,7 @@ import (
 	"unsafe"
 )
 
-// TODO: use image/color.RGBA
+// TODO: use image/color.RGBA; must be [4] array, not struct
 type RGBAColor [4]uint8
 
 type Vertex struct {
@@ -127,7 +127,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 }
 
 func (r *Renderer) SetProjectionViewModelMatrix(m *Mat4) {
-	r.projViewModelMatUfm.Set(m)
+	r.prog.SetUniform(r.projViewModelMatUfm, m)
 }
 
 func (r *Renderer) SetViewport(l, b, w, h int) {
