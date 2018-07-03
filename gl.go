@@ -11,47 +11,50 @@ import (
 	"image/draw"
 )
 
-type Shader uint32
-
-func NewShaderFromString(typ uint32, src string) (Shader, error) {
-	s := Shader(gl.CreateShader(typ))
-	s.setSource(src)
-	err := s.compile()
-	return s, err
+type Shader struct {
+	id uint32
 }
 
-func NewShaderFromFile(typ uint32, filename string) (Shader, error) {
+func NewShaderFromString(typ uint32, src string) (*Shader, error) {
+	var s Shader
+	s.id = gl.CreateShader(typ)
+	s.setSource(src)
+	err := s.compile()
+	return &s, err
+}
+
+func NewShaderFromFile(typ uint32, filename string) (*Shader, error) {
 	src, err := ioutil.ReadFile(filename)
 	if err != nil {
-		return Shader(0), err
+		return nil, err
 	}
 	return NewShaderFromString(typ, string(src))
 }
 
-func (s Shader) setSource(src string) {
+func (s *Shader) setSource(src string) {
 	cSrc, free := gl.Strs(src)
 	defer free()
 	length := int32(len(src))
-	gl.ShaderSource(uint32(s), 1, cSrc, &length)
+	gl.ShaderSource(s.id, 1, cSrc, &length)
 }
 
-func (s Shader) compiled() bool {
+func (s *Shader) compiled() bool {
 	var status int32
-	gl.GetShaderiv(uint32(s), gl.COMPILE_STATUS, &status)
+	gl.GetShaderiv(s.id, gl.COMPILE_STATUS, &status)
 	return status == gl.TRUE
 }
 
-func (s Shader) log() string {
+func (s *Shader) log() string {
 	var length int32
-	gl.GetShaderiv(uint32(s), gl.INFO_LOG_LENGTH, &length)
+	gl.GetShaderiv(s.id, gl.INFO_LOG_LENGTH, &length)
 	var log string = string(make([]byte, length + 1))
-	gl.GetShaderInfoLog(uint32(s), length + 1, nil, gl.Str(log))
+	gl.GetShaderInfoLog(s.id, length + 1, nil, gl.Str(log))
 	log = log[:len(log)-1] // remove null terminator
 	return log
 }
 
-func (s Shader) compile() error {
-	gl.CompileShader(uint32(s))
+func (s *Shader) compile() error {
+	gl.CompileShader(s.id)
 	if s.compiled() {
 		return nil
 	} else {
@@ -61,45 +64,48 @@ func (s Shader) compile() error {
 
 
 
-type Program uint32
-
-func NewProgramFromShaders(vShader, fShader Shader) (Program, error) {
-	p := Program(gl.CreateProgram())
-	gl.AttachShader(uint32(p), uint32(vShader))
-	gl.AttachShader(uint32(p), uint32(fShader))
-	err := p.link()
-	return p, err
+type Program struct {
+	id uint32
 }
 
-func NewProgramFromFiles(vShaderFilename, fShaderFilename string) (Program, error) {
+func NewProgramFromShaders(vShader, fShader *Shader) (*Program, error) {
+	var p Program
+	p.id = gl.CreateProgram()
+	gl.AttachShader(p.id, vShader.id)
+	gl.AttachShader(p.id, fShader.id)
+	err := p.link()
+	return &p, err
+}
+
+func NewProgramFromFiles(vShaderFilename, fShaderFilename string) (*Program, error) {
 	vShader, err := NewShaderFromFile(gl.VERTEX_SHADER, vShaderFilename)
 	if err != nil {
-		return Program(0), err
+		return nil, err
 	}
 	fShader, err := NewShaderFromFile(gl.FRAGMENT_SHADER, fShaderFilename)
 	if err != nil {
-		return Program(0), err
+		return nil, err
 	}
 	return NewProgramFromShaders(vShader, fShader)
 }
 
-func (p Program) linked() bool {
+func (p *Program) linked() bool {
 	var status int32
-	gl.GetProgramiv(uint32(p), gl.LINK_STATUS, &status)
+	gl.GetProgramiv(p.id, gl.LINK_STATUS, &status)
 	return status == gl.TRUE
 }
 
-func (p Program) log() string {
+func (p *Program) log() string {
 	var length int32
-	gl.GetProgramiv(uint32(p), gl.INFO_LOG_LENGTH, &length)
+	gl.GetProgramiv(p.id, gl.INFO_LOG_LENGTH, &length)
 	var log string = string(make([]byte, length + 1))
-	gl.GetProgramInfoLog(uint32(p), length + 1, nil, gl.Str(log))
+	gl.GetProgramInfoLog(p.id, length + 1, nil, gl.Str(log))
 	log = log[:len(log)-1] // remove null terminator
 	return log
 }
 
-func (p Program) link() error {
-	gl.LinkProgram(uint32(p))
+func (p *Program) link() error {
+	gl.LinkProgram(p.id)
 	if p.linked() {
 		return nil
 	} else {
@@ -107,13 +113,13 @@ func (p Program) link() error {
 	}
 }
 
-func (p Program) use() {
-	gl.UseProgram(uint32(p))
+func (p *Program) use() {
+	gl.UseProgram(p.id)
 }
 
-func (p Program) attrib(name string) (*Attrib, error) {
+func (p *Program) attrib(name string) (*Attrib, error) {
 	var a Attrib
-	loc := gl.GetAttribLocation(uint32(p), gl.Str(name + "\x00"))
+	loc := gl.GetAttribLocation(p.id, gl.Str(name + "\x00"))
 	if loc == -1 {
 		return nil, errors.New(fmt.Sprint(name, " attribute location -1"))
 	} else {
@@ -122,14 +128,14 @@ func (p Program) attrib(name string) (*Attrib, error) {
 	}
 }
 
-func (p Program) uniform(name string) (*Uniform, error) {
+func (p *Program) uniform(name string) (*Uniform, error) {
 	var u Uniform
-	loc := gl.GetUniformLocation(uint32(p), gl.Str(name + "\x00"))
+	loc := gl.GetUniformLocation(p.id, gl.Str(name + "\x00"))
 	if loc == -1 {
 		return nil, errors.New(fmt.Sprint(name, " uniform location -1"))
 	} else {
 		u.id = uint32(loc)
-		gl.GetActiveUniform(uint32(p), u.id, 0, nil, nil, &u.typ, nil)
+		gl.GetActiveUniform(p.id, u.id, 0, nil, nil, &u.typ, nil)
 		return &u, nil
 	}
 }

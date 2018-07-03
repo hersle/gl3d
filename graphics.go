@@ -14,7 +14,7 @@ type Vertex struct {
 }
 
 type Renderer struct {
-	prog Program
+	prog *Program
 	vbo *Buffer
 	ibo *Buffer
 	vao *VertexArray
