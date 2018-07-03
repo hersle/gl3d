@@ -107,10 +107,11 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	for _, vert := range m.verts {
 		r.verts = append(r.verts, vert)
 	}
+
 	r.vbo.SetData(r.verts, 0)
 	r.ibo.SetData(r.inds, 0)
 
-	r.ibo.bind()
+	gl.VertexArrayElementBuffer(r.vaoId, r.ibo.id)
 	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
 
 	r.verts = r.verts[:0]

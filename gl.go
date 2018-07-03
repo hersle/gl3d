@@ -142,23 +142,18 @@ type Buffer struct {
 	size int
 }
 
+// TODO: type not needed
 func NewBuffer(typ uint32) *Buffer {
 	var b Buffer
 	b.typ = typ
-	gl.GenBuffers(1, &b.id)
+	gl.CreateBuffers(1, &b.id)
 	b.size = 0
 	return &b
 }
 
-func (b *Buffer) bind() {
-	// TODO: track currently bound buffer to avoid unnecessarily binding buffers
-	gl.BindBuffer(b.typ, b.id)
-}
-
 func (b *Buffer) allocate(size int) {
-	b.bind()
 	b.size = size
-	gl.BufferData(b.typ, b.size, nil, gl.STREAM_DRAW)
+	gl.NamedBufferData(b.id, int32(b.size), nil, gl.STREAM_DRAW)
 }
 
 func (b *Buffer) SetData(data interface{}, byteOffset int) {
@@ -166,12 +161,11 @@ func (b *Buffer) SetData(data interface{}, byteOffset int) {
 	val := reflect.ValueOf(data)
 	if val.Kind() == reflect.Slice {
 		if val.Len() > 0 {
-			b.bind()
 			size := val.Len() * int(val.Type().Elem().Size())
 			if size > b.size {
 				b.allocate(size)
 			}
-			gl.BufferSubData(b.typ, byteOffset, size, gl.Ptr(data))
+			gl.NamedBufferSubData(b.id, byteOffset, int32(size), gl.Ptr(data))
 		}
 	} else {
 		panic("not a slice")
@@ -186,12 +180,11 @@ type Texture2D struct {
 
 func NewTexture2D() *Texture2D {
 	var t Texture2D
-	gl.GenTextures(1, &t.id)
-	t.bind()
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	gl.CreateTextures(gl.TEXTURE_2D, 1, &t.id)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, gl.REPEAT)
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, gl.REPEAT)
 	return &t
 }
 
@@ -203,10 +196,10 @@ func (t *Texture2D) SetImage(img image.Image) {
 	switch img.(type) {
 		case *image.RGBA:
 			img := img.(*image.RGBA)
-			t.bind()
 			gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-			w, h := img.Bounds().Size().X, img.Bounds().Size().Y
-			gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, int32(w), int32(h), 0, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img.Pix))
+			w, h := int32(img.Bounds().Size().X), int32(img.Bounds().Size().Y)
+			gl.TextureStorage2D(t.id, 1, gl.RGBA8, w, h)
+			gl.TextureSubImage2D(t.id, 0, 0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(img.Pix))
 		default:
 			imgRGBA := image.NewRGBA(img.Bounds())
 			draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
