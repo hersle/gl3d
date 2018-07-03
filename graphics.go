@@ -17,7 +17,7 @@ type Renderer struct {
 	prog Program
 	vbo *Buffer
 	ibo *Buffer
-	vaoId uint32
+	vao *VertexArray
 	posAttr *Attrib
 	colorAttr *Attrib
 	texCoordAttr *Attrib
@@ -68,25 +68,26 @@ func NewRenderer(win *Window) (*Renderer, error) {
 		println(err.Error())
 	}
 
-	gl.GenVertexArrays(1, &r.vaoId)
-	gl.BindVertexArray(r.vaoId)
+	r.vao = NewVertexArray()
 
 	r.vbo = NewBuffer(gl.ARRAY_BUFFER)
 	r.ibo = NewBuffer(gl.ELEMENT_ARRAY_BUFFER)
 
+	r.vao.SetIndexBuffer(r.ibo)
+
 	stride := int(unsafe.Sizeof(Vertex{}))
 
 	offset := int(unsafe.Offsetof(Vertex{}.pos))
-	r.posAttr.SetFormat(3, gl.FLOAT, true)
-	r.posAttr.SetSource(r.vbo, offset, stride)
+	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
+	r.vao.SetAttribSource(r.posAttr, r.vbo, offset, stride)
 
 	offset = int(unsafe.Offsetof(Vertex{}.color))
-	r.colorAttr.SetFormat(4, gl.UNSIGNED_BYTE, true)
-	r.colorAttr.SetSource(r.vbo, offset, stride)
+	r.vao.SetAttribFormat(r.colorAttr, 4, gl.UNSIGNED_BYTE, true)
+	r.vao.SetAttribSource(r.colorAttr, r.vbo, offset, stride)
 
 	offset = int(unsafe.Offsetof(Vertex{}.texCoord))
-	r.texCoordAttr.SetFormat(2, gl.FLOAT, false)
-	r.texCoordAttr.SetSource(r.vbo, offset, stride)
+	r.vao.SetAttribFormat(r.texCoordAttr, 2, gl.FLOAT, false)
+	r.vao.SetAttribSource(r.texCoordAttr, r.vbo, offset, stride)
 
 	return &r, nil
 }
@@ -111,7 +112,7 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.vbo.SetData(r.verts, 0)
 	r.ibo.SetData(r.inds, 0)
 
-	gl.VertexArrayElementBuffer(r.vaoId, r.ibo.id)
+	r.vao.bind()
 	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
 
 	r.verts = r.verts[:0]

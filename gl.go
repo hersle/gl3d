@@ -228,16 +228,6 @@ type Attrib struct {
 	id uint32
 }
 
-func (a *Attrib) SetFormat(dim int, typ int, normalize bool) {
-	gl.VertexAttribFormat(a.id, int32(dim), uint32(typ), normalize, 0)
-}
-
-func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
-	gl.VertexAttribBinding(a.id, a.id)
-	gl.BindVertexBuffer(a.id, b.id, offset, int32(stride))
-	gl.EnableVertexAttribArray(a.id)
-}
-
 
 
 type Uniform struct {
@@ -258,4 +248,34 @@ func (u *Uniform) Set(val interface{}) {
 	default:
 		panic("tried to set uniform of unknown type")
 	}
+}
+
+
+
+type VertexArray struct {
+	id uint32
+}
+
+func NewVertexArray() *VertexArray {
+	var vao VertexArray
+	gl.CreateVertexArrays(1, &vao.id)
+	return &vao
+}
+
+func (vao *VertexArray) bind() {
+	gl.BindVertexArray(vao.id)
+}
+
+func (vao *VertexArray) SetAttribFormat(a *Attrib, dim, typ int, normalize bool) {
+	gl.VertexArrayAttribFormat(vao.id, a.id, int32(dim), uint32(typ), normalize, 0)
+}
+
+func (vao *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int) {
+	gl.VertexArrayAttribBinding(vao.id, a.id, a.id)
+	gl.VertexArrayVertexBuffer(vao.id, a.id, b.id, offset, int32(stride))
+	gl.EnableVertexArrayAttrib(vao.id, a.id)
+}
+
+func (vao *VertexArray) SetIndexBuffer(b *Buffer) {
+	gl.VertexArrayElementBuffer(vao.id, b.id)
 }
