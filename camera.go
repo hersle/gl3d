@@ -4,6 +4,7 @@ import (
 	"math"
 )
 
+// TODO: optimize, do not recalculate everything every time
 type Camera struct {
 	pos Vec3
 	fwd, up, right Vec3

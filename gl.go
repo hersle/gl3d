@@ -147,7 +147,6 @@ type Buffer struct {
 	size int
 }
 
-// TODO: type not needed
 func NewBuffer() *Buffer {
 	var b Buffer
 	gl.CreateBuffers(1, &b.id)
@@ -240,6 +239,7 @@ type Uniform struct {
 }
 
 func (u *Uniform) Set(val interface{}) {
+	// TODO: set more types
 	switch u.typ {
 	case gl.FLOAT_MAT4:
 		switch val.(type) {

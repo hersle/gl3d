@@ -5,6 +5,7 @@ import (
 	"fmt"
 )
 
+// TODO: add Invert() method
 type Mat4 [4*4]float32
 
 func NewMat4Zero() *Mat4 {

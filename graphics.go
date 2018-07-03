@@ -5,6 +5,7 @@ import (
 	"unsafe"
 )
 
+// TODO: use image/color.RGBA
 type RGBAColor [4]uint8
 
 type Vertex struct {
