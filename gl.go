@@ -74,6 +74,8 @@ func NewProgramFromShaders(vShader, fShader *Shader) (*Program, error) {
 	gl.AttachShader(p.id, vShader.id)
 	gl.AttachShader(p.id, fShader.id)
 	err := p.link()
+	gl.DetachShader(p.id, vShader.id)
+	gl.DetachShader(p.id, fShader.id)
 	return &p, err
 }
 
