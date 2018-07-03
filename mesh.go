@@ -12,6 +12,7 @@ import (
 	_ "image/png"
 )
 
+// TODO: upload mesh data to GPU only once!
 type Mesh struct {
 	verts []Vertex
 	faces []int
