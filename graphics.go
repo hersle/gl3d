@@ -25,6 +25,7 @@ type Renderer struct {
 	projViewModelMat *Mat4
 	projViewModelMatUfm *Uniform
 	ambientUfm *Uniform
+	ambientLightUfm *Uniform
 }
 
 func NewColor(r, g, b, a uint8) RGBAColor {
@@ -71,6 +72,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.ambientLightUfm, err = r.prog.uniform("ambientLight")
+	if err != nil {
+		println(err.Error())
+	}
 
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
@@ -87,6 +92,8 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.projViewModelMat.Mult(c.ProjectionViewMatrix())
 	r.projViewModelMat.Mult(m.modelMat)
 	r.SetProjectionViewModelMatrix(r.projViewModelMat)
+
+	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
 
 	for _, subMesh := range m.subMeshes {
 		r.prog.SetUniform(r.ambientUfm, subMesh.mtl.ambient)
