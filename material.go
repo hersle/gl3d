@@ -52,7 +52,8 @@ func FindMaterialInFile(filename string, mtlName string) *Material {
 
 	var tmp [3]float32
 
-	for s.Scan() {
+	reachedNewMaterial := false
+	for s.Scan() && !reachedNewMaterial {
 		line := s.Text()
 		fields := strings.Fields(line)
 		if len(fields) == 0 {
@@ -63,7 +64,7 @@ func FindMaterialInFile(filename string, mtlName string) *Material {
 		case "#":
 			continue
 		case "newmtl":
-			break
+			reachedNewMaterial = true
 		case "Ka":
 			if len(fields[1:]) < 3 {
 				panic("Ka error")

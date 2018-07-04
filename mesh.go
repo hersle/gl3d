@@ -11,14 +11,17 @@ import (
 )
 
 // TODO: upload mesh data to GPU only once!
-type Mesh struct {
+type SubMesh struct {
 	vbo *Buffer
 	ibo *Buffer
+	inds int
+	mtl *Material
+}
+
+type Mesh struct {
+	subMeshes []*SubMesh
 	modelMat *Mat4
 	tmpMat *Mat4
-	mtl *Material
-	inds int
-	// TODO: transformation matrix, etc.
 }
 
 func ReadMesh(filename string) (*Mesh, error) {
@@ -48,6 +51,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	var verts[]Vertex
 	var faces []int32
+
+	var subMesh *SubMesh
 
 	errMsg := ""
 	lineNo := 0
@@ -115,12 +120,26 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			mtlFilenames = mtlFilenames[:0]
 			mtlFilenames = append(mtlFilenames, fields[1:]...)
 		case "usemtl":
+			if len(faces) > 0 {
+				// store submesh
+				subMesh.vbo = NewBuffer()
+				subMesh.ibo = NewBuffer()
+				subMesh.vbo.SetData(verts, 0)
+				subMesh.ibo.SetData(faces, 0)
+				subMesh.inds = len(faces)
+				m.subMeshes = append(m.subMeshes, subMesh)
+			}
+			// start new submesh
+			subMesh = &SubMesh{}
+			verts = verts[:0]
+			faces = faces[:0]
+
 			if len(fields) != 2 {
 				errMsg = "material data error"
 			} else {
 				mtlName := fields[1]
-				m.mtl = FindMaterialInFiles(mtlFilenames, mtlName)
-				if m.mtl == nil {
+				subMesh.mtl = FindMaterialInFiles(mtlFilenames, mtlName)
+				if subMesh.mtl == nil {
 					errMsg = "material not found"
 				}
 			}
@@ -134,11 +153,15 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		}
 	}
 
-	m.inds = len(faces)
-	m.vbo = NewBuffer()
-	m.ibo = NewBuffer()
-	m.vbo.SetData(verts, 0)
-	m.ibo.SetData(faces, 0)
+	if len(faces) > 0 {
+		// store submesh
+		subMesh.vbo = NewBuffer()
+		subMesh.ibo = NewBuffer()
+		subMesh.vbo.SetData(verts, 0)
+		subMesh.ibo.SetData(faces, 0)
+		subMesh.inds = len(faces)
+		m.subMeshes = append(m.subMeshes, subMesh)
+	}
 
 	m.modelMat = NewMat4Identity()
 	m.tmpMat = NewMat4Zero()

@@ -87,15 +87,18 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.projViewModelMat.Mult(c.ProjectionViewMatrix())
 	r.projViewModelMat.Mult(m.modelMat)
 	r.SetProjectionViewModelMatrix(r.projViewModelMat)
-	r.prog.SetUniform(r.ambientUfm, m.mtl.ambient)
 
-	stride := int(unsafe.Sizeof(Vertex{}))
-	offset := int(unsafe.Offsetof(Vertex{}.pos))
-	r.vao.SetAttribSource(r.posAttr, m.vbo, offset, stride)
-	r.vao.SetIndexBuffer(m.ibo)
+	for _, subMesh := range m.subMeshes {
+		r.prog.SetUniform(r.ambientUfm, subMesh.mtl.ambient)
 
-	r.vao.bind()
-	gl.DrawElements(gl.TRIANGLES, int32(m.inds), gl.UNSIGNED_INT, nil)
+		stride := int(unsafe.Sizeof(Vertex{}))
+		offset := int(unsafe.Offsetof(Vertex{}.pos))
+		r.vao.SetAttribSource(r.posAttr, subMesh.vbo, offset, stride)
+		r.vao.SetIndexBuffer(subMesh.ibo)
+
+		r.vao.bind()
+		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
+	}
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
