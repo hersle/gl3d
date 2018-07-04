@@ -12,11 +12,12 @@ import (
 
 // TODO: upload mesh data to GPU only once!
 type Mesh struct {
-	verts []Vertex
-	faces []int
+	vbo *Buffer
+	ibo *Buffer
 	modelMat *Mat4
 	tmpMat *Mat4
 	mtl *Material
+	inds int
 	// TODO: transformation matrix, etc.
 }
 
@@ -44,6 +45,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	var positions []Vec3
 	var texCoords []Vec2
 	var mtlFilenames []string
+
+	var verts[]Vertex
+	var faces []int32
 
 	errMsg := ""
 	lineNo := 0
@@ -84,7 +88,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			}
 			texCoords = append(texCoords, NewVec2(texCoord[0], texCoord[1]))
 		case "f":
-			i1 := len(m.verts)
+			i1 := len(verts)
 			for _, field := range fields[1:] {
 				indStrs := strings.Split(field, "/")
 				for i, indStr := range indStrs {
@@ -102,10 +106,10 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 					break
 				}
 				vert := Vertex{positions[inds[0]-1], RGBAColor{}, NewVec2(0, 0)}
-				i2 := len(m.verts) - 1
-				i3 := len(m.verts)
-				m.faces = append(m.faces, i1, i2, i3)
-				m.verts = append(m.verts, vert)
+				i2 := len(verts) - 1
+				i3 := len(verts)
+				faces = append(faces, int32(i1), int32(i2), int32(i3))
+				verts = append(verts, vert)
 			}
 		case "mtllib":
 			mtlFilenames = mtlFilenames[:0]
@@ -129,6 +133,12 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			return nil, err
 		}
 	}
+
+	m.inds = len(faces)
+	m.vbo = NewBuffer()
+	m.ibo = NewBuffer()
+	m.vbo.SetData(verts, 0)
+	m.ibo.SetData(faces, 0)
 
 	m.modelMat = NewMat4Identity()
 	m.tmpMat = NewMat4Zero()

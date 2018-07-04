@@ -25,8 +25,6 @@ type Renderer struct {
 	projViewModelMat *Mat4
 	projViewModelMatUfm *Uniform
 	ambientUfm *Uniform
-	verts []Vertex
-	inds []int32
 }
 
 func NewColor(r, g, b, a uint8) RGBAColor {
@@ -75,17 +73,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	}
 
 	r.vao = NewVertexArray()
-
-	r.vbo = NewBuffer()
-	r.ibo = NewBuffer()
-
-	r.vao.SetIndexBuffer(r.ibo)
-
-	stride := int(unsafe.Sizeof(Vertex{}))
-
-	offset := int(unsafe.Offsetof(Vertex{}.pos))
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
-	r.vao.SetAttribSource(r.posAttr, r.vbo, offset, stride)
 
 	return &r, nil
 }
@@ -100,21 +88,14 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.projViewModelMat.Mult(m.modelMat)
 	r.SetProjectionViewModelMatrix(r.projViewModelMat)
 	r.prog.SetUniform(r.ambientUfm, m.mtl.ambient)
-	for _, i := range m.faces {
-		r.inds = append(r.inds, int32(len(r.verts) + i))
-	}
-	for _, vert := range m.verts {
-		r.verts = append(r.verts, vert)
-	}
 
-	r.vbo.SetData(r.verts, 0)
-	r.ibo.SetData(r.inds, 0)
+	stride := int(unsafe.Sizeof(Vertex{}))
+	offset := int(unsafe.Offsetof(Vertex{}.pos))
+	r.vao.SetAttribSource(r.posAttr, m.vbo, offset, stride)
+	r.vao.SetIndexBuffer(m.ibo)
 
 	r.vao.bind()
-	gl.DrawElements(gl.TRIANGLES, int32(len(r.inds)), gl.UNSIGNED_INT, nil)
-
-	r.verts = r.verts[:0]
-	r.inds = r.inds[:0]
+	gl.DrawElements(gl.TRIANGLES, int32(m.inds), gl.UNSIGNED_INT, nil)
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
