@@ -91,7 +91,7 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.projViewModelMat.Identity()
 	r.projViewModelMat.Mult(c.ProjectionViewMatrix())
 	r.projViewModelMat.Mult(m.modelMat)
-	r.SetProjectionViewModelMatrix(r.projViewModelMat)
+	r.prog.SetUniform(r.projViewModelMatUfm, r.projViewModelMat)
 
 	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
 
@@ -112,10 +112,6 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	for _, m := range s.meshes {
 		r.renderMesh(m, c)
 	}
-}
-
-func (r *Renderer) SetProjectionViewModelMatrix(m *Mat4) {
-	r.prog.SetUniform(r.projViewModelMatUfm, m)
 }
 
 func (r *Renderer) SetViewport(l, b, w, h int) {
