@@ -9,6 +9,7 @@ import (
 	"os"
 	"image"
 	"image/draw"
+	_ "image/png"
 )
 
 type Shader struct {
