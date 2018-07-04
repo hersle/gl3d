@@ -14,7 +14,6 @@ import (
 type Mesh struct {
 	verts []Vertex
 	faces []int
-	tex *Texture2D
 	modelMat *Mat4
 	tmpMat *Mat4
 	mtl *Material
@@ -102,7 +101,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 					errMsg = "face data error"
 					break
 				}
-				vert := Vertex{positions[inds[0]-1], RGBAColor{}, texCoords[inds[1]-1]}
+				vert := Vertex{positions[inds[0]-1], RGBAColor{}, NewVec2(0, 0)}
 				i2 := len(m.verts) - 1
 				i3 := len(m.verts)
 				m.faces = append(m.faces, i1, i2, i3)
@@ -129,12 +128,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			err = errors.New(fmt.Sprintf("%s:%d: %s", filename, lineNo, errMsg))
 			return nil, err
 		}
-	}
-
-	m.tex = NewTexture2D()
-	err = m.tex.ReadImage(strings.TrimSuffix(filename, ".obj") + "_texture.png")
-	if err != nil {
-		return nil, err
 	}
 
 	m.modelMat = NewMat4Identity()

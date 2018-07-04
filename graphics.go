@@ -100,7 +100,6 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.projViewModelMat.Mult(m.modelMat)
 	r.SetProjectionViewModelMatrix(r.projViewModelMat)
 	r.prog.SetUniform(r.ambientUfm, m.mtl.ambient)
-	m.tex.bind()
 	for _, i := range m.faces {
 		r.inds = append(r.inds, int32(len(r.verts) + i))
 	}
