@@ -23,16 +23,6 @@ type Mesh struct {
 	// TODO: transformation matrix, etc.
 }
 
-func NewMesh(verts []Vertex, faces []int, tex *Texture2D) *Mesh {
-	var m Mesh
-	m.verts = verts
-	m.faces = faces
-	m.tex = tex
-	m.modelMat = NewMat4Identity()
-	m.tmpMat = NewMat4Zero()
-	return &m
-}
-
 func ReadMesh(filename string) (*Mesh, error) {
 	switch path.Ext(filename) {
 	case ".3d":
