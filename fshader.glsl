@@ -5,8 +5,8 @@ in vec2 texCoordF;
 
 out vec4 fragColor;
 
-uniform sampler2D tex;
+uniform vec3 ambient;
 
 void main() {
-	fragColor = vec4(texture(tex, texCoordF).rgb, colorF.a);
+	fragColor = vec4(ambient, 1.0);
 }

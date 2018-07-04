@@ -24,6 +24,7 @@ type Renderer struct {
 	texCoordAttr *Attrib
 	projViewModelMat *Mat4
 	projViewModelMatUfm *Uniform
+	ambientUfm *Uniform
 	verts []Vertex
 	inds []int32
 }
@@ -68,6 +69,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.ambientUfm, err = r.prog.uniform("ambient")
+	if err != nil {
+		println(err.Error())
+	}
 
 	r.vao = NewVertexArray()
 
@@ -82,14 +87,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribSource(r.posAttr, r.vbo, offset, stride)
 
-	offset = int(unsafe.Offsetof(Vertex{}.color))
-	r.vao.SetAttribFormat(r.colorAttr, 4, gl.UNSIGNED_BYTE, true)
-	r.vao.SetAttribSource(r.colorAttr, r.vbo, offset, stride)
-
-	offset = int(unsafe.Offsetof(Vertex{}.texCoord))
-	r.vao.SetAttribFormat(r.texCoordAttr, 2, gl.FLOAT, false)
-	r.vao.SetAttribSource(r.texCoordAttr, r.vbo, offset, stride)
-
 	return &r, nil
 }
 
@@ -102,6 +99,7 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.projViewModelMat.Mult(c.ProjectionViewMatrix())
 	r.projViewModelMat.Mult(m.modelMat)
 	r.SetProjectionViewModelMatrix(r.projViewModelMat)
+	r.prog.SetUniform(r.ambientUfm, m.mtl.ambient)
 	m.tex.bind()
 	for _, i := range m.faces {
 		r.inds = append(r.inds, int32(len(r.verts) + i))

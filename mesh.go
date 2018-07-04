@@ -19,6 +19,7 @@ type Mesh struct {
 	tex *Texture2D
 	modelMat *Mat4
 	tmpMat *Mat4
+	mtl *Material
 	// TODO: transformation matrix, etc.
 }
 
@@ -57,6 +58,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	var inds [3]int
 	var positions []Vec3
 	var texCoords []Vec2
+	var mtlFilenames []string
 
 	errMsg := ""
 	lineNo := 0
@@ -70,6 +72,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		}
 
 		switch fields[0] {
+		case "#":
+			continue
 		case "v":
 			if len(fields[1:]) < 3 {
 				errMsg = "vertex data error"
@@ -118,8 +122,19 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				m.faces = append(m.faces, i1, i2, i3)
 				m.verts = append(m.verts, vert)
 			}
-		case "#":
-			continue
+		case "mtllib":
+			mtlFilenames = mtlFilenames[:0]
+			mtlFilenames = append(mtlFilenames, fields[1:]...)
+		case "usemtl":
+			if len(fields) != 2 {
+				errMsg = "material data error"
+			} else {
+				mtlName := fields[1]
+				m.mtl = FindMaterialInFiles(mtlFilenames, mtlName)
+				if m.mtl == nil {
+					errMsg = "material not found"
+				}
+			}
 		default:
 			println("warning: ignoring line with unknown prefix", fields[0])
 		}

@@ -28,7 +28,7 @@ func main() {
 		model.Scale(0.1, 0.1, 0.1)
 		s.AddMesh(model)
 	}
-	floor, err := ReadMesh("objects/floor.3d")
+	floor, err := ReadMesh("objects/floor.obj")
 	if err != nil {
 		panic(err)
 	}
