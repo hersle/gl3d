@@ -44,9 +44,11 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	var pos [3]float32
 	var texCoord [2]float32
+	var normal [3]float32
 	var inds [3]int
 	var positions []Vec3
 	var texCoords []Vec2
+	var normals []Vec3
 	var mtlFilenames []string
 
 	var verts[]Vertex
@@ -92,10 +94,23 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				}
 			}
 			texCoords = append(texCoords, NewVec2(texCoord[0], texCoord[1]))
+		case "vn":
+			if len(fields[1:]) < 3 {
+				errMsg = "vertex normal data error"
+			}
+			for i := 0; i < 3; i++ {
+				_, err := fmt.Sscan(fields[1+i], &normal[i])
+				if err != nil {
+					errMsg = "vertex normal data error"
+					break
+				}
+			}
+			normals = append(normals, NewVec3(normal[0], normal[1], normal[2]))
 		case "f":
 			i1 := len(verts)
 			for _, field := range fields[1:] {
 				indStrs := strings.Split(field, "/")
+				inds[0], inds[1], inds[2] = 0, 0, 0
 				for i, indStr := range indStrs {
 					if indStr == "" {
 						inds[i] = 0
@@ -106,11 +121,22 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 						}
 					}
 				}
-				if err != nil || inds[0] == 0 || inds[1] == 0 {
+				if err != nil || inds[0] == 0 {
 					errMsg = "face data error"
 					break
 				}
-				vert := Vertex{positions[inds[0]-1], RGBAColor{}, NewVec2(0, 0)}
+				p := positions[inds[0]-1]
+				c := RGBAColor{}
+				t := NewVec2(0, 0)
+				n := NewVec3(0, 0, 0)
+				if inds[1] != 0 {
+					t = texCoords[inds[1]-1]
+				}
+				if inds[2] != 0 {
+					n = normals[inds[2]-1]
+				}
+				vert := Vertex{p, c, t, n}
+				fmt.Printf("%+v\n", vert)
 				i2 := len(verts) - 1
 				i3 := len(verts)
 				faces = append(faces, int32(i1), int32(i2), int32(i3))

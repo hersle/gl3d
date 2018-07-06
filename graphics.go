@@ -12,6 +12,7 @@ type Vertex struct {
 	pos Vec3
 	color RGBAColor
 	texCoord Vec2
+	normal Vec3
 }
 
 type Renderer struct {
@@ -22,10 +23,14 @@ type Renderer struct {
 	posAttr *Attrib
 	colorAttr *Attrib
 	texCoordAttr *Attrib
-	projViewModelMat *Mat4
-	projViewModelMatUfm *Uniform
+	normalAttr *Attrib
+	modelMatUfm *Uniform
+	projViewMatUfm *Uniform
+	lightPosUfm *Uniform
 	ambientUfm *Uniform
 	ambientLightUfm *Uniform
+	diffuseUfm *Uniform
+	diffuseLightUfm *Uniform
 }
 
 func NewColor(r, g, b, a uint8) RGBAColor {
@@ -41,8 +46,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	r.projViewModelMat = NewMat4Zero()
 
 	gl.Enable(gl.DEPTH_TEST)
 
@@ -64,7 +67,15 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
-	r.projViewModelMatUfm, err = r.prog.uniform("projectionViewModelMatrix")
+	r.normalAttr, err = r.prog.attrib("normalV")
+	if err != nil {
+		println(err.Error())
+	}
+	r.modelMatUfm, err = r.prog.uniform("modelMatrix")
+	if err != nil {
+		println(err.Error())
+	}
+	r.projViewMatUfm, err = r.prog.uniform("projectionViewMatrix")
 	if err != nil {
 		println(err.Error())
 	}
@@ -76,9 +87,22 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.diffuseUfm, err = r.prog.uniform("diffuse")
+	if err != nil {
+		println(err.Error())
+	}
+	r.diffuseLightUfm, err = r.prog.uniform("diffuseLight")
+	if err != nil {
+		println(err.Error())
+	}
+	r.lightPosUfm, err = r.prog.uniform("lightPosition")
+	if err != nil {
+		println(err.Error())
+	}
 
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
+	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
 
 	return &r, nil
 }
@@ -88,19 +112,22 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
-	r.projViewModelMat.Identity()
-	r.projViewModelMat.Mult(c.ProjectionViewMatrix())
-	r.projViewModelMat.Mult(m.modelMat)
-	r.prog.SetUniform(r.projViewModelMatUfm, r.projViewModelMat)
+	r.prog.SetUniform(r.modelMatUfm, m.modelMat)
+	r.prog.SetUniform(r.projViewMatUfm, c.ProjectionViewMatrix())
 
 	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
+	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1.0, 1.0, 1.0))
+	r.prog.SetUniform(r.lightPosUfm, NewVec3(0, +2.0, -5.0))
 
 	for _, subMesh := range m.subMeshes {
 		r.prog.SetUniform(r.ambientUfm, subMesh.mtl.ambient)
+		r.prog.SetUniform(r.diffuseUfm, subMesh.mtl.diffuse)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
 		r.vao.SetAttribSource(r.posAttr, subMesh.vbo, offset, stride)
+		offset = int(unsafe.Offsetof(Vertex{}.normal))
+		r.vao.SetAttribSource(r.normalAttr, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
 		r.vao.bind()
