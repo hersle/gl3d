@@ -32,6 +32,9 @@ type Renderer struct {
 	ambientLightUfm *Uniform
 	diffuseUfm *Uniform
 	diffuseLightUfm *Uniform
+	specularUfm *Uniform
+	specularLightUfm *Uniform
+	shininessUfm *Uniform
 }
 
 func NewColor(r, g, b, a uint8) RGBAColor {
@@ -100,6 +103,18 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.specularUfm, err = r.prog.uniform("specular")
+	if err != nil {
+		println(err.Error())
+	}
+	r.specularLightUfm, err = r.prog.uniform("specularLight")
+	if err != nil {
+		println(err.Error())
+	}
+	r.shininessUfm, err = r.prog.uniform("shininess")
+	if err != nil {
+		println(err.Error())
+	}
 	r.lightPosUfm, err = r.prog.uniform("lightPosition")
 	if err != nil {
 		println(err.Error())
@@ -124,11 +139,14 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 
 	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
 	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1.0, 1.0, 1.0))
+	r.prog.SetUniform(r.specularLightUfm, NewVec3(1.0, 1.0, 1.0))
 	r.prog.SetUniform(r.lightPosUfm, NewVec3(0, +2.0, -5.0))
 
 	for _, subMesh := range m.subMeshes {
 		r.prog.SetUniform(r.ambientUfm, subMesh.mtl.ambient)
 		r.prog.SetUniform(r.diffuseUfm, subMesh.mtl.diffuse)
+		r.prog.SetUniform(r.specularUfm, subMesh.mtl.specular)
+		r.prog.SetUniform(r.shininessUfm, subMesh.mtl.shininess)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))

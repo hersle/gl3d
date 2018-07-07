@@ -146,6 +146,14 @@ func (p *Program) uniform(name string) (*Uniform, error) {
 func (p *Program) SetUniform(u *Uniform, val interface{}) {
 	// TODO: set more types
 	switch u.typ {
+	case gl.FLOAT:
+		switch val.(type) {
+		case float32:
+			val := val.(float32)
+			gl.ProgramUniform1f(p.id, int32(u.id), val)
+		default:
+			panic("tried to set uniform from unknown type")
+		}
 	case gl.FLOAT_VEC3:
 		switch val.(type) {
 		case Vec3:

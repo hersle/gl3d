@@ -12,6 +12,7 @@ in vec3 normalV;
 out vec3 normalF;
 
 out vec3 fragWorldPosition;
+out vec3 fragViewPosition;
 
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -25,4 +26,5 @@ void main() {
 	mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
 	normalF = normalMatrix * normalV;
 	fragWorldPosition = vec3(modelMatrix * vec4(position, 1.0));
+	fragViewPosition = vec3(viewMatrix * vec4(fragWorldPosition, 1.0));
 }
