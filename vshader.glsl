@@ -22,6 +22,7 @@ void main() {
 	gl_Position = projectionViewModelMatrix * vec4(position, 1.0);
 	colorF = colorV;
 	texCoordF = texCoordV;
-	normalF = normalV;
+	mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
+	normalF = normalMatrix * normalV;
 	fragWorldPosition = vec3(modelMatrix * vec4(position, 1.0));
 }
