@@ -2,12 +2,11 @@ package main
 
 import (
 	"os"
-	"time"
 	"github.com/go-gl/glfw/v3.2/glfw"
 )
 
 func main() {
-	win, err := NewWindow(400, 400, "GL3D")
+	win, err := NewWindow(1280, 720, "GL3D")
 	if err != nil {
 		panic(err)
 	}
@@ -18,25 +17,16 @@ func main() {
 	}
 
 	s := NewScene()
-	if len(os.Args) == 2{
-		filename := os.Args[1]
+	for _, filename := range os.Args[1:] {
 		model, err := ReadMesh(filename)
 		if err != nil {
 			panic(err)
 		}
 		s.AddMesh(model)
 	}
-	floor, err := ReadMesh("objects/floor.obj")
-	if err != nil {
-		panic(err)
-	}
-	s.AddMesh(floor)
 
-	c := NewCamera(NewVec3(0, 0, 0), NewVec3(0, 0, 1), NewVec3(0, 1, 0), 60, 1, 0.01, 100)
-
-	//var dt float32
-	var time1, time2 time.Time
-	time1 = time.Now()
+	pos, fwd, up := NewVec3(0, 0, 0), NewVec3(0, 0, 1), NewVec3(0, 1, 0)
+	c := NewCamera(pos, fwd, up, 60, 1, 0.01, 100)
 
 	var camFactor float32
 
@@ -46,10 +36,6 @@ func main() {
 		renderer.Clear()
 		renderer.Render(s, c)
 		win.Update()
-
-		time2 = time.Now()
-		_ = time2.Sub(time1).Seconds()
-		time1 = time2
 
 		if win.glfwWin.GetKey(glfw.KeyLeftShift) == glfw.Press {
 			camFactor = 0.1 // for precise camera controls

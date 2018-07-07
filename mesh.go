@@ -10,7 +10,6 @@ import (
 	"strconv"
 )
 
-// TODO: upload mesh data to GPU only once!
 type SubMesh struct {
 	vbo *Buffer
 	ibo *Buffer
@@ -42,16 +41,14 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	var m Mesh
 
-	var pos [3]float32
-	var texCoord [2]float32
-	var normal [3]float32
+	var tmp [3]float32
 	var inds [3]int
 	var positions []Vec3
 	var texCoords []Vec2
 	var normals []Vec3
 	var mtlFilenames []string
 
-	var verts[]Vertex
+	var verts []Vertex
 	var faces []int32
 
 	var subMesh *SubMesh
@@ -75,46 +72,44 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				errMsg = "vertex data error"
 			}
 			for i := 0; i < 3; i++ {
-				_, err := fmt.Sscan(fields[1+i], &pos[i])
+				_, err := fmt.Sscan(fields[1+i], &tmp[i])
 				if err != nil {
 					errMsg = "vertex data error"
 					break
 				}
 			}
-			positions = append(positions, NewVec3(pos[0], pos[1], pos[2]))
+			positions = append(positions, NewVec3(tmp[0], tmp[1], tmp[2]))
 		case "vt":
 			if len(fields[1:]) < 2 || len(fields[1:]) > 3 {
 				errMsg = "texture coordinate data error"
 			}
 			for i := 0; i < 2; i++ {
-				_, err := fmt.Sscan(fields[1+i], &texCoord[i])
+				_, err := fmt.Sscan(fields[1+i], &tmp[i])
 				if err != nil {
 					errMsg = "texture coordinate data error"
 					break
 				}
 			}
-			texCoords = append(texCoords, NewVec2(texCoord[0], texCoord[1]))
+			texCoords = append(texCoords, NewVec2(tmp[0], tmp[1]))
 		case "vn":
 			if len(fields[1:]) < 3 {
 				errMsg = "vertex normal data error"
 			}
 			for i := 0; i < 3; i++ {
-				_, err := fmt.Sscan(fields[1+i], &normal[i])
+				_, err := fmt.Sscan(fields[1+i], &tmp[i])
 				if err != nil {
 					errMsg = "vertex normal data error"
 					break
 				}
 			}
-			normals = append(normals, NewVec3(normal[0], normal[1], normal[2]))
+			normals = append(normals, NewVec3(tmp[0], tmp[1], tmp[2]))
 		case "f":
 			i1 := len(verts)
 			for _, field := range fields[1:] {
 				indStrs := strings.Split(field, "/")
 				inds[0], inds[1], inds[2] = 0, 0, 0
 				for i, indStr := range indStrs {
-					if indStr == "" {
-						inds[i] = 0
-					} else {
+					if indStr != "" {
 						inds[i], err = strconv.Atoi(indStr)
 						if err != nil {
 							break
@@ -136,7 +131,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 					n = normals[inds[2]-1]
 				}
 				vert := Vertex{p, c, t, n}
-				fmt.Printf("%+v\n", vert)
 				i2 := len(verts) - 1
 				i3 := len(verts)
 				faces = append(faces, int32(i1), int32(i2), int32(i3))
@@ -181,6 +175,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	if len(faces) > 0 {
 		// store submesh
+		// TODO: repeated here, make function or only occur once
 		subMesh.vbo = NewBuffer()
 		subMesh.ibo = NewBuffer()
 		subMesh.vbo.SetData(verts, 0)

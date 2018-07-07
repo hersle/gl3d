@@ -5,6 +5,7 @@ import (
 )
 
 // TODO: optimize, do not recalculate everything every time
+// TODO: matrix methods, use dirty flags to optimize recomputing
 type Camera struct {
 	pos Vec3
 	fwd, up, right Vec3

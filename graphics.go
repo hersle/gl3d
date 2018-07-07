@@ -15,26 +15,17 @@ type Vertex struct {
 	normal Vec3
 }
 
+// TODO: redesign attr/uniform access system?
 type Renderer struct {
 	prog *Program
-	vbo *Buffer
-	ibo *Buffer
+	vbo, ibo *Buffer
 	vao *VertexArray
-	posAttr *Attrib
-	colorAttr *Attrib
-	texCoordAttr *Attrib
-	normalAttr *Attrib
-	modelMatUfm *Uniform
-	viewMatUfm *Uniform
-	projMatUfm *Uniform
+	posAttr, colorAttr, texCoordAttr, normalAttr *Attrib
+	modelMatUfm, viewMatUfm, projMatUfm *Uniform
+	ambientUfm, ambientLightUfm *Uniform
+	diffuseUfm, diffuseLightUfm *Uniform
+	specularUfm, specularLightUfm, shineUfm *Uniform
 	lightPosUfm *Uniform
-	ambientUfm *Uniform
-	ambientLightUfm *Uniform
-	diffuseUfm *Uniform
-	diffuseLightUfm *Uniform
-	specularUfm *Uniform
-	specularLightUfm *Uniform
-	shininessUfm *Uniform
 }
 
 func NewColor(r, g, b, a uint8) RGBAColor {
@@ -53,69 +44,69 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	gl.Enable(gl.DEPTH_TEST)
 
-	r.prog, err = NewProgramFromFiles("vshader.glsl", "fshader.glsl")
+	r.prog, err = ReadProgram("vshader.glsl", "fshader.glsl")
 	if err != nil {
 		return nil, err
 	}
-	r.prog.use()
+	r.prog.Use()
 
-	r.posAttr, err = r.prog.attrib("position")
+	r.posAttr, err = r.prog.Attrib("position")
 	if err != nil {
 		println(err.Error())
 	}
-	r.colorAttr, err = r.prog.attrib("colorV")
+	r.colorAttr, err = r.prog.Attrib("colorV")
 	if err != nil {
 		println(err.Error())
 	}
-	r.texCoordAttr, err = r.prog.attrib("texCoordV")
+	r.texCoordAttr, err = r.prog.Attrib("texCoordV")
 	if err != nil {
 		println(err.Error())
 	}
-	r.normalAttr, err = r.prog.attrib("normalV")
+	r.normalAttr, err = r.prog.Attrib("normalV")
 	if err != nil {
 		println(err.Error())
 	}
-	r.modelMatUfm, err = r.prog.uniform("modelMatrix")
+	r.modelMatUfm, err = r.prog.Uniform("modelMatrix")
 	if err != nil {
 		println(err.Error())
 	}
-	r.viewMatUfm, err = r.prog.uniform("viewMatrix")
+	r.viewMatUfm, err = r.prog.Uniform("viewMatrix")
 	if err != nil {
 		println(err.Error())
 	}
-	r.projMatUfm, err = r.prog.uniform("projectionMatrix")
+	r.projMatUfm, err = r.prog.Uniform("projectionMatrix")
 	if err != nil {
 		println(err.Error())
 	}
-	r.ambientUfm, err = r.prog.uniform("ambient")
+	r.ambientUfm, err = r.prog.Uniform("ambient")
 	if err != nil {
 		println(err.Error())
 	}
-	r.ambientLightUfm, err = r.prog.uniform("ambientLight")
+	r.ambientLightUfm, err = r.prog.Uniform("ambientLight")
 	if err != nil {
 		println(err.Error())
 	}
-	r.diffuseUfm, err = r.prog.uniform("diffuse")
+	r.diffuseUfm, err = r.prog.Uniform("diffuse")
 	if err != nil {
 		println(err.Error())
 	}
-	r.diffuseLightUfm, err = r.prog.uniform("diffuseLight")
+	r.diffuseLightUfm, err = r.prog.Uniform("diffuseLight")
 	if err != nil {
 		println(err.Error())
 	}
-	r.specularUfm, err = r.prog.uniform("specular")
+	r.specularUfm, err = r.prog.Uniform("specular")
 	if err != nil {
 		println(err.Error())
 	}
-	r.specularLightUfm, err = r.prog.uniform("specularLight")
+	r.specularLightUfm, err = r.prog.Uniform("specularLight")
 	if err != nil {
 		println(err.Error())
 	}
-	r.shininessUfm, err = r.prog.uniform("shininess")
+	r.shineUfm, err = r.prog.Uniform("shine")
 	if err != nil {
 		println(err.Error())
 	}
-	r.lightPosUfm, err = r.prog.uniform("lightPosition")
+	r.lightPosUfm, err = r.prog.Uniform("lightPosition")
 	if err != nil {
 		println(err.Error())
 	}
@@ -146,7 +137,7 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.prog.SetUniform(r.ambientUfm, subMesh.mtl.ambient)
 		r.prog.SetUniform(r.diffuseUfm, subMesh.mtl.diffuse)
 		r.prog.SetUniform(r.specularUfm, subMesh.mtl.specular)
-		r.prog.SetUniform(r.shininessUfm, subMesh.mtl.shininess)
+		r.prog.SetUniform(r.shineUfm, subMesh.mtl.shine)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
@@ -155,7 +146,7 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.vao.SetAttribSource(r.normalAttr, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
-		r.vao.bind()
+		r.vao.Bind()
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
 }

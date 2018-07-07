@@ -12,7 +12,7 @@ type Material struct {
 	ambient Vec3
 	diffuse Vec3
 	specular Vec3
-	shininess float32
+	shine float32
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -54,7 +54,7 @@ func FindMaterialInFile(filename string, mtlName string) *Material {
 	mtl.ambient = NewVec3(1.0, 1.0, 1.0)
 	mtl.diffuse = NewVec3(1.0, 1.0, 1.0)
 	mtl.specular = NewVec3(1.0, 1.0, 1.0)
-	mtl.shininess = 100 // TODO: change default?
+	mtl.shine = 100 // TODO: change default?
 
 	var tmp [3]float32
 
@@ -106,11 +106,11 @@ func FindMaterialInFile(filename string, mtlName string) *Material {
 			mtl.specular = NewVec3(tmp[0], tmp[1], tmp[2])
 		case "Ns":
 			if len(fields[1:]) != 1 {
-				panic("shininess error")
+				panic("shine error")
 			}
-			_, err := fmt.Sscan(fields[1], &mtl.shininess)
+			_, err := fmt.Sscan(fields[1], &mtl.shine)
 			if err != nil {
-				panic("shininess error")
+				panic("shine error")
 			}
 		}
 	}

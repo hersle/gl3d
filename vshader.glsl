@@ -1,30 +1,29 @@
 #version 450
 
 in vec3 position;
-
 in vec4 colorV;
-out vec4 colorF;
-
 in vec2 texCoordV;
-out vec2 texCoordF;
-
 in vec3 normalV;
-out vec3 normalF;
 
-out vec3 fragWorldPosition;
-out vec3 fragViewPosition;
+out vec3 worldPosition;
+out vec3 viewPosition;
+out vec4 colorF;
+out vec2 texCoordF;
+out vec3 normalF;
 
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
 void main() {
-	mat4 projectionViewModelMatrix = projectionMatrix * viewMatrix * modelMatrix;
-	gl_Position = projectionViewModelMatrix * vec4(position, 1.0);
+	worldPosition = vec3(modelMatrix * vec4(position, 1));
+	viewPosition = vec3(viewMatrix * vec4(worldPosition, 1));
+	gl_Position = projectionMatrix * vec4(viewPosition, 1);
+
 	colorF = colorV;
+
 	texCoordF = texCoordV;
+
 	mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
 	normalF = normalMatrix * normalV;
-	fragWorldPosition = vec3(modelMatrix * vec4(position, 1.0));
-	fragViewPosition = vec3(viewMatrix * vec4(fragWorldPosition, 1.0));
 }
