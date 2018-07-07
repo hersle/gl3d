@@ -14,10 +14,11 @@ out vec3 normalF;
 out vec3 fragWorldPosition;
 
 uniform mat4 modelMatrix;
-uniform mat4 projectionViewMatrix;
+uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
 
 void main() {
-	mat4 projectionViewModelMatrix = projectionViewMatrix * modelMatrix;
+	mat4 projectionViewModelMatrix = projectionMatrix * viewMatrix * modelMatrix;
 	gl_Position = projectionViewModelMatrix * vec4(position, 1.0);
 	colorF = colorV;
 	texCoordF = texCoordV;

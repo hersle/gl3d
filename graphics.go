@@ -25,7 +25,8 @@ type Renderer struct {
 	texCoordAttr *Attrib
 	normalAttr *Attrib
 	modelMatUfm *Uniform
-	projViewMatUfm *Uniform
+	viewMatUfm *Uniform
+	projMatUfm *Uniform
 	lightPosUfm *Uniform
 	ambientUfm *Uniform
 	ambientLightUfm *Uniform
@@ -75,7 +76,11 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
-	r.projViewMatUfm, err = r.prog.uniform("projectionViewMatrix")
+	r.viewMatUfm, err = r.prog.uniform("viewMatrix")
+	if err != nil {
+		println(err.Error())
+	}
+	r.projMatUfm, err = r.prog.uniform("projectionMatrix")
 	if err != nil {
 		println(err.Error())
 	}
@@ -112,8 +117,10 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
+	c.UpdateMatrices()
 	r.prog.SetUniform(r.modelMatUfm, m.modelMat)
-	r.prog.SetUniform(r.projViewMatUfm, c.ProjectionViewMatrix())
+	r.prog.SetUniform(r.viewMatUfm, c.viewMat)
+	r.prog.SetUniform(r.projMatUfm, c.projMat)
 
 	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
 	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1.0, 1.0, 1.0))

@@ -11,7 +11,7 @@ type Camera struct {
 	fovY float32
 	aspect float32
 	near, far float32
-	viewMat, projMat, viewProjMat *Mat4
+	viewMat, projMat *Mat4
 }
 
 func NewCamera(pos, fwd, up Vec3, fovYDeg, aspect, near, far float32) *Camera {
@@ -26,7 +26,6 @@ func NewCamera(pos, fwd, up Vec3, fovYDeg, aspect, near, far float32) *Camera {
 	c.far = far
 	c.viewMat = NewMat4Identity()
 	c.projMat = NewMat4Identity()
-	c.viewProjMat = NewMat4Identity()
 	return &c
 }
 
@@ -48,8 +47,7 @@ func (c *Camera) SetAspect(aspect float32) {
 	c.aspect = aspect
 }
 
-func (c *Camera) ProjectionViewMatrix() *Mat4 {
+func (c *Camera) UpdateMatrices() {
 	c.viewMat.LookAt(c.pos, c.pos.Add(c.fwd), c.up)
 	c.projMat.Perspective(c.fovY, c.aspect, c.near, c.far)
-	return c.viewProjMat.Identity().Mult(c.projMat).Mult(c.viewMat)
 }
