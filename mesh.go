@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"errors"
 	"strings"
-	"strconv"
 )
 
 type SubMesh struct {
@@ -40,21 +39,15 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	defer file.Close()
 
 	var m Mesh
+	var subMesh *SubMesh = &SubMesh{}
+	var verts []Vertex
+	var faces []int32
 
 	var tmp [3]float32
-	var inds [3]int
 	var positions []Vec3
 	var texCoords []Vec2
 	var normals []Vec3
 	var mtls []*Material
-
-	var verts []Vertex
-	var faces []int32
-
-	var subMesh *SubMesh
-	// start new submesh
-	// TODO: happens twice, make into function
-	subMesh = &SubMesh{}
 
 	errMsg := ""
 	lineNo := 0
@@ -63,13 +56,12 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		line := s.Text()
 		lineNo++
 		fields := strings.Fields(line)
-		if len(fields) == 0 {
+
+		if len(fields) == 0 || strings.HasPrefix(fields[0], "#") {
 			continue
 		}
 
 		switch fields[0] {
-		case "#":
-			continue
 		case "v":
 			if len(fields[1:]) < 3 {
 				errMsg = "vertex data error"
@@ -107,33 +99,38 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			}
 			normals = append(normals, NewVec3(tmp[0], tmp[1], tmp[2]))
 		case "f":
+			if len(fields[1:]) < 3 {
+				errMsg = "face data error"
+				break
+			}
 			i1 := len(verts)
 			for _, field := range fields[1:] {
+				var ind int
+				var vert Vertex
 				indStrs := strings.Split(field, "/")
-				inds[0], inds[1], inds[2] = 0, 0, 0
-				for i, indStr := range indStrs {
-					if indStr != "" {
-						inds[i], err = strconv.Atoi(indStr)
-						if err != nil {
-							break
-						}
+				_, err := fmt.Sscan(indStrs[0], &ind)
+				if err != nil {
+					panic("face data error")
+				}
+				vert.pos = positions[ind-1]
+				if indStrs[1] == "" {
+					vert.texCoord = NewVec2(0, 0)
+				} else {
+					_, err := fmt.Sscan(indStrs[1], &ind)
+					if err != nil {
+						panic("face data error")
 					}
+					vert.texCoord = texCoords[ind-1]
 				}
-				if err != nil || inds[0] == 0 {
-					errMsg = "face data error"
-					break
+				if indStrs[2] == "" {
+					vert.normal = NewVec3(0, 0, 0)
+				} else {
+					_, err := fmt.Sscan(indStrs[2], &ind)
+					if err != nil {
+						panic("face data error")
+					}
+					vert.normal = normals[ind-1]
 				}
-				p := positions[inds[0]-1]
-				c := RGBAColor{}
-				t := NewVec2(0, 0)
-				n := NewVec3(0, 0, 0)
-				if inds[1] != 0 {
-					t = texCoords[inds[1]-1]
-				}
-				if inds[2] != 0 {
-					n = normals[inds[2]-1]
-				}
-				vert := Vertex{p, c, t, n}
 				i2 := len(verts) - 1
 				i3 := len(verts)
 				faces = append(faces, int32(i1), int32(i2), int32(i3))

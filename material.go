@@ -47,7 +47,7 @@ func ReadMaterials(filenames []string) []*Material {
 			line := s.Text()
 			fields := strings.Fields(line)
 
-			if strings.HasPrefix(fields[0], "#") {
+			if len(fields) == 0 || strings.HasPrefix(fields[0], "#") {
 				continue // comment
 			}
 			if mtl == nil && fields[0] != "newmtl" {
