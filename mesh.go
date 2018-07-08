@@ -46,12 +46,15 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	var positions []Vec3
 	var texCoords []Vec2
 	var normals []Vec3
-	var mtlFilenames []string
+	var mtls []*Material
 
 	var verts []Vertex
 	var faces []int32
 
 	var subMesh *SubMesh
+	// start new submesh
+	// TODO: happens twice, make into function
+	subMesh = &SubMesh{}
 
 	errMsg := ""
 	lineNo := 0
@@ -137,8 +140,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				verts = append(verts, vert)
 			}
 		case "mtllib":
-			mtlFilenames = mtlFilenames[:0]
-			mtlFilenames = append(mtlFilenames, fields[1:]...)
+			mtlFilenames := fields[1:]
+			mtls = ReadMaterials(mtlFilenames)
 		case "usemtl":
 			if len(faces) > 0 {
 				// store submesh
@@ -158,7 +161,12 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				errMsg = "material data error"
 			} else {
 				mtlName := fields[1]
-				subMesh.mtl = FindMaterialInFiles(mtlFilenames, mtlName)
+				for _, mtl := range mtls {
+					if mtl.name == mtlName {
+						subMesh.mtl = mtl
+						break
+					}
+				}
 				if subMesh.mtl == nil {
 					errMsg = "material not found"
 				}
@@ -182,6 +190,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		subMesh.ibo.SetData(faces, 0)
 		subMesh.inds = len(faces)
 		m.subMeshes = append(m.subMeshes, subMesh)
+		if subMesh.mtl == nil {
+			subMesh.mtl = NewDefaultMaterial("")
+		}
 	}
 
 	m.modelMat = NewMat4Identity()
