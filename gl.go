@@ -12,7 +12,7 @@ import (
 	_ "image/png"
 )
 
-// TODO: add opengl state object tracker
+// TODO: add opengl state object tracker?
 
 type Shader struct {
 	id uint32
@@ -118,7 +118,6 @@ func (p *Program) Link() error {
 	}
 }
 
-// TODO: move to opengl state object
 func (p *Program) Use() {
 	gl.UseProgram(p.id)
 }
@@ -227,7 +226,6 @@ func NewTexture2D() *Texture2D {
 	return &t
 }
 
-// TODO: move to opengl state object
 func (t *Texture2D) Bind() {
 	gl.BindTexture(gl.TEXTURE_2D, t.id)
 }
@@ -288,7 +286,6 @@ func NewVertexArray() *VertexArray {
 	return &va
 }
 
-// TODO: move to opengl state object
 func (va *VertexArray) Bind() {
 	gl.BindVertexArray(va.id)
 }

@@ -48,7 +48,6 @@ func (c *Camera) Rotate(axis Vec3, ang float32) {
 }
 
 func (c *Camera) SetAspect(aspect float32) {
-	// TODO: skip if aspect == c.aspect?
 	c.aspect = aspect
 	c.dirtyProjMat = true
 }
