@@ -123,10 +123,9 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
-	c.UpdateMatrices()
 	r.prog.SetUniform(r.modelMatUfm, m.modelMat)
-	r.prog.SetUniform(r.viewMatUfm, c.viewMat)
-	r.prog.SetUniform(r.projMatUfm, c.projMat)
+	r.prog.SetUniform(r.viewMatUfm, c.ViewMatrix())
+	r.prog.SetUniform(r.projMatUfm, c.ProjectionMatrix())
 
 	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
 	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1.0, 1.0, 1.0))
