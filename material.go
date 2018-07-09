@@ -21,6 +21,8 @@ type Material struct {
 
 // spec: http://paulbourke.net/dataformats/mtl/
 
+var defaultTexture *Texture2D = nil
+
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
 	mtl.name = name
@@ -28,17 +30,21 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.diffuse = NewVec3(0.5, 0.5, 0.5)
 	mtl.specular = NewVec3(0.5, 0.5, 0.5)
 	mtl.shine = 100
-	mtl.ambientMapTexture = NewTexture2D()
 	return &mtl
 }
 
 func (mtl *Material) Finish() {
 	if mtl.ambientMapFilename == "" {
-		// use default 1x1 blank texture TODO: make constant
-		img := image.NewRGBA(image.Rect(0, 0, 1, 1))
-		img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-		mtl.ambientMapTexture.SetImage(img)
+		// use default 1x1 blank texture
+		if defaultTexture == nil {
+			defaultTexture = NewTexture2D()
+			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
+			defaultTexture.SetImage(img)
+		}
+		mtl.ambientMapTexture = defaultTexture
 	} else {
+		mtl.ambientMapTexture = NewTexture2D()
 		err := mtl.ambientMapTexture.ReadImage(mtl.ambientMapFilename)
 		if err != nil {
 			panic(err)
