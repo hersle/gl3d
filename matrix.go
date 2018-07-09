@@ -3,9 +3,9 @@ package main
 import (
 	"math"
 	"fmt"
+	"errors"
 )
 
-// TODO: add Invert() method
 type Mat4 [4*4]float32
 
 func NewMat4Zero() *Mat4 {
@@ -196,6 +196,99 @@ func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
 	a.SetRow(2, fwd.Scale(-1).Vec4(+fwd.Dot(eye)))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
 	return a
+}
+
+func (a *Mat4) Determinant() float32 {
+	// 1-indexed variable names
+	a11, a12, a13, a14 := a.At(0, 0), a.At(0, 1), a.At(0, 2), a.At(0, 3)
+	a21, a22, a23, a24 := a.At(1, 0), a.At(1, 1), a.At(1, 2), a.At(1, 3)
+	a31, a32, a33, a34 := a.At(2, 0), a.At(2, 1), a.At(2, 2), a.At(2, 3)
+	a41, a42, a43, a44 := a.At(3, 0), a.At(3, 1), a.At(3, 2), a.At(3, 3)
+
+	// aijkl = aij * akl - ail * akj
+	a3142 := a31 * a42 - a32 * a41
+	a3143 := a31 * a43 - a33 * a41
+	a3144 := a31 * a44 - a34 * a41
+	a3243 := a32 * a43 - a33 * a42
+	a3244 := a32 * a44 - a34 * a42
+	a3344 := a33 * a44 - a34 * a43
+
+	t1 := +1 * a11 * (a22 * a3344 - a23 * a3244 + a24 * a3243)
+	t2 := -1 * a12 * (a21 * a3344 - a23 * a3144 + a24 * a3143)
+	t3 := +1 * a13 * (a21 * a3244 - a22 * a3144 + a24 * a3142)
+	t4 := -1 * a14 * (a21 * a3243 - a22 * a3143 + a23 * a3142)
+
+	return t1 + t2 + t3 + t4
+}
+
+func (a *Mat4) Invert() (*Mat4, error) {
+	det := a.Determinant()
+
+	if det == 0 {
+		return a, errors.New("cannot invert singular matrix")
+	}
+
+	// 1-indexed variable names
+	a11, a12, a13, a14 := a.At(0, 0), a.At(0, 1), a.At(0, 2), a.At(0, 3)
+	a21, a22, a23, a24 := a.At(1, 0), a.At(1, 1), a.At(1, 2), a.At(1, 3)
+	a31, a32, a33, a34 := a.At(2, 0), a.At(2, 1), a.At(2, 2), a.At(2, 3)
+	a41, a42, a43, a44 := a.At(3, 0), a.At(3, 1), a.At(3, 2), a.At(3, 3)
+
+	b11 := (a22 * a33 * a44) + (a23 * a34 * a42) + (a24 * a32 * a43)
+	b11 -= (a22 * a34 * a43) + (a23 * a32 * a44) + (a24 * a33 * a42)
+
+	b12 := (a12 * a34 * a43) + (a13 * a32 * a44) + (a14 * a33 * a42)
+	b12 -= (a12 * a33 * a44) + (a13 * a34 * a42) + (a14 * a32 * a43)
+
+	b13 := (a12 * a23 * a44) + (a13 * a24 * a42) + (a14 * a22 * a43)
+	b13 -= (a12 * a24 * a43) + (a13 * a22 * a44) + (a14 * a23 * a42)
+
+	b14 := (a12 * a24 * a33) + (a13 * a22 * a34) + (a14 * a23 * a32)
+	b14 -= (a12 * a23 * a34) + (a13 * a24 * a32) + (a14 * a22 * a33)
+
+	b21 := (a21 * a34 * a43) + (a23 * a31 * a44) + (a24 * a33 * a41)
+	b21 -= (a21 * a33 * a44) + (a23 * a34 * a41) + (a24 * a31 * a43)
+
+	b22 := (a11 * a33 * a44) + (a13 * a34 * a41) + (a14 * a31 * a43)
+	b22 -= (a11 * a34 * a43) + (a13 * a31 * a44) + (a14 * a33 * a41)
+
+	b23 := (a11 * a24 * a43) + (a13 * a21 * a44) + (a14 * a23 * a41)
+	b23 -= (a11 * a23 * a44) + (a13 * a24 * a41) + (a14 * a21 * a43)
+
+	b24 := (a11 * a23 * a34) + (a13 * a24 * a31) + (a14 * a21 * a33)
+	b24 -= (a11 * a24 * a33) + (a13 * a21 * a34) + (a14 * a23 * a31)
+
+	b31 := (a21 * a32 * a44) + (a22 * a34 * a41) + (a24 * a31 * a42)
+	b31 -= (a21 * a34 * a42) + (a22 * a31 * a44) + (a24 * a32 * a41)
+
+	b32 := (a11 * a34 * a42) + (a12 * a31 * a44) + (a14 * a32 * a41)
+	b32 -= (a11 * a32 * a44) + (a12 * a34 * a41) + (a14 * a31 * a42)
+
+	b33 := (a11 * a22 * a44) + (a12 * a24 * a41) + (a14 * a21 * a42)
+	b33 -= (a11 * a24 * a42) + (a12 * a21 * a44) + (a14 * a22 * a41)
+
+	b34 := (a11 * a24 * a32) + (a12 * a21 * a34) + (a14 * a22 * a31)
+	b34 -= (a11 * a22 * a34) + (a12 * a24 * a31) + (a14 * a21 * a32)
+
+	b41 := (a21 * a33 * a42) + (a22 * a31 * a43) + (a23 * a32 * a41)
+	b41 -= (a21 * a32 * a43) + (a22 * a33 * a41) + (a23 * a31 * a42)
+
+	b42 := (a11 * a32 * a43) + (a12 * a33 * a41) + (a13 * a31 * a42)
+	b42 -= (a11 * a33 * a42) + (a12 * a31 * a43) + (a13 * a32 * a41)
+
+	b43 := (a11 * a23 * a42) + (a12 * a21 * a43) + (a13 * a22 * a41)
+	b43 -= (a11 * a22 * a43) + (a12 * a23 * a41) + (a13 * a21 * a42)
+
+	b44 := (a11 * a22 * a33) + (a12 * a23 * a31) + (a13 * a21 * a32)
+	b44 -= (a11 * a23 * a32) + (a12 * a21 * a33) + (a13 * a22 * a31)
+
+	a.SetRow(0, NewVec4(b11, b12, b13, b14))
+	a.SetRow(1, NewVec4(b21, b22, b23, b24))
+	a.SetRow(2, NewVec4(b31, b32, b33, b34))
+	a.SetRow(3, NewVec4(b41, b42, b43, b44))
+	a.Scale(1 / det)
+
+	return a, nil
 }
 
 func (a *Mat4) String() string {
