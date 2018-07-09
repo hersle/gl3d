@@ -89,15 +89,6 @@ func (a *Mat4) Mult(b *Mat4) *Mat4 {
 	return a
 }
 
-// TODO: replace with func (a Vec3/4) Transform(m *Mat4)?
-func (a *Mat4) MultVec(v Vec4) Vec4 {
-	x := a.Row(0).Dot(v)
-	y := a.Row(1).Dot(v)
-	z := a.Row(2).Dot(v)
-	w := a.Row(3).Dot(v)
-	return NewVec4(x, y, z, w)
-}
-
 func (a *Mat4) Transpose() *Mat4 {
 	r0, r1, r2, r3 := a.Row(0), a.Row(1), a.Row(2), a.Row(3)
 	a.SetCol(0, r0)

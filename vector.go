@@ -174,6 +174,14 @@ func (a Vec3) Rotate(axis Vec3, ang float32) Vec3 {
 	return v1.Add(v2).Add(v3)
 }
 
+func (a Vec4) Transform(m *Mat4) Vec4 {
+	x := m.Row(0).Dot(a)
+	y := m.Row(1).Dot(a)
+	z := m.Row(2).Dot(a)
+	w := m.Row(3).Dot(a)
+	return NewVec4(x, y, z, w)
+}
+
 func (a Vec2) String() string {
 	return fmt.Sprintf("(%v, %v)", a.X(), a.Y())
 }
