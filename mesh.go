@@ -22,6 +22,22 @@ type Mesh struct {
 	tmpMat *Mat4
 }
 
+func NewSubMesh() *SubMesh {
+	var sm SubMesh
+	return &sm
+}
+
+func (sm *SubMesh) Finish(verts []Vertex, faces []int32) {
+	sm.vbo = NewBuffer()
+	sm.ibo = NewBuffer()
+	sm.vbo.SetData(verts, 0)
+	sm.ibo.SetData(faces, 0)
+	sm.inds = len(faces)
+	if sm.mtl == nil {
+		sm.mtl = NewDefaultMaterial("")
+	}
+}
+
 func ReadMesh(filename string) (*Mesh, error) {
 	switch path.Ext(filename) {
 	case ".obj":
@@ -39,7 +55,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	defer file.Close()
 
 	var m Mesh
-	var subMesh *SubMesh = &SubMesh{}
+	var subMesh *SubMesh = NewSubMesh()
 	var verts []Vertex
 	var faces []int32
 
@@ -159,16 +175,10 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			mtls = ReadMaterials(mtlFilenames)
 		case "usemtl":
 			if len(faces) > 0 {
-				// store submesh
-				subMesh.vbo = NewBuffer()
-				subMesh.ibo = NewBuffer()
-				subMesh.vbo.SetData(verts, 0)
-				subMesh.ibo.SetData(faces, 0)
-				subMesh.inds = len(faces)
+				subMesh.Finish(verts, faces)
 				m.subMeshes = append(m.subMeshes, subMesh)
 			}
-			// start new submesh
-			subMesh = &SubMesh{}
+			subMesh = NewSubMesh()
 			verts = verts[:0]
 			faces = faces[:0]
 
@@ -197,17 +207,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	}
 
 	if len(faces) > 0 {
-		// store submesh
-		// TODO: repeated here, make function or only occur once
-		subMesh.vbo = NewBuffer()
-		subMesh.ibo = NewBuffer()
-		subMesh.vbo.SetData(verts, 0)
-		subMesh.ibo.SetData(faces, 0)
-		subMesh.inds = len(faces)
+		subMesh.Finish(verts, faces)
 		m.subMeshes = append(m.subMeshes, subMesh)
-		if subMesh.mtl == nil {
-			subMesh.mtl = NewDefaultMaterial("")
-		}
 	}
 
 	m.modelMat = NewMat4Identity()

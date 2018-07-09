@@ -15,6 +15,7 @@ type Material struct {
 	diffuse Vec3
 	specular Vec3
 	shine float32
+	ambientMapFilename string
 	ambientMapTexture *Texture2D
 }
 
@@ -27,14 +28,22 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.diffuse = NewVec3(0.5, 0.5, 0.5)
 	mtl.specular = NewVec3(0.5, 0.5, 0.5)
 	mtl.shine = 100
-
-	// use default 1x1 blank texture TODO: make constant
 	mtl.ambientMapTexture = NewTexture2D()
-	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
-	img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-	mtl.ambientMapTexture.SetImage(img)
-
 	return &mtl
+}
+
+func (mtl *Material) Finish() {
+	if mtl.ambientMapFilename == "" {
+		// use default 1x1 blank texture TODO: make constant
+		img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+		img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
+		mtl.ambientMapTexture.SetImage(img)
+	} else {
+		err := mtl.ambientMapTexture.ReadImage(mtl.ambientMapFilename)
+		if err != nil {
+			panic(err)
+		}
+	}
 }
 
 func ReadMaterials(filenames []string) []*Material {
@@ -70,8 +79,7 @@ func ReadMaterials(filenames []string) []*Material {
 					panic("newmtl error")
 				}
 				if mtl != nil {
-					if mtl.ambientMapTexture == nil {
-					}
+					mtl.Finish()
 					mtls = append(mtls, mtl)
 				}
 				name := fields[1]
@@ -121,15 +129,12 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("ambient map error")
 				}
-				ambientMapFilename := fields[1]
-				err := mtl.ambientMapTexture.ReadImage(ambientMapFilename)
-				if err != nil {
-					panic(err)
-				}
+				mtl.ambientMapFilename = fields[1]
 			}
 		}
 
 		if mtl != nil {
+			mtl.Finish()
 			mtls = append(mtls, mtl)
 		}
 	}
