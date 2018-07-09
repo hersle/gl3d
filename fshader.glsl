@@ -20,11 +20,14 @@ uniform vec3 ambientLight;
 uniform vec3 diffuseLight;
 uniform vec3 specularLight;
 
+uniform mat4 viewMatrix;
+
 void main() {
 	vec3 ambientFactor = ambientLight;
 	vec3 ambientColor = ambientFactor * ambient;
 
 	vec3 lightDirection = normalize(worldPosition - lightPosition);
+	lightDirection = vec3(viewMatrix * vec4(lightDirection, 0));
 
 	vec3 diffuseFactor = max(dot(normalF, -lightDirection), 0) * diffuseLight;
 	vec3 diffuseColor = diffuseFactor * diffuse;

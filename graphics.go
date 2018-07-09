@@ -135,8 +135,8 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.prog.SetUniform(r.viewMatUfm, c.ViewMatrix())
 	r.prog.SetUniform(r.projMatUfm, c.ProjectionMatrix())
 
-	// TODO: correct? viewModel instead of model?
-	r.normalMat.Copy(m.modelMat)
+	r.normalMat.Copy(c.ViewMatrix())
+	r.normalMat.Mult(m.modelMat)
 	r.normalMat.Invert()
 	r.normalMat.Transpose()
 	r.prog.SetUniform(r.normalMatUfm, r.normalMat)

@@ -25,5 +25,5 @@ void main() {
 
 	texCoordF = texCoordV;
 
-	normalF = normalize(vec3(normalMatrix * vec4(normalV, 0))); // TODO: correct?
+	normalF = normalize(vec3(normalMatrix * vec4(normalV, 0)));
 }
