@@ -112,24 +112,42 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				if err != nil {
 					panic("face data error")
 				}
-				vert.pos = positions[ind-1]
-				if indStrs[1] == "" {
+				if ind > 0 {
+					vert.pos = positions[ind-1]
+				} else if ind < 0 {
+					vert.pos = positions[len(positions)+ind]
+				} else {
+					panic("face data error")
+				}
+				if len(indStrs) < 2 || indStrs[1] == "" {
 					vert.texCoord = NewVec2(0, 0)
 				} else {
 					_, err := fmt.Sscan(indStrs[1], &ind)
 					if err != nil {
 						panic("face data error")
 					}
-					vert.texCoord = texCoords[ind-1]
+					if ind > 0 {
+						vert.texCoord = texCoords[ind-1]
+					} else if ind < 0 {
+						vert.texCoord = texCoords[len(texCoords)+ind]
+					} else {
+						panic("face data error")
+					}
 				}
-				if indStrs[2] == "" {
+				if len(indStrs) < 3 || indStrs[2] == "" {
 					vert.normal = NewVec3(0, 0, 0)
 				} else {
 					_, err := fmt.Sscan(indStrs[2], &ind)
 					if err != nil {
 						panic("face data error")
 					}
-					vert.normal = normals[ind-1]
+					if ind > 0 {
+						vert.normal = normals[ind-1]
+					} else if ind < 0 {
+						vert.normal = normals[len(positions)+ind]
+					} else {
+						panic("face data error")
+					}
 				}
 				i2 := len(verts) - 1
 				i3 := len(verts)
