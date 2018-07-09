@@ -89,6 +89,16 @@ func (a *Mat4) Mult(b *Mat4) *Mat4 {
 	return a
 }
 
+func (a *Mat4) MultRight(b *Mat4) *Mat4 {
+	return a.Mult(b)
+}
+
+func (a *Mat4) MultLeft(b *Mat4) *Mat4 {
+	b.MultRight(a)
+	a.Copy(b)
+	return a
+}
+
 func (a *Mat4) Transpose() *Mat4 {
 	r0, r1, r2, r3 := a.Row(0), a.Row(1), a.Row(2), a.Row(3)
 	a.SetCol(0, r0)

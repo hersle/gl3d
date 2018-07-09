@@ -23,10 +23,10 @@ func main() {
 			panic(err)
 		}
 		if filename == "objects/car.obj" {
-			model.Translate(NewVec3(-2, -5, +5))
-			model.RotateY(3.1415 - 3.1415/5)
-			model.RotateX(-3.1415/2)
 			model.Scale(0.02, 0.02, 0.02)
+			model.RotateX(-3.1415/2)
+			model.RotateY(3.1415 - 3.1415/5)
+			model.Translate(NewVec3(-2, -5, +5))
 		}
 		s.AddMesh(model)
 	}
