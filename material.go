@@ -5,6 +5,8 @@ import (
 	"bufio"
 	"strings"
 	"fmt"
+	"image"
+	"image/color"
 )
 
 type Material struct {
@@ -13,6 +15,7 @@ type Material struct {
 	diffuse Vec3
 	specular Vec3
 	shine float32
+	ambientMapTexture *Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -20,9 +23,9 @@ type Material struct {
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
 	mtl.name = name
-	mtl.ambient = NewVec3(0.0, 0.0, 0.0)
-	mtl.diffuse = NewVec3(1.0, 1.0, 1.0)
-	mtl.specular = NewVec3(1.0, 1.0, 1.0)
+	mtl.ambient = NewVec3(0.5, 0.5, 0.5)
+	mtl.diffuse = NewVec3(0.5, 0.5, 0.5)
+	mtl.specular = NewVec3(0.5, 0.5, 0.5)
 	mtl.shine = 100
 	return &mtl
 }
@@ -60,6 +63,13 @@ func ReadMaterials(filenames []string) []*Material {
 					panic("newmtl error")
 				}
 				if mtl != nil {
+					if mtl.ambientMapTexture == nil {
+						// use default 1x1 blank texture TODO: make constant
+						mtl.ambientMapTexture = NewTexture2D()
+						img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+						img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
+						mtl.ambientMapTexture.SetImage(img)
+					}
 					mtls = append(mtls, mtl)
 				}
 				name := fields[1]
@@ -105,10 +115,27 @@ func ReadMaterials(filenames []string) []*Material {
 				if err != nil {
 					panic("shine error")
 				}
+			case "map_Ka":
+				if len(fields[1:]) != 1 {
+					panic("ambient map error")
+				}
+				ambientMapFilename := fields[1]
+				mtl.ambientMapTexture = NewTexture2D()
+				err := mtl.ambientMapTexture.ReadImage(ambientMapFilename)
+				if err != nil {
+					panic(err)
+				}
 			}
 		}
 
 		if mtl != nil {
+			if mtl.ambientMapTexture == nil {
+				// use default 1x1 blank texture TODO: make constant
+				mtl.ambientMapTexture = NewTexture2D()
+				img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+				img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
+				mtl.ambientMapTexture.SetImage(img)
+			}
 			mtls = append(mtls, mtl)
 		}
 	}

@@ -120,6 +120,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
+	r.vao.SetAttribFormat(r.texCoordAttr, 2, gl.FLOAT, false)
 
 	r.normalMat = NewMat4Zero()
 
@@ -157,8 +158,11 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.vao.SetAttribSource(r.posAttr, subMesh.vbo, offset, stride)
 		offset = int(unsafe.Offsetof(Vertex{}.normal))
 		r.vao.SetAttribSource(r.normalAttr, subMesh.vbo, offset, stride)
+		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
+		r.vao.SetAttribSource(r.texCoordAttr, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
+		subMesh.mtl.ambientMapTexture.Bind()
 		r.vao.Bind()
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}

@@ -13,6 +13,7 @@ uniform vec3 ambient;
 uniform vec3 diffuse;
 uniform vec3 specular;
 uniform float shine;
+uniform sampler2D ambientMap;
 
 // light
 uniform vec3 lightPosition;
@@ -24,7 +25,8 @@ uniform mat4 viewMatrix;
 
 void main() {
 	vec3 ambientFactor = ambientLight;
-	vec3 ambientColor = ambientFactor * ambient;
+	vec4 ambientMapRGBA = texture(ambientMap, texCoordF);
+	vec3 ambientColor = ambientFactor * ((1 - ambientMapRGBA.a) * ambient + ambientMapRGBA.a * ambientMapRGBA.rgb);
 
 	vec3 lightDirection = normalize(worldPosition - lightPosition);
 	lightDirection = vec3(viewMatrix * vec4(lightDirection, 0));
