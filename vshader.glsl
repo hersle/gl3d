@@ -25,5 +25,5 @@ void main() {
 	texCoordF = texCoordV;
 
 	mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
-	normalF = normalMatrix * normalV;
+	normalF = normalize(normalMatrix * normalV);
 }
