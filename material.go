@@ -20,7 +20,7 @@ type Material struct {
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
 	mtl.name = name
-	mtl.ambient = NewVec3(1.0, 1.0, 1.0)
+	mtl.ambient = NewVec3(0.0, 0.0, 0.0)
 	mtl.diffuse = NewVec3(1.0, 1.0, 1.0)
 	mtl.specular = NewVec3(1.0, 1.0, 1.0)
 	mtl.shine = 100

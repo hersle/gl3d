@@ -141,9 +141,9 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.normalMat.Transpose()
 	r.prog.SetUniform(r.normalMatUfm, r.normalMat)
 
-	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
-	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1.0, 1.0, 1.0))
-	r.prog.SetUniform(r.specularLightUfm, NewVec3(1.0, 1.0, 1.0))
+	r.prog.SetUniform(r.ambientLightUfm, NewVec3(1, 1, 1))
+	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1, 1, 1))
+	r.prog.SetUniform(r.specularLightUfm, NewVec3(1, 1, 1))
 	r.prog.SetUniform(r.lightPosUfm, NewVec3(0, +2.0, -5.0))
 
 	for _, subMesh := range m.subMeshes {
