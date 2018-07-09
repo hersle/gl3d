@@ -56,7 +56,6 @@ func (a *Mat4) Copy(b *Mat4) {
 	for i := 0; i < 4; i++ {
 		a.SetRow(i, b.Row(i))
 	}
-	return a
 }
 
 func (a *Mat4) Add(b *Mat4) *Mat4 {

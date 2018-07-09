@@ -14,6 +14,7 @@ out vec3 normalF;
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
+uniform mat4 normalMatrix;
 
 void main() {
 	worldPosition = vec3(modelMatrix * vec4(position, 1));
@@ -24,6 +25,5 @@ void main() {
 
 	texCoordF = texCoordV;
 
-	mat3 normalMatrix = transpose(inverse(mat3(modelMatrix)));
-	normalF = normalize(normalMatrix * normalV);
+	normalF = normalize(vec3(normalMatrix * vec4(normalV, 0))); // TODO: correct?
 }

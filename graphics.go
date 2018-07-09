@@ -22,10 +22,12 @@ type Renderer struct {
 	vao *VertexArray
 	posAttr, colorAttr, texCoordAttr, normalAttr *Attrib
 	modelMatUfm, viewMatUfm, projMatUfm *Uniform
+	normalMatUfm *Uniform
 	ambientUfm, ambientLightUfm *Uniform
 	diffuseUfm, diffuseLightUfm *Uniform
 	specularUfm, specularLightUfm, shineUfm *Uniform
 	lightPosUfm *Uniform
+	normalMat *Mat4
 }
 
 func NewColor(r, g, b, a uint8) RGBAColor {
@@ -78,6 +80,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.normalMatUfm, err = r.prog.Uniform("normalMatrix")
+	if err != nil {
+		println(err.Error())
+	}
 	r.ambientUfm, err = r.prog.Uniform("ambient")
 	if err != nil {
 		println(err.Error())
@@ -115,6 +121,8 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
 
+	r.normalMat = NewMat4Zero()
+
 	return &r, nil
 }
 
@@ -126,6 +134,12 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.prog.SetUniform(r.modelMatUfm, m.modelMat)
 	r.prog.SetUniform(r.viewMatUfm, c.ViewMatrix())
 	r.prog.SetUniform(r.projMatUfm, c.ProjectionMatrix())
+
+	// TODO: correct? viewModel instead of model?
+	r.normalMat.Copy(m.modelMat)
+	r.normalMat.Invert()
+	r.normalMat.Transpose()
+	r.prog.SetUniform(r.normalMatUfm, r.normalMat)
 
 	r.prog.SetUniform(r.ambientLightUfm, NewVec3(0.5, 0.5, 0.5))
 	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1.0, 1.0, 1.0))
