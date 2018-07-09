@@ -12,7 +12,34 @@ import (
 	_ "image/png"
 )
 
-// TODO: add opengl state object tracker?
+type StateTracker struct {
+	vaBound *VertexArray
+	progBound *Program
+	tex2dBound *Texture2D
+}
+
+var gls *StateTracker = &StateTracker{}
+
+func (st *StateTracker) BindVertexArray(va *VertexArray) {
+	if st.vaBound == nil || st.vaBound.id != va.id {
+		gl.BindVertexArray(va.id)
+		st.vaBound = va
+	}
+}
+
+func (st *StateTracker) BindTexture2D(tex2d *Texture2D) {
+	if st.tex2dBound == nil || st.tex2dBound.id != tex2d.id {
+		gl.BindTexture(gl.TEXTURE_2D, tex2d.id)
+		st.tex2dBound = tex2d
+	}
+}
+
+func (st *StateTracker) UseProgram(prog *Program) {
+	if st.progBound == nil || st.progBound.id != prog.id {
+		gl.UseProgram(prog.id)
+		st.progBound = prog
+	}
+}
 
 type Shader struct {
 	id uint32
@@ -116,10 +143,6 @@ func (p *Program) Link() error {
 	} else {
 		return errors.New(p.Log())
 	}
-}
-
-func (p *Program) Use() {
-	gl.UseProgram(p.id)
 }
 
 func (p *Program) Attrib(name string) (*Attrib, error) {
@@ -226,10 +249,6 @@ func NewTexture2D() *Texture2D {
 	return &t
 }
 
-func (t *Texture2D) Bind() {
-	gl.BindTexture(gl.TEXTURE_2D, t.id)
-}
-
 func (t *Texture2D) SetImage(img image.Image) {
 	switch img.(type) {
 	case *image.RGBA:
@@ -284,10 +303,6 @@ func NewVertexArray() *VertexArray {
 	var va VertexArray
 	gl.CreateVertexArrays(1, &va.id)
 	return &va
-}
-
-func (va *VertexArray) Bind() {
-	gl.BindVertexArray(va.id)
 }
 
 func (va *VertexArray) SetAttribFormat(a *Attrib, dim, typ int, normalize bool) {

@@ -50,7 +50,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
-	r.prog.Use()
+	gls.UseProgram(r.prog)
 
 	r.posAttr, err = r.prog.Attrib("position")
 	if err != nil {
@@ -162,8 +162,8 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.vao.SetAttribSource(r.texCoordAttr, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
-		subMesh.mtl.ambientMapTexture.Bind()
-		r.vao.Bind()
+		gls.BindTexture2D(subMesh.mtl.ambientMapTexture)
+		gls.BindVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
 }
