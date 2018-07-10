@@ -196,6 +196,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 					errMsg = "material not found"
 				}
 			}
+		case "o":
+			break // no reason to process
 		default:
 			println("warning: ignoring line with unknown prefix", fields[0])
 		}
