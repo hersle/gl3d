@@ -47,6 +47,36 @@ func ReadMesh(filename string) (*Mesh, error) {
 	}
 }
 
+func readVec3(fields []string) (Vec3, error) {
+	var xyz [3]float32
+	if len(fields) >= 3 {
+		for i := 0; i < 3; i++ {
+			_, err := fmt.Sscan(fields[i], &xyz[i])
+			if err != nil {
+				return NewVec3(0, 0, 0), err
+			}
+		}
+		return NewVec3(xyz[0], xyz[1], xyz[2]), nil
+	} else {
+		return NewVec3(0, 0, 0), errors.New("error reading vec3")
+	}
+}
+
+func readVec2(fields []string) (Vec2, error) {
+	var xy [2]float32
+	if len(fields) >= 2 {
+		for i := 0; i < 2; i++ {
+			_, err := fmt.Sscan(fields[i], &xy[i])
+			if err != nil {
+				return NewVec2(0, 0), err
+			}
+		}
+		return NewVec2(xy[0], xy[1]), nil
+	} else {
+		return NewVec2(0, 0), errors.New("error reading vec2")
+	}
+}
+
 func ReadMeshObj(filename string) (*Mesh, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -59,7 +89,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	var verts []Vertex
 	var faces []int32
 
-	var tmp [3]float32
 	var positions []Vec3
 	var texCoords []Vec2
 	var normals []Vec3
@@ -79,41 +108,26 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 		switch fields[0] {
 		case "v":
-			if len(fields[1:]) < 3 {
+			position, err := readVec3(fields[1:])
+			if err != nil {
 				errMsg = "vertex data error"
+				break
 			}
-			for i := 0; i < 3; i++ {
-				_, err := fmt.Sscan(fields[1+i], &tmp[i])
-				if err != nil {
-					errMsg = "vertex data error"
-					break
-				}
-			}
-			positions = append(positions, NewVec3(tmp[0], tmp[1], tmp[2]))
+			positions = append(positions, position)
 		case "vt":
-			if len(fields[1:]) < 2 || len(fields[1:]) > 3 {
+			texCoord, err := readVec2(fields[1:])
+			if err != nil {
 				errMsg = "texture coordinate data error"
+				break
 			}
-			for i := 0; i < 2; i++ {
-				_, err := fmt.Sscan(fields[1+i], &tmp[i])
-				if err != nil {
-					errMsg = "texture coordinate data error"
-					break
-				}
-			}
-			texCoords = append(texCoords, NewVec2(tmp[0], tmp[1]))
+			texCoords = append(texCoords, texCoord)
 		case "vn":
-			if len(fields[1:]) < 3 {
+			normal, err := readVec3(fields[1:])
+			if err != nil {
 				errMsg = "vertex normal data error"
+				break
 			}
-			for i := 0; i < 3; i++ {
-				_, err := fmt.Sscan(fields[1+i], &tmp[i])
-				if err != nil {
-					errMsg = "vertex normal data error"
-					break
-				}
-			}
-			normals = append(normals, NewVec3(tmp[0], tmp[1], tmp[2]))
+			normals = append(normals, normal)
 		case "f":
 			if len(fields[1:]) < 3 {
 				errMsg = "face data error"
@@ -121,49 +135,37 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			}
 			i1 := len(verts)
 			for _, field := range fields[1:] {
-				var ind int
-				var vert Vertex
+				var inds [3]int
 				indStrs := strings.Split(field, "/")
-				_, err := fmt.Sscan(indStrs[0], &ind)
-				if err != nil {
-					panic("face data error")
+				for i, indStr := range indStrs {
+					_, err := fmt.Sscan(indStr, &inds[i])
+					if err != nil {
+						errMsg = "face data error"
+						break
+					}
 				}
-				if ind > 0 {
-					vert.pos = positions[ind-1]
-				} else if ind < 0 {
-					vert.pos = positions[len(positions)+ind]
+				var vert Vertex
+				if inds[0] > 0 {
+					vert.pos = positions[inds[0]-1]
+				} else if inds[0] < 0 {
+					vert.pos = positions[len(positions)+inds[0]]
 				} else {
-					panic("face data error")
+					errMsg = "face data error"
+					break
 				}
-				if len(indStrs) < 2 || indStrs[1] == "" {
+				if inds[1] > 0 {
+					vert.texCoord = texCoords[inds[1]-1]
+				} else if inds[1] < 0 {
+					vert.texCoord = texCoords[len(texCoords)+inds[1]]
+				} else {
 					vert.texCoord = NewVec2(0, 0)
-				} else {
-					_, err := fmt.Sscan(indStrs[1], &ind)
-					if err != nil {
-						panic("face data error")
-					}
-					if ind > 0 {
-						vert.texCoord = texCoords[ind-1]
-					} else if ind < 0 {
-						vert.texCoord = texCoords[len(texCoords)+ind]
-					} else {
-						panic("face data error")
-					}
 				}
-				if len(indStrs) < 3 || indStrs[2] == "" {
-					vert.normal = NewVec3(0, 0, 0)
+				if inds[2] > 0 {
+					vert.normal = normals[inds[2]-1]
+				} else if inds[2] < 0 {
+					vert.normal = normals[len(positions)+inds[2]]
 				} else {
-					_, err := fmt.Sscan(indStrs[2], &ind)
-					if err != nil {
-						panic("face data error")
-					}
-					if ind > 0 {
-						vert.normal = normals[ind-1]
-					} else if ind < 0 {
-						vert.normal = normals[len(positions)+ind]
-					} else {
-						panic("face data error")
-					}
+					vert.normal = NewVec3(0, 0, 0)
 				}
 				i2 := len(verts) - 1
 				i3 := len(verts)
