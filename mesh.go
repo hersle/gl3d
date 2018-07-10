@@ -198,6 +198,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			}
 		case "o":
 			break // no reason to process
+		case "g":
+			break // no reason to process
 		default:
 			println("warning: ignoring line with unknown prefix", fields[0])
 		}
