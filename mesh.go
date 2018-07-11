@@ -47,6 +47,7 @@ func ReadMesh(filename string) (*Mesh, error) {
 	}
 }
 
+/*
 func readVec3(fields []string) (Vec3, error) {
 	var xyz [3]float32
 	if len(fields) >= 3 {
@@ -216,6 +217,150 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		subMesh.Finish(verts, faces)
 		m.subMeshes = append(m.subMeshes, subMesh)
 	}
+
+	m.modelMat = NewMat4Identity()
+	m.tmpMat = NewMat4Zero()
+
+	return &m, nil
+}
+*/
+
+func readVec2(fields []string) Vec2 {
+	var x, y float32
+	fmt.Sscan(fields[0], &x)
+	fmt.Sscan(fields[1], &y)
+	return NewVec2(x, y)
+}
+
+func readVec3(fields []string) Vec3 {
+	var z float32
+	fmt.Sscan(fields[2], &z)
+	return readVec2(fields[:2]).Vec3(z)
+}
+
+func readIndexedVertex(desc string) indexedVertex {
+	var vert indexedVertex
+	var inds [3]int = [3]int{0, 0, 0}
+	fields := strings.Split(desc, "/")
+	for i, field := range fields {
+		if field != "" {
+			fmt.Sscan(field, &inds[i])
+		}
+	}
+	vert.v, vert.vt, vert.vn = inds[0], inds[1], inds[2]
+	return vert
+}
+
+type indexedVertex struct {
+	v int
+	vt int
+	vn int
+}
+
+type smoothingGroup struct {
+	id int
+	faces []int32
+}
+
+func getSmoothingGroupID(sGroupNames []string, sGroupName string) int {
+	for sGroupID, _ := range sGroupNames {
+		if sGroupNames[sGroupID] == sGroupName {
+			return sGroupID
+		}
+	}
+	return -1
+}
+
+func ReadMeshObj(filename string) (*Mesh, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	var positions []Vec3 = []Vec3{NewVec3(0, 0, 0)}
+	var texCoords []Vec2 = []Vec2{NewVec2(0, 0)}
+	var normals []Vec3 = []Vec3{NewVec3(0, 0, 0)}
+
+	// TODO: smoothing groups
+	var sGroupNames []string
+	var sGroupID int = 0
+	var sGroups [][]indexedVertex
+	sGroups = append(sGroups, make([]indexedVertex, 0))
+
+	// TODO: materials
+
+	s := bufio.NewScanner(file)
+	for s.Scan() {
+		line := s.Text()
+		fields := strings.Fields(line)
+
+		if len(fields) == 0 || strings.HasPrefix(fields[0], "#") {
+			continue
+		}
+
+		switch fields[0] {
+		case "v":
+			positions = append(positions, readVec3(fields[1:]))
+		case "vt":
+			texCoords = append(texCoords, readVec2(fields[1:]))
+		case "vn":
+			normals = append(normals, readVec3(fields[1:]))
+		case "s":
+			id := getSmoothingGroupID(sGroupNames, fields[1])
+			if id == -1 {
+				sGroupNames = append(sGroupNames, fields[1])
+				sGroups = append(sGroups, make([]indexedVertex, 0))
+				sGroupID = len(sGroups)-1
+			} else {
+				sGroupID = id
+			}
+		case "f":
+			vert1 := readIndexedVertex(fields[1])
+			vert2 := readIndexedVertex(fields[2])
+			for _, field := range fields[3:] {
+				vert3 := readIndexedVertex(field)
+				sGroups[sGroupID] = append(sGroups[sGroupID], vert1, vert2, vert3)
+				vert2 = vert3
+			}
+		case "mtllib":
+		case "usemtl":
+		default:
+			println("ignoring line prefix", fields[0])
+		}
+	}
+
+	var m Mesh
+	var sm *SubMesh = NewSubMesh()
+	var verts []Vertex
+	var inds []int32
+
+	for _, sGroup := range sGroups {
+		var weightedNormals []Vec3 = make([]Vec3, len(positions) + 1)
+		for i := 0; i < len(sGroup); i += 3 {
+			i1, i2, i3 := i + 0, i + 1, i + 2
+			v1, v2, v3 := sGroup[i1].v, sGroup[i2].v, sGroup[i3].v
+			edge1 := positions[v3].Sub(positions[v1])
+			edge2 := positions[v3].Sub(positions[v2])
+			normal := edge1.Cross(edge2).Norm()
+			weightedNormals[v1] = weightedNormals[v1].Add(normal)
+			weightedNormals[v2] = weightedNormals[v2].Add(normal)
+			weightedNormals[v3] = weightedNormals[v3].Add(normal)
+		}
+
+		for i := 0; i < len(sGroup); i++ {
+			inds = append(inds, int32(len(verts)))
+			var vert Vertex
+			vert.pos = positions[sGroup[i].v]
+			vert.texCoord = texCoords[sGroup[i].vt]
+			vert.normal = weightedNormals[sGroup[i].v].Norm()
+			verts = append(verts, vert)
+		}
+	}
+
+	sm.Finish(verts, inds)
+	sm.mtl.Finish()
+	m.subMeshes = append(m.subMeshes, sm)
 
 	m.modelMat = NewMat4Identity()
 	m.tmpMat = NewMat4Zero()

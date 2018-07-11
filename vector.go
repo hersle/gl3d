@@ -46,7 +46,7 @@ func (a Vec4) X() float32 {
 }
 
 func (a Vec2) Y() float32 {
-	return a[0]
+	return a[1]
 }
 
 func (a Vec3) Y() float32 {
