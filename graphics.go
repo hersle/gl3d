@@ -5,12 +5,8 @@ import (
 	"unsafe"
 )
 
-// TODO: use image/color.RGBA; must be [4] array, not struct
-type RGBAColor [4]uint8
-
 type Vertex struct {
 	pos Vec3
-	color RGBAColor
 	texCoord Vec2
 	normal Vec3
 }
@@ -20,7 +16,7 @@ type Renderer struct {
 	prog *Program
 	vbo, ibo *Buffer
 	vao *VertexArray
-	posAttr, colorAttr, texCoordAttr, normalAttr *Attrib
+	posAttr, texCoordAttr, normalAttr *Attrib
 	modelMatUfm, viewMatUfm, projMatUfm *Uniform
 	normalMatUfm *Uniform
 	ambientUfm, ambientLightUfm *Uniform
@@ -28,10 +24,6 @@ type Renderer struct {
 	specularUfm, specularLightUfm, shineUfm *Uniform
 	lightPosUfm *Uniform
 	normalMat *Mat4
-}
-
-func NewColor(r, g, b, a uint8) RGBAColor {
-	return RGBAColor{r, g, b, a}
 }
 
 func NewRenderer(win *Window) (*Renderer, error) {
@@ -53,10 +45,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gls.UseProgram(r.prog)
 
 	r.posAttr, err = r.prog.Attrib("position")
-	if err != nil {
-		println(err.Error())
-	}
-	r.colorAttr, err = r.prog.Attrib("colorV")
 	if err != nil {
 		println(err.Error())
 	}
