@@ -29,6 +29,12 @@ func NewSubMesh() *SubMesh {
 	return &sm
 }
 
+func (sm *SubMesh) AddTriangle(vert1, vert2, vert3 Vertex) {
+	i1, i2, i3 := len(sm.verts) + 0, len(sm.verts) + 1, len(sm.verts) + 2
+	sm.faces = append(sm.faces, int32(i1), int32(i2), int32(i3))
+	sm.verts = append(sm.verts, vert1, vert2, vert3)
+}
+
 func (sm *SubMesh) Finish() {
 	sm.vbo = NewBuffer()
 	sm.ibo = NewBuffer()
@@ -259,10 +265,21 @@ type indexedVertex struct {
 	vn int
 }
 
+type indexedTriangle struct {
+	iVerts [3]indexedVertex
+	mtlInd int
+}
+
 type smoothingGroup struct {
 	id int
-	faces []indexedVertex
-	mats []int
+	iTris []indexedTriangle
+}
+
+func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
+	var iTri indexedTriangle
+	iTri.iVerts[0], iTri.iVerts[1], iTri.iVerts[2] = iv1, iv2, iv3
+	iTri.mtlInd = mtlInd
+	return iTri
 }
 
 func newSmoothingGroup(id int) smoothingGroup {
@@ -326,8 +343,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			for _, field := range fields[3:] {
 				vert3 := readIndexedVertex(field)
 				sGroup := &sGroups[sGroupInd]
-				sGroup.faces = append(sGroup.faces, vert1, vert2, vert3)
-				sGroup.mats = append(sGroup.mats, mtlInd, mtlInd, mtlInd)
+				iTri := newIndexedTriangle(vert1, vert2, vert3, mtlInd)
+				sGroup.iTris = append(sGroup.iTris, iTri)
 				vert2 = vert3
 			}
 		case "mtllib":
@@ -366,9 +383,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	for _, sGroup := range sGroups {
 		var weightedNormals []Vec3 = make([]Vec3, len(positions) + 1)
-		for i := 0; i < len(sGroup.faces); i += 3 {
-			i1, i2, i3 := i + 0, i + 1, i + 2
-			v1, v2, v3 := sGroup.faces[i1].v, sGroup.faces[i2].v, sGroup.faces[i3].v
+		for i := 0; i < len(sGroup.iTris); i++ {
+			iTri := sGroup.iTris[i]
+			v1, v2, v3 := iTri.iVerts[0].v, iTri.iVerts[1].v, iTri.iVerts[2].v
 			edge1 := positions[v3].Sub(positions[v1])
 			edge2 := positions[v3].Sub(positions[v2])
 			normal := edge1.Cross(edge2).Norm()
@@ -377,12 +394,15 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			weightedNormals[v3] = weightedNormals[v3].Add(normal)
 		}
 
-		for i, iVert := range sGroup.faces {
-			pos := positions[iVert.v]
-			texCoord := texCoords[iVert.vt]
-			normal := weightedNormals[iVert.v].Norm()
-			m.subMeshes[sGroup.mats[i]].verts = append(m.subMeshes[sGroup.mats[i]].verts, NewVertex(pos, texCoord, normal))
-			m.subMeshes[sGroup.mats[i]].faces = append(m.subMeshes[sGroup.mats[i]].faces, int32(len(m.subMeshes[sGroup.mats[i]].verts) - 1))
+		for _, iTri := range sGroup.iTris {
+			var verts [3]Vertex
+			for i := 0; i < 3; i++ {
+				pos := positions[iTri.iVerts[i].v]
+				texCoord := texCoords[iTri.iVerts[i].vt]
+				normal := weightedNormals[iTri.iVerts[i].v].Norm()
+				verts[i] = NewVertex(pos, texCoord, normal)
+			}
+			m.subMeshes[iTri.mtlInd].AddTriangle(verts[0], verts[1], verts[2])
 		}
 	}
 
