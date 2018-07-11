@@ -10,6 +10,8 @@ import (
 )
 
 type SubMesh struct {
+	verts []Vertex
+	faces []int32
 	vbo *Buffer
 	ibo *Buffer
 	inds int
@@ -27,12 +29,12 @@ func NewSubMesh() *SubMesh {
 	return &sm
 }
 
-func (sm *SubMesh) Finish(verts []Vertex, faces []int32) {
+func (sm *SubMesh) Finish() {
 	sm.vbo = NewBuffer()
 	sm.ibo = NewBuffer()
-	sm.vbo.SetData(verts, 0)
-	sm.ibo.SetData(faces, 0)
-	sm.inds = len(faces)
+	sm.vbo.SetData(sm.verts, 0)
+	sm.ibo.SetData(sm.faces, 0)
+	sm.inds = len(sm.faces)
 	if sm.mtl == nil {
 		sm.mtl = NewDefaultMaterial("")
 	}
@@ -260,6 +262,7 @@ type indexedVertex struct {
 type smoothingGroup struct {
 	id int
 	faces []indexedVertex
+	mats []int
 }
 
 func newSmoothingGroup(id int) smoothingGroup {
@@ -282,7 +285,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	var sGroupInd int = 0
 	var sGroups []smoothingGroup = []smoothingGroup{newSmoothingGroup(0)}
 
-	// TODO: materials
+	var mtlLib []*Material
+	var mtlInd int = 0
+	var mtls []*Material = []*Material{NewDefaultMaterial("")}
 
 	s := bufio.NewScanner(file)
 	for s.Scan() {
@@ -322,19 +327,42 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				vert3 := readIndexedVertex(field)
 				sGroup := &sGroups[sGroupInd]
 				sGroup.faces = append(sGroup.faces, vert1, vert2, vert3)
+				sGroup.mats = append(sGroup.mats, mtlInd, mtlInd, mtlInd)
 				vert2 = vert3
 			}
 		case "mtllib":
+			mtlLib = ReadMaterials(fields[1:])
 		case "usemtl":
+			// find material in current library with given name
+			var mtl *Material
+			for _, mtl = range mtlLib {
+				if mtl.name == fields[1] {
+					break
+				}
+			}
+
+			// if the material has been used before, use it again
+			for mtlInd = 0; mtlInd < len(mtls); mtlInd++ {
+				if mtls[mtlInd] == mtl {
+					break
+				}
+			}
+
+			// otherwise, make a new material
+			if mtlInd == len(mtls) {
+				mtls = append(mtls, mtl)
+			}
 		default:
 			println("ignoring line prefix", fields[0])
 		}
 	}
 
 	var m Mesh
-	var sm *SubMesh = NewSubMesh()
-	var verts []Vertex
-	var inds []int32
+	m.subMeshes = make([]*SubMesh, len(mtls)) // one submesh per material
+	for i, _ := range m.subMeshes {
+		m.subMeshes[i] = NewSubMesh()
+		m.subMeshes[i].mtl = mtls[i]
+	}
 
 	for _, sGroup := range sGroups {
 		var weightedNormals []Vec3 = make([]Vec3, len(positions) + 1)
@@ -349,21 +377,27 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			weightedNormals[v3] = weightedNormals[v3].Add(normal)
 		}
 
-		for _, iVert := range sGroup.faces {
+		for i, iVert := range sGroup.faces {
 			pos := positions[iVert.v]
 			texCoord := texCoords[iVert.vt]
 			normal := weightedNormals[iVert.v].Norm()
-			verts = append(verts, NewVertex(pos, texCoord, normal))
-			inds = append(inds, int32(len(verts) - 1))
+			m.subMeshes[sGroup.mats[i]].verts = append(m.subMeshes[sGroup.mats[i]].verts, NewVertex(pos, texCoord, normal))
+			m.subMeshes[sGroup.mats[i]].faces = append(m.subMeshes[sGroup.mats[i]].faces, int32(len(m.subMeshes[sGroup.mats[i]].verts) - 1))
 		}
 	}
 
-	sm.Finish(verts, inds)
-	sm.mtl.Finish()
-	m.subMeshes = append(m.subMeshes, sm)
+	if len(m.subMeshes[0].verts) == 0 {
+		m.subMeshes = m.subMeshes[1:]
+	}
 
 	m.modelMat = NewMat4Identity()
 	m.tmpMat = NewMat4Zero()
+
+	for i, _ := range m.subMeshes {
+		println("submesh", i, "with", len(m.subMeshes[i].verts), "verts")
+		m.subMeshes[i].Finish()
+		m.subMeshes[i].mtl.Finish()
+	}
 
 	return &m, nil
 }
