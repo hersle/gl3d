@@ -352,7 +352,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		for _, iVert := range sGroup.faces {
 			pos := positions[iVert.v]
 			texCoord := texCoords[iVert.vt]
-			normal := weightedNormals[iVert.v]
+			normal := weightedNormals[iVert.v].Norm()
 			verts = append(verts, NewVertex(pos, texCoord, normal))
 			inds = append(inds, int32(len(verts) - 1))
 		}
