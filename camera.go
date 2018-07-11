@@ -55,13 +55,11 @@ func (c *Camera) SetAspect(aspect float32) {
 func (c *Camera) updateViewMatrix() {
 	c.viewMat.LookAt(c.pos, c.pos.Add(c.fwd), c.up)
 	c.dirtyViewMat = false
-	println("updated view matrix")
 }
 
 func (c *Camera) updateProjectionMatrix() {
 	c.projMat.Perspective(c.fovY, c.aspect, c.near, c.far)
 	c.dirtyProjMat = false
-	println("updated projection matrix")
 }
 
 func (c *Camera) ViewMatrix() *Mat4 {
