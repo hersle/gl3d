@@ -26,6 +26,14 @@ type Renderer struct {
 	normalMat *Mat4
 }
 
+func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
+	var vert Vertex
+	vert.pos = pos
+	vert.texCoord = texCoord
+	vert.normal = normal
+	return vert
+}
+
 func NewRenderer(win *Window) (*Renderer, error) {
 	var r Renderer
 
