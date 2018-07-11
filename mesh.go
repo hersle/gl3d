@@ -259,16 +259,13 @@ type indexedVertex struct {
 
 type smoothingGroup struct {
 	id int
-	faces []int32
+	faces []indexedVertex
 }
 
-func getSmoothingGroupID(sGroupNames []string, sGroupName string) int {
-	for sGroupID, _ := range sGroupNames {
-		if sGroupNames[sGroupID] == sGroupName {
-			return sGroupID
-		}
-	}
-	return -1
+func newSmoothingGroup(id int) smoothingGroup {
+	var sGroup smoothingGroup
+	sGroup.id = id
+	return sGroup
 }
 
 func ReadMeshObj(filename string) (*Mesh, error) {
@@ -282,11 +279,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	var texCoords []Vec2 = []Vec2{NewVec2(0, 0)}
 	var normals []Vec3 = []Vec3{NewVec3(0, 0, 0)}
 
-	// TODO: smoothing groups
-	var sGroupNames []string
-	var sGroupID int = 0
-	var sGroups [][]indexedVertex
-	sGroups = append(sGroups, make([]indexedVertex, 0))
+	var sGroupInd int = 0
+	var sGroups []smoothingGroup = []smoothingGroup{newSmoothingGroup(0)}
 
 	// TODO: materials
 
@@ -307,20 +301,27 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		case "vn":
 			normals = append(normals, readVec3(fields[1:]))
 		case "s":
-			id := getSmoothingGroupID(sGroupNames, fields[1])
-			if id == -1 {
-				sGroupNames = append(sGroupNames, fields[1])
-				sGroups = append(sGroups, make([]indexedVertex, 0))
-				sGroupID = len(sGroups)-1
+			var id int
+			if fields[1] == "off" {
+				id = 0
 			} else {
-				sGroupID = id
+				fmt.Sscan(fields[1], &id)
+			}
+			for sGroupInd = 0; sGroupInd < len(sGroups); sGroupInd++ {
+				if sGroups[sGroupInd].id == id {
+					break
+				}
+			}
+			if sGroupInd == len(sGroups) {
+				sGroups = append(sGroups, newSmoothingGroup(id))
 			}
 		case "f":
 			vert1 := readIndexedVertex(fields[1])
 			vert2 := readIndexedVertex(fields[2])
 			for _, field := range fields[3:] {
 				vert3 := readIndexedVertex(field)
-				sGroups[sGroupID] = append(sGroups[sGroupID], vert1, vert2, vert3)
+				sGroup := &sGroups[sGroupInd]
+				sGroup.faces = append(sGroup.faces, vert1, vert2, vert3)
 				vert2 = vert3
 			}
 		case "mtllib":
@@ -337,9 +338,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	for _, sGroup := range sGroups {
 		var weightedNormals []Vec3 = make([]Vec3, len(positions) + 1)
-		for i := 0; i < len(sGroup); i += 3 {
+		for i := 0; i < len(sGroup.faces); i += 3 {
 			i1, i2, i3 := i + 0, i + 1, i + 2
-			v1, v2, v3 := sGroup[i1].v, sGroup[i2].v, sGroup[i3].v
+			v1, v2, v3 := sGroup.faces[i1].v, sGroup.faces[i2].v, sGroup.faces[i3].v
 			edge1 := positions[v3].Sub(positions[v1])
 			edge2 := positions[v3].Sub(positions[v2])
 			normal := edge1.Cross(edge2).Norm()
@@ -348,12 +349,12 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			weightedNormals[v3] = weightedNormals[v3].Add(normal)
 		}
 
-		for i := 0; i < len(sGroup); i++ {
+		for _, iVert := range sGroup.faces {
 			inds = append(inds, int32(len(verts)))
 			var vert Vertex
-			vert.pos = positions[sGroup[i].v]
-			vert.texCoord = texCoords[sGroup[i].vt]
-			vert.normal = weightedNormals[sGroup[i].v].Norm()
+			vert.pos = positions[iVert.v]
+			vert.texCoord = texCoords[iVert.vt]
+			vert.normal = weightedNormals[iVert.v]
 			verts = append(verts, vert)
 		}
 	}
