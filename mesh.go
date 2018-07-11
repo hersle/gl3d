@@ -369,6 +369,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			if mtlInd == len(mtls) {
 				mtls = append(mtls, mtl)
 			}
+		case "g":
+		case "o":
+			continue // ignore without warning - no effect on appearance
 		default:
 			println("ignoring line prefix", fields[0])
 		}
