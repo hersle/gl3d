@@ -9,6 +9,12 @@ import (
 	"strings"
 )
 
+type Mesh struct {
+	subMeshes []*SubMesh
+	modelMat *Mat4
+	tmpMat *Mat4
+}
+
 type SubMesh struct {
 	verts []Vertex
 	faces []int32
@@ -18,10 +24,20 @@ type SubMesh struct {
 	mtl *Material
 }
 
-type Mesh struct {
-	subMeshes []*SubMesh
-	modelMat *Mat4
-	tmpMat *Mat4
+type indexedVertex struct {
+	v int
+	vt int
+	vn int
+}
+
+type indexedTriangle struct {
+	iVerts [3]indexedVertex
+	mtlInd int
+}
+
+type smoothingGroup struct {
+	id int
+	iTris []indexedTriangle
 }
 
 func NewSubMesh() *SubMesh {
@@ -46,13 +62,17 @@ func (sm *SubMesh) Finish() {
 	}
 }
 
-func ReadMesh(filename string) (*Mesh, error) {
-	switch path.Ext(filename) {
-	case ".obj":
-		return ReadMeshObj(filename)
-	default:
-		return nil, errors.New(fmt.Sprintf("%s has unknown format", filename))
-	}
+func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
+	var iTri indexedTriangle
+	iTri.iVerts[0], iTri.iVerts[1], iTri.iVerts[2] = iv1, iv2, iv3
+	iTri.mtlInd = mtlInd
+	return iTri
+}
+
+func newSmoothingGroup(id int) smoothingGroup {
+	var sGroup smoothingGroup
+	sGroup.id = id
+	return sGroup
 }
 
 func readVec2(fields []string) Vec2 {
@@ -63,9 +83,11 @@ func readVec2(fields []string) Vec2 {
 }
 
 func readVec3(fields []string) Vec3 {
-	var z float32
+	var x, y, z float32
+	fmt.Sscan(fields[0], &x)
+	fmt.Sscan(fields[1], &y)
 	fmt.Sscan(fields[2], &z)
-	return readVec2(fields[:2]).Vec3(z)
+	return NewVec3(x, y, z)
 }
 
 func readIndexedVertex(desc string) indexedVertex {
@@ -81,33 +103,13 @@ func readIndexedVertex(desc string) indexedVertex {
 	return vert
 }
 
-type indexedVertex struct {
-	v int
-	vt int
-	vn int
-}
-
-type indexedTriangle struct {
-	iVerts [3]indexedVertex
-	mtlInd int
-}
-
-type smoothingGroup struct {
-	id int
-	iTris []indexedTriangle
-}
-
-func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
-	var iTri indexedTriangle
-	iTri.iVerts[0], iTri.iVerts[1], iTri.iVerts[2] = iv1, iv2, iv3
-	iTri.mtlInd = mtlInd
-	return iTri
-}
-
-func newSmoothingGroup(id int) smoothingGroup {
-	var sGroup smoothingGroup
-	sGroup.id = id
-	return sGroup
+func ReadMesh(filename string) (*Mesh, error) {
+	switch path.Ext(filename) {
+	case ".obj":
+		return ReadMeshObj(filename)
+	default:
+		return nil, errors.New(fmt.Sprintf("%s has unknown format", filename))
+	}
 }
 
 func ReadMeshObj(filename string) (*Mesh, error) {
