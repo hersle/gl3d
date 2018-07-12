@@ -14,6 +14,7 @@ uniform vec3 diffuse;
 uniform vec3 specular;
 uniform float shine;
 uniform sampler2D ambientMap;
+uniform sampler2D diffuseMap;
 
 // light
 uniform vec3 lightPosition;
@@ -32,7 +33,8 @@ void main() {
 	lightDirection = vec3(viewMatrix * vec4(lightDirection, 0));
 
 	vec3 diffuseFactor = max(dot(normalF, -lightDirection), 0) * diffuseLight;
-	vec3 diffuseColor = diffuseFactor * diffuse;
+	vec4 diffuseMapRGBA = texture(diffuseMap, texCoordF);
+	vec3 diffuseColor = diffuseFactor * ((1 - diffuseMapRGBA.a) * diffuse + diffuseMapRGBA.a * diffuseMapRGBA.rgb);
 
 	vec3 reflection = reflect(lightDirection, normalF);
 	vec3 fragDirection = normalize(viewPosition) - vec3(0, 0, 0);

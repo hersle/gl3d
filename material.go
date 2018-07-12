@@ -17,6 +17,8 @@ type Material struct {
 	shine float32
 	ambientMapFilename string
 	ambientMapTexture *Texture2D
+	diffuseMapFilename string
+	diffuseMapTexture *Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -46,6 +48,15 @@ func (mtl *Material) Finish() {
 	} else {
 		mtl.ambientMapTexture = NewTexture2D()
 		err := mtl.ambientMapTexture.ReadImage(mtl.ambientMapFilename)
+		if err != nil {
+			panic(err)
+		}
+	}
+	if mtl.diffuseMapFilename == "" {
+		mtl.diffuseMapTexture = defaultTexture
+	} else {
+		mtl.diffuseMapTexture = NewTexture2D()
+		err := mtl.diffuseMapTexture.ReadImage(mtl.diffuseMapFilename)
 		if err != nil {
 			panic(err)
 		}
@@ -136,6 +147,11 @@ func ReadMaterials(filenames []string) []*Material {
 					panic("ambient map error")
 				}
 				mtl.ambientMapFilename = fields[1]
+			case "map_Kd":
+				if len(fields[1:]) != 1 {
+					panic("diffuse map error")
+				}
+				mtl.diffuseMapFilename = fields[1]
 			}
 		}
 

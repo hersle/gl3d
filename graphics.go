@@ -20,11 +20,11 @@ type Renderer struct {
 	modelMatUfm, viewMatUfm, projMatUfm *Uniform
 	normalMatUfm *Uniform
 	ambientUfm, ambientLightUfm, ambientMapUfm *Uniform
-	diffuseUfm, diffuseLightUfm *Uniform
+	diffuseUfm, diffuseLightUfm, diffuseMapUfm *Uniform
 	specularUfm, specularLightUfm, shineUfm *Uniform
 	lightPosUfm *Uniform
 	normalMat *Mat4
-	texUnit *TextureUnit
+	ambientTexUnit, diffuseTexUnit *TextureUnit
 }
 
 func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
@@ -117,14 +117,22 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.diffuseMapUfm, err = r.prog.Uniform("diffuseMap")
+	if err != nil {
+		println(err.Error())
+	}
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.texCoordAttr, 2, gl.FLOAT, false)
 
-	r.texUnit = NewTextureUnit(0)
-	r.prog.SetUniform(r.ambientMapUfm, r.texUnit)
-	gls.SetTextureUnit(r.texUnit)
+	r.ambientTexUnit = NewTextureUnit(0)
+	r.prog.SetUniform(r.ambientMapUfm, r.ambientTexUnit)
+
+	//gls.SetTextureUnit(r.texUnit)
+
+	r.diffuseTexUnit = NewTextureUnit(1)
+	r.prog.SetUniform(r.diffuseMapUfm, r.diffuseTexUnit)
 
 	r.normalMat = NewMat4Zero()
 
@@ -166,7 +174,8 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.vao.SetAttribSource(r.texCoordAttr, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
-		r.texUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
+		r.ambientTexUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
+		r.diffuseTexUnit.SetTexture2D(subMesh.mtl.diffuseMapTexture)
 		gls.SetVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
