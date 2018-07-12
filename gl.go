@@ -16,28 +16,29 @@ type StateTracker struct {
 	vaBound *VertexArray
 	progBound *Program
 	tex2dBound *Texture2D
+	texUnitBound *TextureUnit
 }
 
 var gls *StateTracker = &StateTracker{}
 
-func (st *StateTracker) BindVertexArray(va *VertexArray) {
+func (st *StateTracker) SetVertexArray(va *VertexArray) {
 	if st.vaBound == nil || st.vaBound.id != va.id {
 		gl.BindVertexArray(va.id)
 		st.vaBound = va
 	}
 }
 
-func (st *StateTracker) BindTexture2D(tex2d *Texture2D) {
-	if st.tex2dBound == nil || st.tex2dBound.id != tex2d.id {
-		gl.BindTexture(gl.TEXTURE_2D, tex2d.id)
-		st.tex2dBound = tex2d
-	}
-}
-
-func (st *StateTracker) UseProgram(prog *Program) {
+func (st *StateTracker) SetProgram(prog *Program) {
 	if st.progBound == nil || st.progBound.id != prog.id {
 		gl.UseProgram(prog.id)
 		st.progBound = prog
+	}
+}
+
+func (st *StateTracker) SetTextureUnit(tu *TextureUnit) {
+	if st.texUnitBound == nil || st.texUnitBound.id != tu.id {
+		gl.ActiveTexture(uint32(tu.id))
+		st.texUnitBound = tu
 	}
 }
 
@@ -192,6 +193,13 @@ func (p *Program) SetUniform(u *Uniform, val interface{}) {
 			gl.ProgramUniformMatrix4fv(p.id, int32(u.id), 1, true, &val[0])
 			return
 		}
+	case gl.SAMPLER_2D:
+		switch val.(type) {
+		case *TextureUnit:
+			val := val.(*TextureUnit)
+			gl.ProgramUniform1i(p.id, int32(u.id), val.id)
+			return
+		}
 	default:
 		panic("tried to set uniform of unknown type")
 	}
@@ -317,4 +325,20 @@ func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int)
 
 func (va *VertexArray) SetIndexBuffer(b *Buffer) {
 	gl.VertexArrayElementBuffer(va.id, b.id)
+}
+
+
+
+type TextureUnit struct {
+	id int32
+}
+
+func NewTextureUnit(id int) *TextureUnit {
+	var tu TextureUnit
+	tu.id = int32(id)
+	return &tu
+}
+
+func (tu *TextureUnit) SetTexture2D(t *Texture2D) {
+	gl.BindTextureUnit(uint32(tu.id), t.id)
 }

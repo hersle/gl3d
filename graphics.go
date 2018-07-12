@@ -19,11 +19,12 @@ type Renderer struct {
 	posAttr, texCoordAttr, normalAttr *Attrib
 	modelMatUfm, viewMatUfm, projMatUfm *Uniform
 	normalMatUfm *Uniform
-	ambientUfm, ambientLightUfm *Uniform
+	ambientUfm, ambientLightUfm, ambientMapUfm *Uniform
 	diffuseUfm, diffuseLightUfm *Uniform
 	specularUfm, specularLightUfm, shineUfm *Uniform
 	lightPosUfm *Uniform
 	normalMat *Mat4
+	texUnit *TextureUnit
 }
 
 func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
@@ -50,7 +51,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		return nil, err
 	}
-	gls.UseProgram(r.prog)
+	gls.SetProgram(r.prog)
 
 	r.posAttr, err = r.prog.Attrib("position")
 	if err != nil {
@@ -112,11 +113,18 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
-
+	r.ambientMapUfm, err = r.prog.Uniform("ambientMap")
+	if err != nil {
+		println(err.Error())
+	}
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.texCoordAttr, 2, gl.FLOAT, false)
+
+	r.texUnit = NewTextureUnit(0)
+	r.prog.SetUniform(r.ambientMapUfm, r.texUnit)
+	gls.SetTextureUnit(r.texUnit)
 
 	r.normalMat = NewMat4Zero()
 
@@ -158,8 +166,8 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.vao.SetAttribSource(r.texCoordAttr, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
-		gls.BindTexture2D(subMesh.mtl.ambientMapTexture)
-		gls.BindVertexArray(r.vao)
+		r.texUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
+		gls.SetVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
 }
