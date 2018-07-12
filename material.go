@@ -15,6 +15,7 @@ type Material struct {
 	diffuse Vec3
 	specular Vec3
 	shine float32
+	alpha float32
 	ambientMapFilename string
 	ambientMapTexture *Texture2D
 	diffuseMapFilename string
@@ -34,6 +35,7 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.diffuse = NewVec3(0, 0, 0)
 	mtl.specular = NewVec3(0, 0, 0)
 	mtl.shine = 0
+	mtl.alpha = 1
 	return &mtl
 }
 
@@ -170,6 +172,14 @@ func ReadMaterials(filenames []string) []*Material {
 					panic("specular map error")
 				}
 				mtl.specularMapFilename = fields[1]
+			case "d":
+				if len(fields[1:]) != 1 {
+					panic("dissolve error")
+				}
+				_, err = fmt.Sscan(fields[1], &mtl.alpha)
+				if err != nil {
+					panic(err)
+				}
 			default:
 				println("ignored material file prefix", fields[0])
 			}

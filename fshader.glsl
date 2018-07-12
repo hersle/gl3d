@@ -16,6 +16,7 @@ uniform float shine;
 uniform sampler2D ambientMap;
 uniform sampler2D diffuseMap;
 uniform sampler2D specularMap;
+uniform float alpha; // TODO: let textures modify alpha
 
 // light
 uniform vec3 lightPosition;
@@ -45,5 +46,5 @@ void main() {
 	vec4 specularMapRGBA = texture(specularMap, texCoordF);
 	vec3 specularColor = specularFactor * ((1 - specularMapRGBA.a) * specular + specularMapRGBA.a * specularMapRGBA.rgb);
 
-	fragColor = vec4(ambientColor + diffuseColor + specularColor, 1.0);
+	fragColor = vec4(ambientColor + diffuseColor + specularColor, alpha);
 }

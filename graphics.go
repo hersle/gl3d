@@ -23,6 +23,7 @@ type Renderer struct {
 	diffuseUfm, diffuseLightUfm, diffuseMapUfm *Uniform
 	specularUfm, specularLightUfm, shineUfm, specularMapUfm *Uniform
 	lightPosUfm *Uniform
+	alphaUfm *Uniform
 	normalMat *Mat4
 	ambientTexUnit, diffuseTexUnit, specularTexUnit *TextureUnit
 }
@@ -46,6 +47,8 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	}
 
 	gl.Enable(gl.DEPTH_TEST)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	r.prog, err = ReadProgram("vshader.glsl", "fshader.glsl")
 	if err != nil {
@@ -125,6 +128,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.alphaUfm, err = r.prog.Uniform("alpha")
+	if err != nil {
+		println(err.Error())
+	}
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
@@ -169,6 +176,7 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.prog.SetUniform(r.diffuseUfm, subMesh.mtl.diffuse)
 		r.prog.SetUniform(r.specularUfm, subMesh.mtl.specular)
 		r.prog.SetUniform(r.shineUfm, subMesh.mtl.shine)
+		r.prog.SetUniform(r.alphaUfm, subMesh.mtl.alpha)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
