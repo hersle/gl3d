@@ -170,6 +170,8 @@ func ReadMaterials(filenames []string) []*Material {
 					panic("specular map error")
 				}
 				mtl.specularMapFilename = fields[1]
+			default:
+				println("ignored material file prefix", fields[0])
 			}
 		}
 
