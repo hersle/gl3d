@@ -15,6 +15,7 @@ uniform vec3 specular;
 uniform float shine;
 uniform sampler2D ambientMap;
 uniform sampler2D diffuseMap;
+uniform sampler2D specularMap;
 
 // light
 uniform vec3 lightPosition;
@@ -41,7 +42,8 @@ void main() {
 	float facing = dot(normalF, lightDirection) < 0 ? 1 : 0;
 	vec3 specularFactor = max(pow(dot(reflection, -fragDirection), shine), 0) *
 	                      facing * specularLight;
-	vec3 specularColor = specularFactor * specular;
+	vec4 specularMapRGBA = texture(specularMap, texCoordF);
+	vec3 specularColor = specularFactor * ((1 - specularMapRGBA.a) * specular + specularMapRGBA.a * specularMapRGBA.rgb);
 
 	fragColor = vec4(ambientColor + diffuseColor + specularColor, 1.0);
 }

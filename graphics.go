@@ -21,10 +21,10 @@ type Renderer struct {
 	normalMatUfm *Uniform
 	ambientUfm, ambientLightUfm, ambientMapUfm *Uniform
 	diffuseUfm, diffuseLightUfm, diffuseMapUfm *Uniform
-	specularUfm, specularLightUfm, shineUfm *Uniform
+	specularUfm, specularLightUfm, shineUfm, specularMapUfm *Uniform
 	lightPosUfm *Uniform
 	normalMat *Mat4
-	ambientTexUnit, diffuseTexUnit *TextureUnit
+	ambientTexUnit, diffuseTexUnit, specularTexUnit *TextureUnit
 }
 
 func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
@@ -121,6 +121,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
+	r.specularMapUfm, err = r.prog.Uniform("specularMap")
+	if err != nil {
+		println(err.Error())
+	}
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
@@ -129,10 +133,11 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.ambientTexUnit = NewTextureUnit(0)
 	r.prog.SetUniform(r.ambientMapUfm, r.ambientTexUnit)
 
-	//gls.SetTextureUnit(r.texUnit)
-
 	r.diffuseTexUnit = NewTextureUnit(1)
 	r.prog.SetUniform(r.diffuseMapUfm, r.diffuseTexUnit)
+
+	r.specularTexUnit = NewTextureUnit(2)
+	r.prog.SetUniform(r.specularMapUfm, r.specularTexUnit)
 
 	r.normalMat = NewMat4Zero()
 
@@ -176,6 +181,7 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 
 		r.ambientTexUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
 		r.diffuseTexUnit.SetTexture2D(subMesh.mtl.diffuseMapTexture)
+		r.specularTexUnit.SetTexture2D(subMesh.mtl.specularMapTexture)
 		gls.SetVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}

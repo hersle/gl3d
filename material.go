@@ -19,6 +19,8 @@ type Material struct {
 	ambientMapTexture *Texture2D
 	diffuseMapFilename string
 	diffuseMapTexture *Texture2D
+	specularMapFilename string
+	specularMapTexture *Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -52,11 +54,22 @@ func (mtl *Material) Finish() {
 			panic(err)
 		}
 	}
+
 	if mtl.diffuseMapFilename == "" {
 		mtl.diffuseMapTexture = defaultTexture
 	} else {
 		mtl.diffuseMapTexture = NewTexture2D()
 		err := mtl.diffuseMapTexture.ReadImage(mtl.diffuseMapFilename)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	if mtl.specularMapFilename == "" {
+		mtl.specularMapTexture = defaultTexture
+	} else {
+		mtl.specularMapTexture = NewTexture2D()
+		err := mtl.specularMapTexture.ReadImage(mtl.specularMapFilename)
 		if err != nil {
 			panic(err)
 		}
@@ -152,6 +165,11 @@ func ReadMaterials(filenames []string) []*Material {
 					panic("diffuse map error")
 				}
 				mtl.diffuseMapFilename = fields[1]
+			case "map_Ks":
+				if len(fields[1:]) != 1 {
+					panic("specular map error")
+				}
+				mtl.specularMapFilename = fields[1]
 			}
 		}
 
