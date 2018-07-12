@@ -26,10 +26,10 @@ var defaultTexture *Texture2D = nil
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
 	mtl.name = name
-	mtl.ambient = NewVec3(0.5, 0.5, 0.5)
-	mtl.diffuse = NewVec3(0.5, 0.5, 0.5)
-	mtl.specular = NewVec3(0.5, 0.5, 0.5)
-	mtl.shine = 100
+	mtl.ambient = NewVec3(0, 0, 0)
+	mtl.diffuse = NewVec3(0, 0, 0)
+	mtl.specular = NewVec3(0, 0, 0)
+	mtl.shine = 0
 	return &mtl
 }
 
