@@ -172,6 +172,11 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				vert2 = vert3
 			}
 		case "mtllib":
+			for i, _ := range fields[1:] {
+				if !path.IsAbs(fields[1:][i]) {
+					fields[1:][i] = path.Join(path.Dir(filename), fields[1:][i])
+				}
+			}
 			mtlLib = ReadMaterials(fields[1:])
 		case "usemtl":
 			// find material in current library with given name
