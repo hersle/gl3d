@@ -104,12 +104,11 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.vao.SetAttribFormat(r.attrs.texCoord, 2, gl.FLOAT, false)
 
 	r.ambientTexUnit = NewTextureUnit(0)
-	r.prog.SetUniform(r.uniforms.ambientMap, r.ambientTexUnit)
-
 	r.diffuseTexUnit = NewTextureUnit(1)
-	r.prog.SetUniform(r.uniforms.diffuseMap, r.diffuseTexUnit)
-
 	r.specularTexUnit = NewTextureUnit(2)
+
+	r.prog.SetUniform(r.uniforms.ambientMap, r.ambientTexUnit)
+	r.prog.SetUniform(r.uniforms.diffuseMap, r.diffuseTexUnit)
 	r.prog.SetUniform(r.uniforms.specularMap, r.specularTexUnit)
 
 	r.normalMat = NewMat4Zero()
@@ -122,14 +121,14 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
-	r.prog.SetUniform(r.uniforms.modelMat, m.modelMat)
-	r.prog.SetUniform(r.uniforms.viewMat, c.ViewMatrix())
-	r.prog.SetUniform(r.uniforms.projMat, c.ProjectionMatrix())
-
 	r.normalMat.Copy(c.ViewMatrix())
 	r.normalMat.Mult(m.modelMat)
 	r.normalMat.Invert()
 	r.normalMat.Transpose()
+
+	r.prog.SetUniform(r.uniforms.modelMat, m.modelMat)
+	r.prog.SetUniform(r.uniforms.viewMat, c.ViewMatrix())
+	r.prog.SetUniform(r.uniforms.projMat, c.ProjectionMatrix())
 	r.prog.SetUniform(r.uniforms.normalMat, r.normalMat)
 
 	r.prog.SetUniform(r.uniforms.ambientLight, NewVec3(1, 1, 1))
