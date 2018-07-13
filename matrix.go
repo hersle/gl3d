@@ -3,10 +3,35 @@ package main
 import (
 	"math"
 	"fmt"
-	"errors"
 )
 
 type Mat4 [4*4]float32
+
+type MatrixStack struct {
+	matrices []*Mat4
+	top int
+}
+
+var internalMatStack *MatrixStack
+
+func NewMatrixStack() *MatrixStack {
+	var ms MatrixStack
+	return &ms
+}
+
+func (ms *MatrixStack) New() *Mat4 {
+	if ms.top >= len(ms.matrices) {
+		ms.matrices = append(ms.matrices, NewMat4Zero())
+	}
+	ms.top++
+	return ms.matrices[ms.top - 1]
+}
+
+func (ms *MatrixStack) Pop() {
+	if ms.top > 0 {
+		ms.top--
+	}
+}
 
 func NewMat4Zero() *Mat4 {
 	var a Mat4
@@ -54,10 +79,11 @@ func (a *Mat4) SetRow(i int, row Vec4) {
 	a.Set(i, 3, row.W())
 }
 
-func (a *Mat4) Copy(b *Mat4) {
+func (a *Mat4) Copy(b *Mat4) *Mat4 {
 	for i := 0; i < 4; i++ {
 		a.SetRow(i, b.Row(i))
 	}
+	return a
 }
 
 func (a *Mat4) Add(b *Mat4) *Mat4 {
@@ -133,11 +159,23 @@ func (a *Mat4) Translation(d Vec3) *Mat4 {
 	return a
 }
 
+func (a *Mat4) MultTranslation(d Vec3) *Mat4 {
+	a.Mult(internalMatStack.New().Translation(d))
+	internalMatStack.Pop()
+	return a
+}
+
 func (a *Mat4) Scaling(factor Vec3) *Mat4 {
 	a.SetRow(0, NewVec4(factor.X(), 0, 0, 0))
 	a.SetRow(1, NewVec4(0, factor.Y(), 0, 0))
 	a.SetRow(2, NewVec4(0, 0, factor.Z(), 0))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultScaling(factor Vec3) *Mat4 {
+	a.Mult(internalMatStack.New().Scaling(factor))
+	internalMatStack.Pop()
 	return a
 }
 
@@ -151,6 +189,12 @@ func (a *Mat4) RotationX(ang float32) *Mat4 {
 	return a
 }
 
+func (a *Mat4) MultRotationX(ang float32) *Mat4 {
+	a.Mult(internalMatStack.New().RotationX(ang))
+	internalMatStack.Pop()
+	return a
+}
+
 func (a *Mat4) RotationY(ang float32) *Mat4 {
 	cos := float32(math.Cos(float64(ang)))
 	sin := float32(math.Sin(float64(ang)))
@@ -158,6 +202,12 @@ func (a *Mat4) RotationY(ang float32) *Mat4 {
 	a.SetCol(1, NewVec4(0, 1, 0, 0))
 	a.SetCol(2, NewVec4(sin, 0, cos, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultRotationY(ang float32) *Mat4 {
+	a.Mult(internalMatStack.New().RotationY(ang))
+	internalMatStack.Pop()
 	return a
 }
 
@@ -171,8 +221,20 @@ func (a *Mat4) RotationZ(ang float32) *Mat4 {
 	return a
 }
 
+func (a *Mat4) MultRotationZ(ang float32) *Mat4 {
+	a.Mult(internalMatStack.New().RotationZ(ang))
+	internalMatStack.Pop()
+	return a
+}
+
 func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
 	a.Scaling(NewVec3(2 / size.X(), 2 / size.Y(), -2 / size.Z()))
+	return a
+}
+
+func (a *Mat4) MultOrthoCentered(size Vec3) *Mat4 {
+	a.Mult(internalMatStack.New().OrthoCentered(size))
+	internalMatStack.Pop()
 	return a
 }
 
@@ -184,8 +246,20 @@ func (a *Mat4) Frustum(l, b, r, t, n, f float32) *Mat4 {
 	return a
 }
 
+func (a *Mat4) MultFrustum(l, b, r, t, n, f float32) *Mat4 {
+	a.Mult(internalMatStack.New().Frustum(l, b, r, t, n, f))
+	internalMatStack.Pop()
+	return a
+}
+
 func (a *Mat4) FrustumCentered(w, h, n, f float32) *Mat4 {
 	a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
+	return a
+}
+
+func (a *Mat4) MultFrustumCentered(w, h, n, f float32) *Mat4 {
+	a.Mult(internalMatStack.New().FrustumCentered(w, h, n, f))
+	internalMatStack.Pop()
 	return a
 }
 
@@ -193,6 +267,12 @@ func (a *Mat4) Perspective(fovY, aspect, n, f float32) *Mat4 {
 	h := 2 * n * float32(math.Tan(float64(fovY / 2)))
 	w := aspect * h
 	a.FrustumCentered(w, h, n, f)
+	return a
+}
+
+func (a *Mat4) MultPerspective(fovY, aspect, n, f float32) *Mat4 {
+	a.Mult(internalMatStack.New().Perspective(fovY, aspect, n, f))
+	internalMatStack.Pop()
 	return a
 }
 
@@ -204,6 +284,12 @@ func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
 	a.SetRow(1, up.Vec4(-up.Dot(eye)))
 	a.SetRow(2, fwd.Scale(-1).Vec4(+fwd.Dot(eye)))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	return a
+}
+
+func (a *Mat4) MultLookAt(eye, target, up Vec3) *Mat4 {
+	a.Mult(internalMatStack.New().LookAt(eye, target, up))
+	internalMatStack.Pop()
 	return a
 }
 
@@ -229,11 +315,11 @@ func (a *Mat4) Determinant() float32 {
 	return t1 + t2 + t3 + t4
 }
 
-func (a *Mat4) Invert() error {
+func (a *Mat4) Invert() *Mat4 {
 	det := a.Determinant()
 
 	if det == 0 {
-		return errors.New("cannot invert singular matrix")
+		panic("cannot invert singular matrix")
 	}
 
 	// 1-indexed variable names
@@ -296,9 +382,13 @@ func (a *Mat4) Invert() error {
 	a.SetRow(3, NewVec4(b41, b42, b43, b44))
 	a.Scale(1 / det)
 
-	return nil
+	return a
 }
 
 func (a *Mat4) String() string {
 	return fmt.Sprintf("%v\n%v\n%v\n%v\n", a.Row(0), a.Row(1), a.Row(2), a.Row(3))
+}
+
+func init() {
+	internalMatStack = NewMatrixStack()
 }
