@@ -28,6 +28,9 @@ func main() {
 			model.RotateY(3.1415 - 3.1415/5)
 			model.Translate(NewVec3(-2, -5, +5))
 		}
+		if filename == "objects/sponza.obj" {
+			model.Scale(0.02, 0.02, 0.02)
+		}
 		s.AddMesh(model)
 	}
 

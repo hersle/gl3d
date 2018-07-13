@@ -5,9 +5,11 @@ import (
 	"bufio"
 	"strings"
 	"fmt"
+	"path"
 	"image"
 	"image/color"
 	_ "image/png"
+	_ "github.com/ftrvxmtrx/tga"
 )
 
 type Material struct {
@@ -54,8 +56,6 @@ func readImage(filename string) (image.Image, error) {
 }
 
 func (mtl *Material) Finish() {
-	// TODO: image path relative to material file!
-
 	img, err := readImage(mtl.ambientMapFilename)
 	if err == nil {
 		mtl.ambientMapTexture = NewTexture2D()
@@ -170,17 +170,29 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("ambient map error")
 				}
-				mtl.ambientMapFilename = fields[1]
+				if path.IsAbs(fields[1]) {
+					mtl.ambientMapFilename = fields[1]
+				} else {
+					mtl.ambientMapFilename = path.Join(path.Dir(filename), fields[1])
+				}
 			case "map_Kd":
 				if len(fields[1:]) != 1 {
 					panic("diffuse map error")
 				}
-				mtl.diffuseMapFilename = fields[1]
+				if path.IsAbs(fields[1]) {
+					mtl.diffuseMapFilename = fields[1]
+				} else {
+					mtl.diffuseMapFilename = path.Join(path.Dir(filename), fields[1])
+				}
 			case "map_Ks":
 				if len(fields[1:]) != 1 {
 					panic("specular map error")
 				}
-				mtl.specularMapFilename = fields[1]
+				if path.IsAbs(fields[1]) {
+					mtl.specularMapFilename = fields[1]
+				} else {
+					mtl.specularMapFilename = path.Join(path.Dir(filename), fields[1])
+				}
 			case "d":
 				if len(fields[1:]) != 1 {
 					panic("dissolve error")
