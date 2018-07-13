@@ -14,16 +14,27 @@ type Vertex struct {
 // TODO: redesign attr/uniform access system?
 type Renderer struct {
 	prog *Program
+	uniforms struct {
+		modelMat *Uniform
+		viewMat *Uniform
+		projMat *Uniform
+		normalMat *Uniform
+		ambient *Uniform
+		ambientLight *Uniform
+		ambientMap *Uniform
+		diffuse *Uniform
+		diffuseLight *Uniform
+		diffuseMap *Uniform
+		specular *Uniform
+		specularLight *Uniform
+		shine *Uniform
+		specularMap *Uniform
+		lightPos *Uniform
+		alpha *Uniform
+	}
 	vbo, ibo *Buffer
 	vao *VertexArray
 	posAttr, texCoordAttr, normalAttr *Attrib
-	modelMatUfm, viewMatUfm, projMatUfm *Uniform
-	normalMatUfm *Uniform
-	ambientUfm, ambientLightUfm, ambientMapUfm *Uniform
-	diffuseUfm, diffuseLightUfm, diffuseMapUfm *Uniform
-	specularUfm, specularLightUfm, shineUfm, specularMapUfm *Uniform
-	lightPosUfm *Uniform
-	alphaUfm *Uniform
 	normalMat *Mat4
 	ambientTexUnit, diffuseTexUnit, specularTexUnit *TextureUnit
 }
@@ -68,83 +79,84 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	if err != nil {
 		println(err.Error())
 	}
-	r.modelMatUfm, err = r.prog.Uniform("modelMatrix")
+	r.uniforms.modelMat, err = r.prog.Uniform("modelMatrix")
 	if err != nil {
 		println(err.Error())
 	}
-	r.viewMatUfm, err = r.prog.Uniform("viewMatrix")
+	r.uniforms.viewMat, err = r.prog.Uniform("viewMatrix")
 	if err != nil {
 		println(err.Error())
 	}
-	r.projMatUfm, err = r.prog.Uniform("projectionMatrix")
+	r.uniforms.projMat, err = r.prog.Uniform("projectionMatrix")
 	if err != nil {
 		println(err.Error())
 	}
-	r.normalMatUfm, err = r.prog.Uniform("normalMatrix")
+	r.uniforms.normalMat, err = r.prog.Uniform("normalMatrix")
 	if err != nil {
 		println(err.Error())
 	}
-	r.ambientUfm, err = r.prog.Uniform("ambient")
+	r.uniforms.ambient, err = r.prog.Uniform("ambient")
 	if err != nil {
 		println(err.Error())
 	}
-	r.ambientLightUfm, err = r.prog.Uniform("ambientLight")
+	r.uniforms.ambientLight, err = r.prog.Uniform("ambientLight")
 	if err != nil {
 		println(err.Error())
 	}
-	r.diffuseUfm, err = r.prog.Uniform("diffuse")
+	r.uniforms.diffuse, err = r.prog.Uniform("diffuse")
 	if err != nil {
 		println(err.Error())
 	}
-	r.diffuseLightUfm, err = r.prog.Uniform("diffuseLight")
+	r.uniforms.diffuseLight, err = r.prog.Uniform("diffuseLight")
 	if err != nil {
 		println(err.Error())
 	}
-	r.specularUfm, err = r.prog.Uniform("specular")
+	r.uniforms.specular, err = r.prog.Uniform("specular")
 	if err != nil {
 		println(err.Error())
 	}
-	r.specularLightUfm, err = r.prog.Uniform("specularLight")
+	r.uniforms.specularLight, err = r.prog.Uniform("specularLight")
 	if err != nil {
 		println(err.Error())
 	}
-	r.shineUfm, err = r.prog.Uniform("shine")
+	r.uniforms.shine, err = r.prog.Uniform("shine")
 	if err != nil {
 		println(err.Error())
 	}
-	r.lightPosUfm, err = r.prog.Uniform("lightPosition")
+	r.uniforms.lightPos, err = r.prog.Uniform("lightPosition")
 	if err != nil {
 		println(err.Error())
 	}
-	r.ambientMapUfm, err = r.prog.Uniform("ambientMap")
+	r.uniforms.ambientMap, err = r.prog.Uniform("ambientMap")
 	if err != nil {
 		println(err.Error())
 	}
-	r.diffuseMapUfm, err = r.prog.Uniform("diffuseMap")
+	r.uniforms.diffuseMap, err = r.prog.Uniform("diffuseMap")
 	if err != nil {
 		println(err.Error())
 	}
-	r.specularMapUfm, err = r.prog.Uniform("specularMap")
+	r.uniforms.specularMap, err = r.prog.Uniform("specularMap")
 	if err != nil {
 		println(err.Error())
 	}
-	r.alphaUfm, err = r.prog.Uniform("alpha")
+	r.uniforms.alpha, err = r.prog.Uniform("alpha")
 	if err != nil {
 		println(err.Error())
 	}
+
 	r.vao = NewVertexArray()
 	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.texCoordAttr, 2, gl.FLOAT, false)
 
 	r.ambientTexUnit = NewTextureUnit(0)
-	r.prog.SetUniform(r.ambientMapUfm, r.ambientTexUnit)
+	r.prog.SetUniform(r.uniforms.ambientMap, r.ambientTexUnit)
 
 	r.diffuseTexUnit = NewTextureUnit(1)
-	r.prog.SetUniform(r.diffuseMapUfm, r.diffuseTexUnit)
+	r.prog.SetUniform(r.uniforms.diffuseMap, r.diffuseTexUnit)
 
 	r.specularTexUnit = NewTextureUnit(2)
-	r.prog.SetUniform(r.specularMapUfm, r.specularTexUnit)
+	r.prog.SetUniform(r.uniforms.specularMap, r.specularTexUnit)
 
 	r.normalMat = NewMat4Zero()
 
@@ -156,27 +168,27 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
-	r.prog.SetUniform(r.modelMatUfm, m.modelMat)
-	r.prog.SetUniform(r.viewMatUfm, c.ViewMatrix())
-	r.prog.SetUniform(r.projMatUfm, c.ProjectionMatrix())
+	r.prog.SetUniform(r.uniforms.modelMat, m.modelMat)
+	r.prog.SetUniform(r.uniforms.viewMat, c.ViewMatrix())
+	r.prog.SetUniform(r.uniforms.projMat, c.ProjectionMatrix())
 
 	r.normalMat.Copy(c.ViewMatrix())
 	r.normalMat.Mult(m.modelMat)
 	r.normalMat.Invert()
 	r.normalMat.Transpose()
-	r.prog.SetUniform(r.normalMatUfm, r.normalMat)
+	r.prog.SetUniform(r.uniforms.normalMat, r.normalMat)
 
-	r.prog.SetUniform(r.ambientLightUfm, NewVec3(1, 1, 1))
-	r.prog.SetUniform(r.diffuseLightUfm, NewVec3(1, 1, 1))
-	r.prog.SetUniform(r.specularLightUfm, NewVec3(1, 1, 1))
-	r.prog.SetUniform(r.lightPosUfm, NewVec3(0, +2.0, -5.0))
+	r.prog.SetUniform(r.uniforms.ambientLight, NewVec3(1, 1, 1))
+	r.prog.SetUniform(r.uniforms.diffuseLight, NewVec3(1, 1, 1))
+	r.prog.SetUniform(r.uniforms.specularLight, NewVec3(1, 1, 1))
+	r.prog.SetUniform(r.uniforms.lightPos, NewVec3(0, +2.0, -5.0))
 
 	for _, subMesh := range m.subMeshes {
-		r.prog.SetUniform(r.ambientUfm, subMesh.mtl.ambient)
-		r.prog.SetUniform(r.diffuseUfm, subMesh.mtl.diffuse)
-		r.prog.SetUniform(r.specularUfm, subMesh.mtl.specular)
-		r.prog.SetUniform(r.shineUfm, subMesh.mtl.shine)
-		r.prog.SetUniform(r.alphaUfm, subMesh.mtl.alpha)
+		r.prog.SetUniform(r.uniforms.ambient, subMesh.mtl.ambient)
+		r.prog.SetUniform(r.uniforms.diffuse, subMesh.mtl.diffuse)
+		r.prog.SetUniform(r.uniforms.specular, subMesh.mtl.specular)
+		r.prog.SetUniform(r.uniforms.shine, subMesh.mtl.shine)
+		r.prog.SetUniform(r.uniforms.alpha, subMesh.mtl.alpha)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
