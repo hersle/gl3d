@@ -32,9 +32,14 @@ type Renderer struct {
 		lightPos *Uniform
 		alpha *Uniform
 	}
+	//posAttr, texCoordAttr, normalAttr *Attrib
+	attrs struct {
+		pos *Attrib
+		texCoord *Attrib
+		normal *Attrib
+	}
 	vbo, ibo *Buffer
 	vao *VertexArray
-	posAttr, texCoordAttr, normalAttr *Attrib
 	normalMat *Mat4
 	ambientTexUnit, diffuseTexUnit, specularTexUnit *TextureUnit
 }
@@ -67,15 +72,15 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	}
 	gls.SetProgram(r.prog)
 
-	r.posAttr, err = r.prog.Attrib("position")
+	r.attrs.pos, err = r.prog.Attrib("position")
 	if err != nil {
 		println(err.Error())
 	}
-	r.texCoordAttr, err = r.prog.Attrib("texCoordV")
+	r.attrs.texCoord, err = r.prog.Attrib("texCoordV")
 	if err != nil {
 		println(err.Error())
 	}
-	r.normalAttr, err = r.prog.Attrib("normalV")
+	r.attrs.normal, err = r.prog.Attrib("normalV")
 	if err != nil {
 		println(err.Error())
 	}
@@ -145,9 +150,9 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	}
 
 	r.vao = NewVertexArray()
-	r.vao.SetAttribFormat(r.posAttr, 3, gl.FLOAT, false)
-	r.vao.SetAttribFormat(r.normalAttr, 3, gl.FLOAT, false)
-	r.vao.SetAttribFormat(r.texCoordAttr, 2, gl.FLOAT, false)
+	r.vao.SetAttribFormat(r.attrs.pos, 3, gl.FLOAT, false)
+	r.vao.SetAttribFormat(r.attrs.normal, 3, gl.FLOAT, false)
+	r.vao.SetAttribFormat(r.attrs.texCoord, 2, gl.FLOAT, false)
 
 	r.ambientTexUnit = NewTextureUnit(0)
 	r.prog.SetUniform(r.uniforms.ambientMap, r.ambientTexUnit)
@@ -192,11 +197,11 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
-		r.vao.SetAttribSource(r.posAttr, subMesh.vbo, offset, stride)
+		r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
 		offset = int(unsafe.Offsetof(Vertex{}.normal))
-		r.vao.SetAttribSource(r.normalAttr, subMesh.vbo, offset, stride)
+		r.vao.SetAttribSource(r.attrs.normal, subMesh.vbo, offset, stride)
 		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
-		r.vao.SetAttribSource(r.texCoordAttr, subMesh.vbo, offset, stride)
+		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
 		r.ambientTexUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
