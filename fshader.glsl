@@ -30,24 +30,27 @@ uniform struct Light {
 uniform mat4 viewMatrix;
 
 void main() {
-	vec3 ambientFactor = light.ambient;
-	vec4 ambientMapRGBA = texture(material.ambientMap, texCoordF);
-	vec3 ambientColor = ambientFactor * ((1 - ambientMapRGBA.a) * material.ambient + ambientMapRGBA.a * ambientMapRGBA.rgb);
-
-	vec3 lightDirection = normalize(worldPosition - light.position);
-	lightDirection = vec3(viewMatrix * vec4(lightDirection, 0));
-
-	vec3 diffuseFactor = max(dot(normalF, -lightDirection), 0) * light.diffuse;
-	vec4 diffuseMapRGBA = texture(material.diffuseMap, texCoordF);
-	vec3 diffuseColor = diffuseFactor * ((1 - diffuseMapRGBA.a) * material.diffuse + diffuseMapRGBA.a * diffuseMapRGBA.rgb);
-
+	vec4 tex;
+	vec3 lightDirection = worldPosition - light.position;
+	lightDirection = normalize((viewMatrix * vec4(lightDirection, 0)).xyz);
 	vec3 reflection = reflect(lightDirection, normalF);
 	vec3 fragDirection = normalize(viewPosition) - vec3(0, 0, 0);
-	float facing = dot(normalF, lightDirection) < 0 ? 1 : 0;
-	vec3 specularFactor = max(pow(dot(reflection, -fragDirection), material.shine), 0) *
-	                      facing * light.specular;
-	vec4 specularMapRGBA = texture(material.specularMap, texCoordF);
-	vec3 specularColor = specularFactor * ((1 - specularMapRGBA.a) * material.specular + specularMapRGBA.a * specularMapRGBA.rgb);
+	bool facing = dot(normalF, lightDirection) < 0;
 
-	fragColor = vec4(ambientColor + diffuseColor + specularColor, material.alpha);
+	tex = texture(material.ambientMap, texCoordF);
+	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
+	             * light.ambient;
+
+	tex = texture(material.diffuseMap, texCoordF);
+	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
+	             * max(dot(normalF, -lightDirection), 0)
+			     * light.diffuse;
+
+	tex = texture(material.specularMap, texCoordF);
+	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
+	              * max(pow(dot(reflection, -fragDirection), material.shine), 0)
+			      * light.specular
+			      * (facing ? 1 : 0);
+
+	fragColor = vec4(ambient + diffuse + specular, material.alpha);
 }
