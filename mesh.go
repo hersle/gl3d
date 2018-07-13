@@ -262,8 +262,8 @@ func (m *Mesh) Translate(d Vec3) {
 	m.modelMat.MultLeft(m.tmpMat)
 }
 
-func (m *Mesh) Scale(factorX, factorY, factorZ float32) {
-	m.tmpMat.Scaling(factorX, factorY, factorZ)
+func (m *Mesh) Scale(factor Vec3) {
+	m.tmpMat.Scaling(factor)
 	m.modelMat.MultLeft(m.tmpMat)
 }
 

@@ -126,10 +126,10 @@ func (a *Mat4) Translation(d Vec3) {
 	a.SetCol(3, d.Vec4(1))
 }
 
-func (a *Mat4) Scaling(factorX, factorY, factorZ float32) {
-	a.SetRow(0, NewVec4(factorX, 0, 0, 0))
-	a.SetRow(1, NewVec4(0, factorY, 0, 0))
-	a.SetRow(2, NewVec4(0, 0, factorZ, 0))
+func (a *Mat4) Scaling(factor Vec3) {
+	a.SetRow(0, NewVec4(factor.X(), 0, 0, 0))
+	a.SetRow(1, NewVec4(0, factor.Y(), 0, 0))
+	a.SetRow(2, NewVec4(0, 0, factor.Z(), 0))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
 }
 
@@ -161,7 +161,7 @@ func (a *Mat4) RotationZ(ang float32) {
 }
 
 func (a *Mat4) OrthoCentered(size Vec3) {
-	a.Scaling(2 / size.X(), 2 / size.Y(), -2 / size.Z())
+	a.Scaling(NewVec3(2 / size.X(), 2 / size.Y(), -2 / size.Z()))
 }
 
 func (a *Mat4) Frustum(l, b, r, t, n, f float32) {
