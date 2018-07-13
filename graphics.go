@@ -131,10 +131,11 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.prog.SetUniform(r.uniforms.projMat, c.ProjectionMatrix())
 	r.prog.SetUniform(r.uniforms.normalMat, r.normalMat)
 
-	r.prog.SetUniform(r.uniforms.ambientLight, NewVec3(1, 1, 1))
-	r.prog.SetUniform(r.uniforms.diffuseLight, NewVec3(1, 1, 1))
-	r.prog.SetUniform(r.uniforms.specularLight, NewVec3(1, 1, 1))
-	r.prog.SetUniform(r.uniforms.lightPos, NewVec3(0, +2.0, -5.0))
+	light := NewLight(NewVec3(0, +2, -5), NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
+	r.prog.SetUniform(r.uniforms.lightPos, light.position)
+	r.prog.SetUniform(r.uniforms.ambientLight, light.ambient)
+	r.prog.SetUniform(r.uniforms.diffuseLight, light.diffuse)
+	r.prog.SetUniform(r.uniforms.specularLight, light.specular)
 
 	for _, subMesh := range m.subMeshes {
 		r.prog.SetUniform(r.uniforms.ambient, subMesh.mtl.ambient)
