@@ -15,7 +15,9 @@ func NewMat4Zero() *Mat4 {
 }
 
 func NewMat4Identity() *Mat4 {
-	return NewMat4Zero().Identity()
+	var a Mat4
+	a.Identity()
+	return &a
 }
 
 func (a *Mat4) index(i, j int) int {
@@ -58,24 +60,22 @@ func (a *Mat4) Copy(b *Mat4) {
 	}
 }
 
-func (a *Mat4) Add(b *Mat4) *Mat4 {
+func (a *Mat4) Add(b *Mat4) {
 	for i := 0; i < 4; i++ {
 		a.SetRow(i, a.Row(i).Add(b.Row(i)))
 	}
-	return a
 }
 
-func (a *Mat4) Scale(factor float32) *Mat4 {
+func (a *Mat4) Scale(factor float32) {
 	for i := 0; i < 4; i++ {
 		a.SetRow(i, a.Row(i).Scale(factor))
 	}
-	return a
 }
 
-func (a *Mat4) Sub(b *Mat4) *Mat4 {
-	a.Add(b.Scale(-1))
+func (a *Mat4) Sub(b *Mat4) {
+	b.Scale(-1)
+	a.Add(b)
 	b.Scale(-1) // leave b unchanged
-	return a
 }
 
 func (a *Mat4) Mult(b *Mat4) *Mat4 {
@@ -99,102 +99,89 @@ func (a *Mat4) MultLeft(b *Mat4) *Mat4 {
 	return a
 }
 
-func (a *Mat4) Transpose() *Mat4 {
+func (a *Mat4) Transpose() {
 	r0, r1, r2, r3 := a.Row(0), a.Row(1), a.Row(2), a.Row(3)
 	a.SetCol(0, r0)
 	a.SetCol(1, r1)
 	a.SetCol(2, r2)
 	a.SetCol(3, r3)
-	return a
 }
 
-func (a *Mat4) Zero() *Mat4 {
+func (a *Mat4) Zero() {
 	a.SetRow(0, NewVec4(0, 0, 0, 0))
 	a.SetRow(1, NewVec4(0, 0, 0, 0))
 	a.SetRow(2, NewVec4(0, 0, 0, 0))
 	a.SetRow(3, NewVec4(0, 0, 0, 0))
-	return a
 }
 
-func (a *Mat4) Identity() *Mat4 {
+func (a *Mat4) Identity() {
 	a.SetRow(0, NewVec4(1, 0, 0, 0))
 	a.SetRow(1, NewVec4(0, 1, 0, 0))
 	a.SetRow(2, NewVec4(0, 0, 1, 0))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
-	return a
 }
 
-func (a *Mat4) Translation(d Vec3) *Mat4 {
+func (a *Mat4) Translation(d Vec3) {
 	a.Identity()
 	a.SetCol(3, d.Vec4(1))
-	return a
 }
 
-func (a *Mat4) Scaling(factorX, factorY, factorZ float32) *Mat4 {
+func (a *Mat4) Scaling(factorX, factorY, factorZ float32) {
 	a.SetRow(0, NewVec4(factorX, 0, 0, 0))
 	a.SetRow(1, NewVec4(0, factorY, 0, 0))
 	a.SetRow(2, NewVec4(0, 0, factorZ, 0))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
-	return a
 }
 
-func (a *Mat4) RotationX(ang float32) *Mat4 {
+func (a *Mat4) RotationX(ang float32) {
 	cos := float32(math.Cos(float64(ang)))
 	sin := float32(math.Sin(float64(ang)))
 	a.SetCol(0, NewVec4(1, 0, 0, 0))
 	a.SetCol(1, NewVec4(0, cos, sin, 0))
 	a.SetCol(2, NewVec4(0, -sin, cos, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
-	return a
 }
 
-func (a *Mat4) RotationY(ang float32) *Mat4 {
+func (a *Mat4) RotationY(ang float32) {
 	cos := float32(math.Cos(float64(ang)))
 	sin := float32(math.Sin(float64(ang)))
 	a.SetCol(0, NewVec4(cos, 0, -sin, 0))
 	a.SetCol(1, NewVec4(0, 1, 0, 0))
 	a.SetCol(2, NewVec4(sin, 0, cos, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
-	return a
 }
 
-func (a *Mat4) RotationZ(ang float32) *Mat4 {
+func (a *Mat4) RotationZ(ang float32) {
 	cos := float32(math.Cos(float64(ang)))
 	sin := float32(math.Sin(float64(ang)))
 	a.SetCol(0, NewVec4(cos, sin, 0, 0))
 	a.SetCol(1, NewVec4(-sin, cos, 0, 0))
 	a.SetCol(2, NewVec4(0, 0, 1, 0))
 	a.SetCol(3, NewVec4(0, 0, 0, 1))
-	return a
 }
 
-func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
-	return a.Scaling(2 / size.X(), 2 / size.Y(), -2 / size.Z())
+func (a *Mat4) OrthoCentered(size Vec3) {
+	a.Scaling(2 / size.X(), 2 / size.Y(), -2 / size.Z())
 }
 
-func (a *Mat4) Frustum(l, b, r, t, n, f float32) *Mat4 {
-	a.Zero()
-	a.Set(0, 0, 2 * n / (r - l))
-	a.Set(1, 1, 2 * n / (t - b))
-	a.Set(0, 2, (r + l) / (r - l))
-	a.Set(1, 2, (t + b) / (t - b))
-	a.Set(2, 2, -(f + n) / (f - n))
-	a.Set(2, 3, -2 * f * n / (f - n))
-	a.Set(3, 2, -1)
-	return a
+func (a *Mat4) Frustum(l, b, r, t, n, f float32) {
+	a.SetRow(0, NewVec4(2 * n / (r - l), 0, (r + l) / (r - l), 0))
+	a.SetRow(1, NewVec4(0, 2 * n / (t - b), (t + b) / (t - b), 0))
+	a.SetRow(2, NewVec4(0, 0, -(f + n) / (f - n), -2 * f * n / (f - n)))
+	a.SetRow(3, NewVec4(0, 0, -1, 0))
 }
 
-func (a *Mat4) FrustumCentered(w, h, n, f float32) *Mat4 {
-	return a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
+func (a *Mat4) FrustumCentered(w, h, n, f float32) {
+	a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
 }
 
-func (a *Mat4) Perspective(fovY, aspect, n, f float32) *Mat4 {
+func (a *Mat4) Perspective(fovY, aspect, n, f float32) {
 	h := 2 * n * float32(math.Tan(float64(fovY / 2)))
 	w := aspect * h
-	return a.FrustumCentered(w, h, n, f)
+	a.FrustumCentered(w, h, n, f)
 }
 
-func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
+func (a *Mat4) LookAt(eye, target, up Vec3) {
 	fwd := target.Sub(eye).Norm()
 	up = up.Norm()
 	right := fwd.Cross(up).Norm()
@@ -202,17 +189,15 @@ func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
 	a.SetRow(1, up.Vec4(-up.Dot(eye)))
 	a.SetRow(2, fwd.Scale(-1).Vec4(+fwd.Dot(eye)))
 	a.SetRow(3, NewVec4(0, 0, 0, 1))
-	return a
 }
 
 func (a *Mat4) Determinant() float32 {
-	// 1-indexed variable names
 	a11, a12, a13, a14 := a.At(0, 0), a.At(0, 1), a.At(0, 2), a.At(0, 3)
 	a21, a22, a23, a24 := a.At(1, 0), a.At(1, 1), a.At(1, 2), a.At(1, 3)
 	a31, a32, a33, a34 := a.At(2, 0), a.At(2, 1), a.At(2, 2), a.At(2, 3)
 	a41, a42, a43, a44 := a.At(3, 0), a.At(3, 1), a.At(3, 2), a.At(3, 3)
 
-	// aijkl = aij * akl - ail * akj
+	// 2D determinans (aijkl = aij * akl - ail * akj)
 	a3142 := a31 * a42 - a32 * a41
 	a3143 := a31 * a43 - a33 * a41
 	a3144 := a31 * a44 - a34 * a41
@@ -228,11 +213,11 @@ func (a *Mat4) Determinant() float32 {
 	return t1 + t2 + t3 + t4
 }
 
-func (a *Mat4) Invert() (*Mat4, error) {
+func (a *Mat4) Invert() error {
 	det := a.Determinant()
 
 	if det == 0 {
-		return a, errors.New("cannot invert singular matrix")
+		return errors.New("cannot invert singular matrix")
 	}
 
 	// 1-indexed variable names
@@ -295,7 +280,7 @@ func (a *Mat4) Invert() (*Mat4, error) {
 	a.SetRow(3, NewVec4(b41, b42, b43, b44))
 	a.Scale(1 / det)
 
-	return a, nil
+	return nil
 }
 
 func (a *Mat4) String() string {

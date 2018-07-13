@@ -258,21 +258,26 @@ func (m *Mesh) ResetTransformations() {
 }
 
 func (m *Mesh) Translate(d Vec3) {
-	m.modelMat.MultLeft(m.tmpMat.Translation(d))
+	m.tmpMat.Translation(d)
+	m.modelMat.MultLeft(m.tmpMat)
 }
 
 func (m *Mesh) Scale(factorX, factorY, factorZ float32) {
-	m.modelMat.MultLeft(m.tmpMat.Scaling(factorX, factorY, factorZ))
+	m.tmpMat.Scaling(factorX, factorY, factorZ)
+	m.modelMat.MultLeft(m.tmpMat)
 }
 
 func (m *Mesh) RotateX(ang float32) {
-	m.modelMat.MultLeft(m.tmpMat.RotationX(ang))
+	m.tmpMat.RotationX(ang)
+	m.modelMat.MultLeft(m.tmpMat)
 }
 
 func (m *Mesh) RotateY(ang float32) {
-	m.modelMat.MultLeft(m.tmpMat.RotationY(ang))
+	m.tmpMat.RotationY(ang)
+	m.modelMat.MultLeft(m.tmpMat)
 }
 
 func (m *Mesh) RotateZ(ang float32) {
-	m.modelMat.MultLeft(m.tmpMat.RotationZ(ang))
+	m.tmpMat.RotationZ(ang)
+	m.modelMat.MultLeft(m.tmpMat)
 }
