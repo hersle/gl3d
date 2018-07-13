@@ -72,81 +72,30 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	}
 	gls.SetProgram(r.prog)
 
-	r.attrs.pos, err = r.prog.Attrib("position")
-	if err != nil {
-		println(err.Error())
-	}
-	r.attrs.texCoord, err = r.prog.Attrib("texCoordV")
-	if err != nil {
-		println(err.Error())
-	}
-	r.attrs.normal, err = r.prog.Attrib("normalV")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.modelMat, err = r.prog.Uniform("modelMatrix")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.viewMat, err = r.prog.Uniform("viewMatrix")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.projMat, err = r.prog.Uniform("projectionMatrix")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.normalMat, err = r.prog.Uniform("normalMatrix")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.ambient, err = r.prog.Uniform("ambient")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.ambientLight, err = r.prog.Uniform("ambientLight")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.diffuse, err = r.prog.Uniform("diffuse")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.diffuseLight, err = r.prog.Uniform("diffuseLight")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.specular, err = r.prog.Uniform("specular")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.specularLight, err = r.prog.Uniform("specularLight")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.shine, err = r.prog.Uniform("shine")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.lightPos, err = r.prog.Uniform("lightPosition")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.ambientMap, err = r.prog.Uniform("ambientMap")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.diffuseMap, err = r.prog.Uniform("diffuseMap")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.specularMap, err = r.prog.Uniform("specularMap")
-	if err != nil {
-		println(err.Error())
-	}
-	r.uniforms.alpha, err = r.prog.Uniform("alpha")
-	if err != nil {
-		println(err.Error())
+	var errs [19]error
+	r.attrs.pos, errs[0] = r.prog.Attrib("position")
+	r.attrs.texCoord, errs[1] = r.prog.Attrib("texCoordV")
+	r.attrs.normal, errs[2] = r.prog.Attrib("normalV")
+	r.uniforms.modelMat, errs[3] = r.prog.Uniform("modelMatrix")
+	r.uniforms.viewMat, errs[4] = r.prog.Uniform("viewMatrix")
+	r.uniforms.projMat, errs[5] = r.prog.Uniform("projectionMatrix")
+	r.uniforms.normalMat, errs[6] = r.prog.Uniform("normalMatrix")
+	r.uniforms.ambient, errs[7] = r.prog.Uniform("ambient")
+	r.uniforms.ambientLight, errs[8] = r.prog.Uniform("ambientLight")
+	r.uniforms.diffuse, errs[9] = r.prog.Uniform("diffuse")
+	r.uniforms.diffuseLight, errs[10] = r.prog.Uniform("diffuseLight")
+	r.uniforms.specular, errs[11] = r.prog.Uniform("specular")
+	r.uniforms.specularLight, errs[12] = r.prog.Uniform("specularLight")
+	r.uniforms.shine, errs[13] = r.prog.Uniform("shine")
+	r.uniforms.lightPos, errs[14] = r.prog.Uniform("lightPosition")
+	r.uniforms.ambientMap, errs[15] = r.prog.Uniform("ambientMap")
+	r.uniforms.diffuseMap, errs[16] = r.prog.Uniform("diffuseMap")
+	r.uniforms.specularMap, errs[17] = r.prog.Uniform("specularMap")
+	r.uniforms.alpha, errs[18] = r.prog.Uniform("alpha")
+	for _, err := range errs {
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	r.vao = NewVertexArray()
