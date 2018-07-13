@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	_ "image/png"
 )
 
 type Material struct {
@@ -39,9 +40,27 @@ func NewDefaultMaterial(name string) *Material {
 	return &mtl
 }
 
+func readImage(filename string) (image.Image, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, err
+	}
+	return img, nil
+}
+
 func (mtl *Material) Finish() {
-	if mtl.ambientMapFilename == "" {
-		// use default 1x1 blank texture
+	// TODO: image path relative to material file!
+
+	img, err := readImage(mtl.ambientMapFilename)
+	if err == nil {
+		mtl.ambientMapTexture = NewTexture2D()
+		mtl.ambientMapTexture.SetImage(img)
+	} else {
 		if defaultTexture == nil {
 			defaultTexture = NewTexture2D()
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
@@ -49,32 +68,22 @@ func (mtl *Material) Finish() {
 			defaultTexture.SetImage(img)
 		}
 		mtl.ambientMapTexture = defaultTexture
-	} else {
-		mtl.ambientMapTexture = NewTexture2D()
-		err := mtl.ambientMapTexture.ReadImage(mtl.ambientMapFilename)
-		if err != nil {
-			panic(err)
-		}
 	}
 
-	if mtl.diffuseMapFilename == "" {
-		mtl.diffuseMapTexture = defaultTexture
-	} else {
+	img, err = readImage(mtl.diffuseMapFilename)
+	if err == nil {
 		mtl.diffuseMapTexture = NewTexture2D()
-		err := mtl.diffuseMapTexture.ReadImage(mtl.diffuseMapFilename)
-		if err != nil {
-			panic(err)
-		}
+		mtl.diffuseMapTexture.SetImage(img)
+	} else {
+		mtl.diffuseMapTexture = defaultTexture
 	}
 
-	if mtl.specularMapFilename == "" {
-		mtl.specularMapTexture = defaultTexture
-	} else {
+	img, err = readImage(mtl.specularMapFilename)
+	if err == nil {
 		mtl.specularMapTexture = NewTexture2D()
-		err := mtl.specularMapTexture.ReadImage(mtl.specularMapFilename)
-		if err != nil {
-			panic(err)
-		}
+		mtl.specularMapTexture.SetImage(img)
+	} else {
+		mtl.specularMapTexture = defaultTexture
 	}
 }
 
