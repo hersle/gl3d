@@ -252,7 +252,3 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 
 	return &m, nil
 }
-
-func (m *Mesh) Reset() {
-	m.Object.Reset()
-}

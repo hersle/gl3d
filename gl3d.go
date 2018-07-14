@@ -52,16 +52,16 @@ func main() {
 		}
 
 		if win.glfwWin.GetKey(glfw.KeyW) == glfw.Press {
-			c.Translate(c.Object.forward.Scale(camFactor * +0.1))
+			c.Translate(c.forward.Scale(camFactor * +0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyS) == glfw.Press {
-			c.Translate(c.Object.forward.Scale(camFactor * -0.1))
+			c.Translate(c.forward.Scale(camFactor * -0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyD) == glfw.Press {
-			c.Translate(c.Object.right.Scale(camFactor * +0.1))
+			c.Translate(c.right.Scale(camFactor * +0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyA) == glfw.Press {
-			c.Translate(c.Object.right.Scale(camFactor * -0.1))
+			c.Translate(c.right.Scale(camFactor * -0.1))
 		}
 		if win.glfwWin.GetKey(glfw.KeyUp) == glfw.Press {
 			c.Rotate(c.right, camFactor * +0.03)

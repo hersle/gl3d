@@ -34,7 +34,7 @@ func (c *Camera) SetAspect(aspect float32) {
 }
 
 func (c *Camera) updateViewMatrix() {
-	c.viewMat.Copy(c.Object.WorldMatrix()).MultScaling(NewVec3(1, 1, -1)).Invert()
+	c.viewMat.Copy(c.WorldMatrix()).MultScaling(NewVec3(1, 1, -1)).Invert()
 	c.dirtyViewMat = false
 }
 
@@ -44,7 +44,7 @@ func (c *Camera) updateProjectionMatrix() {
 }
 
 func (c *Camera) ViewMatrix() *Mat4 {
-	if c.Object.dirtyWorldMatrix {
+	if c.dirtyWorldMatrix {
 		// camera view matrix dirty iff object world matrix (its inverse) is dirty
 		c.updateViewMatrix()
 	}
