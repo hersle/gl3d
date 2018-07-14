@@ -7,10 +7,9 @@ type Light struct {
 	specular Vec3
 }
 
-func NewLight(position, ambient, diffuse, specular Vec3) *Light {
+func NewLight(ambient, diffuse, specular Vec3) *Light {
 	var l Light
 	l.Object.Init()
-	l.Place(position)
 	l.ambient = ambient
 	l.diffuse = diffuse
 	l.specular = specular
