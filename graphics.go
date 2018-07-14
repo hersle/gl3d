@@ -121,9 +121,10 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
-	r.normalMat.Copy(c.ViewMatrix()).Mult(m.modelMat).Invert().Transpose()
+	r.normalMat.Copy(c.ViewMatrix()).Mult(m.Object.WorldMatrix())
+	r.normalMat.Invert().Transpose()
 
-	r.prog.SetUniform(r.uniforms.modelMat, m.modelMat)
+	r.prog.SetUniform(r.uniforms.modelMat, m.Object.WorldMatrix())
 	r.prog.SetUniform(r.uniforms.viewMat, c.ViewMatrix())
 	r.prog.SetUniform(r.uniforms.projMat, c.ProjectionMatrix())
 	r.prog.SetUniform(r.uniforms.normalMat, r.normalMat)

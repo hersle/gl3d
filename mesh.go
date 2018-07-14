@@ -10,9 +10,8 @@ import (
 )
 
 type Mesh struct {
+	Object
 	subMeshes []*SubMesh
-	modelMat *Mat4
-	tmpMat *Mat4
 }
 
 type SubMesh struct {
@@ -104,12 +103,16 @@ func readIndexedVertex(desc string) indexedVertex {
 }
 
 func ReadMesh(filename string) (*Mesh, error) {
+	var m *Mesh
+	var err error
 	switch path.Ext(filename) {
 	case ".obj":
-		return ReadMeshObj(filename)
+		m, err = ReadMeshObj(filename)
 	default:
 		return nil, errors.New(fmt.Sprintf("%s has unknown format", filename))
 	}
+	m.Object.Init()
+	return m, err
 }
 
 func ReadMeshObj(filename string) (*Mesh, error) {
@@ -241,9 +244,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		m.subMeshes = m.subMeshes[1:]
 	}
 
-	m.modelMat = NewMat4Identity()
-	m.tmpMat = NewMat4Zero()
-
 	for i, _ := range m.subMeshes {
 		println("submesh", i, "with", len(m.subMeshes[i].verts), "verts")
 		m.subMeshes[i].Finish()
@@ -253,31 +253,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	return &m, nil
 }
 
-func (m *Mesh) ResetTransformations() {
-	m.modelMat.Identity()
-}
-
-func (m *Mesh) Translate(d Vec3) {
-	m.tmpMat.Translation(d)
-	m.modelMat.MultLeft(m.tmpMat)
-}
-
-func (m *Mesh) Scale(factor Vec3) {
-	m.tmpMat.Scaling(factor)
-	m.modelMat.MultLeft(m.tmpMat)
-}
-
-func (m *Mesh) RotateX(ang float32) {
-	m.tmpMat.RotationX(ang)
-	m.modelMat.MultLeft(m.tmpMat)
-}
-
-func (m *Mesh) RotateY(ang float32) {
-	m.tmpMat.RotationY(ang)
-	m.modelMat.MultLeft(m.tmpMat)
-}
-
-func (m *Mesh) RotateZ(ang float32) {
-	m.tmpMat.RotationZ(ang)
-	m.modelMat.MultLeft(m.tmpMat)
+func (m *Mesh) Reset() {
+	m.Object.Reset()
 }

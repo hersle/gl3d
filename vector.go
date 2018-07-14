@@ -121,6 +121,18 @@ func (a Vec4) Sub(b Vec4) Vec4 {
 	return a.Add(b.Scale(-1))
 }
 
+func (a Vec2) Mult(b Vec2) Vec2 {
+	return NewVec2(a.X() * b.X(), a.Y() * b.Y())
+}
+
+func (a Vec3) Mult(b Vec3) Vec3 {
+	return NewVec3(a.X() * b.X(), a.Y() * b.Y(), a.Z() * b.Z())
+}
+
+func (a Vec4) Mult(b Vec4) Vec4 {
+	return NewVec4(a.X() * b.X(), a.Y() * b.Y(), a.Z() * b.Z(), a.W() * b.W())
+}
+
 func (a Vec2) Dot(b Vec2) float32 {
 	return a.X() * b.X() + a.Y() * b.Y()
 }
