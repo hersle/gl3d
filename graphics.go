@@ -129,12 +129,6 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.prog.SetUniform(r.uniforms.projMat, c.ProjectionMatrix())
 	r.prog.SetUniform(r.uniforms.normalMat, r.normalMat)
 
-	light := NewLight(NewVec3(0, +2, -5), NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
-	r.prog.SetUniform(r.uniforms.lightPos, light.position)
-	r.prog.SetUniform(r.uniforms.ambientLight, light.ambient)
-	r.prog.SetUniform(r.uniforms.diffuseLight, light.diffuse)
-	r.prog.SetUniform(r.uniforms.specularLight, light.specular)
-
 	for _, subMesh := range m.subMeshes {
 		r.prog.SetUniform(r.uniforms.ambient, subMesh.mtl.ambient)
 		r.prog.SetUniform(r.uniforms.diffuse, subMesh.mtl.diffuse)
@@ -160,6 +154,10 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
+	r.prog.SetUniform(r.uniforms.lightPos, s.Light.position)
+	r.prog.SetUniform(r.uniforms.ambientLight, s.Light.ambient)
+	r.prog.SetUniform(r.uniforms.diffuseLight, s.Light.diffuse)
+	r.prog.SetUniform(r.uniforms.specularLight, s.Light.specular)
 	for _, m := range s.meshes {
 		r.renderMesh(m, c)
 	}

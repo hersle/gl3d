@@ -2,6 +2,7 @@ package main
 
 type Scene struct {
 	meshes []*Mesh
+	Light *Light
 }
 
 func NewScene() *Scene {

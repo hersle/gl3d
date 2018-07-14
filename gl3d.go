@@ -33,6 +33,7 @@ func main() {
 		}
 		s.AddMesh(model)
 	}
+	s.Light = NewLight(NewVec3(0, +2, -5), NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 
 	c := NewCamera(60, 1, 0.01, 100)
 

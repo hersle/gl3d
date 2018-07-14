@@ -44,8 +44,8 @@ func (c *Camera) updateProjectionMatrix() {
 }
 
 func (c *Camera) ViewMatrix() *Mat4 {
+	// camera view matrix dirty iff object world matrix (its inverse) is dirty
 	if c.dirtyWorldMatrix {
-		// camera view matrix dirty iff object world matrix (its inverse) is dirty
 		c.updateViewMatrix()
 	}
 	c.updateViewMatrix()
