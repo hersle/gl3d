@@ -31,12 +31,18 @@ func main() {
 		if filename == "objects/sponza.obj" {
 			model.Scale(NewVec3(0.02, 0.02, 0.02))
 		}
+		if filename == "objects/conference.obj" {
+			model.Scale(NewVec3(0.02, 0.02, 0.02))
+		}
+		if filename == "objects/scrubPine.obj" {
+			model.Scale(NewVec3(0.02, 0.02, 0.02))
+		}
 		s.AddMesh(model)
 	}
 	s.Light = NewLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 	s.Light.Place(NewVec3(0, 10, 0))
 
-	c := NewCamera(60, 1, 0.01, 100)
+	c := NewCamera(60, 1, 0.01, 1000)
 
 	var camFactor float32
 

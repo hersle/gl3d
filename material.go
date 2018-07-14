@@ -9,6 +9,7 @@ import (
 	"image"
 	"image/color"
 	_ "image/png"
+	_ "image/jpeg"
 	_ "github.com/ftrvxmtrx/tga"
 )
 
@@ -75,6 +76,12 @@ func (mtl *Material) Finish() {
 		mtl.diffuseMapTexture = NewTexture2D()
 		mtl.diffuseMapTexture.SetImage(img)
 	} else {
+		if defaultTexture == nil {
+			defaultTexture = NewTexture2D()
+			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
+			defaultTexture.SetImage(img)
+		}
 		mtl.diffuseMapTexture = defaultTexture
 	}
 
@@ -83,6 +90,12 @@ func (mtl *Material) Finish() {
 		mtl.specularMapTexture = NewTexture2D()
 		mtl.specularMapTexture.SetImage(img)
 	} else {
+		if defaultTexture == nil {
+			defaultTexture = NewTexture2D()
+			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
+			defaultTexture.SetImage(img)
+		}
 		mtl.specularMapTexture = defaultTexture
 	}
 }

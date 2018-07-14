@@ -32,7 +32,6 @@ type Renderer struct {
 		lightPos *Uniform
 		alpha *Uniform
 	}
-	//posAttr, texCoordAttr, normalAttr *Attrib
 	attrs struct {
 		pos *Attrib
 		texCoord *Attrib
