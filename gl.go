@@ -15,6 +15,8 @@ type StateTracker struct {
 	vaBound *VertexArray
 	progBound *Program
 	tex2dBound *Texture2D
+	drawFramebufferBound *Framebuffer
+	readFramebufferBound *Framebuffer
 }
 
 type Program struct {
@@ -42,8 +44,6 @@ type TextureUnit struct {
 	id int32
 }
 
-
-
 type Uniform struct {
 	id uint32
 	typ uint32
@@ -53,7 +53,17 @@ type VertexArray struct {
 	id uint32
 }
 
+type Framebuffer struct {
+	id uint32
+}
+
+type Renderbuffer struct {
+	id uint32
+}
+
 var gls *StateTracker = &StateTracker{}
+
+var defaultFramebuffer *Framebuffer = &Framebuffer{0}
 
 func (st *StateTracker) SetVertexArray(va *VertexArray) {
 	if st.vaBound == nil || st.vaBound.id != va.id {
@@ -66,6 +76,20 @@ func (st *StateTracker) SetProgram(prog *Program) {
 	if st.progBound == nil || st.progBound.id != prog.id {
 		gl.UseProgram(prog.id)
 		st.progBound = prog
+	}
+}
+
+func (st *StateTracker) SetDrawFramebuffer(f *Framebuffer) {
+	if st.drawFramebufferBound == nil || st.drawFramebufferBound.id != f.id {
+		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, f.id)
+		st.drawFramebufferBound = f
+	}
+}
+
+func (st *StateTracker) SetReadFramebuffer(f *Framebuffer) {
+	if st.readFramebufferBound == nil || st.readFramebufferBound.id != f.id {
+		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, f.id)
+		st.readFramebufferBound = f
 	}
 }
 
@@ -276,15 +300,19 @@ func NewTexture2D() *Texture2D {
 	return &t
 }
 
+func (t *Texture2D) SetStorage(levels int, format uint32, width, height int) {
+	gl.TextureStorage2D(t.id, int32(levels), format, int32(width), int32(height))
+}
+
 func (t *Texture2D) SetImage(img image.Image) {
 	switch img.(type) {
 	case *image.RGBA:
 		img := img.(*image.RGBA)
-		w, h := int32(img.Bounds().Size().X), int32(img.Bounds().Size().Y)
-		gl.TextureStorage2D(t.id, 1, gl.RGBA8, w, h)
+		w, h := img.Bounds().Size().X, img.Bounds().Size().Y
+		t.SetStorage(1, gl.RGBA8, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		p := unsafe.Pointer(&byteSlice(img.Pix)[0])
-		gl.TextureSubImage2D(t.id, 0, 0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, p)
+		gl.TextureSubImage2D(t.id, 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
@@ -321,4 +349,33 @@ func NewTextureUnit(id int) *TextureUnit {
 
 func (tu *TextureUnit) SetTexture2D(t *Texture2D) {
 	gl.BindTextureUnit(uint32(tu.id), t.id)
+}
+
+func NewFramebuffer() *Framebuffer {
+	var f Framebuffer
+	gl.CreateFramebuffers(1, &f.id)
+	return &f
+}
+
+func (f *Framebuffer) SetTexture(attachment uint32, t *Texture2D, level int32) {
+	gl.NamedFramebufferTexture(f.id, attachment, t.id, level)
+}
+
+func (f *Framebuffer) ClearColor(rgba Vec4) {
+	gl.ClearNamedFramebufferfv(f.id, gl.COLOR, 0,  &rgba[0])
+}
+
+func (f *Framebuffer) ClearDepth(clearDepth float32) {
+	gl.ClearNamedFramebufferfv(f.id, gl.DEPTH, 0, &clearDepth)
+}
+
+func (f *Framebuffer) Complete() bool {
+	status := gl.CheckNamedFramebufferStatus(f.id, gl.FRAMEBUFFER)
+	return status == gl.FRAMEBUFFER_COMPLETE
+}
+
+func NewRenderbuffer() *Renderbuffer {
+	var r Renderbuffer
+	gl.CreateRenderbuffers(1, &r.id)
+	return &r
 }

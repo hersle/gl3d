@@ -42,7 +42,10 @@ func main() {
 	s.Light = NewLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 	s.Light.Place(NewVec3(0, 10, 0))
 
-	c := NewCamera(60, 1, 0.01, 1000)
+	c := NewCamera(60, 1, 0.1, 50)
+	c.Place(NewVec3(-5, +5, -5))
+	c.RotateX(3.1415/4)
+	c.RotateY(3.1415/4)
 
 	var camFactor float32
 

@@ -28,6 +28,7 @@ uniform struct Light {
 } light;
 
 uniform mat4 viewMatrix;
+uniform mat4 projectionMatrix;
 
 void main() {
 	vec4 tex;

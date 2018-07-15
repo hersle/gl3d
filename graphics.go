@@ -13,6 +13,7 @@ type Vertex struct {
 
 // TODO: redesign attr/uniform access system?
 type Renderer struct {
+	win *Window
 	prog *Program
 	uniforms struct {
 		modelMat *Uniform
@@ -41,6 +42,9 @@ type Renderer struct {
 	vao *VertexArray
 	normalMat *Mat4
 	ambientTexUnit, diffuseTexUnit, specularTexUnit *TextureUnit
+
+	shadowFb *Framebuffer
+	shadowTex *Texture2D
 }
 
 func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
@@ -112,6 +116,19 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	r.normalMat = NewMat4Zero()
 
+	r.win = win
+
+	r.shadowTex = NewTexture2D()
+	r.shadowTex.SetStorage(1, gl.DEPTH_COMPONENT16, 512, 512)
+	//r.shadowTex.SetStorage(1, gl.RGB8, 512, 512)
+
+	r.shadowFb = NewFramebuffer()
+	//r.shadowFb.SetTexture(gl.COLOR_ATTACHMENT0, r.shadowTex, 0)
+	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, r.shadowTex, 0)
+	//gl.NamedFramebufferDrawBuffer(r.shadowFb.id, gl.NONE)
+	//gl.NamedFramebufferReadBuffer(r.shadowFb.id, gl.NONE)
+	println(r.shadowFb.Complete())
+
 	return &r, nil
 }
 
@@ -153,12 +170,55 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
+	// shadow pass
+	r.SetViewport(0, 0, 512, 512)
+	//r.shadowFb.ClearColor(NewVec4(0, 0, 0, 0))
+	r.shadowFb.ClearDepth(1)
+	gls.SetDrawFramebuffer(r.shadowFb)
 	r.prog.SetUniform(r.uniforms.lightPos, s.Light.position)
 	r.prog.SetUniform(r.uniforms.ambientLight, s.Light.ambient)
 	r.prog.SetUniform(r.uniforms.diffuseLight, s.Light.diffuse)
 	r.prog.SetUniform(r.uniforms.specularLight, s.Light.specular)
 	for _, m := range s.meshes {
 		r.renderMesh(m, c)
+	}
+
+	// normal pass
+	r.SetFullViewport(r.win)
+	gls.SetDrawFramebuffer(defaultFramebuffer)
+	r.prog.SetUniform(r.uniforms.lightPos, s.Light.position)
+	r.prog.SetUniform(r.uniforms.ambientLight, s.Light.ambient)
+	r.prog.SetUniform(r.uniforms.diffuseLight, s.Light.diffuse)
+	r.prog.SetUniform(r.uniforms.specularLight, s.Light.specular)
+	for _, m := range s.meshes {
+		r.renderMesh(m, c)
+	}
+
+	// draw test quad
+	s.quad.subMeshes[0].mtl.ambientMapTexture = r.shadowTex
+	ident := NewMat4Identity()
+	r.prog.SetUniform(r.uniforms.modelMat, ident)
+	r.prog.SetUniform(r.uniforms.viewMat, ident)
+	r.prog.SetUniform(r.uniforms.projMat, ident)
+	for _, subMesh := range s.quad.subMeshes {
+		r.prog.SetUniform(r.uniforms.ambient, subMesh.mtl.ambient)
+		r.prog.SetUniform(r.uniforms.diffuse, subMesh.mtl.diffuse)
+		r.prog.SetUniform(r.uniforms.specular, subMesh.mtl.specular)
+		r.prog.SetUniform(r.uniforms.shine, subMesh.mtl.shine)
+		r.prog.SetUniform(r.uniforms.alpha, subMesh.mtl.alpha)
+		stride := int(unsafe.Sizeof(Vertex{}))
+		offset := int(unsafe.Offsetof(Vertex{}.pos))
+		r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
+		offset = int(unsafe.Offsetof(Vertex{}.normal))
+		r.vao.SetAttribSource(r.attrs.normal, subMesh.vbo, offset, stride)
+		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
+		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
+		r.vao.SetIndexBuffer(subMesh.ibo)
+		r.ambientTexUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
+		r.diffuseTexUnit.SetTexture2D(subMesh.mtl.diffuseMapTexture)
+		r.specularTexUnit.SetTexture2D(subMesh.mtl.specularMapTexture)
+		gls.SetVertexArray(r.vao)
+		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
 }
 
