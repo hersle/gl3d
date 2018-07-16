@@ -45,6 +45,7 @@ type TextureUnit struct {
 }
 
 type Uniform struct {
+	pID uint32
 	id uint32
 	typ uint32
 }
@@ -212,73 +213,84 @@ func (p *Program) Uniform(name string) (*Uniform, error) {
 	}
 	u.id = uint32(loc)
 	gl.GetActiveUniform(p.id, u.id, 0, nil, nil, &u.typ, nil)
+	u.pID = p.id
 	return &u, nil
 }
 
-func (p *Program) SetUniformInteger(u *Uniform, i int) {
-	gl.ProgramUniform1i(p.id, int32(u.id), int32(i))
+func (u *Uniform) SetInteger(i int) {
+	gl.ProgramUniform1i(u.pID, int32(u.id), int32(i))
 }
 
-func (p *Program) SetUniformFloat(u *Uniform, f float32) {
-	gl.ProgramUniform1f(p.id, int32(u.id), float32(f))
+func (u *Uniform) SetFloat(f float32) {
+	gl.ProgramUniform1f(u.pID, int32(u.id), float32(f))
 }
 
-func (p *Program) SetUniformVector2(u *Uniform, v Vec2) {
-	gl.ProgramUniform2fv(p.id, int32(u.id), 1, &v[0])
+func (u *Uniform) SetVector2(v Vec2) {
+	gl.ProgramUniform2fv(u.pID, int32(u.id), 1, &v[0])
 }
 
-func (p *Program) SetUniformVector3(u *Uniform, v Vec3) {
-	gl.ProgramUniform3fv(p.id, int32(u.id), 1, &v[0])
+func (u *Uniform) SetVector3(v Vec3) {
+	gl.ProgramUniform3fv(u.pID, int32(u.id), 1, &v[0])
 }
 
-func (p *Program) SetUniformVector4(u *Uniform, v Vec4) {
-	gl.ProgramUniform4fv(p.id, int32(u.id), 1, &v[0])
+func (u *Uniform) SetVector4(v Vec4) {
+	gl.ProgramUniform4fv(u.pID, int32(u.id), 1, &v[0])
 }
 
-func (p *Program) SetUniformMatrix4(u *Uniform, m *Mat4) {
-	gl.ProgramUniformMatrix4fv(p.id, int32(u.id), 1, true, &m[0])
+func (u *Uniform) SetMatrix4(m *Mat4) {
+	gl.ProgramUniformMatrix4fv(u.pID, int32(u.id), 1, true, &m[0])
 }
 
-func (p *Program) SetUniform(u *Uniform, val interface{}) {
+func valueGLType(val interface{}) uint32 {
+	switch val.(type) {
+	case int: // TODO: int32?
+		return gl.INT
+	case float32:
+		return gl.FLOAT
+	case Vec2:
+		return gl.FLOAT_VEC2
+	case Vec3:
+		return gl.FLOAT_VEC3
+	case Vec4:
+		return gl.FLOAT_VEC4
+	case *Mat4:
+		return gl.FLOAT_MAT4
+	case *TextureUnit:
+		return gl.SAMPLER_2D // TODO: INCORRECT, will malfunction with multi-D samplers
+	default:
+		panic("attempted to get GL type of unsupported go type")
+	}
+}
+
+func (u *Uniform) Set(val interface{}) {
 	// TODO: pass handler functions, compare reflect.Zero(reflect.TypeOf(val)) interfaces for types?
 	// TODO: set more types
 	// TODO: store uniform locations only?
+	valType := valueGLType(val)
+
+	// TODO: handle samplers correctly
+	if u.typ != valType && u.typ != gl.SAMPLER_2D {
+		panic("type mismatch between GL type and go value type")
+	}
+
 	switch u.typ {
 	case gl.INT:
-		switch val.(type) {
-		case int: // TODO: int32?
-			p.SetUniformInteger(u, val.(int))
-			return
-		}
+		u.SetInteger(val.(int))
 	case gl.FLOAT:
-		switch val.(type) {
-		case float32:
-			p.SetUniformFloat(u, val.(float32))
-			return
-		}
+		u.SetFloat(val.(float32))
 	case gl.FLOAT_VEC3:
-		switch val.(type) {
-		case Vec3:
-			p.SetUniformVector3(u, val.(Vec3))
-			return
-		}
+		u.SetVector3(val.(Vec3))
 	case gl.FLOAT_MAT4:
-		switch val.(type) {
-		case *Mat4:
-			p.SetUniformMatrix4(u, val.(*Mat4))
-			return
-		}
+		u.SetMatrix4(val.(*Mat4))
 	case gl.SAMPLER_2D:
 		switch val.(type) {
 		case *TextureUnit:
 			val := val.(*TextureUnit)
-			gl.ProgramUniform1i(p.id, int32(u.id), val.id)
-			return
+			gl.ProgramUniform1i(u.pID, int32(u.id), val.id)
 		}
 	default:
-		panic("tried to set uniform of unknown type")
+		panic("should never get here")
 	}
-	panic("tried to set uniform from unknown type")
 }
 
 func NewBuffer() *Buffer {
