@@ -32,6 +32,11 @@ type Renderer struct {
 		specularMap *Uniform
 		lightPos *Uniform
 		alpha *Uniform
+		passID *Uniform
+		shadowModelMat *Uniform
+		shadowViewMat *Uniform
+		shadowProjMat *Uniform
+		shadowMap *Uniform
 	}
 	attrs struct {
 		pos *Attrib
@@ -42,6 +47,7 @@ type Renderer struct {
 	vao *VertexArray
 	normalMat *Mat4
 	ambientTexUnit, diffuseTexUnit, specularTexUnit *TextureUnit
+	shadowTexUnit *TextureUnit
 
 	shadowFb *Framebuffer
 	shadowTex *Texture2D
@@ -75,7 +81,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	}
 	gls.SetProgram(r.prog)
 
-	var errs [19]error
+	var errs [24]error
 	r.attrs.pos, errs[0] = r.prog.Attrib("position")
 	r.attrs.texCoord, errs[1] = r.prog.Attrib("texCoordV")
 	r.attrs.normal, errs[2] = r.prog.Attrib("normalV")
@@ -95,6 +101,11 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.uniforms.ambientLight, errs[16] = r.prog.Uniform("light.ambient")
 	r.uniforms.diffuseLight, errs[17] = r.prog.Uniform("light.diffuse")
 	r.uniforms.specularLight, errs[18] = r.prog.Uniform("light.specular")
+	r.uniforms.passID, errs[19] = r.prog.Uniform("passID")
+	r.uniforms.shadowModelMat, errs[20] = r.prog.Uniform("shadowModelMatrix")
+	r.uniforms.shadowViewMat, errs[21] = r.prog.Uniform("shadowViewMatrix")
+	r.uniforms.shadowProjMat, errs[22] = r.prog.Uniform("shadowProjectionMatrix")
+	r.uniforms.shadowMap, errs[23] = r.prog.Uniform("shadowMap")
 	for _, err := range errs {
 		if err != nil {
 			panic(err)
@@ -109,25 +120,25 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.ambientTexUnit = NewTextureUnit(0)
 	r.diffuseTexUnit = NewTextureUnit(1)
 	r.specularTexUnit = NewTextureUnit(2)
+	r.shadowTexUnit = NewTextureUnit(3)
 
 	r.prog.SetUniform(r.uniforms.ambientMap, r.ambientTexUnit)
 	r.prog.SetUniform(r.uniforms.diffuseMap, r.diffuseTexUnit)
 	r.prog.SetUniform(r.uniforms.specularMap, r.specularTexUnit)
+	r.prog.SetUniform(r.uniforms.shadowMap, r.shadowTexUnit)
 
 	r.normalMat = NewMat4Zero()
 
 	r.win = win
 
-	r.shadowTex = NewTexture2D()
+	r.shadowTex = NewTexture2D(gl.NEAREST, gl.CLAMP_TO_BORDER)
 	r.shadowTex.SetStorage(1, gl.DEPTH_COMPONENT16, 512, 512)
-	//r.shadowTex.SetStorage(1, gl.RGB8, 512, 512)
+	r.shadowTex.SetBorderColor(NewVec4(1, 1, 1, 1))
 
 	r.shadowFb = NewFramebuffer()
-	//r.shadowFb.SetTexture(gl.COLOR_ATTACHMENT0, r.shadowTex, 0)
 	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, r.shadowTex, 0)
-	//gl.NamedFramebufferDrawBuffer(r.shadowFb.id, gl.NONE)
-	//gl.NamedFramebufferReadBuffer(r.shadowFb.id, gl.NONE)
 	println(r.shadowFb.Complete())
+
 
 	return &r, nil
 }
@@ -136,7 +147,7 @@ func (r *Renderer) Clear() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
+func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
@@ -144,6 +155,10 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 	r.prog.SetUniform(r.uniforms.viewMat, c.ViewMatrix())
 	r.prog.SetUniform(r.uniforms.projMat, c.ProjectionMatrix())
 	r.prog.SetUniform(r.uniforms.normalMat, r.normalMat)
+
+	r.prog.SetUniform(r.uniforms.shadowModelMat, m.WorldMatrix())
+	r.prog.SetUniform(r.uniforms.shadowViewMat, s.Light.ViewMatrix())
+	r.prog.SetUniform(r.uniforms.shadowProjMat, s.Light.ProjectionMatrix())
 
 	for _, subMesh := range m.subMeshes {
 		r.prog.SetUniform(r.uniforms.ambient, subMesh.mtl.ambient)
@@ -164,26 +179,40 @@ func (r *Renderer) renderMesh(m *Mesh, c *Camera) {
 		r.ambientTexUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
 		r.diffuseTexUnit.SetTexture2D(subMesh.mtl.diffuseMapTexture)
 		r.specularTexUnit.SetTexture2D(subMesh.mtl.specularMapTexture)
+		r.shadowTexUnit.SetTexture2D(r.shadowTex)
 		gls.SetVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
 }
 
-func (r *Renderer) Render(s *Scene, c *Camera) {
-	// shadow pass
+func (r *Renderer) shadowPass(s *Scene, c *Camera) {
+	r.prog.SetUniform(r.uniforms.passID, int(1))
 	r.SetViewport(0, 0, 512, 512)
-	//r.shadowFb.ClearColor(NewVec4(0, 0, 0, 0))
 	r.shadowFb.ClearDepth(1)
 	gls.SetDrawFramebuffer(r.shadowFb)
-	r.prog.SetUniform(r.uniforms.lightPos, s.Light.position)
-	r.prog.SetUniform(r.uniforms.ambientLight, s.Light.ambient)
-	r.prog.SetUniform(r.uniforms.diffuseLight, s.Light.diffuse)
-	r.prog.SetUniform(r.uniforms.specularLight, s.Light.specular)
+	r.prog.SetUniform(r.uniforms.viewMat, s.Light.ViewMatrix())
+	r.prog.SetUniform(r.uniforms.projMat, s.Light.ProjectionMatrix())
+
 	for _, m := range s.meshes {
-		r.renderMesh(m, c)
+		r.prog.SetUniform(r.uniforms.modelMat, m.WorldMatrix())
+		for _, subMesh := range m.subMeshes {
+			stride := int(unsafe.Sizeof(Vertex{}))
+			offset := int(unsafe.Offsetof(Vertex{}.pos))
+			r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
+			r.vao.SetIndexBuffer(subMesh.ibo)
+
+			gls.SetVertexArray(r.vao)
+			gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
+		}
 	}
+}
+
+func (r *Renderer) Render(s *Scene, c *Camera) {
+	// shadow pass
+	r.shadowPass(s, c)
 
 	// normal pass
+	r.prog.SetUniform(r.uniforms.passID, int(2))
 	r.SetFullViewport(r.win)
 	gls.SetDrawFramebuffer(defaultFramebuffer)
 	r.prog.SetUniform(r.uniforms.lightPos, s.Light.position)
@@ -191,7 +220,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	r.prog.SetUniform(r.uniforms.diffuseLight, s.Light.diffuse)
 	r.prog.SetUniform(r.uniforms.specularLight, s.Light.specular)
 	for _, m := range s.meshes {
-		r.renderMesh(m, c)
+		r.renderMesh(s, m, c)
 	}
 
 	// draw test quad

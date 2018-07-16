@@ -26,7 +26,6 @@ func main() {
 			model.Scale(NewVec3(0.02, 0.02, 0.02))
 			model.RotateX(-3.1415/2)
 			model.RotateY(3.1415 - 3.1415/5)
-			model.Translate(NewVec3(-2, -5, +5))
 		}
 		if filename == "objects/sponza.obj" {
 			model.Scale(NewVec3(0.02, 0.02, 0.02))
@@ -39,8 +38,11 @@ func main() {
 		}
 		s.AddMesh(model)
 	}
-	s.Light = NewLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
-	s.Light.Place(NewVec3(0, 10, 0))
+
+	s.Light = NewSpotLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
+	s.Light.Camera = *NewCamera(60, 1, 0.1, 50)
+	s.Light.Place(NewVec3(0, 3, 0))
+	s.Light.Orient(s.Light.position.Scale(-1).Norm(), NewVec3(0, 0, 1))
 
 	c := NewCamera(60, 1, 0.1, 50)
 	c.Place(NewVec3(-5, +5, -5))
@@ -85,6 +87,10 @@ func main() {
 		}
 		if win.glfwWin.GetKey(glfw.KeyRight) == glfw.Press {
 			c.Rotate(NewVec3(0, 1, 0), camFactor * -0.03)
+		}
+		if win.glfwWin.GetKey(glfw.KeySpace) == glfw.Press {
+			s.Light.Place(c.position)
+			s.Light.Orient(c.forward, c.up)
 		}
 	}
 }

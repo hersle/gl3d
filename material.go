@@ -8,6 +8,7 @@ import (
 	"path"
 	"image"
 	"image/color"
+	"github.com/go-gl/gl/v4.5-core/gl"
 	_ "image/png"
 	_ "image/jpeg"
 	_ "github.com/ftrvxmtrx/tga"
@@ -59,11 +60,11 @@ func readImage(filename string) (image.Image, error) {
 func (mtl *Material) Finish() {
 	img, err := readImage(mtl.ambientMapFilename)
 	if err == nil {
-		mtl.ambientMapTexture = NewTexture2D()
+		mtl.ambientMapTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
 		mtl.ambientMapTexture.SetImage(img)
 	} else {
 		if defaultTexture == nil {
-			defaultTexture = NewTexture2D()
+			defaultTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
 			defaultTexture.SetImage(img)
@@ -73,11 +74,11 @@ func (mtl *Material) Finish() {
 
 	img, err = readImage(mtl.diffuseMapFilename)
 	if err == nil {
-		mtl.diffuseMapTexture = NewTexture2D()
+		mtl.diffuseMapTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
 		mtl.diffuseMapTexture.SetImage(img)
 	} else {
 		if defaultTexture == nil {
-			defaultTexture = NewTexture2D()
+			defaultTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
 			defaultTexture.SetImage(img)
@@ -87,11 +88,11 @@ func (mtl *Material) Finish() {
 
 	img, err = readImage(mtl.specularMapFilename)
 	if err == nil {
-		mtl.specularMapTexture = NewTexture2D()
+		mtl.specularMapTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
 		mtl.specularMapTexture.SetImage(img)
 	} else {
 		if defaultTexture == nil {
-			defaultTexture = NewTexture2D()
+			defaultTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
 			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
 			defaultTexture.SetImage(img)

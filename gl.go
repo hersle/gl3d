@@ -219,6 +219,13 @@ func (p *Program) SetUniform(u *Uniform, val interface{}) {
 	// TODO: pass handler functions, compare reflect.Zero(reflect.TypeOf(val)) interfaces for types?
 	// TODO: set more types
 	switch u.typ {
+	case gl.INT:
+		switch val.(type) {
+		case int: // TODO: int32?
+			val := val.(int)
+			gl.ProgramUniform1i(p.id, int32(u.id), int32(val))
+			return
+		}
 	case gl.FLOAT:
 		switch val.(type) {
 		case float32:
@@ -290,14 +297,18 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 	gl.NamedBufferSubData(b.id, byteOffset, int32(size), p)
 }
 
-func NewTexture2D() *Texture2D {
+func NewTexture2D(pixelBehavior, edgeBehavior int32) *Texture2D {
 	var t Texture2D
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &t.id)
-	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
-	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
-	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, gl.REPEAT)
-	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, gl.REPEAT)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, pixelBehavior)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, pixelBehavior)
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, edgeBehavior)
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, edgeBehavior)
 	return &t
+}
+
+func (t *Texture2D) SetBorderColor(rgba Vec4) {
+	gl.TextureParameterfv(t.id, gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
 func (t *Texture2D) SetStorage(levels int, format uint32, width, height int) {
