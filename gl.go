@@ -215,36 +215,57 @@ func (p *Program) Uniform(name string) (*Uniform, error) {
 	return &u, nil
 }
 
+func (p *Program) SetUniformInteger(u *Uniform, i int) {
+	gl.ProgramUniform1i(p.id, int32(u.id), int32(i))
+}
+
+func (p *Program) SetUniformFloat(u *Uniform, f float32) {
+	gl.ProgramUniform1f(p.id, int32(u.id), float32(f))
+}
+
+func (p *Program) SetUniformVector2(u *Uniform, v Vec2) {
+	gl.ProgramUniform2fv(p.id, int32(u.id), 1, &v[0])
+}
+
+func (p *Program) SetUniformVector3(u *Uniform, v Vec3) {
+	gl.ProgramUniform3fv(p.id, int32(u.id), 1, &v[0])
+}
+
+func (p *Program) SetUniformVector4(u *Uniform, v Vec4) {
+	gl.ProgramUniform4fv(p.id, int32(u.id), 1, &v[0])
+}
+
+func (p *Program) SetUniformMatrix4(u *Uniform, m *Mat4) {
+	gl.ProgramUniformMatrix4fv(p.id, int32(u.id), 1, true, &m[0])
+}
+
 func (p *Program) SetUniform(u *Uniform, val interface{}) {
 	// TODO: pass handler functions, compare reflect.Zero(reflect.TypeOf(val)) interfaces for types?
 	// TODO: set more types
+	// TODO: store uniform locations only?
 	switch u.typ {
 	case gl.INT:
 		switch val.(type) {
 		case int: // TODO: int32?
-			val := val.(int)
-			gl.ProgramUniform1i(p.id, int32(u.id), int32(val))
+			p.SetUniformInteger(u, val.(int))
 			return
 		}
 	case gl.FLOAT:
 		switch val.(type) {
 		case float32:
-			val := val.(float32)
-			gl.ProgramUniform1f(p.id, int32(u.id), val)
+			p.SetUniformFloat(u, val.(float32))
 			return
 		}
 	case gl.FLOAT_VEC3:
 		switch val.(type) {
 		case Vec3:
-			val := val.(Vec3)
-			gl.ProgramUniform3fv(p.id, int32(u.id), 1, &val[0])
+			p.SetUniformVector3(u, val.(Vec3))
 			return
 		}
 	case gl.FLOAT_MAT4:
 		switch val.(type) {
 		case *Mat4:
-			val := val.(*Mat4)
-			gl.ProgramUniformMatrix4fv(p.id, int32(u.id), 1, true, &val[0])
+			p.SetUniformMatrix4(u, val.(*Mat4))
 			return
 		}
 	case gl.SAMPLER_2D:
