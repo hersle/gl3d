@@ -46,8 +46,6 @@ type Renderer struct {
 	vbo, ibo *Buffer
 	vao *VertexArray
 	normalMat *Mat4
-	ambientTexUnit, diffuseTexUnit, specularTexUnit *TextureUnit
-	shadowTexUnit *TextureUnit
 
 	shadowFb *Framebuffer
 	shadowTex *Texture2D
@@ -118,16 +116,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.vao.SetAttribFormat(r.attrs.normal, 3, gl.FLOAT, false)
 	r.vao.SetAttribFormat(r.attrs.texCoord, 2, gl.FLOAT, false)
 
-	r.ambientTexUnit = NewTextureUnit(0)
-	r.diffuseTexUnit = NewTextureUnit(1)
-	r.specularTexUnit = NewTextureUnit(2)
-	r.shadowTexUnit = NewTextureUnit(3)
-
-	r.prog.SetUniformSampler(r.uniforms.ambientMap, r.ambientTexUnit)
-	r.prog.SetUniformSampler(r.uniforms.diffuseMap, r.diffuseTexUnit)
-	r.prog.SetUniformSampler(r.uniforms.specularMap, r.specularTexUnit)
-	r.prog.SetUniformSampler(r.uniforms.shadowMap, r.shadowTexUnit)
-
 	r.normalMat = NewMat4Zero()
 
 	r.win = win
@@ -176,10 +164,10 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 
-		r.ambientTexUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
-		r.diffuseTexUnit.SetTexture2D(subMesh.mtl.diffuseMapTexture)
-		r.specularTexUnit.SetTexture2D(subMesh.mtl.specularMapTexture)
-		r.shadowTexUnit.SetTexture2D(r.shadowTex)
+		r.prog.SetUniformSampler(r.uniforms.ambientMap, subMesh.mtl.ambientMapTexture)
+		r.prog.SetUniformSampler(r.uniforms.diffuseMap, subMesh.mtl.diffuseMapTexture)
+		r.prog.SetUniformSampler(r.uniforms.specularMap, subMesh.mtl.specularMapTexture)
+		r.prog.SetUniformSampler(r.uniforms.shadowMap, r.shadowTex)
 		gls.SetVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
@@ -243,9 +231,9 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
 		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
-		r.ambientTexUnit.SetTexture2D(subMesh.mtl.ambientMapTexture)
-		r.diffuseTexUnit.SetTexture2D(subMesh.mtl.diffuseMapTexture)
-		r.specularTexUnit.SetTexture2D(subMesh.mtl.specularMapTexture)
+		r.prog.SetUniformSampler(r.uniforms.ambientMap, subMesh.mtl.ambientMapTexture)
+		r.prog.SetUniformSampler(r.uniforms.diffuseMap, subMesh.mtl.diffuseMapTexture)
+		r.prog.SetUniformSampler(r.uniforms.specularMap, subMesh.mtl.specularMapTexture)
 		gls.SetVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}

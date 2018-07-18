@@ -40,11 +40,6 @@ type Attrib struct {
 	id uint32
 }
 
-type TextureUnit struct {
-	id int32
-	glType int32
-}
-
 // TODO: store value, have Set() function and make "Uniform" an interface?
 type UniformBasic struct {
 	location uint32
@@ -77,6 +72,7 @@ type UniformMatrix4 struct {
 
 type UniformSampler struct {
 	UniformBasic
+	textureUnitIndex uint32
 }
 
 type VertexArray struct {
@@ -244,8 +240,9 @@ func (p *ShaderProgram) SetUniformMatrix4(u *UniformMatrix4, m *Mat4) {
 	gl.ProgramUniformMatrix4fv(p.id, int32(u.location), 1, true, &m[0])
 }
 
-func (p *ShaderProgram) SetUniformSampler(u *UniformSampler, tu *TextureUnit) {
-	gl.ProgramUniform1i(p.id, int32(u.location), int32(tu.id))
+func (p *ShaderProgram) SetUniformSampler(u *UniformSampler, t *Texture2D) {
+	gl.BindTextureUnit(u.textureUnitIndex, t.id)
+	gl.ProgramUniform1i(p.id, int32(u.location), int32(u.textureUnitIndex))
 }
 
 func (p *ShaderProgram) Bind() {
@@ -333,6 +330,7 @@ func (p *ShaderProgram) UniformSampler(name string) (*UniformSampler, error) {
 	if u.glType != gl.SAMPLER_2D { // TODO: allow more sampler types
 		panic("mismatched uniform type")
 	}
+	u.textureUnitIndex = u.location // TODO: make texture unit mapping more sophisticated
 	return &u, nil
 }
 
@@ -428,16 +426,6 @@ func (va *VertexArray) SetIndexBuffer(b *Buffer) {
 
 func (va *VertexArray) Bind() {
 	gl.BindVertexArray(va.id)
-}
-
-func NewTextureUnit(id int) *TextureUnit {
-	var tu TextureUnit
-	tu.id = int32(id)
-	return &tu
-}
-
-func (tu *TextureUnit) SetTexture2D(t *Texture2D) {
-	gl.BindTextureUnit(uint32(tu.id), t.id)
 }
 
 func NewFramebuffer() *Framebuffer {
