@@ -16,27 +16,27 @@ type Renderer struct {
 	win *Window
 	prog *ShaderProgram
 	uniforms struct {
-		modelMat *Uniform
-		viewMat *Uniform
-		projMat *Uniform
-		normalMat *Uniform
-		ambient *Uniform
-		ambientLight *Uniform
-		ambientMap *Uniform
-		diffuse *Uniform
-		diffuseLight *Uniform
-		diffuseMap *Uniform
-		specular *Uniform
-		specularLight *Uniform
-		shine *Uniform
-		specularMap *Uniform
-		lightPos *Uniform
-		alpha *Uniform
-		passID *Uniform
-		shadowModelMat *Uniform
-		shadowViewMat *Uniform
-		shadowProjMat *Uniform
-		shadowMap *Uniform
+		modelMat *UniformMatrix4
+		viewMat *UniformMatrix4
+		projMat *UniformMatrix4
+		normalMat *UniformMatrix4
+		ambient *UniformVector3
+		ambientLight *UniformVector3
+		ambientMap *UniformSampler
+		diffuse *UniformVector3
+		diffuseLight *UniformVector3
+		diffuseMap *UniformSampler
+		specular *UniformVector3
+		specularLight *UniformVector3
+		shine *UniformFloat
+		specularMap *UniformSampler
+		lightPos *UniformVector3
+		alpha *UniformFloat
+		passID *UniformInteger
+		shadowModelMat *UniformMatrix4
+		shadowViewMat *UniformMatrix4
+		shadowProjMat *UniformMatrix4
+		shadowMap *UniformSampler
 	}
 	attrs struct {
 		pos *Attrib
@@ -85,27 +85,28 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.attrs.pos, errs[0] = r.prog.Attrib("position")
 	r.attrs.texCoord, errs[1] = r.prog.Attrib("texCoordV")
 	r.attrs.normal, errs[2] = r.prog.Attrib("normalV")
-	r.uniforms.modelMat, errs[3] = r.prog.Uniform("modelMatrix")
-	r.uniforms.viewMat, errs[4] = r.prog.Uniform("viewMatrix")
-	r.uniforms.projMat, errs[5] = r.prog.Uniform("projectionMatrix")
-	r.uniforms.normalMat, errs[6] = r.prog.Uniform("normalMatrix")
-	r.uniforms.ambient, errs[7] = r.prog.Uniform("material.ambient")
-	r.uniforms.diffuse, errs[8] = r.prog.Uniform("material.diffuse")
-	r.uniforms.specular, errs[9] = r.prog.Uniform("material.specular")
-	r.uniforms.ambientMap, errs[10] = r.prog.Uniform("material.ambientMap")
-	r.uniforms.diffuseMap, errs[11] = r.prog.Uniform("material.diffuseMap")
-	r.uniforms.specularMap, errs[12] = r.prog.Uniform("material.specularMap")
-	r.uniforms.shine, errs[13] = r.prog.Uniform("material.shine")
-	r.uniforms.alpha, errs[14] = r.prog.Uniform("material.alpha")
-	r.uniforms.lightPos, errs[15] = r.prog.Uniform("light.position")
-	r.uniforms.ambientLight, errs[16] = r.prog.Uniform("light.ambient")
-	r.uniforms.diffuseLight, errs[17] = r.prog.Uniform("light.diffuse")
-	r.uniforms.specularLight, errs[18] = r.prog.Uniform("light.specular")
-	r.uniforms.passID, errs[19] = r.prog.Uniform("passID")
-	r.uniforms.shadowModelMat, errs[20] = r.prog.Uniform("shadowModelMatrix")
-	r.uniforms.shadowViewMat, errs[21] = r.prog.Uniform("shadowViewMatrix")
-	r.uniforms.shadowProjMat, errs[22] = r.prog.Uniform("shadowProjectionMatrix")
-	r.uniforms.shadowMap, errs[23] = r.prog.Uniform("shadowMap")
+	// TODO: assign uniforms only name and program, let them handle rest themselves?
+	r.uniforms.modelMat, errs[3] = r.prog.UniformMatrix4("modelMatrix")
+	r.uniforms.viewMat, errs[4] = r.prog.UniformMatrix4("viewMatrix")
+	r.uniforms.projMat, errs[5] = r.prog.UniformMatrix4("projectionMatrix")
+	r.uniforms.normalMat, errs[6] = r.prog.UniformMatrix4("normalMatrix")
+	r.uniforms.ambient, errs[7] = r.prog.UniformVector3("material.ambient")
+	r.uniforms.diffuse, errs[8] = r.prog.UniformVector3("material.diffuse")
+	r.uniforms.specular, errs[9] = r.prog.UniformVector3("material.specular")
+	r.uniforms.ambientMap, errs[10] = r.prog.UniformSampler("material.ambientMap")
+	r.uniforms.diffuseMap, errs[11] = r.prog.UniformSampler("material.diffuseMap")
+	r.uniforms.specularMap, errs[12] = r.prog.UniformSampler("material.specularMap")
+	r.uniforms.shine, errs[13] = r.prog.UniformFloat("material.shine")
+	r.uniforms.alpha, errs[14] = r.prog.UniformFloat("material.alpha")
+	r.uniforms.lightPos, errs[15] = r.prog.UniformVector3("light.position")
+	r.uniforms.ambientLight, errs[16] = r.prog.UniformVector3("light.ambient")
+	r.uniforms.diffuseLight, errs[17] = r.prog.UniformVector3("light.diffuse")
+	r.uniforms.specularLight, errs[18] = r.prog.UniformVector3("light.specular")
+	r.uniforms.passID, errs[19] = r.prog.UniformInteger("passID")
+	r.uniforms.shadowModelMat, errs[20] = r.prog.UniformMatrix4("shadowModelMatrix")
+	r.uniforms.shadowViewMat, errs[21] = r.prog.UniformMatrix4("shadowViewMatrix")
+	r.uniforms.shadowProjMat, errs[22] = r.prog.UniformMatrix4("shadowProjectionMatrix")
+	r.uniforms.shadowMap, errs[23] = r.prog.UniformSampler("shadowMap")
 	for _, err := range errs {
 		if err != nil {
 			panic(err)
@@ -122,10 +123,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.specularTexUnit = NewTextureUnit(2)
 	r.shadowTexUnit = NewTextureUnit(3)
 
-	r.uniforms.ambientMap.Set(r.ambientTexUnit)
-	r.uniforms.diffuseMap.Set(r.diffuseTexUnit)
-	r.uniforms.specularMap.Set(r.specularTexUnit)
-	r.uniforms.shadowMap.Set(r.shadowTexUnit)
+	r.prog.SetUniformSampler(r.uniforms.ambientMap, r.ambientTexUnit)
+	r.prog.SetUniformSampler(r.uniforms.diffuseMap, r.diffuseTexUnit)
+	r.prog.SetUniformSampler(r.uniforms.specularMap, r.specularTexUnit)
+	r.prog.SetUniformSampler(r.uniforms.shadowMap, r.shadowTexUnit)
 
 	r.normalMat = NewMat4Zero()
 
@@ -150,21 +151,21 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
-	r.uniforms.modelMat.Set(m.WorldMatrix())
-	r.uniforms.viewMat.Set(c.ViewMatrix())
-	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	r.uniforms.normalMat.Set(r.normalMat)
+	r.prog.SetUniformMatrix4(r.uniforms.modelMat, m.WorldMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.viewMat, c.ViewMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.projMat, c.ProjectionMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.normalMat, r.normalMat)
 
-	r.uniforms.shadowModelMat.Set(m.WorldMatrix())
-	r.uniforms.shadowViewMat.Set(s.Light.ViewMatrix())
-	r.uniforms.shadowProjMat.Set(s.Light.ProjectionMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.shadowModelMat, m.WorldMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.shadowViewMat, s.Light.ViewMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.shadowProjMat, s.Light.ProjectionMatrix())
 
 	for _, subMesh := range m.subMeshes {
-		r.uniforms.ambient.Set(subMesh.mtl.ambient)
-		r.uniforms.diffuse.Set(subMesh.mtl.diffuse)
-		r.uniforms.specular.Set(subMesh.mtl.specular)
-		r.uniforms.shine.Set(subMesh.mtl.shine)
-		r.uniforms.alpha.Set(subMesh.mtl.alpha)
+		r.prog.SetUniformVector3(r.uniforms.ambient, subMesh.mtl.ambient)
+		r.prog.SetUniformVector3(r.uniforms.diffuse, subMesh.mtl.diffuse)
+		r.prog.SetUniformVector3(r.uniforms.specular, subMesh.mtl.specular)
+		r.prog.SetUniformFloat(r.uniforms.shine, subMesh.mtl.shine)
+		r.prog.SetUniformFloat(r.uniforms.alpha, subMesh.mtl.alpha)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
@@ -185,15 +186,15 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 }
 
 func (r *Renderer) shadowPass(s *Scene, c *Camera) {
-	r.uniforms.passID.Set(int(1))
+	r.prog.SetUniformInteger(r.uniforms.passID, 1)
 	r.SetViewport(0, 0, 512, 512)
 	r.shadowFb.ClearDepth(1)
 	gls.SetDrawFramebuffer(r.shadowFb)
-	r.uniforms.viewMat.Set(s.Light.ViewMatrix())
-	r.uniforms.projMat.Set(s.Light.ProjectionMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.viewMat, s.Light.ViewMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.projMat, s.Light.ProjectionMatrix())
 
 	for _, m := range s.meshes {
-		r.uniforms.modelMat.Set(m.WorldMatrix())
+		r.prog.SetUniformMatrix4(r.uniforms.modelMat, m.WorldMatrix())
 		for _, subMesh := range m.subMeshes {
 			stride := int(unsafe.Sizeof(Vertex{}))
 			offset := int(unsafe.Offsetof(Vertex{}.pos))
@@ -211,13 +212,13 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	r.shadowPass(s, c)
 
 	// normal pass
-	r.uniforms.passID.Set(int(2))
+	r.prog.SetUniformInteger(r.uniforms.passID, 2)
 	r.SetFullViewport(r.win)
 	gls.SetDrawFramebuffer(defaultFramebuffer)
-	r.uniforms.lightPos.Set(s.Light.position)
-	r.uniforms.ambientLight.Set(s.Light.ambient)
-	r.uniforms.diffuseLight.Set(s.Light.diffuse)
-	r.uniforms.specularLight.Set(s.Light.specular)
+	r.prog.SetUniformVector3(r.uniforms.lightPos, s.Light.position)
+	r.prog.SetUniformVector3(r.uniforms.ambientLight, s.Light.ambient)
+	r.prog.SetUniformVector3(r.uniforms.diffuseLight, s.Light.diffuse)
+	r.prog.SetUniformVector3(r.uniforms.specularLight, s.Light.specular)
 	for _, m := range s.meshes {
 		r.renderMesh(s, m, c)
 	}
@@ -225,15 +226,15 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	// draw test quad
 	s.quad.subMeshes[0].mtl.ambientMapTexture = r.shadowTex
 	ident := NewMat4Identity()
-	r.uniforms.modelMat.Set(ident)
-	r.uniforms.viewMat.Set(ident)
-	r.uniforms.projMat.Set(ident)
+	r.prog.SetUniformMatrix4(r.uniforms.modelMat, ident)
+	r.prog.SetUniformMatrix4(r.uniforms.viewMat, ident)
+	r.prog.SetUniformMatrix4(r.uniforms.projMat, ident)
 	for _, subMesh := range s.quad.subMeshes {
-		r.uniforms.ambient.Set(subMesh.mtl.ambient)
-		r.uniforms.diffuse.Set(subMesh.mtl.diffuse)
-		r.uniforms.specular.Set(subMesh.mtl.specular)
-		r.uniforms.shine.Set(subMesh.mtl.shine)
-		r.uniforms.alpha.Set(subMesh.mtl.alpha)
+		r.prog.SetUniformVector3(r.uniforms.ambient, subMesh.mtl.ambient)
+		r.prog.SetUniformVector3(r.uniforms.diffuse, subMesh.mtl.diffuse)
+		r.prog.SetUniformVector3(r.uniforms.specular, subMesh.mtl.specular)
+		r.prog.SetUniformFloat(r.uniforms.shine, subMesh.mtl.shine)
+		r.prog.SetUniformFloat(r.uniforms.alpha, subMesh.mtl.alpha)
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
 		r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
