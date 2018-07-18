@@ -14,7 +14,7 @@ type Vertex struct {
 // TODO: redesign attr/uniform access system?
 type Renderer struct {
 	win *Window
-	prog *Program
+	prog *ShaderProgram
 	uniforms struct {
 		modelMat *Uniform
 		viewMat *Uniform
@@ -75,11 +75,11 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	gl.Enable(gl.BLEND)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
-	r.prog, err = ReadProgram("vshader.glsl", "fshader.glsl")
+	r.prog, err = ReadShaderProgram("vshader.glsl", "fshader.glsl")
 	if err != nil {
 		return nil, err
 	}
-	gls.SetProgram(r.prog)
+	gls.SetShaderProgram(r.prog)
 
 	var errs [24]error
 	r.attrs.pos, errs[0] = r.prog.Attrib("position")

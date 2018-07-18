@@ -11,15 +11,15 @@ import (
 	"unsafe"
 )
 
-type StateTracker struct {
+type RenderState struct {
 	vaBound *VertexArray
-	progBound *Program
+	progBound *ShaderProgram
 	tex2dBound *Texture2D
 	drawFramebufferBound *Framebuffer
 	readFramebufferBound *Framebuffer
 }
 
-type Program struct {
+type ShaderProgram struct {
 	id uint32
 }
 
@@ -58,36 +58,32 @@ type Framebuffer struct {
 	id uint32
 }
 
-type Renderbuffer struct {
-	id uint32
-}
-
-var gls *StateTracker = &StateTracker{}
+var gls *RenderState = &RenderState{}
 
 var defaultFramebuffer *Framebuffer = &Framebuffer{0}
 
-func (st *StateTracker) SetVertexArray(va *VertexArray) {
+func (st *RenderState) SetVertexArray(va *VertexArray) {
 	if st.vaBound == nil || st.vaBound.id != va.id {
 		gl.BindVertexArray(va.id)
 		st.vaBound = va
 	}
 }
 
-func (st *StateTracker) SetProgram(prog *Program) {
+func (st *RenderState) SetShaderProgram(prog *ShaderProgram) {
 	if st.progBound == nil || st.progBound.id != prog.id {
 		gl.UseProgram(prog.id)
 		st.progBound = prog
 	}
 }
 
-func (st *StateTracker) SetDrawFramebuffer(f *Framebuffer) {
+func (st *RenderState) SetDrawFramebuffer(f *Framebuffer) {
 	if st.drawFramebufferBound == nil || st.drawFramebufferBound.id != f.id {
 		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, f.id)
 		st.drawFramebufferBound = f
 	}
 }
 
-func (st *StateTracker) SetReadFramebuffer(f *Framebuffer) {
+func (st *RenderState) SetReadFramebuffer(f *Framebuffer) {
 	if st.readFramebufferBound == nil || st.readFramebufferBound.id != f.id {
 		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, f.id)
 		st.readFramebufferBound = f
@@ -146,8 +142,8 @@ func (s *Shader) Compile() error {
 	}
 }
 
-func NewProgram(vShader, fShader *Shader) (*Program, error) {
-	var p Program
+func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
+	var p ShaderProgram
 	p.id = gl.CreateProgram()
 	gl.AttachShader(p.id, vShader.id)
 	gl.AttachShader(p.id, fShader.id)
@@ -160,7 +156,7 @@ func NewProgram(vShader, fShader *Shader) (*Program, error) {
 	return &p, err
 }
 
-func ReadProgram(vShaderFilename, fShaderFilename string) (*Program, error) {
+func ReadShaderProgram(vShaderFilename, fShaderFilename string) (*ShaderProgram, error) {
 	vShader, err := ReadShader(gl.VERTEX_SHADER, vShaderFilename)
 	if err != nil {
 		return nil, err
@@ -169,16 +165,16 @@ func ReadProgram(vShaderFilename, fShaderFilename string) (*Program, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewProgram(vShader, fShader)
+	return NewShaderProgram(vShader, fShader)
 }
 
-func (p *Program) Linked() bool {
+func (p *ShaderProgram) Linked() bool {
 	var status int32
 	gl.GetProgramiv(p.id, gl.LINK_STATUS, &status)
 	return status == gl.TRUE
 }
 
-func (p *Program) Log() string {
+func (p *ShaderProgram) Log() string {
 	var length int32
 	gl.GetProgramiv(p.id, gl.INFO_LOG_LENGTH, &length)
 	log := string(make([]byte, length + 1))
@@ -187,7 +183,7 @@ func (p *Program) Log() string {
 	return log
 }
 
-func (p *Program) Link() error {
+func (p *ShaderProgram) Link() error {
 	gl.LinkProgram(p.id)
 	if p.Linked() {
 		return nil
@@ -195,7 +191,7 @@ func (p *Program) Link() error {
 	return errors.New(p.Log())
 }
 
-func (p *Program) Attrib(name string) (*Attrib, error) {
+func (p *ShaderProgram) Attrib(name string) (*Attrib, error) {
 	var a Attrib
 	loc := gl.GetAttribLocation(p.id, gl.Str(name + "\x00"))
 	if loc == -1 {
@@ -205,7 +201,7 @@ func (p *Program) Attrib(name string) (*Attrib, error) {
 	return &a, nil
 }
 
-func (p *Program) Uniform(name string) (*Uniform, error) {
+func (p *ShaderProgram) Uniform(name string) (*Uniform, error) {
 	var u Uniform
 	loc := gl.GetUniformLocation(p.id, gl.Str(name + "\x00"))
 	if loc == -1 {
@@ -416,10 +412,4 @@ func (f *Framebuffer) ClearDepth(clearDepth float32) {
 func (f *Framebuffer) Complete() bool {
 	status := gl.CheckNamedFramebufferStatus(f.id, gl.FRAMEBUFFER)
 	return status == gl.FRAMEBUFFER_COMPLETE
-}
-
-func NewRenderbuffer() *Renderbuffer {
-	var r Renderbuffer
-	gl.CreateRenderbuffers(1, &r.id)
-	return &r
 }
