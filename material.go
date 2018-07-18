@@ -57,45 +57,39 @@ func readImage(filename string) (image.Image, error) {
 	return img, nil
 }
 
+func initDefaultTexture() {
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
+	defaultTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+}
+
 func (mtl *Material) Finish() {
 	img, err := readImage(mtl.ambientMapFilename)
 	if err == nil {
-		mtl.ambientMapTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
-		mtl.ambientMapTexture.SetImage(img)
+		mtl.ambientMapTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 	} else {
 		if defaultTexture == nil {
-			defaultTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
-			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
-			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-			defaultTexture.SetImage(img)
+			initDefaultTexture()
 		}
 		mtl.ambientMapTexture = defaultTexture
 	}
 
 	img, err = readImage(mtl.diffuseMapFilename)
 	if err == nil {
-		mtl.diffuseMapTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
-		mtl.diffuseMapTexture.SetImage(img)
+		mtl.diffuseMapTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 	} else {
 		if defaultTexture == nil {
-			defaultTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
-			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
-			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-			defaultTexture.SetImage(img)
+			initDefaultTexture()
 		}
 		mtl.diffuseMapTexture = defaultTexture
 	}
 
 	img, err = readImage(mtl.specularMapFilename)
 	if err == nil {
-		mtl.specularMapTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
-		mtl.specularMapTexture.SetImage(img)
+		mtl.specularMapTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 	} else {
 		if defaultTexture == nil {
-			defaultTexture = NewTexture2D(gl.NEAREST, gl.REPEAT)
-			img := image.NewRGBA(image.Rect(0, 0, 1, 1))
-			img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-			defaultTexture.SetImage(img)
+			initDefaultTexture()
 		}
 		mtl.specularMapTexture = defaultTexture
 	}

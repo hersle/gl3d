@@ -326,38 +326,36 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 	gl.NamedBufferSubData(b.id, byteOffset, int32(size), p)
 }
 
-func NewTexture2D(pixelBehavior, edgeBehavior int32) *Texture2D {
+func NewTexture2D(filterMode, wrapMode int32, format uint32, width, height int) *Texture2D {
 	var t Texture2D
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &t.id)
-	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, pixelBehavior)
-	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, pixelBehavior)
-	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, edgeBehavior)
-	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, edgeBehavior)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, filterMode)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, filterMode)
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, wrapMode)
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, wrapMode)
+	gl.TextureStorage2D(t.id, 1, format, int32(width), int32(height))
 	return &t
 }
 
-func (t *Texture2D) SetBorderColor(rgba Vec4) {
-	gl.TextureParameterfv(t.id, gl.TEXTURE_BORDER_COLOR, &rgba[0])
-}
-
-func (t *Texture2D) SetStorage(levels int, format uint32, width, height int) {
-	gl.TextureStorage2D(t.id, int32(levels), format, int32(width), int32(height))
-}
-
-func (t *Texture2D) SetImage(img image.Image) {
+func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.Image) *Texture2D {
 	switch img.(type) {
 	case *image.RGBA:
 		img := img.(*image.RGBA)
 		w, h := img.Bounds().Size().X, img.Bounds().Size().Y
-		t.SetStorage(1, gl.RGBA8, w, h)
+		t := NewTexture2D(filterMode, wrapMode, format, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		p := unsafe.Pointer(&byteSlice(img.Pix)[0])
 		gl.TextureSubImage2D(t.id, 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
+		return t
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
-		t.SetImage(imgRGBA)
+		return NewTexture2DFromImage(filterMode, wrapMode, format, imgRGBA)
 	}
+}
+
+func (t *Texture2D) SetBorderColor(rgba Vec4) {
+	gl.TextureParameterfv(t.id, gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
 func NewVertexArray() *VertexArray {

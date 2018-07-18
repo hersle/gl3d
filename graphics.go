@@ -131,8 +131,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	r.win = win
 
-	r.shadowTex = NewTexture2D(gl.NEAREST, gl.CLAMP_TO_BORDER)
-	r.shadowTex.SetStorage(1, gl.DEPTH_COMPONENT16, 512, 512)
+	r.shadowTex = NewTexture2D(gl.NEAREST, gl.CLAMP_TO_BORDER, gl.DEPTH_COMPONENT16, 512, 512)
 	r.shadowTex.SetBorderColor(NewVec4(1, 1, 1, 1))
 
 	r.shadowFb = NewFramebuffer()
