@@ -1,7 +1,5 @@
 #version 450
 
-uniform int passID;
-
 in vec3 worldPosition;
 in vec3 viewPosition;
 in vec4 colorF;
@@ -51,32 +49,28 @@ float CalcShadowFactor(vec4 lightSpacePos) {
 }
 
 void main() {
-	if (passID == 1) {
-		// do nothing
-	} else if (passID == 2) {
-		vec4 tex;
-		vec3 lightDirection = worldPosition - light.position;
-		lightDirection = normalize((viewMatrix * vec4(lightDirection, 0)).xyz);
-		vec3 reflection = reflect(lightDirection, normalF);
-		vec3 fragDirection = normalize(viewPosition) - vec3(0, 0, 0);
-		bool facing = dot(normalF, lightDirection) < 0;
+	vec4 tex;
+	vec3 lightDirection = worldPosition - light.position;
+	lightDirection = normalize((viewMatrix * vec4(lightDirection, 0)).xyz);
+	vec3 reflection = reflect(lightDirection, normalF);
+	vec3 fragDirection = normalize(viewPosition) - vec3(0, 0, 0);
+	bool facing = dot(normalF, lightDirection) < 0;
 
-		tex = texture(material.ambientMap, texCoordF);
-		vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
-					 * light.ambient;
+	tex = texture(material.ambientMap, texCoordF);
+	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
+				 * light.ambient;
 
-		tex = texture(material.diffuseMap, texCoordF);
-		vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
-					 * max(dot(normalF, -lightDirection), 0)
-					 * light.diffuse;
+	tex = texture(material.diffuseMap, texCoordF);
+	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
+				 * max(dot(normalF, -lightDirection), 0)
+				 * light.diffuse;
 
-		tex = texture(material.specularMap, texCoordF);
-		vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
-					  * max(pow(dot(reflection, -fragDirection), material.shine), 0)
-					  * light.specular
-					  * (facing ? 1 : 0);
+	tex = texture(material.specularMap, texCoordF);
+	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
+				  * max(pow(dot(reflection, -fragDirection), material.shine), 0)
+				  * light.specular
+				  * (facing ? 1 : 0);
 
-		float factor = CalcShadowFactor(lightSpacePosition);
-		fragColor = vec4(factor * (ambient + diffuse + specular), material.alpha);
-	}
+	float factor = CalcShadowFactor(lightSpacePosition);
+	fragColor = vec4(factor * (ambient + diffuse + specular), material.alpha);
 }

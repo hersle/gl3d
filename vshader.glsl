@@ -1,7 +1,5 @@
 #version 450
 
-uniform int passID;
-
 in vec3 position;
 in vec4 colorV;
 in vec2 texCoordV;
@@ -25,22 +23,16 @@ uniform mat4 shadowProjectionMatrix;
 out vec4 lightSpacePosition;
 
 void main() {
-	if (passID == 1) {
-		worldPosition = vec3(modelMatrix * vec4(position, 1));
-		viewPosition = vec3(viewMatrix * vec4(worldPosition, 1));
-		gl_Position = projectionMatrix * vec4(viewPosition, 1);
-	} else if (passID == 2) {
-		worldPosition = vec3(modelMatrix * vec4(position, 1));
-		viewPosition = vec3(viewMatrix * vec4(worldPosition, 1));
-		gl_Position = projectionMatrix * vec4(viewPosition, 1);
+	worldPosition = vec3(modelMatrix * vec4(position, 1));
+	viewPosition = vec3(viewMatrix * vec4(worldPosition, 1));
+	gl_Position = projectionMatrix * vec4(viewPosition, 1);
 
-		colorF = colorV;
+	colorF = colorV;
 
-		texCoordF = texCoordV;
+	texCoordF = texCoordV;
 
-		normalF = normalize(vec3(normalMatrix * vec4(normalV, 0)));
+	normalF = normalize(vec3(normalMatrix * vec4(normalV, 0)));
 
-		mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * shadowModelMatrix;
-		lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
-	}
+	mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * shadowModelMatrix;
+	lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
 }

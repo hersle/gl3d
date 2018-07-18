@@ -32,7 +32,6 @@ type Renderer struct {
 		specularMap *UniformSampler
 		lightPos *UniformVector3
 		alpha *UniformFloat
-		passID *UniformInteger
 		shadowModelMat *UniformMatrix4
 		shadowViewMat *UniformMatrix4
 		shadowProjMat *UniformMatrix4
@@ -100,7 +99,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.uniforms.ambientLight, errs[16] = r.prog.UniformVector3("light.ambient")
 	r.uniforms.diffuseLight, errs[17] = r.prog.UniformVector3("light.diffuse")
 	r.uniforms.specularLight, errs[18] = r.prog.UniformVector3("light.specular")
-	r.uniforms.passID, errs[19] = r.prog.UniformInteger("passID")
+	// TODO: 19
 	r.uniforms.shadowModelMat, errs[20] = r.prog.UniformMatrix4("shadowModelMatrix")
 	r.uniforms.shadowViewMat, errs[21] = r.prog.UniformMatrix4("shadowViewMatrix")
 	r.uniforms.shadowProjMat, errs[22] = r.prog.UniformMatrix4("shadowProjectionMatrix")
@@ -174,7 +173,6 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 }
 
 func (r *Renderer) shadowPass(s *Scene, c *Camera) {
-	r.prog.SetUniformInteger(r.uniforms.passID, 1)
 	r.SetViewport(0, 0, 512, 512)
 	r.shadowFb.ClearDepth(1)
 	gls.SetDrawFramebuffer(r.shadowFb)
@@ -200,7 +198,6 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	r.shadowPass(s, c)
 
 	// normal pass
-	r.prog.SetUniformInteger(r.uniforms.passID, 2)
 	r.SetFullViewport(r.win)
 	gls.SetDrawFramebuffer(defaultFramebuffer)
 	r.prog.SetUniformVector3(r.uniforms.lightPos, s.Light.position)
@@ -219,21 +216,13 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	r.prog.SetUniformMatrix4(r.uniforms.projMat, ident)
 	for _, subMesh := range s.quad.subMeshes {
 		r.prog.SetUniformVector3(r.uniforms.ambient, subMesh.mtl.ambient)
-		r.prog.SetUniformVector3(r.uniforms.diffuse, subMesh.mtl.diffuse)
-		r.prog.SetUniformVector3(r.uniforms.specular, subMesh.mtl.specular)
-		r.prog.SetUniformFloat(r.uniforms.shine, subMesh.mtl.shine)
-		r.prog.SetUniformFloat(r.uniforms.alpha, subMesh.mtl.alpha)
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
 		r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
-		offset = int(unsafe.Offsetof(Vertex{}.normal))
-		r.vao.SetAttribSource(r.attrs.normal, subMesh.vbo, offset, stride)
 		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
 		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 		r.prog.SetUniformSampler(r.uniforms.ambientMap, subMesh.mtl.ambientMapTexture)
-		r.prog.SetUniformSampler(r.uniforms.diffuseMap, subMesh.mtl.diffuseMapTexture)
-		r.prog.SetUniformSampler(r.uniforms.specularMap, subMesh.mtl.specularMapTexture)
 		gls.SetVertexArray(r.vao)
 		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
 	}
