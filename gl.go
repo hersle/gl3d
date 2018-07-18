@@ -64,28 +64,28 @@ var defaultFramebuffer *Framebuffer = &Framebuffer{0}
 
 func (st *RenderState) SetVertexArray(va *VertexArray) {
 	if st.vaBound == nil || st.vaBound.id != va.id {
-		gl.BindVertexArray(va.id)
+		va.Bind()
 		st.vaBound = va
 	}
 }
 
 func (st *RenderState) SetShaderProgram(prog *ShaderProgram) {
 	if st.progBound == nil || st.progBound.id != prog.id {
-		gl.UseProgram(prog.id)
+		prog.Bind()
 		st.progBound = prog
 	}
 }
 
 func (st *RenderState) SetDrawFramebuffer(f *Framebuffer) {
 	if st.drawFramebufferBound == nil || st.drawFramebufferBound.id != f.id {
-		gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, f.id)
+		f.BindDraw()
 		st.drawFramebufferBound = f
 	}
 }
 
 func (st *RenderState) SetReadFramebuffer(f *Framebuffer) {
 	if st.readFramebufferBound == nil || st.readFramebufferBound.id != f.id {
-		gl.BindFramebuffer(gl.READ_FRAMEBUFFER, f.id)
+		f.BindRead()
 		st.readFramebufferBound = f
 	}
 }
@@ -189,6 +189,10 @@ func (p *ShaderProgram) Link() error {
 		return nil
 	}
 	return errors.New(p.Log())
+}
+
+func (p *ShaderProgram) Bind() {
+	gl.UseProgram(p.id)
 }
 
 func (p *ShaderProgram) Attrib(name string) (*Attrib, error) {
@@ -379,6 +383,10 @@ func (va *VertexArray) SetIndexBuffer(b *Buffer) {
 	gl.VertexArrayElementBuffer(va.id, b.id)
 }
 
+func (va *VertexArray) Bind() {
+	gl.BindVertexArray(va.id)
+}
+
 func NewTextureUnit(id int) *TextureUnit {
 	var tu TextureUnit
 	tu.id = int32(id)
@@ -410,4 +418,12 @@ func (f *Framebuffer) ClearDepth(clearDepth float32) {
 func (f *Framebuffer) Complete() bool {
 	status := gl.CheckNamedFramebufferStatus(f.id, gl.FRAMEBUFFER)
 	return status == gl.FRAMEBUFFER_COMPLETE
+}
+
+func (f *Framebuffer) BindDraw() {
+	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, f.id)
+}
+
+func (f *Framebuffer) BindRead() {
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, f.id)
 }
