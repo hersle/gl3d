@@ -152,21 +152,21 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
-	r.prog.SetUniformMatrix4(r.uniforms.modelMat, m.WorldMatrix())
-	r.prog.SetUniformMatrix4(r.uniforms.viewMat, c.ViewMatrix())
-	r.prog.SetUniformMatrix4(r.uniforms.projMat, c.ProjectionMatrix())
-	r.prog.SetUniformMatrix4(r.uniforms.normalMat, r.normalMat)
+	r.uniforms.modelMat.Set(m.WorldMatrix())
+	r.uniforms.viewMat.Set(c.ViewMatrix())
+	r.uniforms.projMat.Set(c.ProjectionMatrix())
+	r.uniforms.normalMat.Set(r.normalMat)
 
-	r.prog.SetUniformMatrix4(r.uniforms.shadowModelMat, m.WorldMatrix())
-	r.prog.SetUniformMatrix4(r.uniforms.shadowViewMat, s.Light.ViewMatrix())
-	r.prog.SetUniformMatrix4(r.uniforms.shadowProjMat, s.Light.ProjectionMatrix())
+	r.uniforms.shadowModelMat.Set(m.WorldMatrix())
+	r.uniforms.shadowViewMat.Set(s.Light.ViewMatrix())
+	r.uniforms.shadowProjMat.Set(s.Light.ProjectionMatrix())
 
 	for _, subMesh := range m.subMeshes {
-		r.prog.SetUniformVector3(r.uniforms.ambient, subMesh.mtl.ambient)
-		r.prog.SetUniformVector3(r.uniforms.diffuse, subMesh.mtl.diffuse)
-		r.prog.SetUniformVector3(r.uniforms.specular, subMesh.mtl.specular)
-		r.prog.SetUniformFloat(r.uniforms.shine, subMesh.mtl.shine)
-		r.prog.SetUniformFloat(r.uniforms.alpha, subMesh.mtl.alpha)
+		r.uniforms.ambient.Set(subMesh.mtl.ambient)
+		r.uniforms.diffuse.Set(subMesh.mtl.diffuse)
+		r.uniforms.specular.Set(subMesh.mtl.specular)
+		r.uniforms.shine.Set(subMesh.mtl.shine)
+		r.uniforms.alpha.Set(subMesh.mtl.alpha)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
@@ -187,11 +187,11 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 
 func (r *Renderer) shadowPass(s *Scene, c *Camera) {
 	r.shadowFb.ClearDepth(1)
-	r.prog.SetUniformMatrix4(r.uniforms.viewMat, s.Light.ViewMatrix())
-	r.prog.SetUniformMatrix4(r.uniforms.projMat, s.Light.ProjectionMatrix())
+	r.uniforms.viewMat.Set(s.Light.ViewMatrix())
+	r.uniforms.projMat.Set(s.Light.ProjectionMatrix())
 
 	for _, m := range s.meshes {
-		r.prog.SetUniformMatrix4(r.uniforms.modelMat, m.WorldMatrix())
+		r.uniforms.modelMat.Set(m.WorldMatrix())
 		for _, subMesh := range m.subMeshes {
 			stride := int(unsafe.Sizeof(Vertex{}))
 			offset := int(unsafe.Offsetof(Vertex{}.pos))
@@ -209,10 +209,10 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 
 	// normal pass
 	r.renderState1.viewportWidth, r.renderState1.viewportHeight = r.win.Size()
-	r.prog.SetUniformVector3(r.uniforms.lightPos, s.Light.position)
-	r.prog.SetUniformVector3(r.uniforms.ambientLight, s.Light.ambient)
-	r.prog.SetUniformVector3(r.uniforms.diffuseLight, s.Light.diffuse)
-	r.prog.SetUniformVector3(r.uniforms.specularLight, s.Light.specular)
+	r.uniforms.lightPos.Set(s.Light.position)
+	r.uniforms.ambientLight.Set(s.Light.ambient)
+	r.uniforms.diffuseLight.Set(s.Light.diffuse)
+	r.uniforms.specularLight.Set(s.Light.specular)
 	for _, m := range s.meshes {
 		r.renderMesh(s, m, c)
 	}
@@ -220,11 +220,11 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	// draw test quad
 	s.quad.subMeshes[0].mtl.ambientMapTexture = r.shadowTex
 	ident := NewMat4Identity()
-	r.prog.SetUniformMatrix4(r.uniforms.modelMat, ident)
-	r.prog.SetUniformMatrix4(r.uniforms.viewMat, ident)
-	r.prog.SetUniformMatrix4(r.uniforms.projMat, ident)
+	r.uniforms.modelMat.Set(ident)
+	r.uniforms.viewMat.Set(ident)
+	r.uniforms.projMat.Set(ident)
 	for _, subMesh := range s.quad.subMeshes {
-		r.prog.SetUniformVector3(r.uniforms.ambient, subMesh.mtl.ambient)
+		r.uniforms.ambient.Set(subMesh.mtl.ambient)
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
 		r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
@@ -339,8 +339,8 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 func (r *SkyboxRenderer) Render(c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 	gl.Disable(gl.DEPTH_TEST)
-	r.prog.SetUniformMatrix4(r.uniforms.viewMat, c.ViewMatrix())
-	r.prog.SetUniformMatrix4(r.uniforms.projMat, c.ProjectionMatrix())
-	r.prog.SetUniformSamplerCube(r.uniforms.cubeMap, r.tex)
+	r.uniforms.viewMat.Set(c.ViewMatrix())
+	r.uniforms.projMat.Set(c.ProjectionMatrix())
+	r.uniforms.cubeMap.SetCube(r.tex)
 	NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
 }

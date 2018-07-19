@@ -58,6 +58,7 @@ type Attrib struct {
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
 type UniformBasic struct {
+	progID uint32
 	location uint32
 	glType uint32
 }
@@ -201,28 +202,40 @@ func (p *ShaderProgram) Link() error {
 	return errors.New(p.Log())
 }
 
-func (p *ShaderProgram) SetUniformInteger(u *UniformInteger, i int) {
-	gl.ProgramUniform1i(p.id, int32(u.location), int32(i))
+func (u *UniformInteger) Set(i int) {
+	gl.ProgramUniform1i(u.progID, int32(u.location), int32(i))
 }
 
-func (p *ShaderProgram) SetUniformFloat(u *UniformFloat, f float32) {
-	gl.ProgramUniform1f(p.id, int32(u.location), f)
+func (u *UniformFloat) Set(f float32) {
+	gl.ProgramUniform1f(u.progID, int32(u.location), f)
 }
 
-func (p *ShaderProgram) SetUniformVector2(u *UniformVector2, v Vec2) {
-	gl.ProgramUniform2fv(p.id, int32(u.location), 1, &v[0])
+func (u *UniformVector2) Set(v Vec2) {
+	gl.ProgramUniform2fv(u.progID, int32(u.location), 1, &v[0])
 }
 
-func (p *ShaderProgram) SetUniformVector3(u *UniformVector3, v Vec3) {
-	gl.ProgramUniform3fv(p.id, int32(u.location), 1, &v[0])
+func (u *UniformVector3) Set(v Vec3) {
+	gl.ProgramUniform3fv(u.progID, int32(u.location), 1, &v[0])
 }
 
-func (p *ShaderProgram) SetUniformVector4(u *UniformVector4, v Vec4) {
-	gl.ProgramUniform4fv(p.id, int32(u.location), 1, &v[0])
+func (u *UniformVector4) Set(v Vec4) {
+	gl.ProgramUniform4fv(u.progID, int32(u.location), 1, &v[0])
 }
 
-func (p *ShaderProgram) SetUniformMatrix4(u *UniformMatrix4, m *Mat4) {
-	gl.ProgramUniformMatrix4fv(p.id, int32(u.location), 1, true, &m[0])
+func (u *UniformMatrix4) Set(m *Mat4) {
+	gl.ProgramUniformMatrix4fv(u.progID, int32(u.location), 1, true, &m[0])
+}
+
+func (u *UniformSampler) Set2D(t *Texture2D) {
+	// TODO: other shaders can mess with this texture index
+	gl.BindTextureUnit(u.textureUnitIndex, t.id)
+	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
+}
+
+func (u *UniformSampler) SetCube(t *CubeMap) {
+	// TODO: other shaders can mess with this texture index
+	gl.BindTextureUnit(u.textureUnitIndex, t.id)
+	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
 }
 
 func (p *ShaderProgram) SetUniformSampler(u *UniformSampler, t *Texture2D) {
@@ -258,6 +271,7 @@ func (p *ShaderProgram) UniformBasic(name string) (UniformBasic, error) {
 		return u, errors.New(fmt.Sprint(name, " uniform location -1"))
 	}
 	u.location = uint32(loc)
+	u.progID = p.id
 	gl.GetActiveUniform(p.id, u.location, 0, nil, nil, &u.glType, nil)
 	return u, nil
 }
