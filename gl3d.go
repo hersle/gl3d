@@ -3,6 +3,8 @@ package main
 import (
 	"os"
 	"github.com/go-gl/glfw/v3.2/glfw"
+	"time"
+	"fmt"
 )
 
 func main() {
@@ -49,12 +51,27 @@ func main() {
 	var camFactor float32
 
 	skyboxRenderer := NewSkyboxRenderer(win)
+	textRenderer := NewTextRenderer(win)
 
+	time1 := time.Now()
+	fps := int(0)
+	frameCount := int(0)
 	for !win.ShouldClose() {
+		if time.Now().Sub(time1).Seconds() > 0.5 {
+			time2 := time.Now()
+			fps = int(float64(frameCount) / (time2.Sub(time1).Seconds()))
+			time1 = time2
+			frameCount = 0
+		}
+
 		c.SetAspect(win.Aspect())
 		renderer.Clear()
 		skyboxRenderer.Render(c)
 		renderer.Render(s, c)
+		text := "FPS:      " + fmt.Sprint(fps) + "\n"
+		text += "position: " + c.position.String() + "\n"
+		text += "forward:  " + c.forward.String()
+		textRenderer.Render(NewVec2(-1, +1), text, 0.05)
 		win.Update()
 
 		if win.glfwWin.GetKey(glfw.KeyLeftShift) == glfw.Press {
@@ -91,5 +108,7 @@ func main() {
 			s.Light.Place(c.position)
 			s.Light.Orient(c.forward, c.up)
 		}
+
+		frameCount++
 	}
 }

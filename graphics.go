@@ -4,6 +4,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"unsafe"
 	"path"
+	"golang.org/x/image/font/basicfont"
 )
 
 type Vertex struct {
@@ -114,7 +115,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	r.shadowFb = NewFramebuffer()
 	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, r.shadowTex, 0)
-	println(r.shadowFb.Complete())
 
 	r.renderState1 = NewRenderState()
 	r.renderState1.SetShaderProgram(r.prog)
@@ -309,4 +309,114 @@ func (r *SkyboxRenderer) Render(c *Camera) {
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
 	r.uniforms.cubeMap.SetCube(r.tex)
 	NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
+}
+
+type TextRenderer struct {
+	win *Window
+	prog *ShaderProgram
+	uniforms struct {
+		tex *UniformSampler
+	}
+	attrs struct {
+		pos *Attrib
+		texCoord *Attrib
+	}
+	tex *Texture2D
+	vbo *Buffer
+	ibo *Buffer
+	renderState *RenderState
+}
+
+func NewTextRenderer(win *Window) *TextRenderer {
+	var r TextRenderer
+
+	r.win = win
+
+	r.prog, _ = ReadShaderProgram("shaders/textvshader.glsl", "shaders/textfshader.glsl")
+	r.uniforms.tex = r.prog.UniformSampler("fontAtlas")
+	r.attrs.pos = r.prog.Attrib("position")
+	r.attrs.texCoord = r.prog.Attrib("texCoordV")
+
+	r.vbo = NewBuffer()
+	r.ibo = NewBuffer()
+
+	stride := int(unsafe.Sizeof(Vertex{}))
+	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+	offset2 := int(unsafe.Offsetof(Vertex{}.texCoord))
+	r.attrs.pos.SetFormat(2, gl.FLOAT, false)
+	r.attrs.pos.SetSource(r.vbo, offset1, stride)
+	r.attrs.texCoord.SetFormat(2, gl.FLOAT, false)
+	r.attrs.texCoord.SetSource(r.vbo, offset2, stride)
+	r.prog.SetAttribIndexBuffer(r.ibo)
+
+	img := basicfont.Face7x13.Mask
+	r.tex = NewTexture2DFromImage(gl.NEAREST, gl.CLAMP_TO_EDGE, gl.RGBA8, img)
+
+	r.renderState = NewRenderState()
+	r.renderState.SetDepthTest(false)
+	r.renderState.SetFramebuffer(defaultFramebuffer)
+	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetBlend(true)
+	r.renderState.SetBlendFunction(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_COLOR)
+
+	return &r
+}
+
+func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+
+	var verts []Vertex
+	var inds []int32
+
+	face := basicfont.Face7x13
+
+	x0 := tl.X()
+	imgW, imgH := face.Mask.Bounds().Dx(), face.Mask.Bounds().Dy()
+	subImgW, subImgH := face.Width, face.Ascent + face.Descent
+	h := height
+	w := h * float32(subImgW) / float32(subImgH)
+
+	for _, char := range text {
+		for _, runeRange := range face.Ranges {
+			lo, hi, offset := runeRange.Low, runeRange.High, runeRange.Offset
+			if char >= lo && char < hi {
+				imgX1, imgY1 := 0, (int(char-lo) + offset) * subImgH
+				imgX2, imgY2 := imgX1 + subImgW, imgY1 + subImgH
+				texX1 := float32(imgX1) / float32(imgW) // left
+				texY1 := float32(imgY1) / float32(imgH) // top
+				texX2 := float32(imgX2) / float32(imgW) // right
+				texY2 := float32(imgY2) / float32(imgH) // bottom
+				br := NewVec2(tl.X() + w, tl.Y() - h)
+				tr := NewVec2(br.X(), tl.Y())
+				bl := NewVec2(tl.X(), br.Y())
+
+				normal := NewVec3(0, 0, 0)
+				vert1 := NewVertex(bl.Vec3(0), NewVec2(texX1, texY2), normal)
+				vert2 := NewVertex(br.Vec3(0), NewVec2(texX2, texY2), normal)
+				vert3 := NewVertex(tr.Vec3(0), NewVec2(texX2, texY1), normal)
+				vert4 := NewVertex(tl.Vec3(0), NewVec2(texX1, texY1), normal)
+				inds = append(inds, int32(len(verts) + 0))
+				inds = append(inds, int32(len(verts) + 1))
+				inds = append(inds, int32(len(verts) + 2))
+				inds = append(inds, int32(len(verts) + 0))
+				inds = append(inds, int32(len(verts) + 2))
+				inds = append(inds, int32(len(verts) + 3))
+				verts = append(verts, vert1, vert2, vert3, vert4)
+				break
+			}
+		}
+
+		if char == '\n' {
+			tl = NewVec2(x0, tl.Y() - h)
+		} else if char == '\t' {
+			tl = tl.Add(NewVec2(4 * float32(face.Advance) * h / float32(subImgH), 0))
+		} else {
+			tl = tl.Add(NewVec2(float32(face.Advance) * h / float32(subImgH), 0))
+		}
+	}
+
+	r.uniforms.tex.Set2D(r.tex)
+	r.vbo.SetData(verts, 0)
+	r.ibo.SetData(inds, 0)
+	NewRenderCommand(gl.TRIANGLES, len(inds), 0, r.renderState).Execute()
 }

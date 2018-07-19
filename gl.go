@@ -8,6 +8,7 @@ import (
 	"image"
 	"image/draw"
 	"unsafe"
+	"os"
 )
 
 // TODO: enable sorting of these states to reduce state changes?
@@ -405,6 +406,19 @@ func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
 		return NewTexture2DFromImage(filterMode, wrapMode, format, imgRGBA)
 	}
+}
+
+func ReadTexture2D(filterMode, wrapMode int32, format uint32, filename string) *Texture2D {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil
+	}
+	defer file.Close()
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil
+	}
+	return NewTexture2DFromImage(filterMode, wrapMode, format, img)
 }
 
 func (t *Texture2D) SetBorderColor(rgba Vec4) {
