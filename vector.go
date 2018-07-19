@@ -195,13 +195,13 @@ func (a Vec4) Transform(m *Mat4) Vec4 {
 }
 
 func (a Vec2) String() string {
-	return fmt.Sprintf("(%v, %v)", a.X(), a.Y())
+	return fmt.Sprintf("(%.2f, %.2f)", a.X(), a.Y())
 }
 
 func (a Vec3) String() string {
-	return fmt.Sprintf("(%v, %v, %v)", a.X(), a.Y(), a.Z())
+	return fmt.Sprintf("(%.2f, %.2f, %.2f)", a.X(), a.Y(), a.Z())
 }
 
 func (a Vec4) String() string {
-	return fmt.Sprintf("(%v, %v, %v, %v)", a.X(), a.Y(), a.Z(), a.W())
+	return fmt.Sprintf("(%.2f, %.2f, %.2f, %.2f)", a.X(), a.Y(), a.Z(), a.W())
 }
