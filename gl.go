@@ -11,12 +11,24 @@ import (
 	"unsafe"
 )
 
+// TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
-	vaBound *VertexArray
-	progBound *ShaderProgram
-	tex2dBound *Texture2D
-	drawFramebufferBound *Framebuffer
-	readFramebufferBound *Framebuffer
+	va *VertexArray
+	prog *ShaderProgram
+	framebuffer *Framebuffer
+	depthTest bool
+	blend bool
+	blendSrcFactor uint32
+	blendDstFactor uint32
+	viewportWidth int
+	viewportHeight int
+}
+
+type RenderCommand struct {
+	primitiveType uint32
+	vertexCount int
+	offset int
+	state *RenderState
 }
 
 type ShaderProgram struct {
@@ -81,45 +93,14 @@ type UniformSampler struct {
 
 type VertexArray struct {
 	id uint32
+	hasIndexBuffer bool
 }
 
 type Framebuffer struct {
 	id uint32
 }
 
-var gls *RenderState = &RenderState{}
-
 var defaultFramebuffer *Framebuffer = &Framebuffer{0}
-
-func (st *RenderState) SetVertexArray(va *VertexArray) {
-	if st.vaBound == nil || st.vaBound.id != va.id {
-		va.Bind()
-		st.vaBound = va
-	}
-}
-
-func (st *RenderState) SetShaderProgram(prog *ShaderProgram) {
-	if st.progBound == nil || st.progBound.id != prog.id {
-		prog.Bind()
-		st.progBound = prog
-	}
-}
-
-func (st *RenderState) SetDrawFramebuffer(f *Framebuffer) {
-	if st.drawFramebufferBound == nil || st.drawFramebufferBound.id != f.id {
-		f.BindDraw()
-		st.drawFramebufferBound = f
-	}
-}
-
-func (st *RenderState) SetReadFramebuffer(f *Framebuffer) {
-	if st.readFramebufferBound == nil || st.readFramebufferBound.id != f.id {
-		f.BindRead()
-		st.readFramebufferBound = f
-	}
-}
-
-// TODO: draw methods
 
 func NewShader(typ uint32, src string) (*Shader, error) {
 	var s Shader
@@ -463,6 +444,7 @@ func ReadCubeMap(filterMode int32, filename1, filename2, filename3, filename4, f
 func NewVertexArray() *VertexArray {
 	var va VertexArray
 	gl.CreateVertexArrays(1, &va.id)
+	va.hasIndexBuffer = false
 	return &va
 }
 
@@ -479,6 +461,7 @@ func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int)
 
 func (va *VertexArray) SetIndexBuffer(b *Buffer) {
 	gl.VertexArrayElementBuffer(va.id, b.id)
+	va.hasIndexBuffer = true
 }
 
 func (va *VertexArray) Bind() {
@@ -514,4 +497,80 @@ func (f *Framebuffer) BindDraw() {
 
 func (f *Framebuffer) BindRead() {
 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, f.id)
+}
+
+func NewRenderCommand(primitiveType uint32, vertexCount, offset int, state *RenderState) *RenderCommand {
+	var cmd RenderCommand
+	cmd.primitiveType = primitiveType
+	cmd.vertexCount = vertexCount
+	cmd.offset = offset
+	cmd.state = state
+	return &cmd
+}
+
+func (cmd *RenderCommand) Execute() {
+	cmd.state.Apply()
+	if cmd.state.va.hasIndexBuffer {
+		gl.DrawElements(cmd.primitiveType, int32(cmd.vertexCount), gl.UNSIGNED_INT, nil)
+	} else {
+		gl.DrawArrays(cmd.primitiveType, int32(cmd.offset), int32(cmd.vertexCount))
+	}
+}
+
+func NewRenderState() *RenderState {
+	var rs RenderState
+	return &rs
+}
+
+func (rs *RenderState) SetVertexArray(va *VertexArray) {
+	rs.va = va
+}
+
+func (rs *RenderState) SetShaderProgram(prog *ShaderProgram) {
+	rs.prog = prog
+}
+
+func (rs *RenderState) SetFramebuffer(fb *Framebuffer) {
+	rs.framebuffer = fb
+}
+
+func (rs *RenderState) SetDepthTest(depthTest bool) {
+	rs.depthTest = depthTest
+}
+
+func (rs *RenderState) SetBlend(blend bool) {
+	rs.blend = blend
+}
+
+func (rs *RenderState) SetBlendFunction(blendSrcFactor, blendDstFactor uint32) {
+	rs.blendSrcFactor = blendSrcFactor
+	rs.blendDstFactor = blendDstFactor
+}
+
+func (rs *RenderState) SetViewport(width, height int) {
+	rs.viewportWidth = width
+	rs.viewportHeight = height
+}
+
+func (rs *RenderState) Apply() {
+	rs.va.Bind()
+
+	rs.prog.Bind()
+
+	rs.framebuffer.BindDraw()
+
+	if rs.depthTest {
+		gl.Enable(gl.DEPTH_TEST)
+	} else {
+		gl.Disable(gl.DEPTH_TEST)
+	}
+
+	if rs.blend {
+		gl.Enable(gl.BLEND)
+		gl.BlendFunc(rs.blendSrcFactor, rs.blendDstFactor)
+	} else {
+		gl.Disable(gl.BLEND)
+	}
+
+	gl.Viewport(0, 0, int32(rs.viewportWidth), int32(rs.viewportHeight))
 }

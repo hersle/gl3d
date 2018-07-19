@@ -49,6 +49,9 @@ type Renderer struct {
 
 	shadowFb *Framebuffer
 	shadowTex *Texture2D
+
+	renderState1 *RenderState
+	renderState2 *RenderState
 }
 
 func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
@@ -122,6 +125,22 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, r.shadowTex, 0)
 	println(r.shadowFb.Complete())
 
+	r.renderState1 = NewRenderState()
+	r.renderState1.SetVertexArray(r.vao)
+	r.renderState1.SetShaderProgram(r.prog)
+	r.renderState1.SetFramebuffer(defaultFramebuffer)
+	r.renderState1.SetDepthTest(true)
+	r.renderState1.SetBlend(true)
+	r.renderState1.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+
+	r.renderState2 = NewRenderState()
+	r.renderState2.SetVertexArray(r.vao)
+	r.renderState2.SetShaderProgram(r.prog)
+	r.renderState2.SetFramebuffer(r.shadowFb)
+	r.renderState2.SetDepthTest(true)
+	r.renderState2.SetBlend(false)
+	r.renderState2.SetViewport(512, 512)
+
 	return &r, nil
 }
 
@@ -162,15 +181,12 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.prog.SetUniformSampler(r.uniforms.diffuseMap, subMesh.mtl.diffuseMapTexture)
 		r.prog.SetUniformSampler(r.uniforms.specularMap, subMesh.mtl.specularMapTexture)
 		r.prog.SetUniformSampler(r.uniforms.shadowMap, r.shadowTex)
-		gls.SetVertexArray(r.vao)
-		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
+		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }
 
 func (r *Renderer) shadowPass(s *Scene, c *Camera) {
-	r.SetViewport(0, 0, 512, 512)
 	r.shadowFb.ClearDepth(1)
-	gls.SetDrawFramebuffer(r.shadowFb)
 	r.prog.SetUniformMatrix4(r.uniforms.viewMat, s.Light.ViewMatrix())
 	r.prog.SetUniformMatrix4(r.uniforms.projMat, s.Light.ProjectionMatrix())
 
@@ -182,24 +198,17 @@ func (r *Renderer) shadowPass(s *Scene, c *Camera) {
 			r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
 			r.vao.SetIndexBuffer(subMesh.ibo)
 
-			gls.SetVertexArray(r.vao)
-			gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
+			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState2).Execute()
 		}
 	}
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
-	gl.Enable(gl.DEPTH_TEST)
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-	gls.SetShaderProgram(r.prog)
-
 	// shadow pass
 	r.shadowPass(s, c)
 
 	// normal pass
-	r.SetFullViewport(r.win)
-	gls.SetDrawFramebuffer(defaultFramebuffer)
+	r.renderState1.viewportWidth, r.renderState1.viewportHeight = r.win.Size()
 	r.prog.SetUniformVector3(r.uniforms.lightPos, s.Light.position)
 	r.prog.SetUniformVector3(r.uniforms.ambientLight, s.Light.ambient)
 	r.prog.SetUniformVector3(r.uniforms.diffuseLight, s.Light.diffuse)
@@ -223,18 +232,8 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
 		r.vao.SetIndexBuffer(subMesh.ibo)
 		r.prog.SetUniformSampler(r.uniforms.ambientMap, subMesh.mtl.ambientMapTexture)
-		gls.SetVertexArray(r.vao)
-		gl.DrawElements(gl.TRIANGLES, int32(subMesh.inds), gl.UNSIGNED_INT, nil)
+		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
-}
-
-func (r *Renderer) SetViewport(l, b, w, h int) {
-	gl.Viewport(int32(l), int32(b), int32(w), int32(h))
-}
-
-func (r *Renderer) SetFullViewport(win *Window) {
-	w, h := win.Size()
-	r.SetViewport(0, 0, w, h)
 }
 
 type SkyboxRenderer struct {
@@ -251,10 +250,13 @@ type SkyboxRenderer struct {
 	vbo *Buffer
 	vao *VertexArray
 	tex *CubeMap
+	renderState *RenderState
 }
 
-func NewSkyboxRenderer() *SkyboxRenderer {
+func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	var r SkyboxRenderer
+
+	r.win = win
 
 	var err error
 	r.prog, err = ReadShaderProgram("shaders/skyboxvshader.glsl", "shaders/skyboxfshader.glsl")
@@ -325,15 +327,20 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	r.vao.SetAttribFormat(r.attrs.pos, 3, gl.FLOAT, false)
 	r.vao.SetAttribSource(r.attrs.pos, r.vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
 
+	r.renderState = NewRenderState()
+	r.renderState.SetDepthTest(false)
+	r.renderState.SetFramebuffer(defaultFramebuffer)
+	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetVertexArray(r.vao)
+
 	return &r
 }
 
 func (r *SkyboxRenderer) Render(c *Camera) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 	gl.Disable(gl.DEPTH_TEST)
 	r.prog.SetUniformMatrix4(r.uniforms.viewMat, c.ViewMatrix())
 	r.prog.SetUniformMatrix4(r.uniforms.projMat, c.ProjectionMatrix())
 	r.prog.SetUniformSamplerCube(r.uniforms.cubeMap, r.tex)
-	gls.SetShaderProgram(r.prog)
-	gls.SetVertexArray(r.vao)
-	gl.DrawArrays(gl.TRIANGLES, 0, 36)
+	NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
 }
