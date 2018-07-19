@@ -33,6 +33,7 @@ type RenderCommand struct {
 
 type ShaderProgram struct {
 	id uint32
+	va *VertexArray
 }
 
 type Shader struct {
@@ -53,6 +54,7 @@ type CubeMap struct {
 }
 
 type Attrib struct {
+	prog *ShaderProgram
 	id uint32
 }
 
@@ -164,6 +166,7 @@ func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
 	}
 	gl.DetachShader(p.id, vShader.id)
 	gl.DetachShader(p.id, fShader.id)
+	p.va = NewVertexArray()
 	return &p, err
 }
 
@@ -238,16 +241,16 @@ func (u *UniformSampler) SetCube(t *CubeMap) {
 	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
 }
 
-func (p *ShaderProgram) SetUniformSampler(u *UniformSampler, t *Texture2D) {
-	// TODO: other shaders can mess with this texture index
-	gl.BindTextureUnit(u.textureUnitIndex, t.id)
-	gl.ProgramUniform1i(p.id, int32(u.location), int32(u.textureUnitIndex))
+func (a *Attrib) SetFormat(dim, typ int, normalize bool) {
+	a.prog.va.SetAttribFormat(a, dim, typ, normalize)
 }
 
-func (p *ShaderProgram) SetUniformSamplerCube(u *UniformSampler, t *CubeMap) {
-	// TODO: other shaders can mess with this texture index
-	gl.BindTextureUnit(u.textureUnitIndex, t.id)
-	gl.ProgramUniform1i(p.id, int32(u.location), int32(u.textureUnitIndex))
+func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
+	a.prog.va.SetAttribSource(a, b, offset, stride)
+}
+
+func (p *ShaderProgram) SetAttribIndexBuffer(b *Buffer) {
+	p.va.SetIndexBuffer(b)
 }
 
 func (p *ShaderProgram) Bind() {
@@ -261,6 +264,7 @@ func (p *ShaderProgram) Attrib(name string) (*Attrib, error) {
 		return nil, errors.New(fmt.Sprint(name, " attribute location -1"))
 	}
 	a.id = uint32(loc)
+	a.prog = p
 	return &a, nil
 }
 

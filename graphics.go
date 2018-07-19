@@ -44,7 +44,6 @@ type Renderer struct {
 		normal *Attrib
 	}
 	vbo, ibo *Buffer
-	vao *VertexArray
 	normalMat *Mat4
 
 	shadowFb *Framebuffer
@@ -109,10 +108,9 @@ func NewRenderer(win *Window) (*Renderer, error) {
 		}
 	}
 
-	r.vao = NewVertexArray()
-	r.vao.SetAttribFormat(r.attrs.pos, 3, gl.FLOAT, false)
-	r.vao.SetAttribFormat(r.attrs.normal, 3, gl.FLOAT, false)
-	r.vao.SetAttribFormat(r.attrs.texCoord, 2, gl.FLOAT, false)
+	r.attrs.pos.SetFormat(3, gl.FLOAT, false)
+	r.attrs.normal.SetFormat(3, gl.FLOAT, false)
+	r.attrs.texCoord.SetFormat(2, gl.FLOAT, false)
 
 	r.normalMat = NewMat4Zero()
 
@@ -126,7 +124,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	println(r.shadowFb.Complete())
 
 	r.renderState1 = NewRenderState()
-	r.renderState1.SetVertexArray(r.vao)
+	r.renderState1.SetVertexArray(r.prog.va) // TODO: remove 
 	r.renderState1.SetShaderProgram(r.prog)
 	r.renderState1.SetFramebuffer(defaultFramebuffer)
 	r.renderState1.SetDepthTest(true)
@@ -134,7 +132,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.renderState1.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	r.renderState2 = NewRenderState()
-	r.renderState2.SetVertexArray(r.vao)
+	r.renderState2.SetVertexArray(r.prog.va) // TODO: remove 
 	r.renderState2.SetShaderProgram(r.prog)
 	r.renderState2.SetFramebuffer(r.shadowFb)
 	r.renderState2.SetDepthTest(true)
@@ -170,17 +168,17 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
-		r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
+		r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
 		offset = int(unsafe.Offsetof(Vertex{}.normal))
-		r.vao.SetAttribSource(r.attrs.normal, subMesh.vbo, offset, stride)
+		r.attrs.normal.SetSource(subMesh.vbo, offset, stride)
 		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
-		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
-		r.vao.SetIndexBuffer(subMesh.ibo)
+		r.attrs.texCoord.SetSource(subMesh.vbo, offset, stride)
+		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
-		r.prog.SetUniformSampler(r.uniforms.ambientMap, subMesh.mtl.ambientMapTexture)
-		r.prog.SetUniformSampler(r.uniforms.diffuseMap, subMesh.mtl.diffuseMapTexture)
-		r.prog.SetUniformSampler(r.uniforms.specularMap, subMesh.mtl.specularMapTexture)
-		r.prog.SetUniformSampler(r.uniforms.shadowMap, r.shadowTex)
+		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMapTexture)
+		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMapTexture)
+		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMapTexture)
+		r.uniforms.shadowMap.Set2D(r.shadowTex)
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }
@@ -195,8 +193,8 @@ func (r *Renderer) shadowPass(s *Scene, c *Camera) {
 		for _, subMesh := range m.subMeshes {
 			stride := int(unsafe.Sizeof(Vertex{}))
 			offset := int(unsafe.Offsetof(Vertex{}.pos))
-			r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
-			r.vao.SetIndexBuffer(subMesh.ibo)
+			r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
+			r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
 			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState2).Execute()
 		}
@@ -227,11 +225,12 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 		r.uniforms.ambient.Set(subMesh.mtl.ambient)
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset := int(unsafe.Offsetof(Vertex{}.pos))
-		r.vao.SetAttribSource(r.attrs.pos, subMesh.vbo, offset, stride)
+		r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
 		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
-		r.vao.SetAttribSource(r.attrs.texCoord, subMesh.vbo, offset, stride)
-		r.vao.SetIndexBuffer(subMesh.ibo)
-		r.prog.SetUniformSampler(r.uniforms.ambientMap, subMesh.mtl.ambientMapTexture)
+		r.attrs.texCoord.SetSource(subMesh.vbo, offset, stride)
+		r.prog.SetAttribIndexBuffer(subMesh.ibo)
+
+		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMapTexture)
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }
@@ -248,7 +247,6 @@ type SkyboxRenderer struct {
 		pos *Attrib
 	}
 	vbo *Buffer
-	vao *VertexArray
 	tex *CubeMap
 	renderState *RenderState
 }
@@ -323,22 +321,20 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	r.vbo = NewBuffer()
 	r.vbo.SetData(verts, 0)
 
-	r.vao = NewVertexArray()
-	r.vao.SetAttribFormat(r.attrs.pos, 3, gl.FLOAT, false)
-	r.vao.SetAttribSource(r.attrs.pos, r.vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
+	r.attrs.pos.SetFormat(3, gl.FLOAT, false)
+	r.attrs.pos.SetSource(r.vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
 
 	r.renderState = NewRenderState()
 	r.renderState.SetDepthTest(false)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
 	r.renderState.SetShaderProgram(r.prog)
-	r.renderState.SetVertexArray(r.vao)
+	r.renderState.SetVertexArray(r.prog.va) // TODO: remove
 
 	return &r
 }
 
 func (r *SkyboxRenderer) Render(c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	gl.Disable(gl.DEPTH_TEST)
 	r.uniforms.viewMat.Set(c.ViewMatrix())
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
 	r.uniforms.cubeMap.SetCube(r.tex)
