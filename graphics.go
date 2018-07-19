@@ -175,9 +175,9 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.attrs.texCoord.SetSource(subMesh.vbo, offset, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
-		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMapTexture)
-		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMapTexture)
-		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMapTexture)
+		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
+		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
+		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 		r.uniforms.shadowMap.Set2D(r.shadowTex)
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
@@ -216,7 +216,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	}
 
 	// draw test quad
-	s.quad.subMeshes[0].mtl.ambientMapTexture = r.shadowTex
+	s.quad.subMeshes[0].mtl.ambientMap = r.shadowTex
 	ident := NewMat4Identity()
 	r.uniforms.modelMat.Set(ident)
 	r.uniforms.viewMat.Set(ident)
@@ -230,7 +230,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 		r.attrs.texCoord.SetSource(subMesh.vbo, offset, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
-		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMapTexture)
+		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }

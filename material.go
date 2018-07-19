@@ -22,11 +22,11 @@ type Material struct {
 	shine float32
 	alpha float32
 	ambientMapFilename string
-	ambientMapTexture *Texture2D
+	ambientMap *Texture2D
 	diffuseMapFilename string
-	diffuseMapTexture *Texture2D
+	diffuseMap *Texture2D
 	specularMapFilename string
-	specularMapTexture *Texture2D
+	specularMap *Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -66,32 +66,32 @@ func initDefaultTexture() {
 func (mtl *Material) Finish() {
 	img, err := readImage(mtl.ambientMapFilename)
 	if err == nil {
-		mtl.ambientMapTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+		mtl.ambientMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 	} else {
 		if defaultTexture == nil {
 			initDefaultTexture()
 		}
-		mtl.ambientMapTexture = defaultTexture
+		mtl.ambientMap = defaultTexture
 	}
 
 	img, err = readImage(mtl.diffuseMapFilename)
 	if err == nil {
-		mtl.diffuseMapTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+		mtl.diffuseMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 	} else {
 		if defaultTexture == nil {
 			initDefaultTexture()
 		}
-		mtl.diffuseMapTexture = defaultTexture
+		mtl.diffuseMap = defaultTexture
 	}
 
 	img, err = readImage(mtl.specularMapFilename)
 	if err == nil {
-		mtl.specularMapTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+		mtl.specularMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 	} else {
 		if defaultTexture == nil {
 			initDefaultTexture()
 		}
-		mtl.specularMapTexture = defaultTexture
+		mtl.specularMap = defaultTexture
 	}
 }
 
