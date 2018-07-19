@@ -45,9 +45,6 @@ func main() {
 	s.Light.Orient(s.Light.position.Scale(-1).Norm(), NewVec3(0, 0, 1))
 
 	c := NewCamera(60, 1, 0.1, 50)
-	c.Place(NewVec3(-5, +5, -5))
-	c.RotateX(3.1415/4)
-	c.RotateY(3.1415/4)
 
 	var camFactor float32
 

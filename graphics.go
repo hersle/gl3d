@@ -76,37 +76,30 @@ func NewRenderer(win *Window) (*Renderer, error) {
 		return nil, err
 	}
 
-	var errs [24]error
-	r.attrs.pos, errs[0] = r.prog.Attrib("position")
-	r.attrs.texCoord, errs[1] = r.prog.Attrib("texCoordV")
-	r.attrs.normal, errs[2] = r.prog.Attrib("normalV")
+	r.attrs.pos = r.prog.Attrib("position")
+	r.attrs.texCoord = r.prog.Attrib("texCoordV")
+	r.attrs.normal = r.prog.Attrib("normalV")
 	// TODO: assign uniforms only name and program, let them handle rest themselves?
-	r.uniforms.modelMat, errs[3] = r.prog.UniformMatrix4("modelMatrix")
-	r.uniforms.viewMat, errs[4] = r.prog.UniformMatrix4("viewMatrix")
-	r.uniforms.projMat, errs[5] = r.prog.UniformMatrix4("projectionMatrix")
-	r.uniforms.normalMat, errs[6] = r.prog.UniformMatrix4("normalMatrix")
-	r.uniforms.ambient, errs[7] = r.prog.UniformVector3("material.ambient")
-	r.uniforms.diffuse, errs[8] = r.prog.UniformVector3("material.diffuse")
-	r.uniforms.specular, errs[9] = r.prog.UniformVector3("material.specular")
-	r.uniforms.ambientMap, errs[10] = r.prog.UniformSampler("material.ambientMap")
-	r.uniforms.diffuseMap, errs[11] = r.prog.UniformSampler("material.diffuseMap")
-	r.uniforms.specularMap, errs[12] = r.prog.UniformSampler("material.specularMap")
-	r.uniforms.shine, errs[13] = r.prog.UniformFloat("material.shine")
-	r.uniforms.alpha, errs[14] = r.prog.UniformFloat("material.alpha")
-	r.uniforms.lightPos, errs[15] = r.prog.UniformVector3("light.position")
-	r.uniforms.ambientLight, errs[16] = r.prog.UniformVector3("light.ambient")
-	r.uniforms.diffuseLight, errs[17] = r.prog.UniformVector3("light.diffuse")
-	r.uniforms.specularLight, errs[18] = r.prog.UniformVector3("light.specular")
-	// TODO: 19
-	r.uniforms.shadowModelMat, errs[20] = r.prog.UniformMatrix4("shadowModelMatrix")
-	r.uniforms.shadowViewMat, errs[21] = r.prog.UniformMatrix4("shadowViewMatrix")
-	r.uniforms.shadowProjMat, errs[22] = r.prog.UniformMatrix4("shadowProjectionMatrix")
-	r.uniforms.shadowMap, errs[23] = r.prog.UniformSampler("shadowMap")
-	for _, err := range errs {
-		if err != nil {
-			panic(err)
-		}
-	}
+	r.uniforms.modelMat = r.prog.UniformMatrix4("modelMatrix")
+	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
+	r.uniforms.projMat = r.prog.UniformMatrix4("projectionMatrix")
+	r.uniforms.normalMat = r.prog.UniformMatrix4("normalMatrix")
+	r.uniforms.ambient = r.prog.UniformVector3("material.ambient")
+	r.uniforms.diffuse = r.prog.UniformVector3("material.diffuse")
+	r.uniforms.specular = r.prog.UniformVector3("material.specular")
+	r.uniforms.ambientMap = r.prog.UniformSampler("material.ambientMap")
+	r.uniforms.diffuseMap = r.prog.UniformSampler("material.diffuseMap")
+	r.uniforms.specularMap = r.prog.UniformSampler("material.specularMap")
+	r.uniforms.shine = r.prog.UniformFloat("material.shine")
+	r.uniforms.alpha = r.prog.UniformFloat("material.alpha")
+	r.uniforms.lightPos = r.prog.UniformVector3("light.position")
+	r.uniforms.ambientLight = r.prog.UniformVector3("light.ambient")
+	r.uniforms.diffuseLight = r.prog.UniformVector3("light.diffuse")
+	r.uniforms.specularLight = r.prog.UniformVector3("light.specular")
+	r.uniforms.shadowModelMat = r.prog.UniformMatrix4("shadowModelMatrix")
+	r.uniforms.shadowViewMat = r.prog.UniformMatrix4("shadowViewMatrix")
+	r.uniforms.shadowProjMat = r.prog.UniformMatrix4("shadowProjectionMatrix")
+	r.uniforms.shadowMap = r.prog.UniformSampler("shadowMap")
 
 	r.attrs.pos.SetFormat(3, gl.FLOAT, false)
 	r.attrs.normal.SetFormat(3, gl.FLOAT, false)
@@ -124,7 +117,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	println(r.shadowFb.Complete())
 
 	r.renderState1 = NewRenderState()
-	r.renderState1.SetVertexArray(r.prog.va) // TODO: remove 
 	r.renderState1.SetShaderProgram(r.prog)
 	r.renderState1.SetFramebuffer(defaultFramebuffer)
 	r.renderState1.SetDepthTest(true)
@@ -132,7 +124,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.renderState1.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	r.renderState2 = NewRenderState()
-	r.renderState2.SetVertexArray(r.prog.va) // TODO: remove 
 	r.renderState2.SetShaderProgram(r.prog)
 	r.renderState2.SetFramebuffer(r.shadowFb)
 	r.renderState2.SetDepthTest(true)
@@ -167,18 +158,19 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.uniforms.alpha.Set(subMesh.mtl.alpha)
 
 		stride := int(unsafe.Sizeof(Vertex{}))
-		offset := int(unsafe.Offsetof(Vertex{}.pos))
-		r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
-		offset = int(unsafe.Offsetof(Vertex{}.normal))
-		r.attrs.normal.SetSource(subMesh.vbo, offset, stride)
-		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
-		r.attrs.texCoord.SetSource(subMesh.vbo, offset, stride)
+		offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+		offset2 := int(unsafe.Offsetof(Vertex{}.normal))
+		offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
+		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
+		r.attrs.normal.SetSource(subMesh.vbo, offset2, stride)
+		r.attrs.texCoord.SetSource(subMesh.vbo, offset3, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
 		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 		r.uniforms.shadowMap.Set2D(r.shadowTex)
+
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }
@@ -224,13 +216,13 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	for _, subMesh := range s.quad.subMeshes {
 		r.uniforms.ambient.Set(subMesh.mtl.ambient)
 		stride := int(unsafe.Sizeof(Vertex{}))
-		offset := int(unsafe.Offsetof(Vertex{}.pos))
-		r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
-		offset = int(unsafe.Offsetof(Vertex{}.texCoord))
-		r.attrs.texCoord.SetSource(subMesh.vbo, offset, stride)
+		offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+		offset2 := int(unsafe.Offsetof(Vertex{}.texCoord))
+		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
+		r.attrs.texCoord.SetSource(subMesh.vbo, offset2, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
-
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
+
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }
@@ -247,6 +239,7 @@ type SkyboxRenderer struct {
 		pos *Attrib
 	}
 	vbo *Buffer
+	ibo *Buffer
 	tex *CubeMap
 	renderState *RenderState
 }
@@ -261,10 +254,10 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	if err != nil {
 		panic(err)
 	}
-	r.uniforms.viewMat, _ = r.prog.UniformMatrix4("viewMatrix")
-	r.uniforms.projMat , _= r.prog.UniformMatrix4("projectionMatrix")
-	r.uniforms.cubeMap , _= r.prog.UniformSampler("cubeMap")
-	r.attrs.pos, _ = r.prog.Attrib("positionV")
+	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
+	r.uniforms.projMat = r.prog.UniformMatrix4("projectionMatrix")
+	r.uniforms.cubeMap = r.prog.UniformSampler("cubeMap")
+	r.attrs.pos = r.prog.Attrib("positionV")
 
 	dir := "images/skybox/mountain/"
 	names := []string{"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"}
@@ -274,61 +267,38 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	}
 	r.tex = ReadCubeMap(gl.NEAREST, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
 
-    verts := []Vec3{
-        NewVec3(-1.0, +1.0, -1.0),
-        NewVec3(-1.0, -1.0, -1.0),
-        NewVec3(+1.0, -1.0, -1.0),
-        NewVec3(+1.0, -1.0, -1.0),
-        NewVec3(+1.0, +1.0, -1.0),
-        NewVec3(-1.0, +1.0, -1.0),
-
-        NewVec3(-1.0, -1.0, +1.0),
-        NewVec3(-1.0, -1.0, -1.0),
-        NewVec3(-1.0, +1.0, -1.0),
-        NewVec3(-1.0, +1.0, -1.0),
-        NewVec3(-1.0, +1.0, +1.0),
-        NewVec3(-1.0, -1.0, +1.0),
-
-        NewVec3(+1.0, -1.0, -1.0),
-        NewVec3(+1.0, -1.0, +1.0),
-        NewVec3(+1.0, +1.0, +1.0),
-        NewVec3(+1.0, +1.0, +1.0),
-        NewVec3(+1.0, +1.0, -1.0),
-        NewVec3(+1.0, -1.0, -1.0),
-
-        NewVec3(-1.0, -1.0, +1.0),
-        NewVec3(-1.0, +1.0, +1.0),
-        NewVec3(+1.0, +1.0, +1.0),
-        NewVec3(+1.0, +1.0, +1.0),
-        NewVec3(+1.0, -1.0, +1.0),
-        NewVec3(-1.0, -1.0, +1.0),
-
-        NewVec3(-1.0, +1.0, -1.0),
-        NewVec3(+1.0, +1.0, -1.0),
-        NewVec3(+1.0, +1.0, +1.0),
-        NewVec3(+1.0, +1.0, +1.0),
-        NewVec3(-1.0, +1.0, +1.0),
-        NewVec3(-1.0, +1.0, -1.0),
-
-        NewVec3(-1.0, -1.0, -1.0),
-        NewVec3(-1.0, -1.0, +1.0),
-        NewVec3(+1.0, -1.0, -1.0),
-        NewVec3(+1.0, -1.0, -1.0),
-        NewVec3(-1.0, -1.0, +1.0),
-        NewVec3(+1.0, -1.0, +1.0),
-	}
-
 	r.vbo = NewBuffer()
+	verts := []Vec3{
+		NewVec3(-1.0, -1.0, -1.0),
+		NewVec3(+1.0, -1.0, -1.0),
+		NewVec3(+1.0, +1.0, -1.0),
+		NewVec3(-1.0, +1.0, -1.0),
+		NewVec3(-1.0, -1.0, +1.0),
+		NewVec3(+1.0, -1.0, +1.0),
+		NewVec3(+1.0, +1.0, +1.0),
+		NewVec3(-1.0, +1.0, +1.0),
+	}
 	r.vbo.SetData(verts, 0)
+
+	r.ibo = NewBuffer()
+	inds := []int32{
+		4, 5, 6, 4, 6, 7,
+		5, 1, 2, 5, 2, 6,
+		1, 0, 3, 1, 3, 2,
+		0, 4, 7, 0, 7, 3,
+		7, 6, 2, 7, 2, 3,
+		5, 4, 0, 5, 0, 1,
+	}
+	r.ibo.SetData(inds, 0)
 
 	r.attrs.pos.SetFormat(3, gl.FLOAT, false)
 	r.attrs.pos.SetSource(r.vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
+	r.prog.SetAttribIndexBuffer(r.ibo)
 
 	r.renderState = NewRenderState()
 	r.renderState.SetDepthTest(false)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
 	r.renderState.SetShaderProgram(r.prog)
-	r.renderState.SetVertexArray(r.prog.va) // TODO: remove
 
 	return &r
 }

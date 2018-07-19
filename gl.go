@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io/ioutil"
 	"reflect"
-	"fmt"
 	"image"
 	"image/draw"
 	"unsafe"
@@ -13,7 +12,6 @@ import (
 
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
-	va *VertexArray
 	prog *ShaderProgram
 	framebuffer *Framebuffer
 	depthTest bool
@@ -257,91 +255,91 @@ func (p *ShaderProgram) Bind() {
 	gl.UseProgram(p.id)
 }
 
-func (p *ShaderProgram) Attrib(name string) (*Attrib, error) {
+func (p *ShaderProgram) Attrib(name string) *Attrib {
 	var a Attrib
 	loc := gl.GetAttribLocation(p.id, gl.Str(name + "\x00"))
 	if loc == -1 {
-		return nil, errors.New(fmt.Sprint(name, " attribute location -1"))
+		return nil
 	}
 	a.id = uint32(loc)
 	a.prog = p
-	return &a, nil
+	return &a
 }
 
-func (p *ShaderProgram) UniformBasic(name string) (UniformBasic, error) {
+func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 	var u UniformBasic
 	loc := gl.GetUniformLocation(p.id, gl.Str(name + "\x00"))
 	if loc == -1 {
-		return u, errors.New(fmt.Sprint(name, " uniform location -1"))
+		return nil
 	}
 	u.location = uint32(loc)
 	u.progID = p.id
 	gl.GetActiveUniform(p.id, u.location, 0, nil, nil, &u.glType, nil)
-	return u, nil
+	return &u
 }
 
-func (p *ShaderProgram) UniformInteger(name string) (*UniformInteger, error) {
+func (p *ShaderProgram) UniformInteger(name string) *UniformInteger {
 	var u UniformInteger
-	u.UniformBasic, _ = p.UniformBasic(name)
+	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.INT {
-		panic("mismatched uniform type")
+		return nil
 	}
-	return &u, nil
+	return &u
 }
 
-func (p *ShaderProgram) UniformFloat(name string) (*UniformFloat, error) {
+func (p *ShaderProgram) UniformFloat(name string) *UniformFloat {
 	var u UniformFloat
-	u.UniformBasic, _ = p.UniformBasic(name)
+	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.FLOAT {
-		panic("mismatched uniform type")
+		return nil
 	}
-	return &u, nil
+	return &u
 }
 
-func (p *ShaderProgram) UniformVector2(name string) (*UniformVector2, error) {
+func (p *ShaderProgram) UniformVector2(name string) *UniformVector2 {
 	var u UniformVector2
-	u.UniformBasic, _ = p.UniformBasic(name)
+	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.FLOAT_VEC2 {
-		panic("mismatched uniform type")
+		return nil
 	}
-	return &u, nil
+	return &u
 }
 
-func (p *ShaderProgram) UniformVector3(name string) (*UniformVector3, error) {
+func (p *ShaderProgram) UniformVector3(name string) *UniformVector3 {
 	var u UniformVector3
-	u.UniformBasic, _ = p.UniformBasic(name)
+	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.FLOAT_VEC3 {
-		panic("mismatched uniform type")
+		return nil
 	}
-	return &u, nil
+	return &u
 }
 
-func (p *ShaderProgram) UniformVector4(name string) (*UniformVector4, error) {
+func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
 	var u UniformVector4
-	u.UniformBasic, _ = p.UniformBasic(name)
+	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.FLOAT_VEC4 {
-		panic("mismatched uniform type")
+		return nil
 	}
-	return &u, nil
+	return &u
 }
 
-func (p *ShaderProgram) UniformMatrix4(name string) (*UniformMatrix4, error) {
+func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
 	var u UniformMatrix4
-	u.UniformBasic, _ = p.UniformBasic(name)
+	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.FLOAT_MAT4 {
-		panic("mismatched uniform type")
+		return nil
 	}
-	return &u, nil
+	return &u
 }
 
-func (p *ShaderProgram) UniformSampler(name string) (*UniformSampler, error) {
+func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 	var u UniformSampler
-	u.UniformBasic, _ = p.UniformBasic(name)
+	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.SAMPLER_2D && u.glType != gl.SAMPLER_CUBE { // TODO: allow more sampler types
-		panic("mismatched uniform type")
+		return nil
 	}
 	u.textureUnitIndex = u.location // TODO: make texture unit mapping more sophisticated
-	return &u, nil
+	return &u
 }
 
 func NewBuffer() *Buffer {
@@ -528,7 +526,7 @@ func NewRenderCommand(primitiveType uint32, vertexCount, offset int, state *Rend
 
 func (cmd *RenderCommand) Execute() {
 	cmd.state.Apply()
-	if cmd.state.va.hasIndexBuffer {
+	if cmd.state.prog.va.hasIndexBuffer {
 		gl.DrawElements(cmd.primitiveType, int32(cmd.vertexCount), gl.UNSIGNED_INT, nil)
 	} else {
 		gl.DrawArrays(cmd.primitiveType, int32(cmd.offset), int32(cmd.vertexCount))
@@ -538,10 +536,6 @@ func (cmd *RenderCommand) Execute() {
 func NewRenderState() *RenderState {
 	var rs RenderState
 	return &rs
-}
-
-func (rs *RenderState) SetVertexArray(va *VertexArray) {
-	rs.va = va
 }
 
 func (rs *RenderState) SetShaderProgram(prog *ShaderProgram) {
@@ -571,8 +565,7 @@ func (rs *RenderState) SetViewport(width, height int) {
 }
 
 func (rs *RenderState) Apply() {
-	rs.va.Bind()
-
+	rs.prog.va.Bind()
 	rs.prog.Bind()
 
 	rs.framebuffer.BindDraw()
