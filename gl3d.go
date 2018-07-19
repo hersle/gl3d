@@ -51,10 +51,13 @@ func main() {
 
 	var camFactor float32
 
+	skyboxRenderer := NewSkyboxRenderer()
+
 	for !win.ShouldClose() {
 		c.SetAspect(win.Aspect())
 		renderer.SetFullViewport(win)
 		renderer.Clear()
+		skyboxRenderer.Render(c)
 		renderer.Render(s, c)
 		win.Update()
 

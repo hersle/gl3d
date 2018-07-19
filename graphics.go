@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"unsafe"
+	"path"
 )
 
 type Vertex struct {
@@ -68,15 +69,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 		return nil, err
 	}
 
-	gl.Enable(gl.DEPTH_TEST)
-	gl.Enable(gl.BLEND)
-	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
 	r.prog, err = ReadShaderProgram("vshader.glsl", "fshader.glsl")
 	if err != nil {
 		return nil, err
 	}
-	gls.SetShaderProgram(r.prog)
 
 	var errs [24]error
 	r.attrs.pos, errs[0] = r.prog.Attrib("position")
@@ -125,7 +121,6 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.shadowFb = NewFramebuffer()
 	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, r.shadowTex, 0)
 	println(r.shadowFb.Complete())
-
 
 	return &r, nil
 }
@@ -194,6 +189,11 @@ func (r *Renderer) shadowPass(s *Scene, c *Camera) {
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
+	gl.Enable(gl.DEPTH_TEST)
+	gl.Enable(gl.BLEND)
+	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	gls.SetShaderProgram(r.prog)
+
 	// shadow pass
 	r.shadowPass(s, c)
 
@@ -235,4 +235,105 @@ func (r *Renderer) SetViewport(l, b, w, h int) {
 func (r *Renderer) SetFullViewport(win *Window) {
 	w, h := win.Size()
 	r.SetViewport(0, 0, w, h)
+}
+
+type SkyboxRenderer struct {
+	win *Window
+	prog *ShaderProgram
+	uniforms struct {
+		viewMat *UniformMatrix4
+		projMat *UniformMatrix4
+		cubeMap *UniformSampler
+	}
+	attrs struct {
+		pos *Attrib
+	}
+	vbo *Buffer
+	vao *VertexArray
+	tex *CubeMap
+}
+
+func NewSkyboxRenderer() *SkyboxRenderer {
+	var r SkyboxRenderer
+
+	var err error
+	r.prog, err = ReadShaderProgram("shaders/skyboxvshader.glsl", "shaders/skyboxfshader.glsl")
+	if err != nil {
+		panic(err)
+	}
+	r.uniforms.viewMat, _ = r.prog.UniformMatrix4("viewMatrix")
+	r.uniforms.projMat , _= r.prog.UniformMatrix4("projectionMatrix")
+	r.uniforms.cubeMap , _= r.prog.UniformSampler("cubeMap")
+	r.attrs.pos, _ = r.prog.Attrib("positionV")
+
+	dir := "images/skybox/mountain/"
+	names := []string{"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"}
+	var filenames [6]string
+	for i, name := range names {
+		filenames[i] = path.Join(dir, name)
+	}
+	r.tex = ReadCubeMap(gl.NEAREST, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
+
+    verts := []Vec3{
+        NewVec3(-1.0, +1.0, -1.0),
+        NewVec3(-1.0, -1.0, -1.0),
+        NewVec3(+1.0, -1.0, -1.0),
+        NewVec3(+1.0, -1.0, -1.0),
+        NewVec3(+1.0, +1.0, -1.0),
+        NewVec3(-1.0, +1.0, -1.0),
+
+        NewVec3(-1.0, -1.0, +1.0),
+        NewVec3(-1.0, -1.0, -1.0),
+        NewVec3(-1.0, +1.0, -1.0),
+        NewVec3(-1.0, +1.0, -1.0),
+        NewVec3(-1.0, +1.0, +1.0),
+        NewVec3(-1.0, -1.0, +1.0),
+
+        NewVec3(+1.0, -1.0, -1.0),
+        NewVec3(+1.0, -1.0, +1.0),
+        NewVec3(+1.0, +1.0, +1.0),
+        NewVec3(+1.0, +1.0, +1.0),
+        NewVec3(+1.0, +1.0, -1.0),
+        NewVec3(+1.0, -1.0, -1.0),
+
+        NewVec3(-1.0, -1.0, +1.0),
+        NewVec3(-1.0, +1.0, +1.0),
+        NewVec3(+1.0, +1.0, +1.0),
+        NewVec3(+1.0, +1.0, +1.0),
+        NewVec3(+1.0, -1.0, +1.0),
+        NewVec3(-1.0, -1.0, +1.0),
+
+        NewVec3(-1.0, +1.0, -1.0),
+        NewVec3(+1.0, +1.0, -1.0),
+        NewVec3(+1.0, +1.0, +1.0),
+        NewVec3(+1.0, +1.0, +1.0),
+        NewVec3(-1.0, +1.0, +1.0),
+        NewVec3(-1.0, +1.0, -1.0),
+
+        NewVec3(-1.0, -1.0, -1.0),
+        NewVec3(-1.0, -1.0, +1.0),
+        NewVec3(+1.0, -1.0, -1.0),
+        NewVec3(+1.0, -1.0, -1.0),
+        NewVec3(-1.0, -1.0, +1.0),
+        NewVec3(+1.0, -1.0, +1.0),
+	}
+
+	r.vbo = NewBuffer()
+	r.vbo.SetData(verts, 0)
+
+	r.vao = NewVertexArray()
+	r.vao.SetAttribFormat(r.attrs.pos, 3, gl.FLOAT, false)
+	r.vao.SetAttribSource(r.attrs.pos, r.vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
+
+	return &r
+}
+
+func (r *SkyboxRenderer) Render(c *Camera) {
+	gl.Disable(gl.DEPTH_TEST)
+	r.prog.SetUniformMatrix4(r.uniforms.viewMat, c.ViewMatrix())
+	r.prog.SetUniformMatrix4(r.uniforms.projMat, c.ProjectionMatrix())
+	r.prog.SetUniformSamplerCube(r.uniforms.cubeMap, r.tex)
+	gls.SetShaderProgram(r.prog)
+	gls.SetVertexArray(r.vao)
+	gl.DrawArrays(gl.TRIANGLES, 0, 36)
 }
