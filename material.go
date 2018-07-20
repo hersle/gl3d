@@ -36,8 +36,8 @@ var defaultTexture *Texture2D = nil
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
 	mtl.name = name
-	mtl.ambient = NewVec3(0, 0, 0)
-	mtl.diffuse = NewVec3(0, 0, 0)
+	mtl.ambient = NewVec3(0.2, 0.2, 0.2)
+	mtl.diffuse = NewVec3(0.8, 0.8, 0.8)
 	mtl.specular = NewVec3(0, 0, 0)
 	mtl.shine = 0
 	mtl.alpha = 1
