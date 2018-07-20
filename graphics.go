@@ -49,7 +49,6 @@ type Renderer struct {
 	normalMat *Mat4
 
 	shadowFb *Framebuffer
-	shadowTex *Texture2D
 
 	renderState1 *RenderState
 	renderState2 *RenderState
@@ -112,11 +111,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	r.win = win
 
-	r.shadowTex = NewTexture2D(gl.NEAREST, gl.CLAMP_TO_BORDER, gl.DEPTH_COMPONENT16, 512, 512)
-	r.shadowTex.SetBorderColor(NewVec4(1, 1, 1, 1))
-
 	r.shadowFb = NewFramebuffer()
-	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, r.shadowTex, 0)
 
 	r.renderState1 = NewRenderState()
 	r.renderState1.SetShaderProgram(r.prog)
@@ -171,13 +166,14 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
 		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
-		r.uniforms.shadowMap.Set2D(r.shadowTex)
+		r.uniforms.shadowMap.Set2D(s.Light.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }
 
 func (r *Renderer) shadowPass(s *Scene, c *Camera) {
+	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, s.Light.shadowMap, 0)
 	r.shadowFb.ClearDepth(1)
 	r.uniforms.viewMat.Set(s.Light.ViewMatrix())
 	r.uniforms.projMat.Set(s.Light.ProjectionMatrix())
@@ -211,7 +207,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	}
 
 	// draw test quad
-	s.quad.subMeshes[0].mtl.ambientMap = r.shadowTex
+	s.quad.subMeshes[0].mtl.ambientMap = s.Light.shadowMap
 	ident := NewMat4Identity()
 	r.uniforms.modelMat.Set(ident)
 	r.uniforms.viewMat.Set(ident)

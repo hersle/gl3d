@@ -46,6 +46,7 @@ func main() {
 
 	s.Light = NewSpotLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 	s.Light.Camera = *NewCamera(60, 1, 0.1, 50)
+	//s.Light = NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 	s.Light.Place(NewVec3(0, 3, 0))
 	s.Light.Orient(s.Light.position.Scale(-1).Norm(), NewVec3(0, 0, 1))
 
