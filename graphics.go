@@ -33,6 +33,7 @@ type Renderer struct {
 		shine *UniformFloat
 		specularMap *UniformSampler
 		lightPos *UniformVector3
+		lightDir *UniformVector3
 		alpha *UniformFloat
 		shadowModelMat *UniformMatrix4
 		shadowViewMat *UniformMatrix4
@@ -94,6 +95,7 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.uniforms.shine = r.prog.UniformFloat("material.shine")
 	r.uniforms.alpha = r.prog.UniformFloat("material.alpha")
 	r.uniforms.lightPos = r.prog.UniformVector3("light.position")
+	r.uniforms.lightDir = r.prog.UniformVector3("light.direction")
 	r.uniforms.ambientLight = r.prog.UniformVector3("light.ambient")
 	r.uniforms.diffuseLight = r.prog.UniformVector3("light.diffuse")
 	r.uniforms.specularLight = r.prog.UniformVector3("light.specular")
@@ -200,6 +202,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	// normal pass
 	r.renderState1.viewportWidth, r.renderState1.viewportHeight = r.win.Size()
 	r.uniforms.lightPos.Set(s.Light.position)
+	r.uniforms.lightDir.Set(s.Light.forward)
 	r.uniforms.ambientLight.Set(s.Light.ambient)
 	r.uniforms.diffuseLight.Set(s.Light.diffuse)
 	r.uniforms.specularLight.Set(s.Light.specular)

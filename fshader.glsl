@@ -71,6 +71,11 @@ void main() {
 				  * light.specular
 				  * (facing ? 1 : 0);
 
+	if (dot((viewMatrix * vec4(light.direction, 0)).xyz, lightDirection) < 0.75)  {
+		diffuse = vec3(0, 0, 0);
+		specular = vec3(0, 0, 0);
+	}
+
 	float factor = CalcShadowFactor(lightSpacePosition);
-	fragColor = vec4(factor * (ambient + diffuse + specular), material.alpha);
+	fragColor = vec4(ambient + factor * (diffuse + specular), material.alpha);
 }
