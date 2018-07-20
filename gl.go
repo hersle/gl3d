@@ -55,6 +55,7 @@ type CubeMap struct {
 type Attrib struct {
 	prog *ShaderProgram
 	id uint32
+	nComponents int
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
@@ -247,8 +248,8 @@ func (u *UniformSampler) SetCube(t *CubeMap) {
 	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
 }
 
-func (a *Attrib) SetFormat(dim, typ int, normalize bool) {
-	a.prog.va.SetAttribFormat(a, dim, typ, normalize)
+func (a *Attrib) SetFormat(typ int, normalize bool) {
+	a.prog.va.SetAttribFormat(a, a.nComponents, typ, normalize)
 }
 
 func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
@@ -271,6 +272,24 @@ func (p *ShaderProgram) Attrib(name string) *Attrib {
 	}
 	a.id = uint32(loc)
 	a.prog = p
+
+	var size int32
+	var typ uint32
+	gl.GetActiveAttrib(a.prog.id, a.id, 0, nil, &size, &typ, nil)
+
+	switch typ {
+	case gl.FLOAT:
+		a.nComponents = 1
+	case gl.FLOAT_VEC2:
+		a.nComponents = 2
+	case gl.FLOAT_VEC3:
+		a.nComponents = 3
+	case gl.FLOAT_VEC4:
+		a.nComponents = 4
+	default:
+		panic("unrecognized attribute GL type")
+	}
+
 	return &a
 }
 

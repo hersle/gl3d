@@ -104,9 +104,9 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.uniforms.shadowProjMat = r.prog.UniformMatrix4("shadowProjectionMatrix")
 	r.uniforms.shadowMap = r.prog.UniformSampler("shadowMap")
 
-	r.attrs.pos.SetFormat(3, gl.FLOAT, false)
-	r.attrs.normal.SetFormat(3, gl.FLOAT, false)
-	r.attrs.texCoord.SetFormat(2, gl.FLOAT, false)
+	r.attrs.pos.SetFormat(gl.FLOAT, false)
+	r.attrs.normal.SetFormat(gl.FLOAT, false)
+	r.attrs.texCoord.SetFormat(gl.FLOAT, false)
 
 	r.normalMat = NewMat4Zero()
 
@@ -294,7 +294,7 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	}
 	r.ibo.SetData(inds, 0)
 
-	r.attrs.pos.SetFormat(3, gl.FLOAT, false)
+	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.pos.SetSource(r.vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
 	r.prog.SetAttribIndexBuffer(r.ibo)
 
@@ -346,9 +346,9 @@ func NewTextRenderer(win *Window) *TextRenderer {
 	stride := int(unsafe.Sizeof(Vertex{}))
 	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
 	offset2 := int(unsafe.Offsetof(Vertex{}.texCoord))
-	r.attrs.pos.SetFormat(2, gl.FLOAT, false)
+	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.pos.SetSource(r.vbo, offset1, stride)
-	r.attrs.texCoord.SetFormat(2, gl.FLOAT, false)
+	r.attrs.texCoord.SetFormat(gl.FLOAT, false)
 	r.attrs.texCoord.SetSource(r.vbo, offset2, stride)
 	r.prog.SetAttribIndexBuffer(r.ibo)
 
