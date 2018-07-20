@@ -38,6 +38,9 @@ func main() {
 		if filename == "objects/scrubPine.obj" {
 			model.Scale(NewVec3(0.02, 0.02, 0.02))
 		}
+		if filename == "objects/racecar.obj" {
+			model.Scale(NewVec3(0.04, 0.04, 0.04))
+		}
 		s.AddMesh(model)
 	}
 
@@ -68,11 +71,15 @@ func main() {
 		renderer.Clear()
 		skyboxRenderer.Render(c)
 		renderer.Render(s, c)
-		text := "FPS:      " + fmt.Sprint(fps) + "\n"
-		text += "position: " + c.position.String() + "\n"
-		text += "forward:  " + c.forward.String()
+		text := "FPS:        " + fmt.Sprint(fps) + "\n"
+		text += "position:   " + c.position.String() + "\n"
+		text += "forward:    " + c.forward.String() + "\n"
+		text += "draw calls: " + fmt.Sprint(RenderStats.drawCallCount) + "\n"
+		text += "vertices:   " + fmt.Sprint(RenderStats.vertexCount)
 		textRenderer.Render(NewVec2(-1, +1), text, 0.05)
 		win.Update()
+
+		RenderStats.Reset()
 
 		if win.glfwWin.GetKey(glfw.KeyLeftShift) == glfw.Press {
 			camFactor = 0.1 // for precise camera controls

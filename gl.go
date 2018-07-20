@@ -102,7 +102,14 @@ type Framebuffer struct {
 	id uint32
 }
 
+type RenderStatistics struct {
+	drawCallCount int
+	vertexCount int
+}
+
 var defaultFramebuffer *Framebuffer = &Framebuffer{0}
+
+var RenderStats *RenderStatistics = &RenderStatistics{}
 
 func NewShader(typ uint32, src string) (*Shader, error) {
 	var s Shader
@@ -545,6 +552,9 @@ func (cmd *RenderCommand) Execute() {
 	} else {
 		gl.DrawArrays(cmd.primitiveType, int32(cmd.offset), int32(cmd.vertexCount))
 	}
+
+	RenderStats.drawCallCount++
+	RenderStats.vertexCount += cmd.vertexCount
 }
 
 func NewRenderState() *RenderState {
@@ -598,4 +608,9 @@ func (rs *RenderState) Apply() {
 	}
 
 	gl.Viewport(0, 0, int32(rs.viewportWidth), int32(rs.viewportHeight))
+}
+
+func (stats *RenderStatistics) Reset() {
+	stats.drawCallCount = 0
+	stats.vertexCount = 0
 }
