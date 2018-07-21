@@ -36,17 +36,15 @@ uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
 // for spotlight
-//uniform sampler2D shadowMap;
+uniform sampler2D spotShadowMap;
 
-uniform samplerCube shadowMap;
+uniform samplerCube cubeShadowMap;
 
-// for spotlight
-/*
-float CalcShadowFactor(vec4 lightSpacePos) {
+float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = 0.5 + 0.5 * ndcCoords.z;
-	float depthFront = texture(shadowMap, texCoordS).r;
+	float depthFront = texture(spotShadowMap, texCoordS).r;
 	bool inShadow = depth > depthFront + 0.001;
 	if (inShadow) {
 		return 0.5;
@@ -54,11 +52,10 @@ float CalcShadowFactor(vec4 lightSpacePos) {
 		return 1.0;
 	}
 }
-*/
 
 float CalcShadowFactorPointLight() {
 	float depth = length(worldPosition - light.position);
-	float depthFront = textureCube(shadowMap, worldPosition - light.position).r * 50;
+	float depthFront = textureCube(cubeShadowMap, worldPosition - light.position).r * 50;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;
@@ -90,21 +87,20 @@ void main() {
 				  * light.specular
 				  * (facing ? 1 : 0);
 
-	// for spotlight
+	// UNCOMMENT THESE LINES FOR SPOT LIGHT
 	/*
 	if (dot((viewMatrix * vec4(light.direction, 0)).xyz, lightDirection) < 0.75)  {
 		diffuse = vec3(0, 0, 0);
 		specular = vec3(0, 0, 0);
 	}
+	float factor = CalcShadowFactorPointLight();
+	factor /= CalcShadowFactorPointLight();
+	factor *= CalcShadowFactorSpotLight(lightSpacePosition);
 	*/
 
-	float factor = CalcShadowFactorPointLight();
+	// UNCOMMENT THESE LINES FOR POINT LIGHT
+	float factor = CalcShadowFactorSpotLight(lightSpacePosition);
+	factor /= CalcShadowFactorSpotLight(lightSpacePosition);
+	factor *= CalcShadowFactorPointLight();
 	fragColor = vec4(ambient + factor * (diffuse + specular), material.alpha);
-	//fragColor -= vec4(ambient + factor * (diffuse + specular), material.alpha);
-
-	float depth = length(worldPosition - light.position) / 50;
-	float depthFront = texture(shadowMap, worldPosition - light.position).r;
-	//fragColor += vec4(vec3(depth), 1);
-	//fragColor += vec4(vec3(depthFront), 1);
-	//fragColor += vec4(vec3(depthFront / depth), 1);
 }

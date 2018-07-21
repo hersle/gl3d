@@ -44,11 +44,11 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	//s.Light = NewSpotLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
-	//s.Light.Camera = *NewCamera(60, 1, 0.1, 50)
-	s.Light = NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
-	s.Light.Place(NewVec3(0, 3, 0))
-	s.Light.Orient(s.Light.position.Scale(-1).Norm(), NewVec3(0, 0, 1))
+	s.spotLight = NewSpotLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
+	s.spotLight.Camera = *NewCamera(60, 1, 0.1, 50)
+	s.spotLight.Place(NewVec3(0, 3, 0))
+	s.spotLight.Orient(s.spotLight.position.Scale(-1).Norm(), NewVec3(0, 0, 1))
+	s.pointLight = NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 
 	c := NewCamera(60, 1, 0.1, 50)
 
@@ -116,8 +116,9 @@ func main() {
 			c.Rotate(NewVec3(0, 1, 0), camFactor * -0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeySpace) == glfw.Press {
-			s.Light.Place(c.position)
-			s.Light.Orient(c.forward, c.up)
+			s.pointLight.Place(c.position)
+			s.spotLight.Place(c.position)
+			s.spotLight.Orient(c.forward, c.up) // for spotlight
 		}
 
 		frameCount++

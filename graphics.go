@@ -37,10 +37,10 @@ type Renderer struct {
 		lightPos *UniformVector3
 		lightDir *UniformVector3
 		alpha *UniformFloat
-		shadowModelMat *UniformMatrix4
 		shadowViewMat *UniformMatrix4
 		shadowProjMat *UniformMatrix4
-		shadowMap *UniformSampler
+		spotShadowMap *UniformSampler
+		cubeShadowMap *UniformSampler
 	}
 	attrs struct {
 		pos *Attrib
@@ -102,10 +102,10 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.uniforms.ambientLight = r.prog.UniformVector3("light.ambient")
 	r.uniforms.diffuseLight = r.prog.UniformVector3("light.diffuse")
 	r.uniforms.specularLight = r.prog.UniformVector3("light.specular")
-	//r.uniforms.shadowModelMat = r.prog.UniformMatrix4("shadowModelMatrix")
-	//r.uniforms.shadowViewMat = r.prog.UniformMatrix4("shadowViewMatrix")
-	//r.uniforms.shadowProjMat = r.prog.UniformMatrix4("shadowProjectionMatrix")
-	r.uniforms.shadowMap = r.prog.UniformSampler("shadowMap")
+	r.uniforms.shadowViewMat = r.prog.UniformMatrix4("shadowViewMatrix")
+	r.uniforms.shadowProjMat = r.prog.UniformMatrix4("shadowProjectionMatrix")
+	r.uniforms.cubeShadowMap = r.prog.UniformSampler("cubeShadowMap")
+	r.uniforms.spotShadowMap = r.prog.UniformSampler("spotShadowMap")
 
 	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
@@ -149,11 +149,6 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
 	r.uniforms.normalMat.Set(r.normalMat)
 
-	// for spotlight
-	//r.uniforms.shadowModelMat.Set(m.WorldMatrix())
-	//r.uniforms.shadowViewMat.Set(s.Light.ViewMatrix())
-	//r.uniforms.shadowProjMat.Set(s.Light.ProjectionMatrix())
-
 	for _, subMesh := range m.subMeshes {
 		r.uniforms.ambient.Set(subMesh.mtl.ambient)
 		r.uniforms.diffuse.Set(subMesh.mtl.diffuse)
@@ -175,9 +170,9 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 
 		// for spotlight
-		//r.uniforms.shadowMap.Set2D(s.Light.shadowMap)
+		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
 
-		r.uniforms.shadowMap.SetCube(s.Light.shadowMap)
+		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
@@ -186,6 +181,12 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 func (r *Renderer) shadowPassPointLight(s *Scene, l *PointLight) {
 	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
 }
+
+/*
+func (r *Renderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
+	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
+}
+*/
 
 func (r *Renderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 	r.shadowFb.SetTexture2D(gl.DEPTH_ATTACHMENT, l.shadowMap, 0)
@@ -209,24 +210,28 @@ func (r *Renderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 func (r *Renderer) Render(s *Scene, c *Camera) {
 	// shadow pass
 	// for spotlight
-	//r.shadowPassSpotLight(s, s.Light)
+	r.shadowPassSpotLight(s, s.spotLight)
 
-	r.shadowPassPointLight(s, s.Light)
+	r.shadowPassPointLight(s, s.pointLight)
 
 	// normal pass
 	r.renderState1.viewportWidth, r.renderState1.viewportHeight = r.win.Size()
-	r.uniforms.lightPos.Set(s.Light.position)
-	r.uniforms.lightDir.Set(s.Light.forward)
-	r.uniforms.ambientLight.Set(s.Light.ambient)
-	r.uniforms.diffuseLight.Set(s.Light.diffuse)
-	r.uniforms.specularLight.Set(s.Light.specular)
+	r.uniforms.lightPos.Set(s.pointLight.position)
+	r.uniforms.lightDir.Set(s.spotLight.forward)
+	r.uniforms.ambientLight.Set(s.pointLight.ambient)
+	r.uniforms.diffuseLight.Set(s.pointLight.diffuse)
+	r.uniforms.specularLight.Set(s.pointLight.specular)
+
+	// for spotlight
+	r.uniforms.shadowViewMat.Set(s.spotLight.ViewMatrix())
+	r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
+
 	for _, m := range s.meshes {
 		r.renderMesh(s, m, c)
 	}
 
-	// draw test quad
-	/*
-	s.quad.subMeshes[0].mtl.ambientMap = s.Light.shadowMap
+	// UNCOMMENT THESE LINES TO DRAW SPOT LIGHT DEPTH MAP FOR DEBUGGING
+	s.quad.subMeshes[0].mtl.ambientMap = s.spotLight.shadowMap
 	ident := NewMat4Identity()
 	r.uniforms.modelMat.Set(ident)
 	r.uniforms.viewMat.Set(ident)
@@ -240,12 +245,8 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 		r.attrs.texCoord.SetSource(subMesh.vbo, offset2, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
-
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
-	*/
-
-	// TODO: draw test cubemap
 }
 
 type SkyboxRenderer struct {
@@ -328,8 +329,11 @@ func (r *SkyboxRenderer) Render(c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 	r.uniforms.viewMat.Set(c.ViewMatrix())
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	//r.uniforms.cubeMap.SetCube(r.tex) // cube shadow map debug
-	r.uniforms.cubeMap.SetCube(shadowCubeMap)
+	r.uniforms.cubeMap.SetCube(r.tex) // cube shadow map debug
+
+	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
+	//r.uniforms.cubeMap.SetCube(shadowCubeMap)
+
 	NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
 }
 
@@ -513,8 +517,8 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
 	r.uniforms.lightPos.Set(l.position)
 
-	// TODO: remove
-	shadowCubeMap = l.shadowMap // cube shadow map debug
+	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
+	//shadowCubeMap = l.shadowMap
 
 	for face := 0; face < 6; face++ {
 		r.framebuffer.SetTextureCubeMapFace(gl.DEPTH_ATTACHMENT, l.shadowMap, 0, int32(face))
@@ -532,6 +536,25 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 
 				NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 			}
+		}
+	}
+}
+
+func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
+	r.framebuffer.SetTexture2D(gl.DEPTH_ATTACHMENT, l.shadowMap, 0)
+	r.framebuffer.ClearDepth(1)
+	r.uniforms.viewMat.Set(l.ViewMatrix())
+	r.uniforms.projMat.Set(l.ProjectionMatrix())
+
+	for _, m := range s.meshes {
+		r.uniforms.modelMat.Set(m.WorldMatrix())
+		for _, subMesh := range m.subMeshes {
+			stride := int(unsafe.Sizeof(Vertex{}))
+			offset := int(unsafe.Offsetof(Vertex{}.pos))
+			r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
+			r.prog.SetAttribIndexBuffer(subMesh.ibo)
+
+			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 		}
 	}
 }
