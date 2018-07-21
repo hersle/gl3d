@@ -60,6 +60,8 @@ func main() {
 	// TODO: remove
 	renderer.Render(s, c)
 
+	drawScene := true
+
 	time1 := time.Now()
 	fps := int(0)
 	frameCount := int(0)
@@ -74,7 +76,9 @@ func main() {
 		c.SetAspect(win.Aspect())
 		renderer.Clear()
 		skyboxRenderer.Render(c)
-		renderer.Render(s, c)
+		if drawScene {
+			renderer.Render(s, c)
+		}
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
 		text += "position:   " + c.position.String() + "\n"
 		text += "forward:    " + c.forward.String() + "\n"
@@ -119,6 +123,12 @@ func main() {
 			s.pointLight.Place(c.position)
 			s.spotLight.Place(c.position)
 			s.spotLight.Orient(c.forward, c.up) // for spotlight
+		}
+		if win.glfwWin.GetKey(glfw.KeyZ) == glfw.Press {
+			drawScene = true
+		}
+		if win.glfwWin.GetKey(glfw.KeyX) == glfw.Press {
+			drawScene = false
 		}
 
 		frameCount++
