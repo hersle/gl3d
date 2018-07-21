@@ -30,10 +30,7 @@ uniform struct Light {
 	vec3 specular;
 } light;
 
-uniform int mode;
-
 uniform mat4 viewMatrix;
-uniform mat4 projectionMatrix;
 
 // for spotlight
 uniform sampler2D spotShadowMap;

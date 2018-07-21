@@ -16,7 +16,7 @@ type Vertex struct {
 var shadowCubeMap *CubeMap = nil
 
 // TODO: redesign attr/uniform access system?
-type Renderer struct {
+type MeshRenderer struct {
 	win *Window
 	prog *ShaderProgram
 	uniforms struct {
@@ -65,8 +65,8 @@ func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
 	return vert
 }
 
-func NewRenderer(win *Window) (*Renderer, error) {
-	var r Renderer
+func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
+	var r MeshRenderer
 
 	win.MakeContextCurrent()
 
@@ -128,11 +128,11 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	return &r, nil
 }
 
-func (r *Renderer) Clear() {
+func (r *MeshRenderer) Clear() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
-func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
+func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
@@ -170,15 +170,15 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	}
 }
 
-func (r *Renderer) shadowPassPointLight(s *Scene, l *PointLight) {
+func (r *MeshRenderer) shadowPassPointLight(s *Scene, l *PointLight) {
 	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
 }
 
-func (r *Renderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
+func (r *MeshRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
-func (r *Renderer) Render(s *Scene, c *Camera) {
+func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	// shadow pass
 	// for spotlight
 	r.shadowPassSpotLight(s, s.spotLight)

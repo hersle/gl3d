@@ -13,7 +13,7 @@ func main() {
 		panic(err)
 	}
 
-	renderer, err := NewRenderer(win)
+	renderer, err := NewMeshRenderer(win)
 	if err != nil {
 		panic(err)
 	}
