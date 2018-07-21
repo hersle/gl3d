@@ -43,9 +43,9 @@ uniform samplerCube cubeShadowMap;
 float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
-	float depth = 0.5 + 0.5 * ndcCoords.z;
-	float depthFront = texture(spotShadowMap, texCoordS).r;
-	bool inShadow = depth > depthFront + 0.001;
+	float depth = length(worldPosition - light.position);
+	float depthFront = texture(spotShadowMap, texCoordS).r * 50;
+	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;
 	} else {
@@ -102,5 +102,6 @@ void main() {
 	float factor = CalcShadowFactorSpotLight(lightSpacePosition);
 	factor /= CalcShadowFactorSpotLight(lightSpacePosition);
 	factor *= CalcShadowFactorPointLight();
+
 	fragColor = vec4(ambient + factor * (diffuse + specular), material.alpha);
 }

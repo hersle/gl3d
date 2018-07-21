@@ -52,8 +52,7 @@ type Renderer struct {
 
 	shadowFb *Framebuffer
 
-	renderState1 *RenderState
-	renderState2 *RenderState
+	renderState *RenderState
 
 	shadowMapRenderer *ShadowMapRenderer
 }
@@ -117,19 +116,12 @@ func NewRenderer(win *Window) (*Renderer, error) {
 
 	r.shadowFb = NewFramebuffer()
 
-	r.renderState1 = NewRenderState()
-	r.renderState1.SetShaderProgram(r.prog)
-	r.renderState1.SetFramebuffer(defaultFramebuffer)
-	r.renderState1.SetDepthTest(true)
-	r.renderState1.SetBlend(true)
-	r.renderState1.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
-
-	r.renderState2 = NewRenderState()
-	r.renderState2.SetShaderProgram(r.prog)
-	r.renderState2.SetFramebuffer(r.shadowFb)
-	r.renderState2.SetDepthTest(true)
-	r.renderState2.SetBlend(false)
-	r.renderState2.SetViewport(512, 512)
+	r.renderState = NewRenderState()
+	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetFramebuffer(defaultFramebuffer)
+	r.renderState.SetDepthTest(true)
+	r.renderState.SetBlend(true)
+	r.renderState.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 
@@ -174,7 +166,7 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 
 		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
 
-		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
+		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
 }
 
@@ -182,29 +174,8 @@ func (r *Renderer) shadowPassPointLight(s *Scene, l *PointLight) {
 	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
 }
 
-/*
 func (r *Renderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
-}
-*/
-
-func (r *Renderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
-	r.shadowFb.SetTexture2D(gl.DEPTH_ATTACHMENT, l.shadowMap, 0)
-	r.shadowFb.ClearDepth(1)
-	r.uniforms.viewMat.Set(l.ViewMatrix())
-	r.uniforms.projMat.Set(l.ProjectionMatrix())
-
-	for _, m := range s.meshes {
-		r.uniforms.modelMat.Set(m.WorldMatrix())
-		for _, subMesh := range m.subMeshes {
-			stride := int(unsafe.Sizeof(Vertex{}))
-			offset := int(unsafe.Offsetof(Vertex{}.pos))
-			r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
-			r.prog.SetAttribIndexBuffer(subMesh.ibo)
-
-			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState2).Execute()
-		}
-	}
 }
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
@@ -215,7 +186,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	r.shadowPassPointLight(s, s.pointLight)
 
 	// normal pass
-	r.renderState1.viewportWidth, r.renderState1.viewportHeight = r.win.Size()
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 	r.uniforms.lightPos.Set(s.pointLight.position)
 	r.uniforms.lightDir.Set(s.spotLight.forward)
 	r.uniforms.ambientLight.Set(s.pointLight.ambient)
@@ -245,7 +216,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 		r.attrs.texCoord.SetSource(subMesh.vbo, offset2, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
-		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
+		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
 }
 
@@ -545,6 +516,8 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 	r.framebuffer.ClearDepth(1)
 	r.uniforms.viewMat.Set(l.ViewMatrix())
 	r.uniforms.projMat.Set(l.ProjectionMatrix())
+	r.uniforms.far.Set(l.Camera.far)
+	r.uniforms.lightPos.Set(l.position)
 
 	for _, m := range s.meshes {
 		r.uniforms.modelMat.Set(m.WorldMatrix())
