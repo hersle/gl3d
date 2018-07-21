@@ -9,6 +9,8 @@ out vec3 viewPosition;
 out vec2 texCoordF;
 out vec3 normalF;
 
+uniform int mode;
+
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
@@ -17,6 +19,14 @@ uniform mat4 normalMatrix;
 uniform mat4 shadowModelMatrix;
 uniform mat4 shadowViewMatrix;
 uniform mat4 shadowProjectionMatrix;
+
+uniform struct Light {
+	vec3 position;
+	vec3 direction;
+	vec3 ambient;
+	vec3 diffuse;
+	vec3 specular;
+} light;
 
 out vec4 lightSpacePosition;
 

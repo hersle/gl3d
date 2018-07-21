@@ -13,6 +13,8 @@ type Vertex struct {
 	normal Vec3
 }
 
+var shadowCubeMap *CubeMap = nil
+
 // TODO: redesign attr/uniform access system?
 type Renderer struct {
 	win *Window
@@ -39,6 +41,7 @@ type Renderer struct {
 		shadowViewMat *UniformMatrix4
 		shadowProjMat *UniformMatrix4
 		shadowMap *UniformSampler
+		mode *UniformInteger
 	}
 	attrs struct {
 		pos *Attrib
@@ -98,10 +101,13 @@ func NewRenderer(win *Window) (*Renderer, error) {
 	r.uniforms.ambientLight = r.prog.UniformVector3("light.ambient")
 	r.uniforms.diffuseLight = r.prog.UniformVector3("light.diffuse")
 	r.uniforms.specularLight = r.prog.UniformVector3("light.specular")
-	r.uniforms.shadowModelMat = r.prog.UniformMatrix4("shadowModelMatrix")
-	r.uniforms.shadowViewMat = r.prog.UniformMatrix4("shadowViewMatrix")
-	r.uniforms.shadowProjMat = r.prog.UniformMatrix4("shadowProjectionMatrix")
+	//r.uniforms.shadowModelMat = r.prog.UniformMatrix4("shadowModelMatrix")
+	//r.uniforms.shadowViewMat = r.prog.UniformMatrix4("shadowViewMatrix")
+	//r.uniforms.shadowProjMat = r.prog.UniformMatrix4("shadowProjectionMatrix")
 	r.uniforms.shadowMap = r.prog.UniformSampler("shadowMap")
+	r.uniforms.mode = r.prog.UniformInteger("mode")
+
+	r.uniforms.mode.Set(2)
 
 	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
@@ -143,9 +149,10 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
 	r.uniforms.normalMat.Set(r.normalMat)
 
-	r.uniforms.shadowModelMat.Set(m.WorldMatrix())
-	r.uniforms.shadowViewMat.Set(s.Light.ViewMatrix())
-	r.uniforms.shadowProjMat.Set(s.Light.ProjectionMatrix())
+	// for spotlight
+	//r.uniforms.shadowModelMat.Set(m.WorldMatrix())
+	//r.uniforms.shadowViewMat.Set(s.Light.ViewMatrix())
+	//r.uniforms.shadowProjMat.Set(s.Light.ProjectionMatrix())
 
 	for _, subMesh := range m.subMeshes {
 		r.uniforms.ambient.Set(subMesh.mtl.ambient)
@@ -166,17 +173,73 @@ func (r *Renderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
 		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
-		r.uniforms.shadowMap.Set2D(s.Light.shadowMap)
+
+		// for spotlight
+		//r.uniforms.shadowMap.Set2D(s.Light.shadowMap)
+
+		r.uniforms.shadowMap.SetCube(s.Light.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
 }
 
-func (r *Renderer) shadowPass(s *Scene, c *Camera) {
-	r.shadowFb.SetTexture(gl.DEPTH_ATTACHMENT, s.Light.shadowMap, 0)
+func (r *Renderer) shadowPassPointLight(s *Scene, l *PointLight) {
+	r.uniforms.mode.Set(1)
+
+	c := NewCamera(90, 1, 0.1, 50)
+
+	forwards := []Vec3{
+		NewVec3(+1, 0, 0),
+		NewVec3(-1, 0, 0),
+		NewVec3(0, +1, 0),
+		NewVec3(0, -1, 0),
+		NewVec3(0, 0, +1),
+		NewVec3(0, 0, -1),
+	}
+
+	ups := []Vec3{
+		NewVec3(0, -1, 0),
+		NewVec3(0, -1, 0),
+		NewVec3(0, 0, +1), // TODO: ?
+		NewVec3(0, 0, -1), // TODO: ?
+		NewVec3(0, -1, 0),
+		NewVec3(0, -1, 0),
+	}
+
+	c.Place(l.position)
+	r.uniforms.projMat.Set(c.ProjectionMatrix())
+	r.uniforms.lightPos.Set(s.Light.position)
+
+	// TODO: remove
+	shadowCubeMap = l.shadowMap
+
+	for face := 0; face < 6; face++ {
+		r.shadowFb.SetTextureCubeMapFace(gl.DEPTH_ATTACHMENT, l.shadowMap, 0, int32(face))
+		r.shadowFb.ClearDepth(1)
+		c.Orient(forwards[face], ups[face])
+		r.uniforms.viewMat.Set(c.ViewMatrix())
+
+		for _, m := range s.meshes {
+			r.uniforms.modelMat.Set(m.WorldMatrix())
+			for _, subMesh := range m.subMeshes {
+				stride := int(unsafe.Sizeof(Vertex{}))
+				offset := int(unsafe.Offsetof(Vertex{}.pos))
+				r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
+				r.prog.SetAttribIndexBuffer(subMesh.ibo)
+
+				NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState2).Execute()
+			}
+		}
+	}
+
+	r.uniforms.mode.Set(2)
+}
+
+func (r *Renderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
+	r.shadowFb.SetTexture2D(gl.DEPTH_ATTACHMENT, l.shadowMap, 0)
 	r.shadowFb.ClearDepth(1)
-	r.uniforms.viewMat.Set(s.Light.ViewMatrix())
-	r.uniforms.projMat.Set(s.Light.ProjectionMatrix())
+	r.uniforms.viewMat.Set(l.ViewMatrix())
+	r.uniforms.projMat.Set(l.ProjectionMatrix())
 
 	for _, m := range s.meshes {
 		r.uniforms.modelMat.Set(m.WorldMatrix())
@@ -193,7 +256,10 @@ func (r *Renderer) shadowPass(s *Scene, c *Camera) {
 
 func (r *Renderer) Render(s *Scene, c *Camera) {
 	// shadow pass
-	r.shadowPass(s, c)
+	// for spotlight
+	//r.shadowPassSpotLight(s, s.Light)
+
+	r.shadowPassPointLight(s, s.Light)
 
 	// normal pass
 	r.renderState1.viewportWidth, r.renderState1.viewportHeight = r.win.Size()
@@ -207,6 +273,7 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	}
 
 	// draw test quad
+	/*
 	s.quad.subMeshes[0].mtl.ambientMap = s.Light.shadowMap
 	ident := NewMat4Identity()
 	r.uniforms.modelMat.Set(ident)
@@ -224,6 +291,9 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState1).Execute()
 	}
+	*/
+
+	// TODO: draw test cubemap
 }
 
 type SkyboxRenderer struct {
@@ -306,7 +376,8 @@ func (r *SkyboxRenderer) Render(c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 	r.uniforms.viewMat.Set(c.ViewMatrix())
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	r.uniforms.cubeMap.SetCube(r.tex)
+	//r.uniforms.cubeMap.SetCube(r.tex)
+	r.uniforms.cubeMap.SetCube(shadowCubeMap)
 	NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
 }
 

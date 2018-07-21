@@ -2,7 +2,8 @@ package main
 
 type Scene struct {
 	meshes []*Mesh
-	Light *SpotLight
+	//Light *SpotLight
+	Light *PointLight
 	quad *Mesh
 }
 

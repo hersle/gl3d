@@ -13,6 +13,7 @@ type BasicLight struct {
 type PointLight struct {
 	Object
 	BasicLight
+	shadowMap *CubeMap
 }
 
 type SpotLight struct {
@@ -32,6 +33,7 @@ func NewBasicLight(ambient, diffuse, specular Vec3) *BasicLight {
 func NewPointLight(ambient, diffuse, specular Vec3) *PointLight {
 	var l PointLight
 	l.BasicLight = *NewBasicLight(ambient, diffuse, specular)
+	l.shadowMap = NewCubeMap(gl.NEAREST, gl.DEPTH_COMPONENT16, 512, 512)
 	return &l
 }
 

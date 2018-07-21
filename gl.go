@@ -353,6 +353,7 @@ func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
 func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
 	var u UniformMatrix4
 	u.UniformBasic = *p.UniformBasic(name)
+	// TODO: what if things not found?
 	if u.glType != gl.FLOAT_MAT4 {
 		return nil
 	}
@@ -530,8 +531,12 @@ func NewFramebuffer() *Framebuffer {
 	return &f
 }
 
-func (f *Framebuffer) SetTexture(attachment uint32, t *Texture2D, level int32) {
+func (f *Framebuffer) SetTexture2D(attachment uint32, t *Texture2D, level int32) {
 	gl.NamedFramebufferTexture(f.id, attachment, t.id, level)
+}
+
+func (f *Framebuffer) SetTextureCubeMapFace(attachment uint32, t *CubeMap, level int32, layer int32) {
+	gl.NamedFramebufferTextureLayer(f.id, attachment, t.id, level, layer)
 }
 
 func (f *Framebuffer) ClearColor(rgba Vec4) {
