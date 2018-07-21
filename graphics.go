@@ -209,13 +209,29 @@ func (r *Renderer) Render(s *Scene, c *Camera) {
 	r.uniforms.projMat.Set(ident)
 	for _, subMesh := range s.quad.subMeshes {
 		r.uniforms.ambient.Set(subMesh.mtl.ambient)
+		r.uniforms.diffuse.Set(NewVec3(0, 0, 0))
+		r.uniforms.specular.Set(NewVec3(0, 0, 0))
+		r.uniforms.shine.Set(0)
+		r.uniforms.alpha.Set(1)
+
 		stride := int(unsafe.Sizeof(Vertex{}))
 		offset1 := int(unsafe.Offsetof(Vertex{}.pos))
-		offset2 := int(unsafe.Offsetof(Vertex{}.texCoord))
+		offset2 := int(unsafe.Offsetof(Vertex{}.normal))
+		offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
 		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
-		r.attrs.texCoord.SetSource(subMesh.vbo, offset2, stride)
+		r.attrs.normal.SetSource(subMesh.vbo, offset2, stride)
+		r.attrs.texCoord.SetSource(subMesh.vbo, offset3, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
+
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
+		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
+		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
+
+		// for spotlight
+		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
+
+		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
+
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
 }
