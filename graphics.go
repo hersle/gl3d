@@ -319,7 +319,7 @@ func (r *SkyboxRenderer) Render(c *Camera) {
 	r.uniforms.cubeMap.SetCube(r.tex) // cube shadow map debug
 
 	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
-	r.uniforms.cubeMap.SetCube(shadowCubeMap)
+	//r.uniforms.cubeMap.SetCube(shadowCubeMap)
 
 	NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
 }
@@ -505,7 +505,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 	r.uniforms.lightPos.Set(l.position)
 
 	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
-	shadowCubeMap = l.shadowMap
+	//shadowCubeMap = l.shadowMap
 
 	for face := 0; face < 6; face++ {
 		r.framebuffer.SetTextureCubeMapFace(gl.DEPTH_ATTACHMENT, l.shadowMap, 0, int32(face))
