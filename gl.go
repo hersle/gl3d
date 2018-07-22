@@ -23,6 +23,7 @@ type RenderState struct {
 	viewportHeight int
 	cull bool
 	cullFace uint32
+	polygonMode uint32
 }
 
 type RenderCommand struct {
@@ -622,6 +623,10 @@ func (rs *RenderState) SetCullFace(cullFace uint32) {
 	rs.cullFace = cullFace
 }
 
+func (rs *RenderState) SetPolygonMode(mode uint32) {
+	rs.polygonMode = mode
+}
+
 func (rs *RenderState) Apply() {
 	rs.prog.va.Bind()
 	rs.prog.Bind()
@@ -647,6 +652,8 @@ func (rs *RenderState) Apply() {
 	} else {
 		gl.Disable(gl.CULL_FACE)
 	}
+
+	gl.PolygonMode(gl.FRONT_AND_BACK, rs.polygonMode)
 
 	gl.Viewport(0, 0, int32(rs.viewportWidth), int32(rs.viewportHeight))
 }

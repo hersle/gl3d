@@ -124,6 +124,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.renderState.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	r.renderState.SetCull(true)
 	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
+	r.renderState.SetPolygonMode(gl.FILL)
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 
@@ -238,6 +239,14 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	}
 }
 
+func (r *MeshRenderer) SetWireframe(wireframe bool) {
+	if wireframe {
+		r.renderState.polygonMode = gl.LINE
+	} else {
+		r.renderState.polygonMode = gl.FILL
+	}
+}
+
 type SkyboxRenderer struct {
 	win *Window
 	prog *ShaderProgram
@@ -311,6 +320,7 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	r.renderState.SetFramebuffer(defaultFramebuffer)
 	r.renderState.SetShaderProgram(r.prog)
 	r.renderState.SetCull(false)
+	r.renderState.SetPolygonMode(gl.FILL)
 
 	return &r
 }
@@ -375,6 +385,7 @@ func NewTextRenderer(win *Window) *TextRenderer {
 	r.renderState.SetBlend(true)
 	r.renderState.SetBlendFunction(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_COLOR)
 	r.renderState.SetCull(false)
+	r.renderState.SetPolygonMode(gl.FILL)
 
 	return &r
 }

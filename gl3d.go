@@ -130,6 +130,12 @@ func main() {
 		if win.glfwWin.GetKey(glfw.KeyX) == glfw.Press {
 			drawScene = false
 		}
+		if win.glfwWin.GetKey(glfw.KeyC) == glfw.Press {
+			renderer.SetWireframe(false)
+		}
+		if win.glfwWin.GetKey(glfw.KeyV) == glfw.Press {
+			renderer.SetWireframe(true)
+		}
 
 		frameCount++
 	}
