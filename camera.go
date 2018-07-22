@@ -34,6 +34,7 @@ func (c *Camera) SetAspect(aspect float32) {
 }
 
 func (c *Camera) updateViewMatrix() {
+	// flip z for openGL
 	c.viewMat.Copy(c.WorldMatrix()).MultScaling(NewVec3(1, 1, -1)).Invert()
 	c.dirtyViewMat = false
 }

@@ -16,7 +16,7 @@ func (o *Object) Init() {
 
 func (o *Object) Reset() {
 	o.Place(NewVec3(0, 0, 0))
-	o.Orient(NewVec3(0, 0, 1), NewVec3(0, 1, 0))
+	o.Orient(NewVec3(1, 0, 0), NewVec3(0, 1, 0))
 	o.SetScale(NewVec3(1, 1, 1))
 }
 
