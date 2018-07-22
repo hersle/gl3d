@@ -122,6 +122,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.renderState.SetDepthTest(true)
 	r.renderState.SetBlend(true)
 	r.renderState.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+	r.renderState.SetCull(true)
+	r.renderState.SetCullFace(gl.FRONT)
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 
@@ -308,6 +310,7 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	r.renderState.SetDepthTest(false)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
 	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetCull(false)
 
 	return &r
 }
@@ -371,6 +374,7 @@ func NewTextRenderer(win *Window) *TextRenderer {
 	r.renderState.SetShaderProgram(r.prog)
 	r.renderState.SetBlend(true)
 	r.renderState.SetBlendFunction(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_COLOR)
+	r.renderState.SetCull(false)
 
 	return &r
 }

@@ -21,6 +21,8 @@ type RenderState struct {
 	blendDstFactor uint32
 	viewportWidth int
 	viewportHeight int
+	cull bool
+	cullFace uint32
 }
 
 type RenderCommand struct {
@@ -612,6 +614,14 @@ func (rs *RenderState) SetViewport(width, height int) {
 	rs.viewportHeight = height
 }
 
+func (rs *RenderState) SetCull(cull bool) {
+	rs.cull = cull
+}
+
+func (rs *RenderState) SetCullFace(cullFace uint32) {
+	rs.cullFace = cullFace
+}
+
 func (rs *RenderState) Apply() {
 	rs.prog.va.Bind()
 	rs.prog.Bind()
@@ -629,6 +639,13 @@ func (rs *RenderState) Apply() {
 		gl.BlendFunc(rs.blendSrcFactor, rs.blendDstFactor)
 	} else {
 		gl.Disable(gl.BLEND)
+	}
+
+	if rs.cull {
+		gl.Enable(gl.CULL_FACE)
+		gl.CullFace(rs.cullFace)
+	} else {
+		gl.Disable(gl.CULL_FACE)
 	}
 
 	gl.Viewport(0, 0, int32(rs.viewportWidth), int32(rs.viewportHeight))
