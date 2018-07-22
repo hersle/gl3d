@@ -123,7 +123,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.renderState.SetBlend(true)
 	r.renderState.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	r.renderState.SetCull(true)
-	r.renderState.SetCullFace(gl.FRONT)
+	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 
@@ -190,7 +190,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	// normal pass
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 	r.uniforms.lightPos.Set(s.pointLight.position)
-	r.uniforms.lightDir.Set(s.spotLight.forward)
+	r.uniforms.lightDir.Set(s.spotLight.Forward())
 	r.uniforms.ambientLight.Set(s.pointLight.ambient)
 	r.uniforms.diffuseLight.Set(s.pointLight.diffuse)
 	r.uniforms.specularLight.Set(s.pointLight.specular)
@@ -514,7 +514,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 	for face := 0; face < 6; face++ {
 		r.framebuffer.SetTextureCubeMapFace(gl.DEPTH_ATTACHMENT, l.shadowMap, 0, int32(face))
 		r.framebuffer.ClearDepth(1)
-		c.Orient(forwards[face], ups[face])
+		c.SetForwardUp(forwards[face], ups[face])
 		r.uniforms.viewMat.Set(c.ViewMatrix())
 
 		for _, m := range s.meshes {

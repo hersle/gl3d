@@ -2,7 +2,7 @@ package main
 
 type Object struct {
 	position Vec3 // translation
-	forward, up, right Vec3 // orientation
+	unitX, unitY, unitZ Vec3 // orientation
 	scale Vec3 // scale
 
 	dirtyWorldMatrix bool
@@ -20,14 +20,14 @@ func (o *Object) Reset() {
 	o.SetScale(NewVec3(1, 1, 1))
 }
 
-func (o *Object) updateRightVector() {
-	o.right = o.forward.Cross(o.up).Norm()
+func (o *Object) updateUnitZVector() {
+	o.unitZ = o.unitX.Cross(o.unitY).Norm()
 }
 
 func (o *Object) updateWorldMatrix() {
 	o.worldMatrix.Identity()
 	o.worldMatrix.MultTranslation(o.position)
-	o.worldMatrix.MultOrientation(o.right, o.up, o.forward)
+	o.worldMatrix.MultOrientation(o.unitX, o.unitY, o.unitZ)
 	o.worldMatrix.MultScaling(o.scale)
 	o.dirtyWorldMatrix = false
 }
@@ -48,15 +48,15 @@ func (o *Object) Translate(displacement Vec3) {
 	o.Place(o.position.Add(displacement))
 }
 
-func (o *Object) Orient(forward, up Vec3) {
-	o.forward = forward.Norm()
-	o.up = up.Norm()
-	o.updateRightVector()
+func (o *Object) Orient(unitX, unitY Vec3) {
+	o.unitX = unitX.Norm()
+	o.unitY = unitY.Norm()
+	o.updateUnitZVector()
 	o.dirtyWorldMatrix = true
 }
 
 func (o *Object) Rotate(axis Vec3, ang float32) {
-	o.Orient(o.forward.Rotate(axis, ang), o.up.Rotate(axis, ang))
+	o.Orient(o.unitX.Rotate(axis, ang), o.unitY.Rotate(axis, ang))
 }
 
 func (o *Object) RotateX(ang float32) {
