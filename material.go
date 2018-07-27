@@ -30,6 +30,9 @@ type Material struct {
 	hasBumpMap bool
 	bumpMapFilename string
 	bumpMap *Texture2D
+	hasAlphaMap bool
+	alphaMapFilename string
+	alphaMap *Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -45,6 +48,7 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.shine = 0
 	mtl.alpha = 1
 	mtl.hasBumpMap = false
+	mtl.hasAlphaMap = false
 	return &mtl
 }
 
@@ -104,6 +108,14 @@ func (mtl *Material) Finish() {
 		mtl.hasBumpMap = true
 	} else {
 		mtl.hasBumpMap = false
+	}
+
+	img, err = readImage(mtl.alphaMapFilename)
+	if err == nil {
+		mtl.alphaMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.R8, img)
+		mtl.hasAlphaMap = true
+	} else {
+		mtl.hasAlphaMap = false
 	}
 }
 
@@ -221,6 +233,15 @@ func ReadMaterials(filenames []string) []*Material {
 					mtl.bumpMapFilename = fields[1]
 				} else {
 					mtl.bumpMapFilename = path.Join(path.Dir(filename), fields[1])
+				}
+			case "map_d":
+				if len(fields[1:]) != 1 {
+					panic("alpha map error")
+				}
+				if path.IsAbs(fields[1]) {
+					mtl.alphaMapFilename = fields[1]
+				} else {
+					mtl.alphaMapFilename = path.Join(path.Dir(filename), fields[1])
 				}
 			case "d":
 				if len(fields[1:]) != 1 {

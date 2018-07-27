@@ -43,6 +43,8 @@ type MeshRenderer struct {
 		cubeShadowMap *UniformSampler
 		bumpMap *UniformSampler
 		hasBumpMap *UniformBool
+		alphaMap *UniformSampler
+		hasAlphaMap *UniformBool
 	}
 	attrs struct {
 		pos *Attrib
@@ -109,6 +111,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.uniforms.spotShadowMap = r.prog.UniformSampler("spotShadowMap")
 	r.uniforms.hasBumpMap = r.prog.UniformBool("material.hasBumpMap")
 	r.uniforms.bumpMap = r.prog.UniformSampler("material.bumpMap")
+	r.uniforms.hasAlphaMap = r.prog.UniformBool("material.hasAlphaMap")
+	r.uniforms.alphaMap = r.prog.UniformSampler("material.alphaMap")
 
 	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
@@ -169,6 +173,11 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.uniforms.hasBumpMap.Set(subMesh.mtl.hasBumpMap)
 		if subMesh.mtl.hasBumpMap {
 			r.uniforms.bumpMap.Set2D(subMesh.mtl.bumpMap)
+		}
+
+		r.uniforms.hasAlphaMap.Set(subMesh.mtl.hasAlphaMap)
+		if subMesh.mtl.hasAlphaMap {
+			r.uniforms.alphaMap.Set2D(subMesh.mtl.alphaMap)
 		}
 
 		// for spotlight

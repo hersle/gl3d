@@ -22,6 +22,8 @@ uniform struct Material {
 	float alpha; // TODO: let textures modify alpha
 	bool hasBumpMap;
 	sampler2D bumpMap;
+	bool hasAlphaMap;
+	sampler2D alphaMap;
 } material;
 
 uniform struct Light {
@@ -112,5 +114,17 @@ void main() {
 	factor /= CalcShadowFactorSpotLight(lightSpacePosition);
 	factor *= CalcShadowFactorPointLight();
 
-	fragColor = vec4(ambient + factor * (diffuse + specular), material.alpha);
+	float alpha;
+	if (material.hasAlphaMap) {
+		alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
+	} else {
+		alpha = material.alpha;
+	}
+
+	// TODO: add proper transparency?
+	if (alpha < 1) {
+		discard;
+	}
+
+	fragColor = vec4(ambient + factor * (diffuse + specular), 1);
 }
