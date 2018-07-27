@@ -29,7 +29,7 @@ func main() {
 			model.RotateX(-3.1415/2)
 			model.RotateY(3.1415 - 3.1415/5)
 		}
-		if filename == "objects/sponza.obj" {
+		if filename == "objects/sponza.obj" || filename == "objects/sponza2/sponza.obj" {
 			model.Scale(NewVec3(0.02, 0.02, 0.02))
 		}
 		if filename == "objects/conference.obj" {

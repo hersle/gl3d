@@ -450,9 +450,17 @@ func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.
 	case *image.RGBA:
 		img := img.(*image.RGBA)
 		w, h := img.Bounds().Size().X, img.Bounds().Size().Y
+
+		img2 := image.NewRGBA(img.Bounds())
+		for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
+			for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
+				img2.SetRGBA(x, img.Bounds().Max.Y - y, img.RGBAAt(x, y))
+			}
+		}
+
 		t := NewTexture2D(filterMode, wrapMode, format, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-		p := unsafe.Pointer(&byteSlice(img.Pix)[0])
+		p := unsafe.Pointer(&byteSlice(img2.Pix)[0])
 		gl.TextureSubImage2D(t.id, 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
 		return t
 	default:
