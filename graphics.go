@@ -48,7 +48,7 @@ type MeshRenderer struct {
 		normal *Attrib
 	}
 	vbo, ibo *Buffer
-	normalMat *Mat4
+	normalMat Mat4
 
 	shadowFb *Framebuffer
 
@@ -110,8 +110,6 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
 	r.attrs.texCoord.SetFormat(gl.FLOAT, false)
 
-	r.normalMat = NewMat4Zero()
-
 	r.win = win
 
 	r.shadowFb = NewFramebuffer()
@@ -142,7 +140,7 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.uniforms.modelMat.Set(m.WorldMatrix())
 	r.uniforms.viewMat.Set(c.ViewMatrix())
 	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	r.uniforms.normalMat.Set(r.normalMat)
+	r.uniforms.normalMat.Set(&r.normalMat)
 
 	for _, subMesh := range m.subMeshes {
 		r.uniforms.ambient.Set(subMesh.mtl.ambient)

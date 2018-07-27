@@ -6,12 +6,7 @@ type Object struct {
 	scale Vec3 // scale
 
 	dirtyWorldMatrix bool
-	worldMatrix *Mat4
-}
-
-func (o *Object) Init() {
-	o.worldMatrix = NewMat4Zero() // TODO: use mat4 value, not reference
-	o.Reset()
+	worldMatrix Mat4
 }
 
 func (o *Object) Reset() {
@@ -36,7 +31,7 @@ func (o *Object) WorldMatrix() *Mat4 {
 	if o.dirtyWorldMatrix {
 		o.updateWorldMatrix()
 	}
-	return o.worldMatrix
+	return &o.worldMatrix
 }
 
 func (o *Object) Place(position Vec3) {

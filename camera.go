@@ -9,19 +9,19 @@ type Camera struct {
 	fovY float32
 	aspect float32
 	near, far float32
-	viewMat, projMat *Mat4
-	dirtyViewMat, dirtyProjMat bool
+	viewMat Mat4
+	projMat Mat4
+	dirtyViewMat bool
+	dirtyProjMat bool
 }
 
 func NewCamera(fovYDeg, aspect, near, far float32) *Camera {
 	var c Camera
-	c.Object.Init()
+	c.Object.Reset()
 	c.fovY = fovYDeg / 360.0 * 2.0 * math.Pi
 	c.SetAspect(aspect)
 	c.near = near
 	c.far = far
-	c.viewMat = NewMat4Identity()
-	c.projMat = NewMat4Identity()
 	c.dirtyViewMat = true
 	c.updateViewMatrix()
 	c.updateProjectionMatrix()
@@ -68,12 +68,12 @@ func (c *Camera) ViewMatrix() *Mat4 {
 		c.updateViewMatrix()
 	}
 	c.updateViewMatrix()
-	return c.viewMat
+	return &c.viewMat
 }
 
 func (c *Camera) ProjectionMatrix() *Mat4 {
 	if c.dirtyProjMat {
 		c.updateProjectionMatrix()
 	}
-	return c.projMat
+	return &c.projMat
 }

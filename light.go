@@ -40,7 +40,7 @@ func NewPointLight(ambient, diffuse, specular Vec3) *PointLight {
 func NewSpotLight(ambient, diffuse, specular Vec3) *SpotLight {
 	var l SpotLight
 	l.BasicLight = *NewBasicLight(ambient, diffuse, specular)
-	l.Camera.Object.Init()
+	l.Camera.Object.Reset()
 	l.shadowMap = NewTexture2D(gl.NEAREST, gl.CLAMP_TO_BORDER, gl.DEPTH_COMPONENT16, 512, 512)
 	l.shadowMap.SetBorderColor(NewVec4(1, 1, 1, 1))
 	return &l
