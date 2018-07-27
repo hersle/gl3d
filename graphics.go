@@ -75,7 +75,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 		return nil, err
 	}
 
-	r.prog, err = ReadShaderProgram("vshader.glsl", "fshader.glsl")
+	r.prog, err = ReadShaderProgram("shaders/meshvshader.glsl", "shaders/meshfshader.glsl")
 	if err != nil {
 		return nil, err
 	}
