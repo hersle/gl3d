@@ -41,6 +41,8 @@ type MeshRenderer struct {
 		shadowProjMat *UniformMatrix4
 		spotShadowMap *UniformSampler
 		cubeShadowMap *UniformSampler
+		bumpMap *UniformSampler
+		hasBumpMap *UniformBool
 	}
 	attrs struct {
 		pos *Attrib
@@ -105,6 +107,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.uniforms.shadowProjMat = r.prog.UniformMatrix4("shadowProjectionMatrix")
 	r.uniforms.cubeShadowMap = r.prog.UniformSampler("cubeShadowMap")
 	r.uniforms.spotShadowMap = r.prog.UniformSampler("spotShadowMap")
+	r.uniforms.hasBumpMap = r.prog.UniformBool("material.hasBumpMap")
+	r.uniforms.bumpMap = r.prog.UniformSampler("material.bumpMap")
 
 	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
@@ -161,6 +165,11 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
 		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
+
+		r.uniforms.hasBumpMap.Set(subMesh.mtl.hasBumpMap)
+		if subMesh.mtl.hasBumpMap {
+			r.uniforms.bumpMap.Set2D(subMesh.mtl.bumpMap)
+		}
 
 		// for spotlight
 		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)

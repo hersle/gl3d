@@ -27,6 +27,9 @@ type Material struct {
 	diffuseMap *Texture2D
 	specularMapFilename string
 	specularMap *Texture2D
+	hasBumpMap bool
+	bumpMapFilename string
+	bumpMap *Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -41,6 +44,7 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.specular = NewVec3(0, 0, 0)
 	mtl.shine = 0
 	mtl.alpha = 1
+	mtl.hasBumpMap = false
 	return &mtl
 }
 
@@ -92,6 +96,14 @@ func (mtl *Material) Finish() {
 			initDefaultTexture()
 		}
 		mtl.specularMap = defaultTexture
+	}
+
+	img, err = readImage(mtl.bumpMapFilename)
+	if err == nil {
+		mtl.bumpMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGB8, img)
+		mtl.hasBumpMap = true
+	} else {
+		mtl.hasBumpMap = false
 	}
 }
 
@@ -200,6 +212,15 @@ func ReadMaterials(filenames []string) []*Material {
 					mtl.specularMapFilename = fields[1]
 				} else {
 					mtl.specularMapFilename = path.Join(path.Dir(filename), fields[1])
+				}
+			case "bump":
+				if len(fields[1:]) != 1 {
+					panic("bump map error")
+				}
+				if path.IsAbs(fields[1]) {
+					mtl.bumpMapFilename = fields[1]
+				} else {
+					mtl.bumpMapFilename = path.Join(path.Dir(filename), fields[1])
 				}
 			case "d":
 				if len(fields[1:]) != 1 {

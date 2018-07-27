@@ -20,6 +20,8 @@ uniform struct Material {
 	sampler2D diffuseMap;
 	sampler2D specularMap;
 	float alpha; // TODO: let textures modify alpha
+	bool hasBumpMap;
+	sampler2D bumpMap;
 } material;
 
 uniform struct Light {
@@ -36,6 +38,8 @@ uniform mat4 viewMatrix;
 uniform sampler2D spotShadowMap;
 
 uniform samplerCube cubeShadowMap;
+
+uniform mat4 normalMatrix;
 
 float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
@@ -62,12 +66,20 @@ float CalcShadowFactorPointLight() {
 }
 
 void main() {
+	vec3 normal;
+	if (material.hasBumpMap) {
+		vec3 texNormal = texture(material.bumpMap, texCoordF).rgb;
+		normal = normalize(vec3(normalMatrix * vec4(texNormal, 0)));
+	} else {
+		normal = normalF;
+	}
+
 	vec4 tex;
 	vec3 lightDirection = worldPosition - light.position;
 	lightDirection = normalize((viewMatrix * vec4(lightDirection, 0)).xyz);
-	vec3 reflection = reflect(lightDirection, normalF);
+	vec3 reflection = reflect(lightDirection, normal);
 	vec3 fragDirection = normalize(viewPosition) - vec3(0, 0, 0);
-	bool facing = dot(normalF, lightDirection) < 0;
+	bool facing = dot(normal, lightDirection) < 0;
 
 	tex = texture(material.ambientMap, texCoordF);
 	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
@@ -75,7 +87,7 @@ void main() {
 
 	tex = texture(material.diffuseMap, texCoordF);
 	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
-				 * max(dot(normalF, -lightDirection), 0)
+				 * max(dot(normal, -lightDirection), 0)
 				 * light.diffuse;
 
 	tex = texture(material.specularMap, texCoordF);

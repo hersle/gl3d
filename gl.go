@@ -97,6 +97,10 @@ type UniformSampler struct {
 	textureUnitIndex uint32
 }
 
+type UniformBool struct {
+	UniformBasic
+}
+
 type VertexArray struct {
 	id uint32
 	hasIndexBuffer bool
@@ -251,6 +255,16 @@ func (u *UniformSampler) SetCube(t *CubeMap) {
 	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
 }
 
+func (u *UniformBool) Set(b bool) {
+	var i int32
+	if b {
+		i = 1
+	} else {
+		i = 0
+	}
+	gl.ProgramUniform1i(u.progID, int32(u.location), i)
+}
+
 func (a *Attrib) SetFormat(typ int, normalize bool) {
 	a.prog.va.SetAttribFormat(a, a.nComponents, typ, normalize)
 }
@@ -370,6 +384,16 @@ func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 		return nil
 	}
 	u.textureUnitIndex = u.location // TODO: make texture unit mapping more sophisticated
+	return &u
+}
+
+func (p *ShaderProgram) UniformBool(name string) *UniformBool {
+	var u UniformBool
+	u.UniformBasic = *p.UniformBasic(name)
+	// TODO: what if things not found?
+	if u.glType != gl.BOOL {
+		return nil
+	}
 	return &u
 }
 
