@@ -170,13 +170,17 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 
-		r.uniforms.hasBumpMap.Set(subMesh.mtl.hasBumpMap)
-		if subMesh.mtl.hasBumpMap {
+		if subMesh.mtl.bumpMap == nil {
+			r.uniforms.hasBumpMap.Set(false)
+		} else {
+			r.uniforms.hasBumpMap.Set(true)
 			r.uniforms.bumpMap.Set2D(subMesh.mtl.bumpMap)
 		}
 
-		r.uniforms.hasAlphaMap.Set(subMesh.mtl.hasAlphaMap)
-		if subMesh.mtl.hasAlphaMap {
+		if subMesh.mtl.alphaMap == nil {
+			r.uniforms.hasAlphaMap.Set(false)
+		} else {
+			r.uniforms.hasAlphaMap.Set(true)
 			r.uniforms.alphaMap.Set2D(subMesh.mtl.alphaMap)
 		}
 

@@ -27,10 +27,8 @@ type Material struct {
 	diffuseMap *Texture2D
 	specularMapFilename string
 	specularMap *Texture2D
-	hasBumpMap bool
 	bumpMapFilename string
 	bumpMap *Texture2D
-	hasAlphaMap bool
 	alphaMapFilename string
 	alphaMap *Texture2D
 }
@@ -47,8 +45,6 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.specular = NewVec3(0, 0, 0)
 	mtl.shine = 0
 	mtl.alpha = 1
-	mtl.hasBumpMap = false
-	mtl.hasAlphaMap = false
 	return &mtl
 }
 
@@ -105,17 +101,11 @@ func (mtl *Material) Finish() {
 	img, err = readImage(mtl.bumpMapFilename)
 	if err == nil {
 		mtl.bumpMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGB8, img)
-		mtl.hasBumpMap = true
-	} else {
-		mtl.hasBumpMap = false
 	}
 
 	img, err = readImage(mtl.alphaMapFilename)
 	if err == nil {
 		mtl.alphaMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.R8, img)
-		mtl.hasAlphaMap = true
-	} else {
-		mtl.hasAlphaMap = false
 	}
 }
 
