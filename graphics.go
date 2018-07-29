@@ -11,6 +11,8 @@ type Vertex struct {
 	pos Vec3
 	texCoord Vec2
 	normal Vec3
+	tangent Vec3
+	bitangent Vec3
 }
 
 var shadowCubeMap *CubeMap = nil
@@ -50,6 +52,8 @@ type MeshRenderer struct {
 		pos *Attrib
 		texCoord *Attrib
 		normal *Attrib
+		tangent *Attrib
+		bitangent *Attrib
 	}
 	vbo, ibo *Buffer
 	normalMat Mat4
@@ -61,7 +65,7 @@ type MeshRenderer struct {
 	shadowMapRenderer *ShadowMapRenderer
 }
 
-func NewVertex(pos Vec3, texCoord Vec2, normal Vec3) Vertex {
+func NewVertex(pos Vec3, texCoord Vec2, normal, tangent, bitangent Vec3) Vertex {
 	var vert Vertex
 	vert.pos = pos
 	vert.texCoord = texCoord
@@ -87,6 +91,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.attrs.pos = r.prog.Attrib("position")
 	r.attrs.texCoord = r.prog.Attrib("texCoordV")
 	r.attrs.normal = r.prog.Attrib("normalV")
+	r.attrs.tangent = r.prog.Attrib("tangent")
+	r.attrs.bitangent = r.prog.Attrib("bitangent")
 	// TODO: assign uniforms only name and program, let them handle rest themselves?
 	r.uniforms.modelMat = r.prog.UniformMatrix4("modelMatrix")
 	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
@@ -117,6 +123,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
 	r.attrs.texCoord.SetFormat(gl.FLOAT, false)
+	r.attrs.tangent.SetFormat(gl.FLOAT, false)
+	r.attrs.bitangent.SetFormat(gl.FLOAT, false)
 
 	r.win = win
 
@@ -161,9 +169,13 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		offset1 := int(unsafe.Offsetof(Vertex{}.pos))
 		offset2 := int(unsafe.Offsetof(Vertex{}.normal))
 		offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
+		offset4 := int(unsafe.Offsetof(Vertex{}.tangent))
+		offset5 := int(unsafe.Offsetof(Vertex{}.bitangent))
 		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
 		r.attrs.normal.SetSource(subMesh.vbo, offset2, stride)
 		r.attrs.texCoord.SetSource(subMesh.vbo, offset3, stride)
+		r.attrs.tangent.SetSource(subMesh.vbo, offset4, stride)
+		r.attrs.bitangent.SetSource(subMesh.vbo, offset5, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
@@ -439,10 +451,10 @@ func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
 				bl := NewVec2(tl.X(), br.Y())
 
 				normal := NewVec3(0, 0, 0)
-				vert1 := NewVertex(bl.Vec3(0), NewVec2(texX1, texY2), normal)
-				vert2 := NewVertex(br.Vec3(0), NewVec2(texX2, texY2), normal)
-				vert3 := NewVertex(tr.Vec3(0), NewVec2(texX2, texY1), normal)
-				vert4 := NewVertex(tl.Vec3(0), NewVec2(texX1, texY1), normal)
+				vert1 := NewVertex(bl.Vec3(0), NewVec2(texX1, texY2), normal, Vec3{}, Vec3{})
+				vert2 := NewVertex(br.Vec3(0), NewVec2(texX2, texY2), normal, Vec3{}, Vec3{})
+				vert3 := NewVertex(tr.Vec3(0), NewVec2(texX2, texY1), normal, Vec3{}, Vec3{})
+				vert4 := NewVertex(tl.Vec3(0), NewVec2(texX1, texY1), normal, Vec3{}, Vec3{})
 				inds = append(inds, int32(len(verts) + 0))
 				inds = append(inds, int32(len(verts) + 1))
 				inds = append(inds, int32(len(verts) + 2))

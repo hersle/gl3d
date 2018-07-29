@@ -3,6 +3,8 @@
 in vec3 position;
 in vec2 texCoordV;
 in vec3 normalV;
+in vec3 tangent;
+in vec3 bitangent;
 
 out vec3 worldPosition;
 out vec3 viewPosition;
@@ -27,6 +29,7 @@ void main() {
 	texCoordF = texCoordV;
 
 	normalF = normalize(vec3(normalMatrix * vec4(normalV, 0)));
+	normalF += tangent + bitangent - tangent - bitangent;
 
 	mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
 	lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
