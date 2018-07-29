@@ -56,6 +56,7 @@ func main() {
 
 	skyboxRenderer := NewSkyboxRenderer(win)
 	textRenderer := NewTextRenderer(win)
+	arrowRenderer := NewArrowRenderer(win)
 
 	// TODO: remove
 	renderer.Render(s, c)
@@ -78,6 +79,15 @@ func main() {
 		skyboxRenderer.Render(c)
 		if drawScene {
 			renderer.Render(s, c)
+		}
+		if win.glfwWin.GetKey(glfw.Key1) == glfw.Press {
+			arrowRenderer.RenderTangents(s, c)
+		}
+		if win.glfwWin.GetKey(glfw.Key2) == glfw.Press {
+			arrowRenderer.RenderBitangents(s, c)
+		}
+		if win.glfwWin.GetKey(glfw.Key3) == glfw.Press {
+			arrowRenderer.RenderNormals(s, c)
 		}
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
 		text += "position:   " + c.position.String() + "\n"

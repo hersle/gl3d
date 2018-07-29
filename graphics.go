@@ -70,6 +70,8 @@ func NewVertex(pos Vec3, texCoord Vec2, normal, tangent, bitangent Vec3) Vertex 
 	vert.pos = pos
 	vert.texCoord = texCoord
 	vert.normal = normal
+	vert.tangent = tangent
+	vert.bitangent = bitangent
 	return vert
 }
 
@@ -593,4 +595,115 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 		}
 	}
+}
+
+type ArrowRenderer struct {
+	win *Window
+	prog *ShaderProgram
+	uniforms struct {
+		modelMat *UniformMatrix4
+		viewMat *UniformMatrix4
+		projMat *UniformMatrix4
+		color *UniformVector3
+	}
+	attrs struct {
+		pos *Attrib
+	}
+	points []Vec3
+	vbo *Buffer
+	renderState *RenderState
+}
+
+func NewArrowRenderer(win *Window) *ArrowRenderer {
+	var r ArrowRenderer
+	var err error
+
+	r.win = win
+	r.prog, err = ReadShaderProgram("shaders/arrowvshader.glsl", "shaders/arrowfshader.glsl")
+	if err != nil {
+		panic(err)
+	}
+	r.attrs.pos = r.prog.Attrib("position")
+	r.attrs.pos.SetFormat(gl.FLOAT, false)
+	r.uniforms.modelMat = r.prog.UniformMatrix4("modelMatrix")
+	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
+	r.uniforms.projMat = r.prog.UniformMatrix4("projectionMatrix")
+	r.uniforms.color = r.prog.UniformVector3("color")
+
+	r.renderState = NewRenderState()
+	r.renderState.SetBlend(false)
+	r.renderState.SetCull(false)
+	r.renderState.SetDepthTest(true)
+	r.renderState.SetFramebuffer(defaultFramebuffer)
+	r.renderState.SetShaderProgram(r.prog)
+
+	r.vbo = NewBuffer()
+
+	return &r
+}
+
+func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.uniforms.viewMat.Set(c.ViewMatrix())
+	r.uniforms.projMat.Set(c.ProjectionMatrix())
+	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
+	r.attrs.pos.SetSource(r.vbo, 0, stride)
+	r.points = r.points[:0]
+	r.uniforms.color.Set(NewVec3(1, 0, 0))
+	for _, m := range s.meshes {
+		r.uniforms.modelMat.Set(m.WorldMatrix())
+		for _, subMesh := range m.subMeshes {
+			for _, i := range subMesh.faces {
+				p1 := subMesh.verts[i].pos
+				p2 := p1.Add(subMesh.verts[i].tangent)
+				r.points = append(r.points, p1, p2)
+			}
+		}
+	}
+	r.vbo.SetData(r.points, 0)
+	NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
+}
+
+func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.uniforms.viewMat.Set(c.ViewMatrix())
+	r.uniforms.projMat.Set(c.ProjectionMatrix())
+	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
+	r.attrs.pos.SetSource(r.vbo, 0, stride)
+	r.points = r.points[:0]
+	r.uniforms.color.Set(NewVec3(0, 1, 0))
+	for _, m := range s.meshes {
+		r.uniforms.modelMat.Set(m.WorldMatrix())
+		for _, subMesh := range m.subMeshes {
+			for _, i := range subMesh.faces {
+				p1 := subMesh.verts[i].pos
+				p2 := p1.Add(subMesh.verts[i].bitangent)
+				r.points = append(r.points, p1, p2)
+			}
+		}
+	}
+	r.vbo.SetData(r.points, 0)
+	NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
+}
+
+func (r *ArrowRenderer) RenderNormals(s *Scene, c *Camera) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.uniforms.viewMat.Set(c.ViewMatrix())
+	r.uniforms.projMat.Set(c.ProjectionMatrix())
+	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
+	r.attrs.pos.SetSource(r.vbo, 0, stride)
+	r.points = r.points[:0]
+	r.uniforms.color.Set(NewVec3(0, 0, 1))
+	for _, m := range s.meshes {
+		r.uniforms.modelMat.Set(m.WorldMatrix())
+		for _, subMesh := range m.subMeshes {
+			for _, i := range subMesh.faces {
+				p1 := subMesh.verts[i].pos
+				p2 := p1.Add(subMesh.verts[i].normal)
+				r.points = append(r.points, p1, p2)
+			}
+		}
+	}
+	r.vbo.SetData(r.points, 0)
+	NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
 }

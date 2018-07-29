@@ -259,7 +259,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				normal := weightedNormals[iTri.iVerts[i].v].Norm()
 				tangent := weightedTangents[iTri.iVerts[i].v].Norm()
 				bitangent := weightedBitangents[iTri.iVerts[i].v].Norm()
-				println(tangent.Cross(bitangent).Sub(normal).String())
 				verts[i] = NewVertex(pos, texCoord, normal, tangent, bitangent)
 			}
 			m.subMeshes[iTri.mtlInd].AddTriangle(verts[0], verts[1], verts[2])
