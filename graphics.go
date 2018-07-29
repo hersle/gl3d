@@ -424,8 +424,8 @@ func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
 		for _, runeRange := range face.Ranges {
 			lo, hi, offset := runeRange.Low, runeRange.High, runeRange.Offset
 			if char >= lo && char < hi {
-				imgX1, imgY1 := 0, (int(char-lo) + offset) * subImgH
-				imgX2, imgY2 := imgX1 + subImgW, imgY1 + subImgH
+				imgX1, imgY1 := 0, imgH - (int(char-lo) + offset) * subImgH
+				imgX2, imgY2 := imgX1 + subImgW, imgY1 - subImgH
 				texX1 := float32(imgX1) / float32(imgW) // left
 				texY1 := float32(imgY1) / float32(imgH) // top
 				texX2 := float32(imgX2) / float32(imgW) // right
