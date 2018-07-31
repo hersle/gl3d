@@ -146,6 +146,12 @@ func main() {
 		if win.glfwWin.GetKey(glfw.KeyV) == glfw.Press {
 			renderer.SetWireframe(true)
 		}
+		if win.glfwWin.GetKey(glfw.KeyB) == glfw.Press {
+			enableBumpMap = true
+		}
+		if win.glfwWin.GetKey(glfw.KeyN) == glfw.Press {
+			enableBumpMap = false
+		}
 
 		frameCount++
 	}

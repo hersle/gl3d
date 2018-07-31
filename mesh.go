@@ -258,6 +258,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				texCoord := texCoords[iTri.iVerts[i].vt]
 				normal := weightedNormals[iTri.iVerts[i].v].Norm()
 				tangent := weightedTangents[iTri.iVerts[i].v].Norm()
+				tangent = tangent.Sub(normal.Scale(tangent.Dot(normal))).Norm() // gram schmidt
 				bitangent := weightedBitangents[iTri.iVerts[i].v].Norm()
 				verts[i] = NewVertex(pos, texCoord, normal, tangent, bitangent)
 			}

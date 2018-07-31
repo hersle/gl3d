@@ -43,7 +43,7 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.ambient = NewVec3(0.2, 0.2, 0.2)
 	mtl.diffuse = NewVec3(0.8, 0.8, 0.8)
 	mtl.specular = NewVec3(0, 0, 0)
-	mtl.shine = 0
+	mtl.shine = 1
 	mtl.alpha = 1
 	return &mtl
 }

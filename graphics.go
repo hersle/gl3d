@@ -93,8 +93,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.attrs.pos = r.prog.Attrib("position")
 	r.attrs.texCoord = r.prog.Attrib("texCoordV")
 	r.attrs.normal = r.prog.Attrib("normalV")
-	r.attrs.tangent = r.prog.Attrib("tangent")
-	r.attrs.bitangent = r.prog.Attrib("bitangent")
+	r.attrs.tangent = r.prog.Attrib("tangentV")
+	r.attrs.bitangent = r.prog.Attrib("bitangentV")
 	// TODO: assign uniforms only name and program, let them handle rest themselves?
 	r.uniforms.modelMat = r.prog.UniformMatrix4("modelMatrix")
 	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
@@ -126,7 +126,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
 	r.attrs.texCoord.SetFormat(gl.FLOAT, false)
 	r.attrs.tangent.SetFormat(gl.FLOAT, false)
-	r.attrs.bitangent.SetFormat(gl.FLOAT, false)
+	//r.attrs.bitangent.SetFormat(gl.FLOAT, false)
 
 	r.win = win
 
@@ -151,6 +151,7 @@ func (r *MeshRenderer) Clear() {
 	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
+var enableBumpMap bool
 func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
@@ -172,19 +173,19 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		offset2 := int(unsafe.Offsetof(Vertex{}.normal))
 		offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
 		offset4 := int(unsafe.Offsetof(Vertex{}.tangent))
-		offset5 := int(unsafe.Offsetof(Vertex{}.bitangent))
+		//offset5 := int(unsafe.Offsetof(Vertex{}.bitangent))
 		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
 		r.attrs.normal.SetSource(subMesh.vbo, offset2, stride)
 		r.attrs.texCoord.SetSource(subMesh.vbo, offset3, stride)
 		r.attrs.tangent.SetSource(subMesh.vbo, offset4, stride)
-		r.attrs.bitangent.SetSource(subMesh.vbo, offset5, stride)
+		//r.attrs.bitangent.SetSource(subMesh.vbo, offset5, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
 		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 
-		if subMesh.mtl.bumpMap == nil {
+		if subMesh.mtl.bumpMap == nil || !enableBumpMap {
 			r.uniforms.hasBumpMap.Set(false)
 		} else {
 			r.uniforms.hasBumpMap.Set(true)

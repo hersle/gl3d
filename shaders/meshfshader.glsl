@@ -4,7 +4,8 @@ in vec3 worldPosition;
 in vec3 viewPosition;
 in vec4 colorF;
 in vec2 texCoordF;
-in vec3 normalF;
+in vec3 tanLightToVertex;
+in vec3 tanCameraToVertex;
 
 out vec4 fragColor;
 
@@ -68,20 +69,15 @@ float CalcShadowFactorPointLight() {
 }
 
 void main() {
-	vec3 normal;
+	vec3 tanNormal = vec3(0, 0, 1);
 	if (material.hasBumpMap) {
-		vec3 texNormal = texture(material.bumpMap, texCoordF).rgb;
-		normal = normalize(vec3(normalMatrix * vec4(texNormal, 0)));
-	} else {
-		normal = normalF;
+		tanNormal += -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
+		tanNormal = normalize(tanNormal);
 	}
 
 	vec4 tex;
-	vec3 lightDirection = worldPosition - light.position;
-	lightDirection = normalize((viewMatrix * vec4(lightDirection, 0)).xyz);
-	vec3 reflection = reflect(lightDirection, normal);
-	vec3 fragDirection = normalize(viewPosition) - vec3(0, 0, 0);
-	bool facing = dot(normal, lightDirection) < 0;
+	vec3 tanReflection = reflect(normalize(tanLightToVertex), normalize(tanNormal));
+	bool facing = dot(normalize(tanNormal), normalize(tanLightToVertex)) < 0;
 
 	tex = texture(material.ambientMap, texCoordF);
 	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
@@ -89,12 +85,12 @@ void main() {
 
 	tex = texture(material.diffuseMap, texCoordF);
 	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
-				 * max(dot(normal, -lightDirection), 0)
+				 * max(dot(normalize(tanNormal), normalize(-tanLightToVertex)), 0)
 				 * light.diffuse;
 
 	tex = texture(material.specularMap, texCoordF);
 	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
-				  * max(pow(dot(reflection, -fragDirection), material.shine), 0)
+				  * pow(max(dot(normalize(tanReflection), -normalize(tanCameraToVertex)), 0), material.shine)
 				  * light.specular
 				  * (facing ? 1 : 0);
 
