@@ -218,7 +218,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	for _, sGroup := range sGroups {
 		var weightedNormals []Vec3 = make([]Vec3, len(positions) + 1)
 		var weightedTangents []Vec3 = make([]Vec3, len(positions) + 1)
-		var weightedBitangents []Vec3 = make([]Vec3, len(positions) + 1)
 		for i := 0; i < len(sGroup.iTris); i++ {
 			iTri := sGroup.iTris[i]
 			v1, v2, v3 := iTri.iVerts[0].v, iTri.iVerts[1].v, iTri.iVerts[2].v
@@ -232,23 +231,22 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			vt1, vt2, vt3 := iTri.iVerts[0].vt, iTri.iVerts[1].vt, iTri.iVerts[2].vt
 			dTexCoord1 := texCoords[vt1].Sub(texCoords[vt3])
 			dTexCoord2 := texCoords[vt2].Sub(texCoords[vt3])
-			det := 1 / (dTexCoord1.X() * dTexCoord2.Y() - dTexCoord2.X() * dTexCoord1.Y())
+			det := (dTexCoord1.X() * dTexCoord2.Y() - dTexCoord2.X() * dTexCoord1.Y())
+			if det != 0 {
+				det = 1 / det
+			}
 			tangent := NewVec3(
 				dTexCoord2.Y() * edge1.X() - dTexCoord1.Y() * edge2.X(),
 				dTexCoord2.Y() * edge1.Y() - dTexCoord1.Y() * edge2.Y(),
 				dTexCoord2.Y() * edge1.Z() - dTexCoord1.Y() * edge2.Z(),
-			).Scale(det).Norm()
-			bitangent := NewVec3(
-				-dTexCoord2.X() * edge1.X() + dTexCoord1.X() * edge2.X(),
-				-dTexCoord2.X() * edge1.Y() + dTexCoord1.X() * edge2.Y(),
-				-dTexCoord2.X() * edge1.Z() + dTexCoord1.X() * edge2.Z(),
-			).Scale(det).Norm()
+			).Scale(det)
+			if det != 0 {
+				// tangent is not zero vector
+				tangent = tangent.Norm()
+			}
 			weightedTangents[v1] = weightedTangents[v1].Add(tangent)
 			weightedTangents[v2] = weightedTangents[v2].Add(tangent)
 			weightedTangents[v3] = weightedTangents[v3].Add(tangent)
-			weightedBitangents[v1] = weightedBitangents[v1].Add(bitangent)
-			weightedBitangents[v2] = weightedBitangents[v2].Add(bitangent)
-			weightedBitangents[v3] = weightedBitangents[v3].Add(bitangent)
 		}
 
 		for _, iTri := range sGroup.iTris {
@@ -257,10 +255,23 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				pos := positions[iTri.iVerts[i].v]
 				texCoord := texCoords[iTri.iVerts[i].vt]
 				normal := weightedNormals[iTri.iVerts[i].v].Norm()
-				tangent := weightedTangents[iTri.iVerts[i].v].Norm()
+				var tangent Vec3
+				if tangent.X() == 0 && tangent.Y() == 0 && tangent.Z() == 0 {
+					// no tangent - generate arbitrary tangent vector
+					// assume normal is not the zero vector
+					if normal.X() == 0 && normal.Y() == 0 && normal.Z() == 0 {
+						panic("cannot find vector not parallell to zero vector")
+					}
+					if normal.X() == 0 {
+						tangent = NewVec3(1, 0, 0)
+					} else {
+						tangent = NewVec3(0, 1, 0)
+					}
+				} else {
+					tangent = weightedTangents[iTri.iVerts[i].v].Norm()
+				}
 				tangent = tangent.Sub(normal.Scale(tangent.Dot(normal))).Norm() // gram schmidt
-				bitangent := weightedBitangents[iTri.iVerts[i].v].Norm()
-				verts[i] = NewVertex(pos, texCoord, normal, tangent, bitangent)
+				verts[i] = NewVertex(pos, texCoord, normal, tangent)
 			}
 			m.subMeshes[iTri.mtlInd].AddTriangle(verts[0], verts[1], verts[2])
 		}

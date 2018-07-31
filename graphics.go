@@ -12,7 +12,6 @@ type Vertex struct {
 	texCoord Vec2
 	normal Vec3
 	tangent Vec3
-	bitangent Vec3
 }
 
 var shadowCubeMap *CubeMap = nil
@@ -53,7 +52,6 @@ type MeshRenderer struct {
 		texCoord *Attrib
 		normal *Attrib
 		tangent *Attrib
-		bitangent *Attrib
 	}
 	vbo, ibo *Buffer
 	normalMat Mat4
@@ -65,13 +63,12 @@ type MeshRenderer struct {
 	shadowMapRenderer *ShadowMapRenderer
 }
 
-func NewVertex(pos Vec3, texCoord Vec2, normal, tangent, bitangent Vec3) Vertex {
+func NewVertex(pos Vec3, texCoord Vec2, normal, tangent Vec3) Vertex {
 	var vert Vertex
 	vert.pos = pos
 	vert.texCoord = texCoord
 	vert.normal = normal
 	vert.tangent = tangent
-	vert.bitangent = bitangent
 	return vert
 }
 
@@ -94,7 +91,6 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.attrs.texCoord = r.prog.Attrib("texCoordV")
 	r.attrs.normal = r.prog.Attrib("normalV")
 	r.attrs.tangent = r.prog.Attrib("tangentV")
-	r.attrs.bitangent = r.prog.Attrib("bitangentV")
 	// TODO: assign uniforms only name and program, let them handle rest themselves?
 	r.uniforms.modelMat = r.prog.UniformMatrix4("modelMatrix")
 	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
@@ -126,7 +122,6 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
 	r.attrs.texCoord.SetFormat(gl.FLOAT, false)
 	r.attrs.tangent.SetFormat(gl.FLOAT, false)
-	//r.attrs.bitangent.SetFormat(gl.FLOAT, false)
 
 	r.win = win
 
@@ -173,12 +168,10 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		offset2 := int(unsafe.Offsetof(Vertex{}.normal))
 		offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
 		offset4 := int(unsafe.Offsetof(Vertex{}.tangent))
-		//offset5 := int(unsafe.Offsetof(Vertex{}.bitangent))
 		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
 		r.attrs.normal.SetSource(subMesh.vbo, offset2, stride)
 		r.attrs.texCoord.SetSource(subMesh.vbo, offset3, stride)
 		r.attrs.tangent.SetSource(subMesh.vbo, offset4, stride)
-		//r.attrs.bitangent.SetSource(subMesh.vbo, offset5, stride)
 		r.prog.SetAttribIndexBuffer(subMesh.ibo)
 
 		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
@@ -454,10 +447,10 @@ func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
 				bl := NewVec2(tl.X(), br.Y())
 
 				normal := NewVec3(0, 0, 0)
-				vert1 := NewVertex(bl.Vec3(0), NewVec2(texX1, texY2), normal, Vec3{}, Vec3{})
-				vert2 := NewVertex(br.Vec3(0), NewVec2(texX2, texY2), normal, Vec3{}, Vec3{})
-				vert3 := NewVertex(tr.Vec3(0), NewVec2(texX2, texY1), normal, Vec3{}, Vec3{})
-				vert4 := NewVertex(tl.Vec3(0), NewVec2(texX1, texY1), normal, Vec3{}, Vec3{})
+				vert1 := NewVertex(bl.Vec3(0), NewVec2(texX1, texY2), normal, Vec3{})
+				vert2 := NewVertex(br.Vec3(0), NewVec2(texX2, texY2), normal, Vec3{})
+				vert3 := NewVertex(tr.Vec3(0), NewVec2(texX2, texY1), normal, Vec3{})
+				vert4 := NewVertex(tl.Vec3(0), NewVec2(texX1, texY1), normal, Vec3{})
 				inds = append(inds, int32(len(verts) + 0))
 				inds = append(inds, int32(len(verts) + 1))
 				inds = append(inds, int32(len(verts) + 2))
@@ -678,7 +671,7 @@ func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
 		for _, subMesh := range m.subMeshes {
 			for _, i := range subMesh.faces {
 				p1 := subMesh.verts[i].pos
-				p2 := p1.Add(subMesh.verts[i].bitangent)
+				p2 := p1.Add(subMesh.verts[i].normal.Cross(subMesh.verts[i].tangent))
 				r.points = append(r.points, p1, p2)
 			}
 		}
