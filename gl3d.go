@@ -41,6 +41,12 @@ func main() {
 		if filename == "objects/racecar.obj" {
 			model.Scale(NewVec3(0.04, 0.04, 0.04))
 		}
+		if filename == "objects/holodeck/holodeck.obj" {
+			model.Scale(NewVec3(0.04, 0.04, 0.04))
+		}
+		if filename == "objects/oak/white_oak.obj" {
+			model.Scale(NewVec3(0.04, 0.04, 0.04))
+		}
 		s.AddMesh(model)
 	}
 

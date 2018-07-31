@@ -89,7 +89,7 @@ func readVec3(fields []string) Vec3 {
 	return NewVec3(x, y, z)
 }
 
-func readIndexedVertex(desc string) indexedVertex {
+func readIndexedVertex(desc string, nv, nvt, nvn int) indexedVertex {
 	var vert indexedVertex
 	var inds [3]int = [3]int{0, 0, 0}
 	fields := strings.Split(desc, "/")
@@ -99,6 +99,15 @@ func readIndexedVertex(desc string) indexedVertex {
 		}
 	}
 	vert.v, vert.vt, vert.vn = inds[0], inds[1], inds[2]
+	if vert.v < 0 {
+		vert.v = nv + vert.v
+	}
+	if vert.vt < 0 {
+		vert.vt = nvt + vert.vt
+	}
+	if vert.vn < 0 {
+		vert.vn = nvn + vert.vn
+	}
 	return vert
 }
 
@@ -165,10 +174,11 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				sGroups = append(sGroups, newSmoothingGroup(id))
 			}
 		case "f":
-			vert1 := readIndexedVertex(fields[1])
-			vert2 := readIndexedVertex(fields[2])
+			nv, nvt, nvn := len(positions), len(texCoords), len(normals)
+			vert1 := readIndexedVertex(fields[1], nv, nvt, nvn)
+			vert2 := readIndexedVertex(fields[2], nv, nvt, nvn)
 			for _, field := range fields[3:] {
-				vert3 := readIndexedVertex(field)
+				vert3 := readIndexedVertex(field, nv, nvt, nvn)
 				sGroup := &sGroups[sGroupInd]
 				iTri := newIndexedTriangle(vert1, vert2, vert3, mtlInd)
 				sGroup.iTris = append(sGroup.iTris, iTri)
