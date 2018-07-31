@@ -6,6 +6,7 @@ in vec4 colorF;
 in vec2 texCoordF;
 in vec3 tanLightToVertex;
 in vec3 tanCameraToVertex;
+in vec3 tanLightDirection;
 
 out vec4 fragColor;
 
@@ -96,7 +97,7 @@ void main() {
 
 	// UNCOMMENT THESE LINES FOR SPOT LIGHT
 	/*
-	if (dot((viewMatrix * vec4(light.direction, 0)).xyz, lightDirection) < 0.75)  {
+	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
 		diffuse = vec3(0, 0, 0);
 		specular = vec3(0, 0, 0);
 	}

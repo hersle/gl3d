@@ -12,6 +12,7 @@ out vec2 texCoordF;
 out vec3 normalF;
 out vec3 tanLightToVertex;
 out vec3 tanCameraToVertex;
+out vec3 tanLightDirection;
 
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -49,6 +50,9 @@ void main() {
 	tanLightToVertex = viewToTan * viewLightToVertex;
 
 	tanCameraToVertex = viewToTan * (viewPosition - vec3(0, 0, 0));
+
+	vec3 viewLightDirection = vec3(viewMatrix * vec4(light.direction, 0));
+	tanLightDirection = viewToTan * viewLightDirection;
 
 	mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
 	lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
