@@ -26,10 +26,11 @@ uniform sampler2D materialBumpMap;
 uniform bool materialHasAlphaMap;
 uniform sampler2D materialAlphaMap;
 
-uniform vec3 lightPosition;
-uniform vec3 lightAmbient;
-uniform vec3 lightDiffuse;
-uniform vec3 lightSpecular;
+const int MAX_LIGHTS = 10;
+uniform vec3 lightPositions[MAX_LIGHTS];
+uniform vec3 lightAmbients[MAX_LIGHTS];
+uniform vec3 lightDiffuses[MAX_LIGHTS];
+uniform vec3 lightSpeculars[MAX_LIGHTS];
 
 // for spotlight
 uniform sampler2D spotShadowMap;
@@ -39,7 +40,7 @@ uniform samplerCube cubeShadowMap;
 float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
-	float depth = length(worldPosition - lightPosition);
+	float depth = length(worldPosition - lightPositions[0]);
 	float depthFront = texture(spotShadowMap, texCoordS).r * 50;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
@@ -50,8 +51,8 @@ float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 }
 
 float CalcShadowFactorPointLight() {
-	float depth = length(worldPosition - lightPosition);
-	float depthFront = textureCube(cubeShadowMap, worldPosition - lightPosition).r * 50;
+	float depth = length(worldPosition - lightPositions[0]);
+	float depthFront = textureCube(cubeShadowMap, worldPosition - lightPositions[0]).r * 50;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;
@@ -73,17 +74,17 @@ void main() {
 
 	tex = texture(materialAmbientMap, texCoordF);
 	vec3 ambient = ((1 - tex.a) * materialAmbient + tex.a * tex.rgb)
-				 * lightAmbient;
+				 * lightAmbients[0];
 
 	tex = texture(materialDiffuseMap, texCoordF);
 	vec3 diffuse = ((1 - tex.a) * materialDiffuse + tex.a * tex.rgb)
 				 * max(dot(normalize(tanNormal), normalize(-tanLightToVertex)), 0)
-				 * lightDiffuse;
+				 * lightDiffuses[0];
 
 	tex = texture(materialSpecularMap, texCoordF);
 	vec3 specular = ((1 - tex.a) * materialSpecular + tex.a * tex.rgb)
 				  * pow(max(dot(normalize(tanReflection), -normalize(tanCameraToVertex)), 0), materialShine)
-				  * lightSpecular
+				  * lightSpeculars[0]
 				  * (facing ? 1 : 0);
 
 	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {

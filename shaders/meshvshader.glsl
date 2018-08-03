@@ -22,8 +22,9 @@ uniform mat4 normalMatrix;
 uniform mat4 shadowViewMatrix;
 uniform mat4 shadowProjectionMatrix;
 
-uniform vec3 lightPosition;
-uniform vec3 lightDirection;
+const int MAX_LIGHTS = 10;
+uniform vec3 lightPositions[MAX_LIGHTS];
+uniform vec3 lightDirections[MAX_LIGHTS];
 
 out vec4 lightSpacePosition;
 
@@ -40,13 +41,13 @@ void main() {
 	mat3 tanToView = mat3(viewTangent, viewBitangent, viewNormal);
 	mat3 viewToTan = transpose(tanToView); // orthonormal
 
-	vec3 worldLightToVertex = worldPosition - lightPosition;
+	vec3 worldLightToVertex = worldPosition - lightPositions[0];
 	vec3 viewLightToVertex = vec3(viewMatrix * vec4(worldLightToVertex, 0));
 	tanLightToVertex = viewToTan * viewLightToVertex;
 
 	tanCameraToVertex = viewToTan * (viewPosition - vec3(0, 0, 0));
 
-	vec3 viewLightDirection = vec3(viewMatrix * vec4(lightDirection, 0));
+	vec3 viewLightDirection = vec3(viewMatrix * vec4(lightDirections[0], 0));
 	tanLightDirection = viewToTan * viewLightDirection;
 
 	mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
