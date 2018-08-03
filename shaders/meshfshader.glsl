@@ -4,13 +4,12 @@ in vec3 worldPosition;
 in vec3 viewPosition;
 in vec4 colorF;
 in vec2 texCoordF;
-in vec3 tanLightToVertex;
+in vec3 viewLightToVertex;
 in vec3 tanCameraToVertex;
-in vec3 tanLightDirection;
+in vec3 viewLightDirection;
+in mat3 viewToTan;
 
 out vec4 fragColor;
-
-in vec4 lightSpacePosition;
 
 // material
 uniform vec3 materialAmbient;
@@ -31,17 +30,19 @@ uniform vec3 lightPositions[MAX_LIGHTS];
 uniform vec3 lightAmbients[MAX_LIGHTS];
 uniform vec3 lightDiffuses[MAX_LIGHTS];
 uniform vec3 lightSpeculars[MAX_LIGHTS];
+uniform mat4 lightViewMatrices[MAX_LIGHTS];
+uniform mat4 lightProjectionMatrices[MAX_LIGHTS];
 
 // for spotlight
-uniform sampler2D spotShadowMap;
+uniform sampler2D lightSpotShadowMaps[MAX_LIGHTS];
 
-uniform samplerCube cubeShadowMap;
+uniform samplerCube lightCubeShadowMaps[MAX_LIGHTS];
 
 float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = length(worldPosition - lightPositions[0]);
-	float depthFront = texture(spotShadowMap, texCoordS).r * 50;
+	float depthFront = texture(lightSpotShadowMaps[0], texCoordS).r * 50;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;
@@ -52,7 +53,7 @@ float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 
 float CalcShadowFactorPointLight() {
 	float depth = length(worldPosition - lightPositions[0]);
-	float depthFront = textureCube(cubeShadowMap, worldPosition - lightPositions[0]).r * 50;
+	float depthFront = textureCube(lightCubeShadowMaps[0], worldPosition - lightPositions[0]).r * 50;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;
@@ -62,11 +63,16 @@ float CalcShadowFactorPointLight() {
 }
 
 void main() {
+	vec4 lightSpacePosition = lightProjectionMatrices[0] * lightViewMatrices[0] * vec4(worldPosition, 1);
+
 	vec3 tanNormal = vec3(0, 0, 1);
 	if (materialHasBumpMap) {
 		tanNormal += -1 + 2 * normalize(texture(materialBumpMap, texCoordF).rgb);
 		tanNormal = normalize(tanNormal);
 	}
+
+	vec3 tanLightToVertex = viewToTan * viewLightToVertex;
+	vec3 tanLightDirection = viewToTan * viewLightDirection;
 
 	vec4 tex;
 	vec3 tanReflection = reflect(normalize(tanLightToVertex), normalize(tanNormal));
@@ -89,13 +95,13 @@ void main() {
 
 	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
 		// add/remove + to enable/disable spotlight
-		diffuse += vec3(0, 0, 0);
-		specular += vec3(0, 0, 0);
+		diffuse = vec3(0, 0, 0);
+		specular = vec3(0, 0, 0);
 	}
 	// change to enable/disable spotlight
-	float factor = CalcShadowFactorSpotLight(lightSpacePosition);
-	factor /= CalcShadowFactorSpotLight(lightSpacePosition);
-	factor *= CalcShadowFactorPointLight();
+	float factor = CalcShadowFactorPointLight();
+	factor /= CalcShadowFactorPointLight();
+	factor *= CalcShadowFactorSpotLight(lightSpacePosition);
 
 	float alpha;
 	if (materialHasAlphaMap) {
