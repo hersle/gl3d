@@ -50,11 +50,12 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	s.spotLight = NewSpotLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
+	s.ambientLight = NewAmbientLight(NewVec3(1, 1, 1))
+	s.spotLight = NewSpotLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 	s.spotLight.Camera = *NewCamera(60, 1, 0.1, 50)
 	s.spotLight.Place(NewVec3(0, 3, 0))
 	s.spotLight.Orient(s.spotLight.position.Scale(-1).Norm(), NewVec3(0, 0, 1))
-	s.pointLight = NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1), NewVec3(1, 1, 1))
+	s.pointLight = NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1))
 
 	c := NewCamera(60, 1, 0.1, 50)
 

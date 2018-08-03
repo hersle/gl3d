@@ -4,42 +4,42 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type BasicLight struct {
-	ambient Vec3
-	diffuse Vec3
-	specular Vec3
+type AmbientLight struct {
+	color Vec3
 }
 
 type PointLight struct {
 	Object
-	BasicLight
+	diffuse Vec3
+	specular Vec3
 	shadowMap *CubeMap
 }
 
 type SpotLight struct {
 	Camera
-	BasicLight
+	diffuse Vec3
+	specular Vec3
 	shadowMap *Texture2D
 }
 
-func NewBasicLight(ambient, diffuse, specular Vec3) *BasicLight {
-	var l BasicLight
-	l.ambient = ambient
-	l.diffuse = diffuse
-	l.specular = specular
+func NewAmbientLight(color Vec3) *AmbientLight {
+	var l AmbientLight
+	l.color = color
 	return &l
 }
 
-func NewPointLight(ambient, diffuse, specular Vec3) *PointLight {
+func NewPointLight(diffuse, specular Vec3) *PointLight {
 	var l PointLight
-	l.BasicLight = *NewBasicLight(ambient, diffuse, specular)
+	l.diffuse = diffuse
+	l.specular = specular
 	l.shadowMap = NewCubeMap(gl.NEAREST, gl.DEPTH_COMPONENT16, 512, 512)
 	return &l
 }
 
-func NewSpotLight(ambient, diffuse, specular Vec3) *SpotLight {
+func NewSpotLight(diffuse, specular Vec3) *SpotLight {
 	var l SpotLight
-	l.BasicLight = *NewBasicLight(ambient, diffuse, specular)
+	l.diffuse = diffuse
+	l.specular = specular
 	l.Camera.Object.Reset()
 	l.shadowMap = NewTexture2D(gl.NEAREST, gl.CLAMP_TO_BORDER, gl.DEPTH_COMPONENT16, 512, 512)
 	l.shadowMap.SetBorderColor(NewVec4(1, 1, 1, 1))
