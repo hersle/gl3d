@@ -220,7 +220,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 	r.uniforms.lightPos.Set(s.pointLight.position)
 	r.uniforms.lightDir.Set(s.spotLight.Forward())
-	r.uniforms.ambientLight.Set(s.pointLight.ambient)
+	r.uniforms.ambientLight.Set(s.ambientLight.color)
 	r.uniforms.diffuseLight.Set(s.pointLight.diffuse)
 	r.uniforms.specularLight.Set(s.pointLight.specular)
 
