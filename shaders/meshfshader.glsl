@@ -13,42 +13,33 @@ out vec4 fragColor;
 in vec4 lightSpacePosition;
 
 // material
-uniform struct Material {
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-	float shine;
-	sampler2D ambientMap;
-	sampler2D diffuseMap;
-	sampler2D specularMap;
-	float alpha; // TODO: let textures modify alpha
-	bool hasBumpMap;
-	sampler2D bumpMap;
-	bool hasAlphaMap;
-	sampler2D alphaMap;
-} material;
+uniform vec3 materialAmbient;
+uniform vec3 materialDiffuse;
+uniform vec3 materialSpecular;
+uniform float materialShine;
+uniform sampler2D materialAmbientMap;
+uniform sampler2D materialDiffuseMap;
+uniform sampler2D materialSpecularMap;
+uniform float materialAlpha; // TODO: let textures modify alpha
+uniform bool materialHasBumpMap;
+uniform sampler2D materialBumpMap;
+uniform bool materialHasAlphaMap;
+uniform sampler2D materialAlphaMap;
 
-uniform struct Light {
-	vec3 position;
-	vec3 direction;
-	vec3 ambient;
-	vec3 diffuse;
-	vec3 specular;
-} light;
-
-uniform mat4 viewMatrix;
+uniform vec3 lightPosition;
+uniform vec3 lightAmbient;
+uniform vec3 lightDiffuse;
+uniform vec3 lightSpecular;
 
 // for spotlight
 uniform sampler2D spotShadowMap;
 
 uniform samplerCube cubeShadowMap;
 
-uniform mat4 normalMatrix;
-
 float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
-	float depth = length(worldPosition - light.position);
+	float depth = length(worldPosition - lightPosition);
 	float depthFront = texture(spotShadowMap, texCoordS).r * 50;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
@@ -59,8 +50,8 @@ float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 }
 
 float CalcShadowFactorPointLight() {
-	float depth = length(worldPosition - light.position);
-	float depthFront = textureCube(cubeShadowMap, worldPosition - light.position).r * 50;
+	float depth = length(worldPosition - lightPosition);
+	float depthFront = textureCube(cubeShadowMap, worldPosition - lightPosition).r * 50;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;
@@ -71,8 +62,8 @@ float CalcShadowFactorPointLight() {
 
 void main() {
 	vec3 tanNormal = vec3(0, 0, 1);
-	if (material.hasBumpMap) {
-		tanNormal += -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
+	if (materialHasBumpMap) {
+		tanNormal += -1 + 2 * normalize(texture(materialBumpMap, texCoordF).rgb);
 		tanNormal = normalize(tanNormal);
 	}
 
@@ -80,42 +71,36 @@ void main() {
 	vec3 tanReflection = reflect(normalize(tanLightToVertex), normalize(tanNormal));
 	bool facing = dot(normalize(tanNormal), normalize(tanLightToVertex)) < 0;
 
-	tex = texture(material.ambientMap, texCoordF);
-	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
-				 * light.ambient;
+	tex = texture(materialAmbientMap, texCoordF);
+	vec3 ambient = ((1 - tex.a) * materialAmbient + tex.a * tex.rgb)
+				 * lightAmbient;
 
-	tex = texture(material.diffuseMap, texCoordF);
-	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
+	tex = texture(materialDiffuseMap, texCoordF);
+	vec3 diffuse = ((1 - tex.a) * materialDiffuse + tex.a * tex.rgb)
 				 * max(dot(normalize(tanNormal), normalize(-tanLightToVertex)), 0)
-				 * light.diffuse;
+				 * lightDiffuse;
 
-	tex = texture(material.specularMap, texCoordF);
-	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
-				  * pow(max(dot(normalize(tanReflection), -normalize(tanCameraToVertex)), 0), material.shine)
-				  * light.specular
+	tex = texture(materialSpecularMap, texCoordF);
+	vec3 specular = ((1 - tex.a) * materialSpecular + tex.a * tex.rgb)
+				  * pow(max(dot(normalize(tanReflection), -normalize(tanCameraToVertex)), 0), materialShine)
+				  * lightSpecular
 				  * (facing ? 1 : 0);
 
-	// UNCOMMENT THESE LINES FOR SPOT LIGHT
-	/*
 	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
-		diffuse = vec3(0, 0, 0);
-		specular = vec3(0, 0, 0);
+		// add/remove + to enable/disable spotlight
+		diffuse += vec3(0, 0, 0);
+		specular += vec3(0, 0, 0);
 	}
-	float factor = CalcShadowFactorPointLight();
-	factor /= CalcShadowFactorPointLight();
-	factor *= CalcShadowFactorSpotLight(lightSpacePosition);
-	*/
-
-	// UNCOMMENT THESE LINES FOR POINT LIGHT
+	// change to enable/disable spotlight
 	float factor = CalcShadowFactorSpotLight(lightSpacePosition);
 	factor /= CalcShadowFactorSpotLight(lightSpacePosition);
 	factor *= CalcShadowFactorPointLight();
 
 	float alpha;
-	if (material.hasAlphaMap) {
-		alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
+	if (materialHasAlphaMap) {
+		alpha = materialAlpha * texture(materialAlphaMap, texCoordF).r;
 	} else {
-		alpha = material.alpha;
+		alpha = materialAlpha;
 	}
 
 	// TODO: add proper transparency?
