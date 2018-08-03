@@ -318,7 +318,11 @@ func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 	}
 	u.location = uint32(loc)
 	u.progID = p.id
-	gl.GetActiveUniform(p.id, u.location, 0, nil, nil, &u.glType, nil)
+	var index uint32
+	cstrs, free := gl.Strs(name + "\x00")
+	defer free()
+	gl.GetUniformIndices(p.id, 1, cstrs, &index)
+	gl.GetActiveUniform(p.id, index, 0, nil, nil, &u.glType, nil)
 	return &u
 }
 
