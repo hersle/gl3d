@@ -5,6 +5,7 @@ import (
 	"unsafe"
 	"path"
 	"golang.org/x/image/font/basicfont"
+	"fmt"
 )
 
 type Vertex struct {
@@ -26,22 +27,22 @@ type MeshRenderer struct {
 		projMat *UniformMatrix4
 		normalMat *UniformMatrix4
 		ambient *UniformVector3
-		ambientLight *UniformVector3
+		ambientLights []*UniformVector3
 		ambientMap *UniformSampler
 		diffuse *UniformVector3
-		diffuseLight *UniformVector3
+		diffuseLights []*UniformVector3
 		diffuseMap *UniformSampler
 		specular *UniformVector3
-		specularLight *UniformVector3
+		specularLights []*UniformVector3
 		shine *UniformFloat
 		specularMap *UniformSampler
-		lightPos *UniformVector3
-		lightDir *UniformVector3
+		lightPoss []*UniformVector3
+		lightDirs []*UniformVector3
 		alpha *UniformFloat
-		shadowViewMat *UniformMatrix4
-		shadowProjMat *UniformMatrix4
-		spotShadowMap *UniformSampler
-		cubeShadowMap *UniformSampler
+		shadowViewMats []*UniformMatrix4
+		shadowProjMats []*UniformMatrix4
+		spotShadowMaps []*UniformSampler
+		cubeShadowMaps []*UniformSampler
 		bumpMap *UniformSampler
 		hasBumpMap *UniformBool
 		alphaMap *UniformSampler
@@ -87,6 +88,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 		return nil, err
 	}
 
+	var maxLights int = 10 // TODO: query from program
 	r.attrs.pos = r.prog.Attrib("position")
 	r.attrs.texCoord = r.prog.Attrib("texCoordV")
 	r.attrs.normal = r.prog.Attrib("normalV")
@@ -104,15 +106,27 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.uniforms.specularMap = r.prog.UniformSampler("materialSpecularMap")
 	r.uniforms.shine = r.prog.UniformFloat("materialShine")
 	r.uniforms.alpha = r.prog.UniformFloat("materialAlpha")
-	r.uniforms.lightPos = r.prog.UniformVector3("lightPositions[0]")
-	r.uniforms.lightDir = r.prog.UniformVector3("lightDirections[0]")
-	r.uniforms.ambientLight = r.prog.UniformVector3("lightAmbients[0]")
-	r.uniforms.diffuseLight = r.prog.UniformVector3("lightDiffuses[0]")
-	r.uniforms.specularLight = r.prog.UniformVector3("lightSpeculars[0]")
-	r.uniforms.shadowViewMat = r.prog.UniformMatrix4("lightViewMatrices[0]")
-	r.uniforms.shadowProjMat = r.prog.UniformMatrix4("lightProjectionMatrices[0]")
-	r.uniforms.cubeShadowMap = r.prog.UniformSampler("lightCubeShadowMaps[0]")
-	r.uniforms.spotShadowMap = r.prog.UniformSampler("lightSpotShadowMaps[0]")
+	r.uniforms.lightPoss = make([]*UniformVector3, maxLights)
+	r.uniforms.lightDirs = make([]*UniformVector3, maxLights)
+	r.uniforms.ambientLights = make([]*UniformVector3, maxLights)
+	r.uniforms.diffuseLights = make([]*UniformVector3, maxLights)
+	r.uniforms.specularLights = make([]*UniformVector3, maxLights)
+	r.uniforms.shadowViewMats = make([]*UniformMatrix4, maxLights)
+	r.uniforms.shadowProjMats = make([]*UniformMatrix4, maxLights)
+	r.uniforms.cubeShadowMaps = make([]*UniformSampler, maxLights)
+	r.uniforms.spotShadowMaps = make([]*UniformSampler, maxLights)
+	for i := 0; i < 1; i++ {
+		indexString := fmt.Sprintf("[%d]", i)
+		r.uniforms.lightPoss[i] = r.prog.UniformVector3("lightPositions" + indexString)
+		r.uniforms.lightDirs[i] = r.prog.UniformVector3("lightDirections" + indexString)
+		r.uniforms.ambientLights[i] = r.prog.UniformVector3("lightAmbients" + indexString)
+		r.uniforms.diffuseLights[i] = r.prog.UniformVector3("lightDiffuses" + indexString)
+		r.uniforms.specularLights[i] = r.prog.UniformVector3("lightSpeculars" + indexString)
+		r.uniforms.shadowViewMats[i] = r.prog.UniformMatrix4("lightViewMatrices" + indexString)
+		r.uniforms.shadowProjMats[i] = r.prog.UniformMatrix4("lightProjectionMatrices" + indexString)
+		r.uniforms.cubeShadowMaps[i] = r.prog.UniformSampler("lightCubeShadowMaps" + indexString)
+		r.uniforms.spotShadowMaps[i] = r.prog.UniformSampler("lightSpotShadowMaps" + indexString)
+	}
 	r.uniforms.hasBumpMap = r.prog.UniformBool("materialHasBumpMap")
 	r.uniforms.bumpMap = r.prog.UniformSampler("materialBumpMap")
 	r.uniforms.hasAlphaMap = r.prog.UniformBool("materialHasAlphaMap")
@@ -193,9 +207,9 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		}
 
 		// for spotlight
-		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
+		r.uniforms.spotShadowMaps[0].Set2D(s.spotLight.shadowMap)
 
-		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
+		r.uniforms.cubeShadowMaps[0].SetCube(s.pointLight.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
@@ -218,15 +232,15 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 
 	// normal pass
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	r.uniforms.lightPos.Set(s.pointLight.position)
-	r.uniforms.lightDir.Set(s.spotLight.Forward())
-	r.uniforms.ambientLight.Set(s.ambientLight.color)
-	r.uniforms.diffuseLight.Set(s.pointLight.diffuse)
-	r.uniforms.specularLight.Set(s.pointLight.specular)
+	r.uniforms.lightPoss[0].Set(s.pointLight.position)
+	r.uniforms.lightDirs[0].Set(s.spotLight.Forward())
+	r.uniforms.ambientLights[0].Set(s.ambientLight.color)
+	r.uniforms.diffuseLights[0].Set(s.pointLight.diffuse)
+	r.uniforms.specularLights[0].Set(s.pointLight.specular)
 
 	// for spotlight
-	r.uniforms.shadowViewMat.Set(s.spotLight.ViewMatrix())
-	r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
+	r.uniforms.shadowViewMats[0].Set(s.spotLight.ViewMatrix())
+	r.uniforms.shadowProjMats[0].Set(s.spotLight.ProjectionMatrix())
 
 	for _, m := range s.meshes {
 		r.renderMesh(s, m, c)
@@ -259,9 +273,9 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 
 		// for spotlight
-		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
+		r.uniforms.spotShadowMaps[0].Set2D(s.spotLight.shadowMap)
 
-		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
+		r.uniforms.cubeShadowMaps[0].SetCube(s.pointLight.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
