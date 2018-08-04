@@ -67,6 +67,15 @@ type ShadowMapShaderProgram struct {
 	position *Attrib
 }
 
+type ArrowShaderProgram struct {
+	*ShaderProgram
+	modelMatrix *UniformMatrix4
+	viewMatrix *UniformMatrix4
+	projectionMatrix *UniformMatrix4
+	color *UniformVector3
+	position *Attrib
+}
+
 func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
@@ -299,4 +308,44 @@ func (sp *ShadowMapShaderProgram) SetSubMesh(sm *SubMesh) {
 	offset := int(unsafe.Offsetof(Vertex{}.pos))
 	sp.position.SetSource(sm.vbo, offset, stride)
 	sp.SetAttribIndexBuffer(sm.ibo)
+}
+
+func NewArrowShaderProgram() *ArrowShaderProgram {
+	var sp ArrowShaderProgram
+	var err error
+
+	vShaderFilename := "shaders/arrowvshader.glsl"
+	fShaderFilename := "shaders/arrowfshader.glsl"
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	sp.position = sp.Attrib("position")
+	sp.modelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.viewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.projectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.color = sp.UniformVector3("color")
+
+	sp.position.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
+func (sp *ArrowShaderProgram) SetCamera(c *Camera) {
+	sp.viewMatrix.Set(c.ViewMatrix())
+	sp.projectionMatrix.Set(c.ProjectionMatrix())
+}
+
+func (sp *ArrowShaderProgram) SetMesh(m *Mesh) {
+	sp.modelMatrix.Set(m.WorldMatrix())
+}
+
+func (sp *ArrowShaderProgram) SetColor(color Vec3) {
+	sp.color.Set(color)
+}
+
+func (sp *ArrowShaderProgram) SetPosition(vbo *Buffer) {
+	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
+	sp.position.SetSource(vbo, 0, stride)
 }

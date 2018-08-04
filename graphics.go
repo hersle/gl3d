@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"unsafe"
 	"path"
 	"golang.org/x/image/font/basicfont"
 )
@@ -434,16 +433,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 
 type ArrowRenderer struct {
 	win *Window
-	prog *ShaderProgram
-	uniforms struct {
-		modelMat *UniformMatrix4
-		viewMat *UniformMatrix4
-		projMat *UniformMatrix4
-		color *UniformVector3
-	}
-	attrs struct {
-		pos *Attrib
-	}
+	sp *ArrowShaderProgram
 	points []Vec3
 	vbo *Buffer
 	renderState *RenderState
@@ -451,42 +441,30 @@ type ArrowRenderer struct {
 
 func NewArrowRenderer(win *Window) *ArrowRenderer {
 	var r ArrowRenderer
-	var err error
 
 	r.win = win
-	r.prog, err = ReadShaderProgram("shaders/arrowvshader.glsl", "shaders/arrowfshader.glsl")
-	if err != nil {
-		panic(err)
-	}
-	r.attrs.pos = r.prog.Attrib("position")
-	r.attrs.pos.SetFormat(gl.FLOAT, false)
-	r.uniforms.modelMat = r.prog.UniformMatrix4("modelMatrix")
-	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
-	r.uniforms.projMat = r.prog.UniformMatrix4("projectionMatrix")
-	r.uniforms.color = r.prog.UniformVector3("color")
+	r.sp = NewArrowShaderProgram()
 
 	r.renderState = NewRenderState()
 	r.renderState.SetBlend(false)
 	r.renderState.SetCull(false)
 	r.renderState.SetDepthTest(true)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
-	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 
 	r.vbo = NewBuffer()
+	r.sp.SetPosition(r.vbo)
 
 	return &r
 }
 
 func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	r.uniforms.viewMat.Set(c.ViewMatrix())
-	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
-	r.attrs.pos.SetSource(r.vbo, 0, stride)
+	r.sp.SetCamera(c)
 	r.points = r.points[:0]
-	r.uniforms.color.Set(NewVec3(1, 0, 0))
+	r.sp.SetColor(NewVec3(1, 0, 0))
 	for _, m := range s.meshes {
-		r.uniforms.modelMat.Set(m.WorldMatrix())
+		r.sp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
 			for _, i := range subMesh.faces {
 				p1 := subMesh.verts[i].pos
@@ -501,14 +479,11 @@ func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
 
 func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	r.uniforms.viewMat.Set(c.ViewMatrix())
-	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
-	r.attrs.pos.SetSource(r.vbo, 0, stride)
+	r.sp.SetCamera(c)
 	r.points = r.points[:0]
-	r.uniforms.color.Set(NewVec3(0, 1, 0))
+	r.sp.SetColor(NewVec3(0, 1, 0))
 	for _, m := range s.meshes {
-		r.uniforms.modelMat.Set(m.WorldMatrix())
+		r.sp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
 			for _, i := range subMesh.faces {
 				p1 := subMesh.verts[i].pos
@@ -523,14 +498,11 @@ func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
 
 func (r *ArrowRenderer) RenderNormals(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	r.uniforms.viewMat.Set(c.ViewMatrix())
-	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
-	r.attrs.pos.SetSource(r.vbo, 0, stride)
+	r.sp.SetCamera(c)
 	r.points = r.points[:0]
-	r.uniforms.color.Set(NewVec3(0, 0, 1))
+	r.sp.SetColor(NewVec3(0, 0, 1))
 	for _, m := range s.meshes {
-		r.uniforms.modelMat.Set(m.WorldMatrix())
+		r.sp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
 			for _, i := range subMesh.faces {
 				p1 := subMesh.verts[i].pos
