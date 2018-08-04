@@ -67,6 +67,14 @@ func initDefaultTexture() {
 	defaultTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 }
 
+func (mtl *Material) HasBumpMap() bool {
+	return mtl.bumpMap != nil
+}
+
+func (mtl *Material) HasAlphaMap() bool {
+	return mtl.alphaMap != nil
+}
+
 func (mtl *Material) Finish() {
 	img, err := readImage(mtl.ambientMapFilename)
 	if err == nil {

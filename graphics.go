@@ -180,18 +180,18 @@ func (r *MeshRenderer) renderMesh(m *Mesh, c *Camera) {
 		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 
-		if subMesh.mtl.bumpMap == nil || !enableBumpMap {
-			r.uniforms.hasBumpMap.Set(false)
-		} else {
+		if subMesh.mtl.HasBumpMap() && enableBumpMap {
 			r.uniforms.hasBumpMap.Set(true)
 			r.uniforms.bumpMap.Set2D(subMesh.mtl.bumpMap)
+		} else {
+			r.uniforms.hasBumpMap.Set(false)
 		}
 
-		if subMesh.mtl.alphaMap == nil {
-			r.uniforms.hasAlphaMap.Set(false)
-		} else {
+		if subMesh.mtl.HasAlphaMap() {
 			r.uniforms.hasAlphaMap.Set(true)
 			r.uniforms.alphaMap.Set2D(subMesh.mtl.alphaMap)
+		} else {
+			r.uniforms.hasAlphaMap.Set(false)
 		}
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
