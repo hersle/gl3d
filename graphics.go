@@ -135,7 +135,6 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.renderState.SetDepthTest(true)
 	r.renderState.SetDepthFunc(gl.LEQUAL) // enable drawing after depth prepass
 	r.renderState.SetBlend(true)
-	r.renderState.SetBlendFunction(gl.ONE, gl.ONE)
 	r.renderState.SetCull(true)
 	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.renderState.SetPolygonMode(gl.FILL)
@@ -291,9 +290,10 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 
 	r.DepthPass(s, c)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
 
+	r.renderState.SetBlendFunction(gl.ONE, gl.ZERO)
 	r.AmbientPass(s, c)
+	r.renderState.SetBlendFunction(gl.ONE, gl.ONE)
 
 	r.uniforms.lightType.Set(1) // point light
 	for _, l := range s.pointLights {
