@@ -16,6 +16,7 @@ type RenderState struct {
 	prog *ShaderProgram
 	framebuffer *Framebuffer
 	depthTest bool
+	depthFunc uint32
 	blend bool
 	blendSrcFactor uint32
 	blendDstFactor uint32
@@ -634,6 +635,10 @@ func (rs *RenderState) SetDepthTest(depthTest bool) {
 	rs.depthTest = depthTest
 }
 
+func (rs *RenderState) SetDepthFunc(depthFunc uint32) {
+	rs.depthFunc = depthFunc
+}
+
 func (rs *RenderState) SetBlend(blend bool) {
 	rs.blend = blend
 }
@@ -668,6 +673,7 @@ func (rs *RenderState) Apply() {
 
 	if rs.depthTest {
 		gl.Enable(gl.DEPTH_TEST)
+		gl.DepthFunc(rs.depthFunc)
 	} else {
 		gl.Disable(gl.DEPTH_TEST)
 	}
