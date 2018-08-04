@@ -50,6 +50,13 @@ type SkyboxShaderProgram struct {
 	position *Attrib
 }
 
+type TextShaderProgram struct {
+	*ShaderProgram
+	atlas *UniformSampler
+	position *Attrib
+	texCoord *Attrib
+}
+
 func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
@@ -206,5 +213,39 @@ func (sp *SkyboxShaderProgram) SetSkybox(skybox *CubeMap) {
 func (sp *SkyboxShaderProgram) SetCube(vbo, ibo *Buffer) {
 	sp.position.SetFormat(gl.FLOAT, false)
 	sp.position.SetSource(vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
+	sp.SetAttribIndexBuffer(ibo)
+}
+
+func NewTextShaderProgram() *TextShaderProgram {
+	var sp TextShaderProgram
+	var err error
+
+	vShaderFilename := "shaders/textvshader.glsl"
+	fShaderFilename := "shaders/textfshader.glsl"
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	sp.atlas = sp.UniformSampler("fontAtlas")
+	sp.position = sp.Attrib("position")
+	sp.texCoord = sp.Attrib("texCoordV")
+
+	sp.position.SetFormat(gl.FLOAT, false)
+	sp.texCoord.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
+func (sp *TextShaderProgram) SetAtlas(tex *Texture2D) {
+	sp.atlas.Set2D(tex)
+}
+
+func (sp *TextShaderProgram) SetAttribs(vbo, ibo *Buffer) {
+	stride := int(unsafe.Sizeof(Vertex{}))
+	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+	offset2 := int(unsafe.Offsetof(Vertex{}.texCoord))
+	sp.position.SetSource(vbo, offset1, stride)
+	sp.texCoord.SetSource(vbo, offset2, stride)
 	sp.SetAttribIndexBuffer(ibo)
 }

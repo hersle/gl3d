@@ -258,14 +258,7 @@ func (r *SkyboxRenderer) Render(c *Camera) {
 
 type TextRenderer struct {
 	win *Window
-	prog *ShaderProgram
-	uniforms struct {
-		tex *UniformSampler
-	}
-	attrs struct {
-		pos *Attrib
-		texCoord *Attrib
-	}
+	sp *TextShaderProgram
 	tex *Texture2D
 	vbo *Buffer
 	ibo *Buffer
@@ -277,22 +270,12 @@ func NewTextRenderer(win *Window) *TextRenderer {
 
 	r.win = win
 
-	r.prog, _ = ReadShaderProgram("shaders/textvshader.glsl", "shaders/textfshader.glsl")
-	r.uniforms.tex = r.prog.UniformSampler("fontAtlas")
-	r.attrs.pos = r.prog.Attrib("position")
-	r.attrs.texCoord = r.prog.Attrib("texCoordV")
+	r.sp = NewTextShaderProgram()
 
 	r.vbo = NewBuffer()
 	r.ibo = NewBuffer()
 
-	stride := int(unsafe.Sizeof(Vertex{}))
-	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
-	offset2 := int(unsafe.Offsetof(Vertex{}.texCoord))
-	r.attrs.pos.SetFormat(gl.FLOAT, false)
-	r.attrs.pos.SetSource(r.vbo, offset1, stride)
-	r.attrs.texCoord.SetFormat(gl.FLOAT, false)
-	r.attrs.texCoord.SetSource(r.vbo, offset2, stride)
-	r.prog.SetAttribIndexBuffer(r.ibo)
+	r.sp.SetAttribs(r.vbo, r.ibo)
 
 	img := basicfont.Face7x13.Mask
 	r.tex = NewTexture2DFromImage(gl.NEAREST, gl.CLAMP_TO_EDGE, gl.RGBA8, img)
@@ -300,7 +283,7 @@ func NewTextRenderer(win *Window) *TextRenderer {
 	r.renderState = NewRenderState()
 	r.renderState.SetDepthTest(false)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
-	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetBlend(true)
 	r.renderState.SetBlendFunction(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_COLOR)
 	r.renderState.SetCull(false)
@@ -362,7 +345,7 @@ func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
 		}
 	}
 
-	r.uniforms.tex.Set2D(r.tex)
+	r.sp.SetAtlas(r.tex)
 	r.vbo.SetData(verts, 0)
 	r.ibo.SetData(inds, 0)
 	NewRenderCommand(gl.TRIANGLES, len(inds), 0, r.renderState).Execute()
