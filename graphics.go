@@ -214,8 +214,16 @@ func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 	// TODO: improve
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	for _, m := range s.meshes {
-		l := NewPointLight(NewVec3(0, 0, 0), NewVec3(0, 0, 0))
-		r.renderMesh(m, l, c)
+		r.uniforms.modelMat.Set(m.WorldMatrix())
+		r.uniforms.viewMat.Set(c.ViewMatrix())
+		r.uniforms.projMat.Set(c.ProjectionMatrix())
+		for _, subMesh := range m.subMeshes {
+			stride := int(unsafe.Sizeof(Vertex{}))
+			offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+			r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
+			r.prog.SetAttribIndexBuffer(subMesh.ibo)
+			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
+		}
 	}
 }
 
