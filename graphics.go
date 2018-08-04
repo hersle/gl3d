@@ -227,6 +227,15 @@ func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 	}
 }
 
+func (r *MeshRenderer) AmbientPass(s *Scene, c *Camera) {
+	r.uniforms.ambientLight.Set(s.ambientLight.color)
+	l := NewPointLight(NewVec3(0, 0, 0), NewVec3(0, 0, 0))
+	for _, m := range s.meshes {
+		r.renderLitMesh(m, l, c)
+	}
+	r.uniforms.ambientLight.Set(NewVec3(0, 0, 0))
+}
+
 func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 
@@ -237,7 +246,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	// for spotlight
 	//r.shadowPassSpotLight(s, s.spotLight)
 
-	r.uniforms.ambientLight.Set(s.ambientLight.color)
+	r.AmbientPass(s, c)
 
 	for _, l := range s.pointLights {
 		r.shadowPassPointLight(s, l)
