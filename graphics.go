@@ -228,6 +228,8 @@ func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 }
 
 func (r *MeshRenderer) Render(s *Scene, c *Camera) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+
 	r.DepthPass(s, c)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
@@ -235,14 +237,14 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	// for spotlight
 	//r.shadowPassSpotLight(s, s.spotLight)
 
+	r.uniforms.ambientLight.Set(s.ambientLight.color)
+
 	for _, l := range s.pointLights {
 		r.shadowPassPointLight(s, l)
 
 		// normal pass
-		r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 		r.uniforms.lightPos.Set(l.position)
 		//r.uniforms.lightDir.Set(s.spotLight.Forward())
-		r.uniforms.ambientLight.Set(s.ambientLight.color)
 		r.uniforms.diffuseLight.Set(l.diffuse)
 		r.uniforms.specularLight.Set(l.specular)
 
