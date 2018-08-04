@@ -29,6 +29,7 @@ uniform struct Material {
 } material;
 
 uniform struct Light {
+	int type;
 	vec3 position;
 	vec3 direction;
 	vec3 ambient;
@@ -80,9 +81,14 @@ void main() {
 	vec3 tanReflection = reflect(normalize(tanLightToVertex), normalize(tanNormal));
 	bool facing = dot(normalize(tanNormal), normalize(tanLightToVertex)) < 0;
 
-	tex = texture(material.ambientMap, texCoordF);
-	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
-				 * light.ambient;
+	switch (light.type) {
+	case 0: // ambient light
+		tex = texture(material.ambientMap, texCoordF);
+		vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
+					 * light.ambient;
+		fragColor = vec4(ambient, 1);
+		return;
+	}
 
 	tex = texture(material.diffuseMap, texCoordF);
 	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
@@ -95,21 +101,19 @@ void main() {
 				  * light.specular
 				  * (facing ? 1 : 0);
 
-	// UNCOMMENT THESE LINES FOR SPOT LIGHT
-	/*
-	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
-		diffuse = vec3(0, 0, 0);
-		specular = vec3(0, 0, 0);
+	float factor;
+	switch (light.type) {
+	case 1: // point light
+		factor = CalcShadowFactorPointLight();
+		break;
+	case 2: // spot light
+		if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
+			diffuse = vec3(0, 0, 0);
+			specular = vec3(0, 0, 0);
+		}
+		factor = CalcShadowFactorSpotLight(lightSpacePosition);
+		break;
 	}
-	float factor = CalcShadowFactorPointLight();
-	factor /= CalcShadowFactorPointLight();
-	factor *= CalcShadowFactorSpotLight(lightSpacePosition);
-	*/
-
-	// UNCOMMENT THESE LINES FOR POINT LIGHT
-	float factor = CalcShadowFactorSpotLight(lightSpacePosition);
-	factor /= CalcShadowFactorSpotLight(lightSpacePosition);
-	factor *= CalcShadowFactorPointLight();
 
 	float alpha;
 	if (material.hasAlphaMap) {
@@ -123,5 +127,5 @@ void main() {
 		discard;
 	}
 
-	fragColor = vec4(ambient + factor * (diffuse + specular), 1);
+	fragColor = vec4(factor * (diffuse + specular), 1);
 }

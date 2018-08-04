@@ -3,7 +3,7 @@ package main
 type Scene struct {
 	meshes []*Mesh
 	ambientLight *AmbientLight
-	spotLight *SpotLight
+	spotLights []*SpotLight
 	pointLights []*PointLight
 	quad *Mesh
 }
@@ -24,4 +24,8 @@ func (s *Scene) AddMesh(m *Mesh) {
 
 func (s *Scene) AddPointLight(l *PointLight) {
 	s.pointLights = append(s.pointLights, l)
+}
+
+func (s *Scene) AddSpotLight(l *SpotLight) {
+	s.spotLights = append(s.spotLights, l)
 }

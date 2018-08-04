@@ -46,6 +46,7 @@ type MeshRenderer struct {
 		hasBumpMap *UniformBool
 		alphaMap *UniformSampler
 		hasAlphaMap *UniformBool
+		lightType *UniformInteger
 	}
 	attrs struct {
 		pos *Attrib
@@ -117,6 +118,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.uniforms.bumpMap = r.prog.UniformSampler("material.bumpMap")
 	r.uniforms.hasAlphaMap = r.prog.UniformBool("material.hasAlphaMap")
 	r.uniforms.alphaMap = r.prog.UniformSampler("material.alphaMap")
+	r.uniforms.lightType = r.prog.UniformInteger("light.type")
 
 	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
@@ -148,7 +150,7 @@ func (r *MeshRenderer) Clear() {
 }
 
 var enableBumpMap bool
-func (r *MeshRenderer) renderLitMesh(m *Mesh, l *PointLight, c *Camera) {
+func (r *MeshRenderer) renderPointLitMesh(m *Mesh, l *PointLight, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
@@ -193,10 +195,58 @@ func (r *MeshRenderer) renderLitMesh(m *Mesh, l *PointLight, c *Camera) {
 			r.uniforms.alphaMap.Set2D(subMesh.mtl.alphaMap)
 		}
 
-		// for spotlight
-		//r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
-
 		r.uniforms.cubeShadowMap.SetCube(l.shadowMap)
+
+		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
+	}
+}
+
+func (r *MeshRenderer) renderSpotLitMesh(m *Mesh, l *SpotLight, c *Camera) {
+	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
+	r.normalMat.Invert().Transpose()
+
+	r.uniforms.modelMat.Set(m.WorldMatrix())
+	r.uniforms.viewMat.Set(c.ViewMatrix())
+	r.uniforms.projMat.Set(c.ProjectionMatrix())
+	r.uniforms.normalMat.Set(&r.normalMat)
+
+	for _, subMesh := range m.subMeshes {
+		r.uniforms.ambient.Set(subMesh.mtl.ambient)
+		r.uniforms.diffuse.Set(subMesh.mtl.diffuse)
+		r.uniforms.specular.Set(subMesh.mtl.specular)
+		r.uniforms.shine.Set(subMesh.mtl.shine)
+		r.uniforms.alpha.Set(subMesh.mtl.alpha)
+
+		stride := int(unsafe.Sizeof(Vertex{}))
+		offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+		offset2 := int(unsafe.Offsetof(Vertex{}.normal))
+		offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
+		offset4 := int(unsafe.Offsetof(Vertex{}.tangent))
+		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
+		r.attrs.normal.SetSource(subMesh.vbo, offset2, stride)
+		r.attrs.texCoord.SetSource(subMesh.vbo, offset3, stride)
+		r.attrs.tangent.SetSource(subMesh.vbo, offset4, stride)
+		r.prog.SetAttribIndexBuffer(subMesh.ibo)
+
+		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
+		r.uniforms.diffuseMap.Set2D(subMesh.mtl.diffuseMap)
+		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
+
+		if subMesh.mtl.bumpMap == nil || !enableBumpMap {
+			r.uniforms.hasBumpMap.Set(false)
+		} else {
+			r.uniforms.hasBumpMap.Set(true)
+			r.uniforms.bumpMap.Set2D(subMesh.mtl.bumpMap)
+		}
+
+		if subMesh.mtl.alphaMap == nil {
+			r.uniforms.hasAlphaMap.Set(false)
+		} else {
+			r.uniforms.hasAlphaMap.Set(true)
+			r.uniforms.alphaMap.Set2D(subMesh.mtl.alphaMap)
+		}
+
+		r.uniforms.spotShadowMap.Set2D(l.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
@@ -228,10 +278,11 @@ func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 }
 
 func (r *MeshRenderer) AmbientPass(s *Scene, c *Camera) {
+	r.uniforms.lightType.Set(0) // ambient light
 	r.uniforms.ambientLight.Set(s.ambientLight.color)
 	l := NewPointLight(NewVec3(0, 0, 0), NewVec3(0, 0, 0))
 	for _, m := range s.meshes {
-		r.renderLitMesh(m, l, c)
+		r.renderPointLitMesh(m, l, c)
 	}
 	r.uniforms.ambientLight.Set(NewVec3(0, 0, 0))
 }
@@ -242,32 +293,42 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.DepthPass(s, c)
 	gl.Clear(gl.COLOR_BUFFER_BIT)
 
-	// shadow pass
-	// for spotlight
-	//r.shadowPassSpotLight(s, s.spotLight)
-
 	r.AmbientPass(s, c)
 
+	r.uniforms.lightType.Set(1) // point light
 	for _, l := range s.pointLights {
 		r.shadowPassPointLight(s, l)
 
 		// normal pass
 		r.uniforms.lightPos.Set(l.position)
-		//r.uniforms.lightDir.Set(s.spotLight.Forward())
 		r.uniforms.diffuseLight.Set(l.diffuse)
 		r.uniforms.specularLight.Set(l.specular)
 
-		// for spotlight
-		//r.uniforms.shadowViewMat.Set(s.spotLight.ViewMatrix())
-		//r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
+		for _, m := range s.meshes {
+			r.renderPointLitMesh(m, l, c)
+		}
+	}
+
+	r.uniforms.lightType.Set(2) // spot light
+	for _, l := range s.spotLights {
+		r.shadowPassSpotLight(s, l)
+
+		// normal pass
+		r.uniforms.lightPos.Set(l.position)
+		r.uniforms.lightDir.Set(l.Forward())
+		r.uniforms.diffuseLight.Set(l.diffuse)
+		r.uniforms.specularLight.Set(l.specular)
+
+		r.uniforms.shadowViewMat.Set(l.ViewMatrix())
+		r.uniforms.shadowProjMat.Set(l.ProjectionMatrix())
 
 		for _, m := range s.meshes {
-			r.renderLitMesh(m, l, c)
+			r.renderSpotLitMesh(m, l, c)
 		}
 	}
 
 	// UNCOMMENT THESE LINES TO DRAW SPOT LIGHT DEPTH MAP FOR DEBUGGING
-	s.quad.subMeshes[0].mtl.ambientMap = s.spotLight.shadowMap
+	s.quad.subMeshes[0].mtl.ambientMap = s.spotLights[0].shadowMap
 	ident := NewMat4Identity()
 	r.uniforms.modelMat.Set(ident)
 	r.uniforms.viewMat.Set(ident)
@@ -293,7 +354,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 		r.uniforms.specularMap.Set2D(subMesh.mtl.specularMap)
 
 		// for spotlight
-		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
+		r.uniforms.spotShadowMap.Set2D(s.spotLights[0].shadowMap)
 
 		//r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
 
