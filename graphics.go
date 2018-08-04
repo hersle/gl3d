@@ -231,20 +231,11 @@ func (r *MeshRenderer) AmbientPass(s *Scene, c *Camera) {
 	}
 }
 
-func (r *MeshRenderer) Render(s *Scene, c *Camera) {
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-
-	r.DepthPass(s, c)
-
-	r.renderState.SetBlendFunction(gl.ONE, gl.ZERO)
-	r.AmbientPass(s, c)
-	r.renderState.SetBlendFunction(gl.ONE, gl.ONE)
-
+func (r *MeshRenderer) PointLightPass(s *Scene, c *Camera) {
 	r.uniforms.lightType.Set(1) // point light
 	for _, l := range s.pointLights {
 		r.shadowPassPointLight(s, l)
 
-		// normal pass
 		r.uniforms.lightPos.Set(l.position)
 		r.uniforms.diffuseLight.Set(l.diffuse)
 		r.uniforms.specularLight.Set(l.specular)
@@ -254,12 +245,13 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 			r.renderMesh(m, c)
 		}
 	}
+}
 
+func (r *MeshRenderer) SpotLightPass(s *Scene, c *Camera) {
 	r.uniforms.lightType.Set(2) // spot light
 	for _, l := range s.spotLights {
 		r.shadowPassSpotLight(s, l)
 
-		// normal pass
 		r.uniforms.lightPos.Set(l.position)
 		r.uniforms.lightDir.Set(l.Forward())
 		r.uniforms.diffuseLight.Set(l.diffuse)
@@ -272,6 +264,19 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 			r.renderMesh(m, c)
 		}
 	}
+}
+
+func (r *MeshRenderer) Render(s *Scene, c *Camera) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+
+	r.DepthPass(s, c)
+
+	r.renderState.SetBlendFunction(gl.ONE, gl.ZERO) // replace framebuffer contents
+	r.AmbientPass(s, c)
+
+	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
+	r.PointLightPass(s, c)
+	r.SpotLightPass(s, c)
 
 	// UNCOMMENT THESE LINES TO DRAW SPOT LIGHT DEPTH MAP FOR DEBUGGING
 	s.quad.subMeshes[0].mtl.ambientMap = s.spotLights[0].shadowMap
