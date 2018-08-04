@@ -148,7 +148,7 @@ func (r *MeshRenderer) Clear() {
 }
 
 var enableBumpMap bool
-func (r *MeshRenderer) renderMesh(m *Mesh, l *PointLight, c *Camera) {
+func (r *MeshRenderer) renderLitMesh(m *Mesh, l *PointLight, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
@@ -253,7 +253,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 		//r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
 
 		for _, m := range s.meshes {
-			r.renderMesh(m, l, c)
+			r.renderLitMesh(m, l, c)
 		}
 	}
 
