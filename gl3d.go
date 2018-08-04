@@ -61,7 +61,7 @@ func main() {
 
 	var camFactor float32
 
-	skyboxRenderer := NewSkyboxRenderer(win)
+	// skyboxRenderer := NewSkyboxRenderer(win) // disable while working with multiple lights
 	textRenderer := NewTextRenderer(win)
 	arrowRenderer := NewArrowRenderer(win)
 
@@ -83,7 +83,7 @@ func main() {
 
 		c.SetAspect(win.Aspect())
 		renderer.Clear()
-		skyboxRenderer.Render(c)
+		//skyboxRenderer.Render(c)
 		if drawScene {
 			renderer.Render(s, c)
 		}
