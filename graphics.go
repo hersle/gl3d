@@ -148,7 +148,7 @@ func (r *MeshRenderer) Clear() {
 }
 
 var enableBumpMap bool
-func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
+func (r *MeshRenderer) renderMesh(m *Mesh, l *PointLight, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
@@ -194,9 +194,9 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 		}
 
 		// for spotlight
-		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
+		//r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
 
-		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
+		r.uniforms.cubeShadowMap.SetCube(l.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
@@ -214,7 +214,7 @@ func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 	// TODO: improve
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	for _, m := range s.meshes {
-		r.renderMesh(s, m, c)
+		r.renderMesh(m, s.pointLight, c)
 	}
 }
 
@@ -241,7 +241,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
 
 	for _, m := range s.meshes {
-		r.renderMesh(s, m, c)
+		r.renderMesh(m, s.pointLight, c)
 	}
 
 	// UNCOMMENT THESE LINES TO DRAW SPOT LIGHT DEPTH MAP FOR DEBUGGING
