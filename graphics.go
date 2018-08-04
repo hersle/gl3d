@@ -352,42 +352,20 @@ func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
 }
 
 type ShadowMapRenderer struct {
-	prog *ShaderProgram
-	uniforms struct {
-		modelMat *UniformMatrix4
-		viewMat *UniformMatrix4
-		projMat *UniformMatrix4
-		lightPos *UniformVector3
-		far *UniformFloat
-	}
-	attrs struct {
-		pos *Attrib
-	}
+	sp *ShadowMapShaderProgram
 	framebuffer *Framebuffer
 	renderState *RenderState
 }
 
 func NewShadowMapRenderer() *ShadowMapRenderer {
 	var r ShadowMapRenderer
-	var err error
 
-	r.prog, err = ReadShaderProgram("shaders/pointlightshadowmapvshader.glsl", "shaders/pointlightshadowmapfshader.glsl")
-	if err != nil {
-		panic(err)
-	}
-
-	r.uniforms.modelMat = r.prog.UniformMatrix4("modelMatrix")
-	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
-	r.uniforms.projMat = r.prog.UniformMatrix4("projectionMatrix")
-	r.uniforms.lightPos = r.prog.UniformVector3("lightPosition")
-	r.uniforms.far = r.prog.UniformFloat("far")
-
-	r.attrs.pos = r.prog.Attrib("position")
+	r.sp = NewShadowMapShaderProgram()
 
 	r.framebuffer = NewFramebuffer()
 
 	r.renderState = NewRenderState()
-	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetFramebuffer(r.framebuffer)
 	r.renderState.SetDepthTest(true)
 	r.renderState.SetBlend(false)
@@ -417,9 +395,6 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 
 	c := NewCamera(90, 1, 0.1, 50)
 	c.Place(l.position)
-	r.uniforms.far.Set(c.far)
-	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	r.uniforms.lightPos.Set(l.position)
 
 	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
 	//shadowCubeMap = l.shadowMap
@@ -428,15 +403,13 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 		r.framebuffer.SetTextureCubeMapFace(gl.DEPTH_ATTACHMENT, l.shadowMap, 0, int32(face))
 		r.framebuffer.ClearDepth(1)
 		c.SetForwardUp(forwards[face], ups[face])
-		r.uniforms.viewMat.Set(c.ViewMatrix())
+
+		r.sp.SetCamera(c)
 
 		for _, m := range s.meshes {
-			r.uniforms.modelMat.Set(m.WorldMatrix())
+			r.sp.SetMesh(m)
 			for _, subMesh := range m.subMeshes {
-				stride := int(unsafe.Sizeof(Vertex{}))
-				offset := int(unsafe.Offsetof(Vertex{}.pos))
-				r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
-				r.prog.SetAttribIndexBuffer(subMesh.ibo)
+				r.sp.SetSubMesh(subMesh)
 
 				NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 			}
@@ -447,18 +420,12 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 	r.framebuffer.SetTexture2D(gl.DEPTH_ATTACHMENT, l.shadowMap, 0)
 	r.framebuffer.ClearDepth(1)
-	r.uniforms.viewMat.Set(l.ViewMatrix())
-	r.uniforms.projMat.Set(l.ProjectionMatrix())
-	r.uniforms.far.Set(l.Camera.far)
-	r.uniforms.lightPos.Set(l.position)
+	r.sp.SetCamera(&l.Camera)
 
 	for _, m := range s.meshes {
-		r.uniforms.modelMat.Set(m.WorldMatrix())
+		r.sp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
-			stride := int(unsafe.Sizeof(Vertex{}))
-			offset := int(unsafe.Offsetof(Vertex{}.pos))
-			r.attrs.pos.SetSource(subMesh.vbo, offset, stride)
-			r.prog.SetAttribIndexBuffer(subMesh.ibo)
+			r.sp.SetSubMesh(subMesh)
 
 			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 		}

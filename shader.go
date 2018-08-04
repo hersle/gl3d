@@ -57,6 +57,16 @@ type TextShaderProgram struct {
 	texCoord *Attrib
 }
 
+type ShadowMapShaderProgram struct {
+	*ShaderProgram
+	modelMatrix *UniformMatrix4
+	viewMatrix *UniformMatrix4
+	projectionMatrix *UniformMatrix4
+	lightPosition *UniformVector3
+	far *UniformFloat
+	position *Attrib
+}
+
 func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
@@ -248,4 +258,45 @@ func (sp *TextShaderProgram) SetAttribs(vbo, ibo *Buffer) {
 	sp.position.SetSource(vbo, offset1, stride)
 	sp.texCoord.SetSource(vbo, offset2, stride)
 	sp.SetAttribIndexBuffer(ibo)
+}
+
+func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
+	var sp ShadowMapShaderProgram
+	var err error
+
+	vShaderFilename := "shaders/pointlightshadowmapvshader.glsl"
+	fShaderFilename := "shaders/pointlightshadowmapfshader.glsl"
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	sp.modelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.viewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.projectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.lightPosition = sp.UniformVector3("lightPosition")
+	sp.far = sp.UniformFloat("far")
+	sp.position = sp.Attrib("position")
+
+	sp.position.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
+func (sp *ShadowMapShaderProgram) SetCamera(c *Camera) {
+	sp.far.Set(c.far)
+	sp.lightPosition.Set(c.position)
+	sp.viewMatrix.Set(c.ViewMatrix())
+	sp.projectionMatrix.Set(c.ProjectionMatrix())
+}
+
+func (sp *ShadowMapShaderProgram) SetMesh(m *Mesh) {
+	sp.modelMatrix.Set(m.WorldMatrix())
+}
+
+func (sp *ShadowMapShaderProgram) SetSubMesh(sm *SubMesh) {
+	stride := int(unsafe.Sizeof(Vertex{}))
+	offset := int(unsafe.Offsetof(Vertex{}.pos))
+	sp.position.SetSource(sm.vbo, offset, stride)
+	sp.SetAttribIndexBuffer(sm.ibo)
 }
