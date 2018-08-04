@@ -214,7 +214,8 @@ func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 	// TODO: improve
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	for _, m := range s.meshes {
-		r.renderMesh(m, s.pointLight, c)
+		l := NewPointLight(NewVec3(0, 0, 0), NewVec3(0, 0, 0))
+		r.renderMesh(m, l, c)
 	}
 }
 
@@ -224,24 +225,26 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 
 	// shadow pass
 	// for spotlight
-	r.shadowPassSpotLight(s, s.spotLight)
+	//r.shadowPassSpotLight(s, s.spotLight)
 
-	r.shadowPassPointLight(s, s.pointLight)
+	for _, l := range s.pointLights {
+		r.shadowPassPointLight(s, l)
 
-	// normal pass
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	r.uniforms.lightPos.Set(s.pointLight.position)
-	r.uniforms.lightDir.Set(s.spotLight.Forward())
-	r.uniforms.ambientLight.Set(s.ambientLight.color)
-	r.uniforms.diffuseLight.Set(s.pointLight.diffuse)
-	r.uniforms.specularLight.Set(s.pointLight.specular)
+		// normal pass
+		r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+		r.uniforms.lightPos.Set(l.position)
+		//r.uniforms.lightDir.Set(s.spotLight.Forward())
+		r.uniforms.ambientLight.Set(s.ambientLight.color)
+		r.uniforms.diffuseLight.Set(l.diffuse)
+		r.uniforms.specularLight.Set(l.specular)
 
-	// for spotlight
-	r.uniforms.shadowViewMat.Set(s.spotLight.ViewMatrix())
-	r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
+		// for spotlight
+		//r.uniforms.shadowViewMat.Set(s.spotLight.ViewMatrix())
+		//r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
 
-	for _, m := range s.meshes {
-		r.renderMesh(m, s.pointLight, c)
+		for _, m := range s.meshes {
+			r.renderMesh(m, l, c)
+		}
 	}
 
 	// UNCOMMENT THESE LINES TO DRAW SPOT LIGHT DEPTH MAP FOR DEBUGGING
@@ -273,7 +276,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 		// for spotlight
 		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
 
-		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
+		//r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
 
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}

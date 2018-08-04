@@ -55,7 +55,9 @@ func main() {
 	s.spotLight.Camera = *NewCamera(60, 1, 0.1, 50)
 	s.spotLight.Place(NewVec3(0, 3, 0))
 	s.spotLight.Orient(s.spotLight.position.Scale(-1).Norm(), NewVec3(0, 0, 1))
-	s.pointLight = NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1))
+	s.AddPointLight(NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1)))
+	s.AddPointLight(NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1)))
+	s.pointLights[1].Place(NewVec3(5, 0, 0))
 
 	c := NewCamera(60, 1, 0.1, 50)
 
@@ -137,7 +139,7 @@ func main() {
 			c.Rotate(NewVec3(0, 1, 0), camFactor * -0.03)
 		}
 		if win.glfwWin.GetKey(glfw.KeySpace) == glfw.Press {
-			s.pointLight.Place(c.position)
+			s.pointLights[0].Place(c.position)
 			s.spotLight.Place(c.position)
 			s.spotLight.Orient(c.unitX, c.unitY) // for spotlight
 		}

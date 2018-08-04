@@ -4,7 +4,7 @@ type Scene struct {
 	meshes []*Mesh
 	ambientLight *AmbientLight
 	spotLight *SpotLight
-	pointLight *PointLight
+	pointLights []*PointLight
 	quad *Mesh
 }
 
@@ -20,4 +20,8 @@ func NewScene() *Scene {
 
 func (s *Scene) AddMesh(m *Mesh) {
 	s.meshes = append(s.meshes, m)
+}
+
+func (s *Scene) AddPointLight(l *PointLight) {
+	s.pointLights = append(s.pointLights, l)
 }
