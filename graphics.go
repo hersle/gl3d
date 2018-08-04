@@ -46,6 +46,7 @@ type MeshRenderer struct {
 		hasBumpMap *UniformBool
 		alphaMap *UniformSampler
 		hasAlphaMap *UniformBool
+		lightType *UniformInteger
 	}
 	attrs struct {
 		pos *Attrib
@@ -117,6 +118,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.uniforms.bumpMap = r.prog.UniformSampler("material.bumpMap")
 	r.uniforms.hasAlphaMap = r.prog.UniformBool("material.hasAlphaMap")
 	r.uniforms.alphaMap = r.prog.UniformSampler("material.alphaMap")
+	r.uniforms.lightType = r.prog.UniformInteger("light.type")
 
 	r.attrs.pos.SetFormat(gl.FLOAT, false)
 	r.attrs.normal.SetFormat(gl.FLOAT, false)
@@ -131,8 +133,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.renderState.SetShaderProgram(r.prog)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
 	r.renderState.SetDepthTest(true)
+	r.renderState.SetDepthFunc(gl.LEQUAL) // enable drawing after depth prepass
 	r.renderState.SetBlend(true)
-	r.renderState.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	r.renderState.SetCull(true)
 	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.renderState.SetPolygonMode(gl.FILL)
@@ -147,7 +149,7 @@ func (r *MeshRenderer) Clear() {
 }
 
 var enableBumpMap bool
-func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
+func (r *MeshRenderer) renderMesh(m *Mesh, c *Camera) {
 	r.normalMat.Copy(c.ViewMatrix()).Mult(m.WorldMatrix())
 	r.normalMat.Invert().Transpose()
 
@@ -192,11 +194,6 @@ func (r *MeshRenderer) renderMesh(s *Scene, m *Mesh, c *Camera) {
 			r.uniforms.alphaMap.Set2D(subMesh.mtl.alphaMap)
 		}
 
-		// for spotlight
-		r.uniforms.spotShadowMap.Set2D(s.spotLight.shadowMap)
-
-		r.uniforms.cubeShadowMap.SetCube(s.pointLight.shadowMap)
-
 		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 	}
 }
@@ -209,31 +206,80 @@ func (r *MeshRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
-func (r *MeshRenderer) Render(s *Scene, c *Camera) {
-	// shadow pass
-	// for spotlight
-	r.shadowPassSpotLight(s, s.spotLight)
-
-	r.shadowPassPointLight(s, s.pointLight)
-
-	// normal pass
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	r.uniforms.lightPos.Set(s.pointLight.position)
-	r.uniforms.lightDir.Set(s.spotLight.Forward())
-	r.uniforms.ambientLight.Set(s.ambientLight.color)
-	r.uniforms.diffuseLight.Set(s.pointLight.diffuse)
-	r.uniforms.specularLight.Set(s.pointLight.specular)
-
-	// for spotlight
-	r.uniforms.shadowViewMat.Set(s.spotLight.ViewMatrix())
-	r.uniforms.shadowProjMat.Set(s.spotLight.ProjectionMatrix())
-
+func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
+	// TODO: improve
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	for _, m := range s.meshes {
-		r.renderMesh(s, m, c)
+		r.uniforms.modelMat.Set(m.WorldMatrix())
+		r.uniforms.viewMat.Set(c.ViewMatrix())
+		r.uniforms.projMat.Set(c.ProjectionMatrix())
+		for _, subMesh := range m.subMeshes {
+			stride := int(unsafe.Sizeof(Vertex{}))
+			offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+			r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
+			r.prog.SetAttribIndexBuffer(subMesh.ibo)
+			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
+		}
 	}
+}
+
+func (r *MeshRenderer) AmbientPass(s *Scene, c *Camera) {
+	r.uniforms.lightType.Set(0) // ambient light
+	r.uniforms.ambientLight.Set(s.ambientLight.color)
+	for _, m := range s.meshes {
+		r.renderMesh(m, c)
+	}
+}
+
+func (r *MeshRenderer) PointLightPass(s *Scene, c *Camera) {
+	r.uniforms.lightType.Set(1) // point light
+	for _, l := range s.pointLights {
+		r.shadowPassPointLight(s, l)
+
+		r.uniforms.lightPos.Set(l.position)
+		r.uniforms.diffuseLight.Set(l.diffuse)
+		r.uniforms.specularLight.Set(l.specular)
+		r.uniforms.cubeShadowMap.SetCube(l.shadowMap)
+
+		for _, m := range s.meshes {
+			r.renderMesh(m, c)
+		}
+	}
+}
+
+func (r *MeshRenderer) SpotLightPass(s *Scene, c *Camera) {
+	r.uniforms.lightType.Set(2) // spot light
+	for _, l := range s.spotLights {
+		r.shadowPassSpotLight(s, l)
+
+		r.uniforms.lightPos.Set(l.position)
+		r.uniforms.lightDir.Set(l.Forward())
+		r.uniforms.diffuseLight.Set(l.diffuse)
+		r.uniforms.specularLight.Set(l.specular)
+		r.uniforms.spotShadowMap.Set2D(l.shadowMap)
+		r.uniforms.shadowViewMat.Set(l.ViewMatrix())
+		r.uniforms.shadowProjMat.Set(l.ProjectionMatrix())
+
+		for _, m := range s.meshes {
+			r.renderMesh(m, c)
+		}
+	}
+}
+
+func (r *MeshRenderer) Render(s *Scene, c *Camera) {
+	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+
+	r.DepthPass(s, c)
+
+	r.renderState.SetBlendFunction(gl.ONE, gl.ZERO) // replace framebuffer contents
+	r.AmbientPass(s, c)
+
+	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
+	r.PointLightPass(s, c)
+	r.SpotLightPass(s, c)
 
 	// UNCOMMENT THESE LINES TO DRAW SPOT LIGHT DEPTH MAP FOR DEBUGGING
-	s.quad.subMeshes[0].mtl.ambientMap = s.spotLight.shadowMap
+	s.quad.subMeshes[0].mtl.ambientMap = s.spotLights[0].shadowMap
 	ident := NewMat4Identity()
 	r.uniforms.modelMat.Set(ident)
 	r.uniforms.viewMat.Set(ident)

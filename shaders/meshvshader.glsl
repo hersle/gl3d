@@ -23,6 +23,7 @@ uniform mat4 shadowViewMatrix;
 uniform mat4 shadowProjectionMatrix;
 
 uniform struct Light {
+	int type;
 	vec3 position;
 	vec3 direction;
 	vec3 ambient;
@@ -54,6 +55,9 @@ void main() {
 	vec3 viewLightDirection = vec3(viewMatrix * vec4(light.direction, 0));
 	tanLightDirection = viewToTan * viewLightDirection;
 
-	mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
-	lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
+	switch (light.type) {
+	case 2: // spotlight
+		mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
+		lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
+	}
 }
