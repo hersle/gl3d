@@ -131,6 +131,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.renderState.SetShaderProgram(r.prog)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
 	r.renderState.SetDepthTest(true)
+	r.renderState.SetDepthFunc(gl.LEQUAL) // enable drawing after depth prepass
 	r.renderState.SetBlend(true)
 	r.renderState.SetBlendFunction(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 	r.renderState.SetCull(true)
@@ -209,7 +210,18 @@ func (r *MeshRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
+func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
+	// TODO: improve
+	gl.Clear(gl.DEPTH_BUFFER_BIT)
+	for _, m := range s.meshes {
+		r.renderMesh(s, m, c)
+	}
+}
+
 func (r *MeshRenderer) Render(s *Scene, c *Camera) {
+	r.DepthPass(s, c)
+	gl.Clear(gl.COLOR_BUFFER_BIT)
+
 	// shadow pass
 	// for spotlight
 	r.shadowPassSpotLight(s, s.spotLight)
