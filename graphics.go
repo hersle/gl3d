@@ -277,31 +277,6 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
-
-	// UNCOMMENT THESE LINES TO DRAW SPOT LIGHT DEPTH MAP FOR DEBUGGING
-	s.quad.subMeshes[0].mtl.ambientMap = s.spotLights[0].shadowMap
-	ident := NewMat4Identity()
-	r.uniforms.modelMat.Set(ident)
-	r.uniforms.viewMat.Set(ident)
-	r.uniforms.projMat.Set(ident)
-	for _, subMesh := range s.quad.subMeshes {
-		r.uniforms.ambient.Set(subMesh.mtl.ambient)
-		r.uniforms.diffuse.Set(NewVec3(0, 0, 0))
-		r.uniforms.specular.Set(NewVec3(0, 0, 0))
-		r.uniforms.shine.Set(0)
-		r.uniforms.alpha.Set(1)
-
-		stride := int(unsafe.Sizeof(Vertex{}))
-		offset1 := int(unsafe.Offsetof(Vertex{}.pos))
-		offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
-		r.attrs.pos.SetSource(subMesh.vbo, offset1, stride)
-		r.attrs.texCoord.SetSource(subMesh.vbo, offset3, stride)
-		r.prog.SetAttribIndexBuffer(subMesh.ibo)
-
-		r.uniforms.ambientMap.Set2D(subMesh.mtl.ambientMap)
-
-		NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
-	}
 }
 
 func (r *MeshRenderer) SetWireframe(wireframe bool) {
