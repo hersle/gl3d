@@ -190,15 +190,7 @@ func (r *MeshRenderer) SetWireframe(wireframe bool) {
 
 type SkyboxRenderer struct {
 	win *Window
-	prog *ShaderProgram
-	uniforms struct {
-		viewMat *UniformMatrix4
-		projMat *UniformMatrix4
-		cubeMap *UniformSampler
-	}
-	attrs struct {
-		pos *Attrib
-	}
+	sp *SkyboxShaderProgram
 	vbo *Buffer
 	ibo *Buffer
 	tex *CubeMap
@@ -210,15 +202,7 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 
 	r.win = win
 
-	var err error
-	r.prog, err = ReadShaderProgram("shaders/skyboxvshader.glsl", "shaders/skyboxfshader.glsl")
-	if err != nil {
-		panic(err)
-	}
-	r.uniforms.viewMat = r.prog.UniformMatrix4("viewMatrix")
-	r.uniforms.projMat = r.prog.UniformMatrix4("projectionMatrix")
-	r.uniforms.cubeMap = r.prog.UniformSampler("cubeMap")
-	r.attrs.pos = r.prog.Attrib("positionV")
+	r.sp = NewSkyboxShaderProgram()
 
 	dir := "images/skybox/mountain/"
 	names := []string{"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"}
@@ -252,14 +236,12 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 	}
 	r.ibo.SetData(inds, 0)
 
-	r.attrs.pos.SetFormat(gl.FLOAT, false)
-	r.attrs.pos.SetSource(r.vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
-	r.prog.SetAttribIndexBuffer(r.ibo)
+	r.sp.SetCube(r.vbo, r.ibo)
 
 	r.renderState = NewRenderState()
 	r.renderState.SetDepthTest(false)
 	r.renderState.SetFramebuffer(defaultFramebuffer)
-	r.renderState.SetShaderProgram(r.prog)
+	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetCull(false)
 	r.renderState.SetPolygonMode(gl.FILL)
 
@@ -268,12 +250,8 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 
 func (r *SkyboxRenderer) Render(c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
-	r.uniforms.viewMat.Set(c.ViewMatrix())
-	r.uniforms.projMat.Set(c.ProjectionMatrix())
-	r.uniforms.cubeMap.SetCube(r.tex) // cube shadow map debug
-
-	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
-	//r.uniforms.cubeMap.SetCube(shadowCubeMap)
+	r.sp.SetCamera(c)
+	r.sp.SetSkybox(r.tex)
 
 	NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
 }

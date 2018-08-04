@@ -42,6 +42,14 @@ type MeshShaderProgram struct {
 	cubeShadowMap *UniformSampler
 }
 
+type SkyboxShaderProgram struct {
+	*ShaderProgram
+	viewMatrix *UniformMatrix4
+	projectionMatrix *UniformMatrix4
+	cubeMap *UniformSampler
+	position *Attrib
+}
+
 func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
@@ -164,4 +172,39 @@ func (sp *MeshShaderProgram) SetSpotLight(l *SpotLight) {
 	sp.spotShadowMap.Set2D(l.shadowMap)
 	sp.shadowViewMatrix.Set(l.ViewMatrix())
 	sp.shadowProjectionMatrix.Set(l.ProjectionMatrix())
+}
+
+func NewSkyboxShaderProgram() *SkyboxShaderProgram {
+	var sp SkyboxShaderProgram
+	var err error
+
+	vShaderFilename := "shaders/skyboxvshader.glsl"
+	fShaderFilename := "shaders/skyboxfshader.glsl"
+
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	if err != nil {
+		panic(err)
+	}
+
+	sp.viewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.projectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.cubeMap = sp.UniformSampler("cubeMap")
+	sp.position = sp.Attrib("positionV")
+
+	return &sp
+}
+
+func (sp *SkyboxShaderProgram) SetCamera(c *Camera) {
+	sp.viewMatrix.Set(c.ViewMatrix())
+	sp.projectionMatrix.Set(c.ProjectionMatrix())
+}
+
+func (sp *SkyboxShaderProgram) SetSkybox(skybox *CubeMap) {
+	sp.cubeMap.SetCube(skybox)
+}
+
+func (sp *SkyboxShaderProgram) SetCube(vbo, ibo *Buffer) {
+	sp.position.SetFormat(gl.FLOAT, false)
+	sp.position.SetSource(vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
+	sp.SetAttribIndexBuffer(ibo)
 }
