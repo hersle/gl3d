@@ -525,15 +525,7 @@ func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.
 }
 
 func ReadTexture2D(filterMode, wrapMode int32, format uint32, filename string) *Texture2D {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil
-	}
+	img, _ := readImage(filename)
 	return NewTexture2DFromImage(filterMode, wrapMode, format, img)
 }
 
