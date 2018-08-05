@@ -84,7 +84,8 @@ func main() {
 		}
 
 		c.SetAspect(win.Aspect())
-		renderer.Clear()
+		defaultFramebuffer.ClearColor(NewVec4(0, 0, 0, 0))
+		defaultFramebuffer.ClearDepth(1)
 		skyboxRenderer.Render(c)
 		if drawScene {
 			renderer.Render(s, c)

@@ -86,10 +86,6 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	return &r, nil
 }
 
-func (r *MeshRenderer) Clear() {
-	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
-}
-
 var enableBumpMap bool
 func (r *MeshRenderer) renderMesh(m *Mesh, c *Camera) {
 	r.sp.SetMesh(m)
@@ -110,7 +106,6 @@ func (r *MeshRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 }
 
 func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
-	gl.Clear(gl.DEPTH_BUFFER_BIT)
 	r.dsp.SetCamera(c)
 	for _, m := range s.meshes {
 		r.dsp.SetMesh(m)
@@ -159,7 +154,6 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 
 	r.renderState.SetBlendFunction(gl.ONE, gl.ZERO) // replace framebuffer contents
 	r.AmbientPass(s, c)
-
 	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
