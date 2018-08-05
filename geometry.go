@@ -1,7 +1,7 @@
 package main
 
 import (
-	"main"
+	"math"
 )
 
 type Box struct {
@@ -17,14 +17,14 @@ type Sphere struct {
 func NewBox(point1, point2 Vec3) *Box {
 	var b Box
 
-	minX := math.Min(point1.X(), point2.X())
-	minY := math.Min(point1.Y(), point2.Y())
-	minZ := math.Min(point1.Z(), point2.Z())
+	minX := float32(math.Min(float64(point1.X()), float64(point2.X())))
+	minY := float32(math.Min(float64(point1.Y()), float64(point2.Y())))
+	minZ := float32(math.Min(float64(point1.Z()), float64(point2.Z())))
 	b.Min = NewVec3(minX, minY, minZ)
 
-	maxX := math.Max(point1.X(), point2.X())
-	maxY := math.Max(point1.Y(), point2.Y())
-	maxZ := math.Max(point1.Z(), point2.Z())
+	maxX := float32(math.Max(float64(point1.X()), float64(point2.X())))
+	maxY := float32(math.Max(float64(point1.Y()), float64(point2.Y())))
+	maxZ := float32(math.Max(float64(point1.Z()), float64(point2.Z())))
 	b.Max = NewVec3(maxX, maxY, maxZ)
 
 	return &b
