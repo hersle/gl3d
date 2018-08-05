@@ -171,7 +171,7 @@ func (r *MeshRenderer) SpotLightPass(s *Scene, c *Camera) {
 func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 
-	r.DepthPass(s, c)
+	//r.DepthPass(s, c) // use ambient pass as depth pass too
 
 	r.renderState.SetBlendFunction(gl.ONE, gl.ZERO) // replace framebuffer contents
 	r.AmbientPass(s, c)
