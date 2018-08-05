@@ -97,7 +97,6 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	return &r, nil
 }
 
-var enableBumpMap bool
 func (r *MeshRenderer) renderMesh(m *Mesh, c *Camera) {
 	r.sp.SetMesh(m)
 	r.sp.SetCamera(c)
