@@ -64,17 +64,7 @@ func (_ *Vertex) TangentOffset() int {
 func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	var r MeshRenderer
 
-	win.MakeContextCurrent()
-
-	err := gl.Init()
-	if err != nil {
-		return nil, err
-	}
-
 	r.sp = NewMeshShaderProgram()
-	if err != nil {
-		return nil, err
-	}
 
 	r.dsp = NewDepthPassShaderProgram()
 

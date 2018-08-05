@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/go-gl/gl/v4.5-core/gl"
 	"runtime"
 )
 
@@ -20,6 +21,14 @@ func NewWindow(width, height int, title string) (*Window, error) {
 	var w Window
 	var err error
 	w.glfwWin, err = glfw.CreateWindow(width, height, title, nil, nil)
+
+	w.MakeContextCurrent()
+
+	err = gl.Init()
+	if err != nil {
+		return nil, err
+	}
+
 	return &w, err
 }
 
