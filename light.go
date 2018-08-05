@@ -14,6 +14,7 @@ type PointLight struct {
 	specular Vec3
 	shadowMap *CubeMap
 	dirtyShadowMap bool
+	shadowFar float32
 }
 
 type SpotLight struct {
@@ -36,6 +37,7 @@ func NewPointLight(diffuse, specular Vec3) *PointLight {
 	l.specular = specular
 	l.shadowMap = NewCubeMap(gl.NEAREST, gl.DEPTH_COMPONENT16, 512, 512)
 	l.dirtyShadowMap = true
+	l.shadowFar = 50
 	return &l
 }
 

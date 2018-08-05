@@ -387,7 +387,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 		NewVec3(0, -1, 0),
 	}
 
-	c := NewCamera(90, 1, 0.1, 50)
+	c := NewCamera(90, 1, 0.1, l.shadowFar)
 	c.Place(l.position)
 
 	r.renderState.SetViewport(l.shadowMap.width, l.shadowMap.height)

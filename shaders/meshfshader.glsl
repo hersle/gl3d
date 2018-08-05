@@ -35,6 +35,7 @@ uniform struct Light {
 	vec3 ambient;
 	vec3 diffuse;
 	vec3 specular;
+	float far;
 } light;
 
 uniform mat4 viewMatrix;
@@ -50,7 +51,7 @@ float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = length(worldPosition - light.position);
-	float depthFront = texture(spotShadowMap, texCoordS).r * 50;
+	float depthFront = texture(spotShadowMap, texCoordS).r * light.far;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;
@@ -61,7 +62,7 @@ float CalcShadowFactorSpotLight(vec4 lightSpacePos) {
 
 float CalcShadowFactorPointLight() {
 	float depth = length(worldPosition - light.position);
-	float depthFront = textureCube(cubeShadowMap, worldPosition - light.position).r * 50;
+	float depthFront = textureCube(cubeShadowMap, worldPosition - light.position).r * light.far;
 	bool inShadow = depth > depthFront + 1.0;
 	if (inShadow) {
 		return 0.5;

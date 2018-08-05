@@ -40,6 +40,7 @@ type MeshShaderProgram struct {
 	shadowProjectionMatrix *UniformMatrix4
 	spotShadowMap *UniformSampler
 	cubeShadowMap *UniformSampler
+	shadowFar *UniformFloat
 }
 
 type SkyboxShaderProgram struct {
@@ -128,6 +129,7 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	sp.shadowProjectionMatrix = sp.UniformMatrix4("shadowProjectionMatrix")
 	sp.cubeShadowMap = sp.UniformSampler("cubeShadowMap")
 	sp.spotShadowMap = sp.UniformSampler("spotShadowMap")
+	sp.shadowFar = sp.UniformFloat("light.far")
 
 	sp.position.SetFormat(gl.FLOAT, false)
 	sp.normal.SetFormat(gl.FLOAT, false)
@@ -191,6 +193,7 @@ func (sp *MeshShaderProgram) SetPointLight(l *PointLight) {
 	sp.diffuseLight.Set(l.diffuse)
 	sp.specularLight.Set(l.specular)
 	sp.cubeShadowMap.SetCube(l.shadowMap)
+	sp.shadowFar.Set(l.shadowFar)
 }
 
 func (sp *MeshShaderProgram) SetSpotLight(l *SpotLight) {
@@ -202,6 +205,7 @@ func (sp *MeshShaderProgram) SetSpotLight(l *SpotLight) {
 	sp.spotShadowMap.Set2D(l.shadowMap)
 	sp.shadowViewMatrix.Set(l.ViewMatrix())
 	sp.shadowProjectionMatrix.Set(l.ProjectionMatrix())
+	sp.shadowFar.Set(l.Camera.far)
 }
 
 func NewSkyboxShaderProgram() *SkyboxShaderProgram {
