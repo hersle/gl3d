@@ -172,15 +172,11 @@ func (sp *MeshShaderProgram) SetSubMesh(sm *SubMesh) {
 		sp.hasBumpMap.Set(false)
 	}
 
-	stride := int(unsafe.Sizeof(Vertex{}))
-	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
-	offset2 := int(unsafe.Offsetof(Vertex{}.normal))
-	offset3 := int(unsafe.Offsetof(Vertex{}.texCoord))
-	offset4 := int(unsafe.Offsetof(Vertex{}.tangent))
-	sp.position.SetSource(sm.vbo, offset1, stride)
-	sp.normal.SetSource(sm.vbo, offset2, stride)
-	sp.texCoord.SetSource(sm.vbo, offset3, stride)
-	sp.tangent.SetSource(sm.vbo, offset4, stride)
+	var v Vertex
+	sp.position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
+	sp.normal.SetSource(sm.vbo, v.NormalOffset(), v.Size())
+	sp.texCoord.SetSource(sm.vbo, v.TexCoordOffset(), v.Size())
+	sp.tangent.SetSource(sm.vbo, v.TangentOffset(), v.Size())
 	sp.SetAttribIndexBuffer(sm.ibo)
 }
 
@@ -269,11 +265,9 @@ func (sp *TextShaderProgram) SetAtlas(tex *Texture2D) {
 }
 
 func (sp *TextShaderProgram) SetAttribs(vbo, ibo *Buffer) {
-	stride := int(unsafe.Sizeof(Vertex{}))
-	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
-	offset2 := int(unsafe.Offsetof(Vertex{}.texCoord))
-	sp.position.SetSource(vbo, offset1, stride)
-	sp.texCoord.SetSource(vbo, offset2, stride)
+	var v Vertex
+	sp.position.SetSource(vbo, v.PositionOffset(), v.Size())
+	sp.texCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
 	sp.SetAttribIndexBuffer(ibo)
 }
 
@@ -312,9 +306,8 @@ func (sp *ShadowMapShaderProgram) SetMesh(m *Mesh) {
 }
 
 func (sp *ShadowMapShaderProgram) SetSubMesh(sm *SubMesh) {
-	stride := int(unsafe.Sizeof(Vertex{}))
-	offset := int(unsafe.Offsetof(Vertex{}.pos))
-	sp.position.SetSource(sm.vbo, offset, stride)
+	var v Vertex
+	sp.position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
 	sp.SetAttribIndexBuffer(sm.ibo)
 }
 
@@ -387,8 +380,7 @@ func (sp *DepthPassShaderProgram) SetMesh(m *Mesh) {
 }
 
 func (sp *DepthPassShaderProgram) SetSubMesh(sm *SubMesh) {
-	stride := int(unsafe.Sizeof(Vertex{}))
-	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
-	sp.position.SetSource(sm.vbo, offset1, stride)
+	var v Vertex
+	sp.position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
 	sp.SetAttribIndexBuffer(sm.ibo)
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"path"
 	"golang.org/x/image/font/basicfont"
+	"unsafe"
 )
 
 type Vertex struct {
@@ -38,6 +39,26 @@ func NewVertex(pos Vec3, texCoord Vec2, normal, tangent Vec3) Vertex {
 	vert.normal = normal
 	vert.tangent = tangent
 	return vert
+}
+
+func (_ *Vertex) Size() int {
+	return int(unsafe.Sizeof(Vertex{}))
+}
+
+func (_ *Vertex) PositionOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.pos))
+}
+
+func (_ *Vertex) NormalOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.normal))
+}
+
+func (_ *Vertex) TexCoordOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.texCoord))
+}
+
+func (_ *Vertex) TangentOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.tangent))
 }
 
 func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
