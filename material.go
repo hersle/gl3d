@@ -70,7 +70,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.ambientMapFilename != "" {
-		mtl.ambientMap, err = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
+		mtl.ambientMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
 		if err != nil {
 			mtl.ambientMap = defaultTexture
 		}
@@ -79,7 +79,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.diffuseMapFilename != "" {
-		mtl.diffuseMap, err = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
+		mtl.diffuseMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
 		if err != nil {
 			mtl.diffuseMap = defaultTexture
 		}
@@ -88,7 +88,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.specularMapFilename != "" {
-		mtl.specularMap, err = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
+		mtl.specularMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
 		if err != nil {
 			mtl.specularMap = defaultTexture
 		}
@@ -97,11 +97,11 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.bumpMapFilename != "" {
-		mtl.bumpMap, err = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
+		mtl.bumpMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
 	}
 
 	if mtl.alphaMapFilename != "" {
-		mtl.alphaMap, err = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
+		mtl.alphaMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
 	}
 }
 
