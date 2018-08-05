@@ -526,9 +526,12 @@ func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.
 	}
 }
 
-func ReadTexture2D(filterMode, wrapMode int32, format uint32, filename string) *Texture2D {
-	img, _ := readImage(filename)
-	return NewTexture2DFromImage(filterMode, wrapMode, format, img)
+func ReadTexture2D(filterMode, wrapMode int32, format uint32, filename string) (*Texture2D, error) {
+	img, err := readImage(filename)
+	if err != nil {
+		return nil, err
+	}
+	return NewTexture2DFromImage(filterMode, wrapMode, format, img), nil
 }
 
 func (t *Texture2D) SetBorderColor(rgba Vec4) {
