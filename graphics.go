@@ -78,6 +78,7 @@ func NewSceneRenderer(win *Window) (*SceneRenderer, error) {
 	r.renderState.SetDepthTest(true)
 	r.renderState.SetDepthFunc(gl.LEQUAL) // enable drawing after depth prepass
 	r.renderState.SetBlend(true)
+	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
 	r.renderState.SetCull(true)
 	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.renderState.SetPolygonMode(gl.FILL)
@@ -162,9 +163,9 @@ func (r *SceneRenderer) Render(s *Scene, c *Camera) {
 
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
 
-	r.renderState.SetBlendFunction(gl.ONE, gl.ZERO) // replace framebuffer contents
+	r.renderState.SetBlend(false) // replace framebuffer contents
 	r.AmbientPass(s, c)
-	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
+	r.renderState.SetBlend(true) // add to framebuffer contents
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
 }
