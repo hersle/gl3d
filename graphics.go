@@ -347,6 +347,11 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 
 // render shadow map to l's shadow map
 func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
+	// TODO: re-render also when objects have moved
+	if !l.dirtyShadowMap {
+		return
+	}
+
 	forwards := []Vec3{
 		NewVec3(+1, 0, 0),
 		NewVec3(-1, 0, 0),
@@ -388,9 +393,16 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 			}
 		}
 	}
+
+	l.dirtyShadowMap = false
 }
 
 func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
+	// TODO: re-render also when objects have moved
+	if !l.dirtyShadowMap {
+		return
+	}
+
 	r.framebuffer.SetTexture2D(gl.DEPTH_ATTACHMENT, l.shadowMap, 0)
 	r.framebuffer.ClearDepth(1)
 	r.renderState.SetViewport(l.shadowMap.width, l.shadowMap.height)
@@ -404,6 +416,8 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 		}
 	}
+
+	l.dirtyShadowMap = false
 }
 
 type ArrowRenderer struct {
