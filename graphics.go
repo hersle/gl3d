@@ -358,8 +358,8 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 	ups := []Vec3{
 		NewVec3(0, -1, 0),
 		NewVec3(0, -1, 0),
-		NewVec3(0, 0, +1), // TODO: ?
-		NewVec3(0, 0, -1), // TODO: ?
+		NewVec3(0, 0, +1),
+		NewVec3(0, 0, -1),
 		NewVec3(0, -1, 0),
 		NewVec3(0, -1, 0),
 	}
