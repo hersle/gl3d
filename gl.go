@@ -174,7 +174,7 @@ func (s *Shader) Compile() error {
 	}
 }
 
-func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
+func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error) {
 	var p ShaderProgram
 	p.id = gl.CreateProgram()
 
@@ -186,6 +186,10 @@ func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
 		gl.AttachShader(p.id, fShader.id)
 		defer gl.DetachShader(p.id, fShader.id)
 	}
+	if gShader != nil {
+		gl.AttachShader(p.id, gShader.id)
+		defer gl.DetachShader(p.id, gShader.id)
+	}
 
 	err := p.Link()
 	if err != nil {
@@ -196,8 +200,8 @@ func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
 	return &p, err
 }
 
-func ReadShaderProgram(vShaderFilename, fShaderFilename string) (*ShaderProgram, error) {
-	var vShader, fShader *Shader
+func ReadShaderProgram(vShaderFilename, fShaderFilename, gShaderFilename string) (*ShaderProgram, error) {
+	var vShader, fShader, gShader *Shader
 	var err error
 
 	if vShaderFilename == "" {
@@ -218,7 +222,16 @@ func ReadShaderProgram(vShaderFilename, fShaderFilename string) (*ShaderProgram,
 		}
 	}
 
-	return NewShaderProgram(vShader, fShader)
+	if gShaderFilename == "" {
+		gShader = nil
+	} else {
+		gShader, err = ReadShader(gl.GEOMETRY_SHADER, gShaderFilename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return NewShaderProgram(vShader, fShader, gShader)
 }
 
 func (p *ShaderProgram) Linked() bool {

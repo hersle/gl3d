@@ -83,7 +83,7 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	vShaderFilename := "shaders/meshvshader.glsl"
 	fShaderFilename := "shaders/meshfshader.glsl"
 
-	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic("error loading mesh shader")
 	}
@@ -207,7 +207,7 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 	vShaderFilename := "shaders/skyboxvshader.glsl"
 	fShaderFilename := "shaders/skyboxfshader.glsl"
 
-	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
 	}
@@ -241,7 +241,7 @@ func NewTextShaderProgram() *TextShaderProgram {
 
 	vShaderFilename := "shaders/textvshader.glsl"
 	fShaderFilename := "shaders/textfshader.glsl"
-	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
 	}
@@ -275,7 +275,7 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 
 	vShaderFilename := "shaders/pointlightshadowmapvshader.glsl"
 	fShaderFilename := "shaders/pointlightshadowmapfshader.glsl"
-	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
 	}
@@ -316,7 +316,7 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 
 	vShaderFilename := "shaders/arrowvshader.glsl"
 	fShaderFilename := "shaders/arrowfshader.glsl"
-	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename)
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
 	}
