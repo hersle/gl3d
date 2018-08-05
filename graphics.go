@@ -19,6 +19,7 @@ var shadowCubeMap *CubeMap = nil
 type MeshRenderer struct {
 	win *Window
 	sp *MeshShaderProgram
+	dsp *DepthPassShaderProgram
 	vbo, ibo *Buffer
 	normalMat Mat4
 
@@ -52,6 +53,8 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	r.dsp = NewDepthPassShaderProgram()
 
 	r.win = win
 
@@ -98,14 +101,16 @@ func (r *MeshRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 	// TODO: improve
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	r.sp.SetCamera(c)
+	r.renderState.SetShaderProgram(r.dsp.ShaderProgram)
+	r.dsp.SetCamera(c)
 	for _, m := range s.meshes {
-		r.sp.SetMesh(m)
+		r.dsp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
-			r.sp.SetSubMesh(subMesh)
+			r.dsp.SetSubMesh(subMesh)
 			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
 		}
 	}
+	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 }
 
 func (r *MeshRenderer) AmbientPass(s *Scene, c *Camera) {

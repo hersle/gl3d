@@ -76,6 +76,14 @@ type ArrowShaderProgram struct {
 	position *Attrib
 }
 
+type DepthPassShaderProgram struct {
+	*ShaderProgram
+	modelMatrix *UniformMatrix4
+	viewMatrix *UniformMatrix4
+	projectionMatrix *UniformMatrix4
+	position *Attrib
+}
+
 func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
@@ -348,4 +356,39 @@ func (sp *ArrowShaderProgram) SetColor(color Vec3) {
 func (sp *ArrowShaderProgram) SetPosition(vbo *Buffer) {
 	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
 	sp.position.SetSource(vbo, 0, stride)
+}
+
+func NewDepthPassShaderProgram() *DepthPassShaderProgram {
+	var sp DepthPassShaderProgram
+	var err error
+
+	vShaderFilename := "shaders/depthpassvshader.glsl"
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, "", "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.position = sp.Attrib("position")
+	sp.modelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.viewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.projectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.position.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
+func (sp *DepthPassShaderProgram) SetCamera(c *Camera) {
+	sp.viewMatrix.Set(c.ViewMatrix())
+	sp.projectionMatrix.Set(c.ProjectionMatrix())
+}
+
+func (sp *DepthPassShaderProgram) SetMesh(m *Mesh) {
+	sp.modelMatrix.Set(m.WorldMatrix())
+}
+
+func (sp *DepthPassShaderProgram) SetSubMesh(sm *SubMesh) {
+	stride := int(unsafe.Sizeof(Vertex{}))
+	offset1 := int(unsafe.Offsetof(Vertex{}.pos))
+	sp.position.SetSource(sm.vbo, offset1, stride)
+	sp.SetAttribIndexBuffer(sm.ibo)
 }
