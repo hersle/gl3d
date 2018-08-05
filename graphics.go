@@ -17,7 +17,7 @@ type Vertex struct {
 var shadowCubeMap *CubeMap = nil
 
 // TODO: redesign attr/uniform access system?
-type MeshRenderer struct {
+type SceneRenderer struct {
 	win *Window
 	sp *MeshShaderProgram
 	dsp *DepthPassShaderProgram
@@ -61,8 +61,8 @@ func (_ *Vertex) TangentOffset() int {
 	return int(unsafe.Offsetof(Vertex{}.tangent))
 }
 
-func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
-	var r MeshRenderer
+func NewSceneRenderer(win *Window) (*SceneRenderer, error) {
+	var r SceneRenderer
 
 	r.sp = NewMeshShaderProgram()
 
@@ -97,7 +97,7 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	return &r, nil
 }
 
-func (r *MeshRenderer) renderMesh(m *Mesh, c *Camera) {
+func (r *SceneRenderer) renderMesh(m *Mesh, c *Camera) {
 	r.sp.SetMesh(m)
 	r.sp.SetCamera(c)
 
@@ -107,15 +107,15 @@ func (r *MeshRenderer) renderMesh(m *Mesh, c *Camera) {
 	}
 }
 
-func (r *MeshRenderer) shadowPassPointLight(s *Scene, l *PointLight) {
+func (r *SceneRenderer) shadowPassPointLight(s *Scene, l *PointLight) {
 	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
 }
 
-func (r *MeshRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
+func (r *SceneRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
-func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) DepthPass(s *Scene, c *Camera) {
 	r.dsp.SetCamera(c)
 	for _, m := range s.meshes {
 		r.dsp.SetMesh(m)
@@ -126,14 +126,14 @@ func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
 	}
 }
 
-func (r *MeshRenderer) AmbientPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) AmbientPass(s *Scene, c *Camera) {
 	r.sp.SetAmbientLight(s.ambientLight)
 	for _, m := range s.meshes {
 		r.renderMesh(m, c)
 	}
 }
 
-func (r *MeshRenderer) PointLightPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) PointLightPass(s *Scene, c *Camera) {
 	for _, l := range s.pointLights {
 		r.shadowPassPointLight(s, l)
 
@@ -145,7 +145,7 @@ func (r *MeshRenderer) PointLightPass(s *Scene, c *Camera) {
 	}
 }
 
-func (r *MeshRenderer) SpotLightPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) SpotLightPass(s *Scene, c *Camera) {
 	for _, l := range s.spotLights {
 		r.shadowPassSpotLight(s, l)
 
@@ -157,7 +157,7 @@ func (r *MeshRenderer) SpotLightPass(s *Scene, c *Camera) {
 	}
 }
 
-func (r *MeshRenderer) Render(s *Scene, c *Camera) {
+func (r *SceneRenderer) Render(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
 
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
@@ -169,7 +169,7 @@ func (r *MeshRenderer) Render(s *Scene, c *Camera) {
 	r.SpotLightPass(s, c)
 }
 
-func (r *MeshRenderer) SetWireframe(wireframe bool) {
+func (r *SceneRenderer) SetWireframe(wireframe bool) {
 	if wireframe {
 		r.renderState.polygonMode = gl.LINE
 	} else {
