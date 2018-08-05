@@ -26,6 +26,7 @@ type MeshRenderer struct {
 	shadowFb *Framebuffer
 
 	renderState *RenderState
+	depthRenderState *RenderState
 
 	shadowMapRenderer *ShadowMapRenderer
 }
@@ -70,6 +71,16 @@ func NewMeshRenderer(win *Window) (*MeshRenderer, error) {
 	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.renderState.SetPolygonMode(gl.FILL)
 
+	r.depthRenderState = NewRenderState()
+	r.depthRenderState.SetShaderProgram(r.dsp.ShaderProgram)
+	r.depthRenderState.SetFramebuffer(defaultFramebuffer)
+	r.depthRenderState.SetDepthTest(true)
+	r.depthRenderState.SetDepthFunc(gl.LESS) // enable drawing after depth prepass
+	r.depthRenderState.SetBlend(false)
+	r.depthRenderState.SetCull(true)
+	r.depthRenderState.SetCullFace(gl.BACK) // CCW treated as front face by default
+	r.depthRenderState.SetPolygonMode(gl.FILL)
+
 	r.shadowMapRenderer = NewShadowMapRenderer()
 
 	return &r, nil
@@ -99,18 +110,15 @@ func (r *MeshRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
 }
 
 func (r *MeshRenderer) DepthPass(s *Scene, c *Camera) {
-	// TODO: improve
 	gl.Clear(gl.DEPTH_BUFFER_BIT)
-	r.renderState.SetShaderProgram(r.dsp.ShaderProgram)
 	r.dsp.SetCamera(c)
 	for _, m := range s.meshes {
 		r.dsp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
 			r.dsp.SetSubMesh(subMesh)
-			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
+			NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.depthRenderState).Execute()
 		}
 	}
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 }
 
 func (r *MeshRenderer) AmbientPass(s *Scene, c *Camera) {
