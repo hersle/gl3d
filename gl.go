@@ -177,27 +177,47 @@ func (s *Shader) Compile() error {
 func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
 	var p ShaderProgram
 	p.id = gl.CreateProgram()
-	gl.AttachShader(p.id, vShader.id)
-	gl.AttachShader(p.id, fShader.id)
+
+	if vShader != nil {
+		gl.AttachShader(p.id, vShader.id)
+		defer gl.DetachShader(p.id, vShader.id)
+	}
+	if fShader != nil {
+		gl.AttachShader(p.id, fShader.id)
+		defer gl.DetachShader(p.id, fShader.id)
+	}
+
 	err := p.Link()
 	if err != nil {
 		return nil, err
 	}
-	gl.DetachShader(p.id, vShader.id)
-	gl.DetachShader(p.id, fShader.id)
+
 	p.va = NewVertexArray()
 	return &p, err
 }
 
 func ReadShaderProgram(vShaderFilename, fShaderFilename string) (*ShaderProgram, error) {
-	vShader, err := ReadShader(gl.VERTEX_SHADER, vShaderFilename)
-	if err != nil {
-		return nil, err
+	var vShader, fShader *Shader
+	var err error
+
+	if vShaderFilename == "" {
+		vShader = nil
+	} else {
+		vShader, err = ReadShader(gl.VERTEX_SHADER, vShaderFilename)
+		if err != nil {
+			return nil, err
+		}
 	}
-	fShader, err := ReadShader(gl.FRAGMENT_SHADER, fShaderFilename)
-	if err != nil {
-		return nil, err
+
+	if fShaderFilename == "" {
+		fShader = nil
+	} else {
+		fShader, err = ReadShader(gl.FRAGMENT_SHADER, fShaderFilename)
+		if err != nil {
+			return nil, err
+		}
 	}
+
 	return NewShaderProgram(vShader, fShader)
 }
 
