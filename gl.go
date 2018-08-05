@@ -429,13 +429,15 @@ func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
 	return &u
 }
 
+var textureUnitsUsed uint32 = 0
 func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 	var u UniformSampler
 	u.UniformBasic = *p.UniformBasic(name)
 	if u.glType != gl.SAMPLER_2D && u.glType != gl.SAMPLER_CUBE { // TODO: allow more sampler types
 		return nil
 	}
-	u.textureUnitIndex = u.location // TODO: make texture unit mapping more sophisticated
+	u.textureUnitIndex = textureUnitsUsed // TODO: make texture unit mapping more sophisticated
+	textureUnitsUsed++
 	return &u
 }
 
