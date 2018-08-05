@@ -341,7 +341,6 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 	r.renderState.SetFramebuffer(r.framebuffer)
 	r.renderState.SetDepthTest(true)
 	r.renderState.SetBlend(false)
-	r.renderState.SetViewport(512, 512) // TODO: respect actual shadow map size
 
 	return &r
 }
@@ -368,6 +367,8 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 	c := NewCamera(90, 1, 0.1, 50)
 	c.Place(l.position)
 
+	r.renderState.SetViewport(l.shadowMap.width, l.shadowMap.height)
+
 	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
 	//shadowCubeMap = l.shadowMap
 
@@ -392,6 +393,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 	r.framebuffer.SetTexture2D(gl.DEPTH_ATTACHMENT, l.shadowMap, 0)
 	r.framebuffer.ClearDepth(1)
+	r.renderState.SetViewport(l.shadowMap.width, l.shadowMap.height)
 	r.sp.SetCamera(&l.Camera)
 
 	for _, m := range s.meshes {

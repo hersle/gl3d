@@ -50,10 +50,14 @@ type Buffer struct {
 
 type Texture2D struct {
 	id uint32
+	width int
+	height int
 }
 
 type CubeMap struct {
 	id uint32
+	width int
+	height int
 }
 
 type Attrib struct {
@@ -438,6 +442,8 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 
 func NewTexture2D(filterMode, wrapMode int32, format uint32, width, height int) *Texture2D {
 	var t Texture2D
+	t.width = width
+	t.height = height
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &t.id)
 	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, filterMode)
 	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, filterMode)
@@ -491,6 +497,8 @@ func (t *Texture2D) SetBorderColor(rgba Vec4) {
 
 func NewCubeMap(filterMode int32, format uint32, width, height int) *CubeMap {
 	var t CubeMap
+	t.width = width
+	t.height = height
 	gl.CreateTextures(gl.TEXTURE_CUBE_MAP, 1, &t.id)
 
 	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, filterMode)
