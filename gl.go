@@ -560,8 +560,14 @@ func NewCubeMapFromImages(filterMode int32, img1, img2, img3, img4, img5, img6 i
 
 	imgs := []image.Image{img1, img2, img3, img4, img5, img6}
 	for i, img := range imgs {
-		imgRGBA := image.NewRGBA(img.Bounds())
-		draw.Draw(imgRGBA, img.Bounds(), img, img.Bounds().Min, draw.Over)
+		var imgRGBA *image.RGBA
+		switch img.(type) {
+		case *image.RGBA:
+			imgRGBA = img.(*image.RGBA)
+		default:
+			imgRGBA = image.NewRGBA(img.Bounds())
+			draw.Draw(imgRGBA, img.Bounds(), img, img.Bounds().Min, draw.Over)
+		}
 		p := gl.Ptr(imgRGBA.Pix)
 		gl.TextureSubImage3D(t.id, 0, 0, 0, int32(i), int32(w), int32(h), 1, gl.RGBA, gl.UNSIGNED_BYTE, p)
 	}
