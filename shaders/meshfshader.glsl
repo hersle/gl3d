@@ -73,7 +73,7 @@ float CalcShadowFactorPointLight() {
 void main() {
 	vec3 tanNormal = vec3(0, 0, 1);
 	if (material.hasBumpMap) {
-		tanNormal += -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
+		tanNormal = -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
 		tanNormal = normalize(tanNormal);
 	}
 
