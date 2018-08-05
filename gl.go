@@ -120,6 +120,19 @@ type RenderStatistics struct {
 	vertexCount int
 }
 
+func readImage(filename string) (image.Image, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, err
+	}
+	return img, nil
+}
+
 var defaultFramebuffer *Framebuffer = &Framebuffer{0}
 
 var RenderStats *RenderStatistics = &RenderStatistics{}

@@ -48,19 +48,6 @@ func NewDefaultMaterial(name string) *Material {
 	return &mtl
 }
 
-func readImage(filename string) (image.Image, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil, err
-	}
-	return img, nil
-}
-
 func initDefaultTexture() {
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
@@ -76,9 +63,8 @@ func (mtl *Material) HasAlphaMap() bool {
 }
 
 func (mtl *Material) Finish() {
-	img, err := readImage(mtl.ambientMapFilename)
-	if err == nil {
-		mtl.ambientMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+	if mtl.ambientMapFilename != "" {
+		mtl.ambientMap = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
 	} else {
 		if defaultTexture == nil {
 			initDefaultTexture()
@@ -86,9 +72,8 @@ func (mtl *Material) Finish() {
 		mtl.ambientMap = defaultTexture
 	}
 
-	img, err = readImage(mtl.diffuseMapFilename)
-	if err == nil {
-		mtl.diffuseMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+	if mtl.diffuseMapFilename != "" {
+		mtl.diffuseMap = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
 	} else {
 		if defaultTexture == nil {
 			initDefaultTexture()
@@ -96,9 +81,8 @@ func (mtl *Material) Finish() {
 		mtl.diffuseMap = defaultTexture
 	}
 
-	img, err = readImage(mtl.specularMapFilename)
-	if err == nil {
-		mtl.specularMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+	if mtl.specularMapFilename != "" {
+		mtl.specularMap = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
 	} else {
 		if defaultTexture == nil {
 			initDefaultTexture()
@@ -106,14 +90,12 @@ func (mtl *Material) Finish() {
 		mtl.specularMap = defaultTexture
 	}
 
-	img, err = readImage(mtl.bumpMapFilename)
-	if err == nil {
-		mtl.bumpMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGB8, img)
+	if mtl.bumpMapFilename != "" {
+		mtl.bumpMap = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
 	}
 
-	img, err = readImage(mtl.alphaMapFilename)
-	if err == nil {
-		mtl.alphaMap = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.R8, img)
+	if mtl.alphaMapFilename != "" {
+		mtl.alphaMap = ReadTexture2D(gl.NEAREST, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
 	}
 }
 
