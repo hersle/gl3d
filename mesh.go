@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/graphics"
+	"github.com/hersle/gl3d/material"
 	"os"
 	"path"
 	"bufio"
@@ -22,7 +23,7 @@ type SubMesh struct {
 	vbo *graphics.Buffer
 	ibo *graphics.Buffer
 	inds int
-	mtl *Material
+	mtl *material.Material
 }
 
 type indexedVertex struct {
@@ -59,7 +60,7 @@ func (sm *SubMesh) Finish() {
 	sm.ibo.SetData(sm.faces, 0)
 	sm.inds = len(sm.faces)
 	if sm.mtl == nil {
-		sm.mtl = NewDefaultMaterial("")
+		sm.mtl = material.NewDefaultMaterial("")
 	}
 }
 
@@ -140,9 +141,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	var sGroupInd int = 0
 	var sGroups []smoothingGroup = []smoothingGroup{newSmoothingGroup(0)}
 
-	var mtlLib []*Material
+	var mtlLib []*material.Material
 	var mtlInd int = 0
-	var mtls []*Material = []*Material{NewDefaultMaterial("")}
+	var mtls []*material.Material = []*material.Material{material.NewDefaultMaterial("")}
 
 	s := bufio.NewScanner(file)
 	for s.Scan() {
@@ -192,12 +193,12 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 					fields[1:][i] = path.Join(path.Dir(filename), fields[1:][i])
 				}
 			}
-			mtlLib = ReadMaterials(fields[1:])
+			mtlLib = material.ReadMaterials(fields[1:])
 		case "usemtl":
 			// find material in current library with given name
-			var mtl *Material
+			var mtl *material.Material
 			for _, mtl = range mtlLib {
-				if mtl.name == fields[1] {
+				if mtl.Name == fields[1] {
 					break
 				}
 			}

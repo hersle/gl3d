@@ -1,38 +1,35 @@
-package main
+package material
 
 import (
-	"github.com/hersle/gl3d/math"
-	"github.com/hersle/gl3d/graphics"
-	"os"
 	"bufio"
-	"strings"
 	"fmt"
-	"path"
+	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/hersle/gl3d/graphics"
+	"github.com/hersle/gl3d/math"
 	"image"
 	"image/color"
-	"github.com/go-gl/gl/v4.5-core/gl"
-	_ "image/png"
-	_ "image/jpeg"
-	_ "github.com/ftrvxmtrx/tga"
+	"os"
+	"path"
+	"strings"
 )
 
 type Material struct {
-	name string
-	ambient math.Vec3
-	diffuse math.Vec3
-	specular math.Vec3
-	shine float32
-	alpha float32
-	ambientMapFilename string
-	ambientMap *graphics.Texture2D
-	diffuseMapFilename string
-	diffuseMap *graphics.Texture2D
+	Name                string
+	Ambient             math.Vec3
+	Diffuse             math.Vec3
+	Specular            math.Vec3
+	Shine               float32
+	Alpha               float32
+	ambientMapFilename  string
+	AmbientMap          *graphics.Texture2D
+	diffuseMapFilename  string
+	DiffuseMap          *graphics.Texture2D
 	specularMapFilename string
-	specularMap *graphics.Texture2D
-	bumpMapFilename string
-	bumpMap *graphics.Texture2D
-	alphaMapFilename string
-	alphaMap *graphics.Texture2D
+	SpecularMap         *graphics.Texture2D
+	bumpMapFilename     string
+	BumpMap             *graphics.Texture2D
+	alphaMapFilename    string
+	AlphaMap            *graphics.Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
@@ -41,12 +38,12 @@ var defaultTexture *graphics.Texture2D = nil
 
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
-	mtl.name = name
-	mtl.ambient = math.NewVec3(0.2, 0.2, 0.2)
-	mtl.diffuse = math.NewVec3(0.8, 0.8, 0.8)
-	mtl.specular = math.NewVec3(0, 0, 0)
-	mtl.shine = 1
-	mtl.alpha = 1
+	mtl.Name = name
+	mtl.Ambient = math.NewVec3(0.2, 0.2, 0.2)
+	mtl.Diffuse = math.NewVec3(0.8, 0.8, 0.8)
+	mtl.Specular = math.NewVec3(0, 0, 0)
+	mtl.Shine = 1
+	mtl.Alpha = 1
 	return &mtl
 }
 
@@ -57,11 +54,11 @@ func initDefaultTexture() {
 }
 
 func (mtl *Material) HasBumpMap() bool {
-	return mtl.bumpMap != nil
+	return mtl.BumpMap != nil
 }
 
 func (mtl *Material) HasAlphaMap() bool {
-	return mtl.alphaMap != nil
+	return mtl.AlphaMap != nil
 }
 
 func (mtl *Material) Finish() {
@@ -72,38 +69,38 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.ambientMapFilename != "" {
-		mtl.ambientMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
+		mtl.AmbientMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
 		if err != nil {
-			mtl.ambientMap = defaultTexture
+			mtl.AmbientMap = defaultTexture
 		}
 	} else {
-		mtl.ambientMap = defaultTexture
+		mtl.AmbientMap = defaultTexture
 	}
 
 	if mtl.diffuseMapFilename != "" {
-		mtl.diffuseMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
+		mtl.DiffuseMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
 		if err != nil {
-			mtl.diffuseMap = defaultTexture
+			mtl.DiffuseMap = defaultTexture
 		}
 	} else {
-		mtl.diffuseMap = defaultTexture
+		mtl.DiffuseMap = defaultTexture
 	}
 
 	if mtl.specularMapFilename != "" {
-		mtl.specularMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
+		mtl.SpecularMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
 		if err != nil {
-			mtl.specularMap = defaultTexture
+			mtl.SpecularMap = defaultTexture
 		}
 	} else {
-		mtl.specularMap = defaultTexture
+		mtl.SpecularMap = defaultTexture
 	}
 
 	if mtl.bumpMapFilename != "" {
-		mtl.bumpMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
+		mtl.BumpMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
 	}
 
 	if mtl.alphaMapFilename != "" {
-		mtl.alphaMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
+		mtl.AlphaMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
 	}
 }
 
@@ -155,7 +152,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Ka error")
 					}
 				}
-				mtl.ambient = math.NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.Ambient = math.NewVec3(tmp[0], tmp[1], tmp[2])
 			case "Kd":
 				if len(fields[1:]) < 3 {
 					panic("Kd error")
@@ -166,7 +163,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Kd error")
 					}
 				}
-				mtl.diffuse = math.NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.Diffuse = math.NewVec3(tmp[0], tmp[1], tmp[2])
 			case "Ks":
 				if len(fields[1:]) < 3 {
 					panic("Ks error")
@@ -177,12 +174,12 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Ks error")
 					}
 				}
-				mtl.specular = math.NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.Specular = math.NewVec3(tmp[0], tmp[1], tmp[2])
 			case "Ns":
 				if len(fields[1:]) != 1 {
 					panic("shine error")
 				}
-				_, err := fmt.Sscan(fields[1], &mtl.shine)
+				_, err := fmt.Sscan(fields[1], &mtl.Shine)
 				if err != nil {
 					panic("shine error")
 				}
@@ -235,7 +232,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("dissolve error")
 				}
-				_, err = fmt.Sscan(fields[1], &mtl.alpha)
+				_, err = fmt.Sscan(fields[1], &mtl.Alpha)
 				if err != nil {
 					panic(err)
 				}

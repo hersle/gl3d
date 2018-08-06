@@ -8,6 +8,9 @@ import (
 	"image/draw"
 	"unsafe"
 	"os"
+	_ "image/jpeg"
+	_ "image/png"
+	_ "github.com/ftrvxmtrx/tga"
 )
 
 // TODO: enable sorting of these states to reduce state changes?
