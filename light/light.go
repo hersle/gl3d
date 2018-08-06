@@ -39,7 +39,7 @@ func NewPointLight(diffuse, specular math.Vec3) *PointLight {
 	var l PointLight
 	l.Diffuse = diffuse
 	l.Specular = specular
-	l.ShadowMap = graphics.NewCubeMap(gl.NEAREST, gl.DEPTH_COMPONENT16, 512, 512)
+	l.ShadowMap = graphics.NewCubeMap(graphics.NearestFilter, gl.DEPTH_COMPONENT16, 512, 512)
 	l.DirtyShadowMap = true
 	l.ShadowFar = 50
 	return &l
@@ -55,7 +55,7 @@ func NewSpotLight(diffuse, specular math.Vec3) *SpotLight {
 	l.Diffuse = diffuse
 	l.Specular = specular
 	l.Camera.Object.Reset()
-	l.ShadowMap = graphics.NewTexture2D(gl.NEAREST, gl.CLAMP_TO_BORDER, gl.DEPTH_COMPONENT16, 512, 512)
+	l.ShadowMap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
 	l.ShadowMap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 	l.DirtyShadowMap = true
 	return &l

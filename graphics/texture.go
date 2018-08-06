@@ -25,6 +25,21 @@ type CubeMap struct {
 	Height int
 }
 
+type FilterMode int
+
+type WrapMode int
+
+const (
+	NearestFilter FilterMode = FilterMode(gl.NEAREST)
+	LinearFilter FilterMode = FilterMode(gl.LINEAR)
+)
+
+const (
+	EdgeClampWrap WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
+	BorderClampWrap WrapMode = WrapMode(gl.CLAMP_TO_BORDER)
+	RepeatWrap WrapMode = WrapMode(gl.REPEAT)
+)
+
 func readImage(filename string) (image.Image, error) {
 	file, err := os.Open(filename)
 	if err != nil {
@@ -38,20 +53,20 @@ func readImage(filename string) (image.Image, error) {
 	return img, nil
 }
 
-func NewTexture2D(filterMode, wrapMode int32, format uint32, width, height int) *Texture2D {
+func NewTexture2D(filter FilterMode, wrap WrapMode, format uint32, width, height int) *Texture2D {
 	var t Texture2D
 	t.Width = width
 	t.Height = height
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &t.id)
-	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, filterMode)
-	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, filterMode)
-	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, wrapMode)
-	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, wrapMode)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, int32(filter))
+	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, int32(filter))
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, int32(wrap))
+	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, int32(wrap))
 	gl.TextureStorage2D(t.id, 1, format, int32(width), int32(height))
 	return &t
 }
 
-func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.Image) *Texture2D {
+func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img image.Image) *Texture2D {
 	switch img.(type) {
 	case *image.RGBA:
 		img := img.(*image.RGBA)
@@ -64,7 +79,7 @@ func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.
 			}
 		}
 
-		t := NewTexture2D(filterMode, wrapMode, format, w, h)
+		t := NewTexture2D(filter, wrap, format, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		p := unsafe.Pointer(&byteSlice(img2.Pix)[0])
 		gl.TextureSubImage2D(t.id, 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
@@ -72,30 +87,30 @@ func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
-		return NewTexture2DFromImage(filterMode, wrapMode, format, imgRGBA)
+		return NewTexture2DFromImage(filter, wrap, format, imgRGBA)
 	}
 }
 
-func ReadTexture2D(filterMode, wrapMode int32, format uint32, filename string) (*Texture2D, error) {
+func ReadTexture2D(filter FilterMode, wrap WrapMode, format uint32, filename string) (*Texture2D, error) {
 	img, err := readImage(filename)
 	if err != nil {
 		return nil, err
 	}
-	return NewTexture2DFromImage(filterMode, wrapMode, format, img), nil
+	return NewTexture2DFromImage(filter, wrap, format, img), nil
 }
 
 func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
 	gl.TextureParameterfv(t.id, gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
-func NewCubeMap(filterMode int32, format uint32, width, height int) *CubeMap {
+func NewCubeMap(filter FilterMode, format uint32, width, height int) *CubeMap {
 	var t CubeMap
 	t.Width = width
 	t.Height = height
 	gl.CreateTextures(gl.TEXTURE_CUBE_MAP, 1, &t.id)
 
-	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, filterMode)
-	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, filterMode)
+	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, int32(filter))
+	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, int32(filter))
 	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TextureParameteri(t.id, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
@@ -104,9 +119,9 @@ func NewCubeMap(filterMode int32, format uint32, width, height int) *CubeMap {
 	return &t
 }
 
-func NewCubeMapFromImages(filterMode int32, img1, img2, img3, img4, img5, img6 image.Image) *CubeMap {
+func NewCubeMapFromImages(filter FilterMode, img1, img2, img3, img4, img5, img6 image.Image) *CubeMap {
 	w, h := img1.Bounds().Size().X, img1.Bounds().Size().Y
-	t := NewCubeMap(filterMode, gl.RGBA8, w, h)
+	t := NewCubeMap(filter, gl.RGBA8, w, h)
 
 	imgs := []image.Image{img1, img2, img3, img4, img5, img6}
 	for i, img := range imgs {
@@ -125,7 +140,7 @@ func NewCubeMapFromImages(filterMode int32, img1, img2, img3, img4, img5, img6 i
 	return t
 }
 
-func ReadCubeMap(filterMode int32, filename1, filename2, filename3, filename4, filename5, filename6 string) *CubeMap {
+func ReadCubeMap(filter FilterMode, filename1, filename2, filename3, filename4, filename5, filename6 string) *CubeMap {
 	var imgs [6]image.Image
 	var errs [6]error
 	imgs[0], errs[0] = readImage(filename1)
@@ -139,5 +154,5 @@ func ReadCubeMap(filterMode int32, filename1, filename2, filename3, filename4, f
 			panic(err)
 		}
 	}
-	return NewCubeMapFromImages(filterMode, imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5])
+	return NewCubeMapFromImages(filter, imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5])
 }

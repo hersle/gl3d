@@ -249,7 +249,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	for i, name := range names {
 		filenames[i] = path.Join(dir, name)
 	}
-	r.tex = graphics.ReadCubeMap(gl.NEAREST, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
+	r.tex = graphics.ReadCubeMap(graphics.NearestFilter, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
 
 	r.vbo = graphics.NewBuffer()
 	verts := []math.Vec3{
@@ -329,7 +329,7 @@ func NewTextRenderer() *TextRenderer {
 	r.SetAttribs(r.vbo, r.ibo)
 
 	img := basicfont.Face7x13.Mask
-	r.tex = graphics.NewTexture2DFromImage(gl.NEAREST, gl.CLAMP_TO_EDGE, gl.RGBA8, img)
+	r.tex = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetDepthTest(false)

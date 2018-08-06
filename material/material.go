@@ -50,7 +50,7 @@ func NewDefaultMaterial(name string) *Material {
 func initDefaultTexture() {
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-	defaultTexture = graphics.NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+	defaultTexture = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.RepeatWrap, gl.RGBA8, img)
 }
 
 func (mtl *Material) HasBumpMap() bool {
@@ -69,7 +69,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.ambientMapFilename != "" {
-		mtl.AmbientMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
+		mtl.AmbientMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.ambientMapFilename)
 		if err != nil {
 			mtl.AmbientMap = defaultTexture
 		}
@@ -78,7 +78,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.diffuseMapFilename != "" {
-		mtl.DiffuseMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
+		mtl.DiffuseMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.diffuseMapFilename)
 		if err != nil {
 			mtl.DiffuseMap = defaultTexture
 		}
@@ -87,7 +87,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.specularMapFilename != "" {
-		mtl.SpecularMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
+		mtl.SpecularMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.specularMapFilename)
 		if err != nil {
 			mtl.SpecularMap = defaultTexture
 		}
@@ -96,11 +96,11 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.bumpMapFilename != "" {
-		mtl.BumpMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
+		mtl.BumpMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGB8, mtl.bumpMapFilename)
 	}
 
 	if mtl.alphaMapFilename != "" {
-		mtl.AlphaMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
+		mtl.AlphaMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.R8, mtl.alphaMapFilename)
 	}
 }
 
