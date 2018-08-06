@@ -6,15 +6,23 @@ import (
 )
 
 type RenderCommand struct {
-	primitiveType uint32
+	primitive Primitive
 	vertexCount   int
 	offset        int
 	state         *RenderState
 }
 
-func NewRenderCommand(primitiveType uint32, vertexCount, offset int, state *RenderState) *RenderCommand {
+type Primitive int
+
+const (
+	Point Primitive = Primitive(gl.POINTS)
+	Line Primitive = Primitive(gl.LINES)
+	Triangle Primitive = Primitive(gl.TRIANGLES)
+)
+
+func NewRenderCommand(primitive Primitive, vertexCount, offset int, state *RenderState) *RenderCommand {
 	var cmd RenderCommand
-	cmd.primitiveType = primitiveType
+	cmd.primitive = primitive
 	cmd.vertexCount = vertexCount
 	cmd.offset = offset
 	cmd.state = state
@@ -24,9 +32,9 @@ func NewRenderCommand(primitiveType uint32, vertexCount, offset int, state *Rend
 func (cmd *RenderCommand) Execute() {
 	cmd.state.Apply()
 	if cmd.state.prog.va.hasIndexBuffer {
-		gl.DrawElements(cmd.primitiveType, int32(cmd.vertexCount), gl.UNSIGNED_INT, nil)
+		gl.DrawElements(uint32(cmd.primitive), int32(cmd.vertexCount), gl.UNSIGNED_INT, nil)
 	} else {
-		gl.DrawArrays(cmd.primitiveType, int32(cmd.offset), int32(cmd.vertexCount))
+		gl.DrawArrays(uint32(cmd.primitive), int32(cmd.offset), int32(cmd.vertexCount))
 	}
 
 	RenderStats.DrawCallCount++

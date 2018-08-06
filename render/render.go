@@ -72,7 +72,7 @@ func (r *SceneRenderer) renderMesh(m *object.Mesh, c *camera.Camera) {
 
 	for _, subMesh := range m.SubMeshes {
 		r.SetSubMesh(subMesh)
-		graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.renderState).Execute()
+		graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
 	}
 }
 
@@ -90,7 +90,7 @@ func (r *SceneRenderer) DepthPass(s *scene.Scene, c *camera.Camera) {
 		r.SetDepthMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			r.SetDepthSubMesh(subMesh)
-			graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.depthRenderState).Execute()
+			graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.depthRenderState).Execute()
 		}
 	}
 }
@@ -307,7 +307,7 @@ func (r *SkyboxRenderer) Render(c *camera.Camera) {
 	r.SetCamera(c)
 	r.SetSkybox(r.tex)
 
-	graphics.NewRenderCommand(gl.TRIANGLES, 36, 0, r.renderState).Execute()
+	graphics.NewRenderCommand(graphics.Triangle, 36, 0, r.renderState).Execute()
 }
 
 type TextRenderer struct {
@@ -410,7 +410,7 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
 	r.SetAtlas(r.tex)
 	r.vbo.SetData(verts, 0)
 	r.ibo.SetData(inds, 0)
-	graphics.NewRenderCommand(gl.TRIANGLES, len(inds), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(graphics.Triangle, len(inds), 0, r.renderState).Execute()
 }
 
 type ShadowMapRenderer struct {
@@ -496,7 +496,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.P
 			for _, subMesh := range m.SubMeshes {
 				r.SetSubMesh(subMesh)
 
-				graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.renderState).Execute()
+				graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
 			}
 		}
 	}
@@ -520,7 +520,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.Sp
 		for _, subMesh := range m.SubMeshes {
 			r.SetSubMesh(subMesh)
 
-			graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.renderState).Execute()
+			graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
 		}
 	}
 
@@ -586,7 +586,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c *camera.Camera) {
 		}
 	}
 	r.vbo.SetData(r.points, 0)
-	graphics.NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c *camera.Camera) {
@@ -605,7 +605,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c *camera.Camera) {
 		}
 	}
 	r.vbo.SetData(r.points, 0)
-	graphics.NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }
 
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c *camera.Camera) {
@@ -624,5 +624,5 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c *camera.Camera) {
 		}
 	}
 	r.vbo.SetData(r.points, 0)
-	graphics.NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }
