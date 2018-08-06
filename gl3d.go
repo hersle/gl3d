@@ -27,27 +27,21 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
-		if filename == "objects/car.obj" {
+		if filename == "assets/objects/car/car.obj" {
 			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 			model.RotateX(-3.1415/2)
 			model.RotateY(3.1415 - 3.1415/5)
 		}
-		if filename == "objects/sponza.obj" || filename == "objects/sponza2/sponza.obj" {
+		if filename == "assets/objects/sponza/sponza.obj" || filename == "assets/objects/sponza2/sponza.obj" {
 			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 		}
-		if filename == "objects/conference.obj" {
+		if filename == "assets/objects/conference/conference.obj" {
 			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 		}
-		if filename == "objects/scrubPine.obj" {
-			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
-		}
-		if filename == "objects/racecar.obj" {
+		if filename == "assets/objects/racecar/racecar.obj" {
 			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
 		}
-		if filename == "objects/holodeck/holodeck.obj" {
-			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
-		}
-		if filename == "objects/oak/white_oak.obj" {
+		if filename == "assets/objects/holodeck/holodeck.obj" {
 			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
 		}
 		s.AddMesh(model)
