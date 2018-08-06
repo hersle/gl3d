@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/graphics"
 	"os"
 	"path"
 	"bufio"
@@ -18,8 +19,8 @@ type Mesh struct {
 type SubMesh struct {
 	verts []Vertex
 	faces []int32
-	vbo *Buffer
-	ibo *Buffer
+	vbo *graphics.Buffer
+	ibo *graphics.Buffer
 	inds int
 	mtl *Material
 }
@@ -52,8 +53,8 @@ func (sm *SubMesh) AddTriangle(vert1, vert2, vert3 Vertex) {
 }
 
 func (sm *SubMesh) Finish() {
-	sm.vbo = NewBuffer()
-	sm.ibo = NewBuffer()
+	sm.vbo = graphics.NewBuffer()
+	sm.ibo = graphics.NewBuffer()
 	sm.vbo.SetData(sm.verts, 0)
 	sm.ibo.SetData(sm.faces, 0)
 	sm.inds = len(sm.faces)

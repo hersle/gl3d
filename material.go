@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/graphics"
 	"os"
 	"bufio"
 	"strings"
@@ -23,20 +24,20 @@ type Material struct {
 	shine float32
 	alpha float32
 	ambientMapFilename string
-	ambientMap *Texture2D
+	ambientMap *graphics.Texture2D
 	diffuseMapFilename string
-	diffuseMap *Texture2D
+	diffuseMap *graphics.Texture2D
 	specularMapFilename string
-	specularMap *Texture2D
+	specularMap *graphics.Texture2D
 	bumpMapFilename string
-	bumpMap *Texture2D
+	bumpMap *graphics.Texture2D
 	alphaMapFilename string
-	alphaMap *Texture2D
+	alphaMap *graphics.Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
 
-var defaultTexture *Texture2D = nil
+var defaultTexture *graphics.Texture2D = nil
 
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
@@ -52,7 +53,7 @@ func NewDefaultMaterial(name string) *Material {
 func initDefaultTexture() {
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-	defaultTexture = NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
+	defaultTexture = graphics.NewTexture2DFromImage(gl.NEAREST, gl.REPEAT, gl.RGBA8, img)
 }
 
 func (mtl *Material) HasBumpMap() bool {
@@ -71,7 +72,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.ambientMapFilename != "" {
-		mtl.ambientMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
+		mtl.ambientMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.ambientMapFilename)
 		if err != nil {
 			mtl.ambientMap = defaultTexture
 		}
@@ -80,7 +81,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.diffuseMapFilename != "" {
-		mtl.diffuseMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
+		mtl.diffuseMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.diffuseMapFilename)
 		if err != nil {
 			mtl.diffuseMap = defaultTexture
 		}
@@ -89,7 +90,7 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.specularMapFilename != "" {
-		mtl.specularMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
+		mtl.specularMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGBA8, mtl.specularMapFilename)
 		if err != nil {
 			mtl.specularMap = defaultTexture
 		}
@@ -98,11 +99,11 @@ func (mtl *Material) Finish() {
 	}
 
 	if mtl.bumpMapFilename != "" {
-		mtl.bumpMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
+		mtl.bumpMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.RGB8, mtl.bumpMapFilename)
 	}
 
 	if mtl.alphaMapFilename != "" {
-		mtl.alphaMap, err = ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
+		mtl.alphaMap, err = graphics.ReadTexture2D(gl.LINEAR, gl.REPEAT, gl.R8, mtl.alphaMapFilename)
 	}
 }
 

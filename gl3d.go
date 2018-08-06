@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hersle/gl3d/window"
+	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"os"
 	"github.com/go-gl/glfw/v3.2/glfw"
@@ -81,8 +82,8 @@ func main() {
 		}
 
 		c.SetAspect(window.Aspect())
-		defaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
-		defaultFramebuffer.ClearDepth(1)
+		graphics.DefaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
+		graphics.DefaultFramebuffer.ClearDepth(1)
 		skyboxRenderer.Render(c)
 		if drawScene {
 			renderer.Render(s, c)
@@ -99,12 +100,12 @@ func main() {
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
 		text += "position:   " + c.position.String() + "\n"
 		text += "forward:    " + c.Forward().String() + "\n"
-		text += "draw calls: " + fmt.Sprint(RenderStats.drawCallCount) + "\n"
-		text += "vertices:   " + fmt.Sprint(RenderStats.vertexCount)
+		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
+		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
 		textRenderer.Render(math.NewVec2(-1, +1), text, 0.05)
 		window.Update()
 
-		RenderStats.Reset()
+		graphics.RenderStats.Reset()
 
 		if window.Win.GetKey(glfw.KeyLeftShift) == glfw.Press {
 			camFactor = 0.1 // for precise camera controls

@@ -1,4 +1,4 @@
-package main
+package graphics
 
 import (
 	"github.com/hersle/gl3d/math"
@@ -492,8 +492,8 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
 
-	vShaderFilename := "shaders/meshvshader.glsl"
-	fShaderFilename := "shaders/meshfshader.glsl"
+	vShaderFilename := "graphics/shaders/meshvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "graphics/shaders/meshfshader.glsl" // TODO: make independent from executable directory
 
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
@@ -546,8 +546,8 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 	var sp SkyboxShaderProgram
 	var err error
 
-	vShaderFilename := "shaders/skyboxvshader.glsl"
-	fShaderFilename := "shaders/skyboxfshader.glsl"
+	vShaderFilename := "graphics/shaders/skyboxvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "graphics/shaders/skyboxfshader.glsl" // TODO: make independent from executable directory
 
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
@@ -566,8 +566,8 @@ func NewTextShaderProgram() *TextShaderProgram {
 	var sp TextShaderProgram
 	var err error
 
-	vShaderFilename := "shaders/textvshader.glsl"
-	fShaderFilename := "shaders/textfshader.glsl"
+	vShaderFilename := "graphics/shaders/textvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "graphics/shaders/textfshader.glsl" // TODO: make independent from executable directory
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
@@ -587,8 +587,8 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 	var sp ShadowMapShaderProgram
 	var err error
 
-	vShaderFilename := "shaders/pointlightshadowmapvshader.glsl"
-	fShaderFilename := "shaders/pointlightshadowmapfshader.glsl"
+	vShaderFilename := "graphics/shaders/pointlightshadowmapvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "graphics/shaders/pointlightshadowmapfshader.glsl" // TODO: make independent from executable directory
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
@@ -610,8 +610,8 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	var sp ArrowShaderProgram
 	var err error
 
-	vShaderFilename := "shaders/arrowvshader.glsl"
-	fShaderFilename := "shaders/arrowfshader.glsl"
+	vShaderFilename := "graphics/shaders/arrowvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "graphics/shaders/arrowfshader.glsl" // TODO: make independent from executable directory
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
@@ -632,7 +632,7 @@ func NewDepthPassShaderProgram() *DepthPassShaderProgram {
 	var sp DepthPassShaderProgram
 	var err error
 
-	vShaderFilename := "shaders/depthpassvshader.glsl"
+	vShaderFilename := "graphics/shaders/depthpassvshader.glsl" // TODO: make independent from executable directory
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, "", "")
 	if err != nil {
 		panic(err)

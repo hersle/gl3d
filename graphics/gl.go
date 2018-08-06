@@ -1,4 +1,4 @@
-package main
+package graphics
 
 import (
 	"github.com/hersle/gl3d/math"
@@ -40,14 +40,14 @@ type Buffer struct {
 
 type Texture2D struct {
 	id uint32
-	width int
-	height int
+	Width int
+	Height int
 }
 
 type CubeMap struct {
 	id uint32
-	width int
-	height int
+	Width int
+	Height int
 }
 
 type Framebuffer struct {
@@ -55,8 +55,8 @@ type Framebuffer struct {
 }
 
 type RenderStatistics struct {
-	drawCallCount int
-	vertexCount int
+	DrawCallCount int
+	VertexCount int
 }
 
 func readImage(filename string) (image.Image, error) {
@@ -72,7 +72,7 @@ func readImage(filename string) (image.Image, error) {
 	return img, nil
 }
 
-var defaultFramebuffer *Framebuffer = &Framebuffer{0}
+var DefaultFramebuffer *Framebuffer = &Framebuffer{0}
 
 var RenderStats *RenderStatistics = &RenderStatistics{}
 
@@ -115,8 +115,8 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 
 func NewTexture2D(filterMode, wrapMode int32, format uint32, width, height int) *Texture2D {
 	var t Texture2D
-	t.width = width
-	t.height = height
+	t.Width = width
+	t.Height = height
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &t.id)
 	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, filterMode)
 	gl.TextureParameteri(t.id, gl.TEXTURE_MAG_FILTER, filterMode)
@@ -165,8 +165,8 @@ func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
 
 func NewCubeMap(filterMode int32, format uint32, width, height int) *CubeMap {
 	var t CubeMap
-	t.width = width
-	t.height = height
+	t.Width = width
+	t.Height = height
 	gl.CreateTextures(gl.TEXTURE_CUBE_MAP, 1, &t.id)
 
 	gl.TextureParameteri(t.id, gl.TEXTURE_MIN_FILTER, filterMode)
@@ -269,8 +269,8 @@ func (cmd *RenderCommand) Execute() {
 		gl.DrawArrays(cmd.primitiveType, int32(cmd.offset), int32(cmd.vertexCount))
 	}
 
-	RenderStats.drawCallCount++
-	RenderStats.vertexCount += cmd.vertexCount
+	RenderStats.DrawCallCount++
+	RenderStats.VertexCount += cmd.vertexCount
 }
 
 func NewRenderState() *RenderState {
@@ -353,6 +353,6 @@ func (rs *RenderState) Apply() {
 }
 
 func (stats *RenderStatistics) Reset() {
-	stats.drawCallCount = 0
-	stats.vertexCount = 0
+	stats.DrawCallCount = -1
+	stats.VertexCount = 0
 }
