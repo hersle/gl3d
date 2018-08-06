@@ -579,7 +579,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c *camera.Camera) {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Faces {
-				p1 := subMesh.Verts[i].Pos
+				p1 := subMesh.Verts[i].Position
 				p2 := p1.Add(subMesh.Verts[i].Tangent)
 				r.points = append(r.points, p1, p2)
 			}
@@ -598,7 +598,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c *camera.Camera) {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Faces {
-				p1 := subMesh.Verts[i].Pos
+				p1 := subMesh.Verts[i].Position
 				p2 := p1.Add(subMesh.Verts[i].Normal.Cross(subMesh.Verts[i].Tangent))
 				r.points = append(r.points, p1, p2)
 			}
@@ -617,7 +617,7 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c *camera.Camera) {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Faces {
-				p1 := subMesh.Verts[i].Pos
+				p1 := subMesh.Verts[i].Position
 				p2 := p1.Add(subMesh.Verts[i].Normal)
 				r.points = append(r.points, p1, p2)
 			}

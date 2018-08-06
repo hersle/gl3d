@@ -14,7 +14,7 @@ import (
 )
 
 type Vertex struct {
-	Pos      math.Vec3
+	Position math.Vec3
 	TexCoord math.Vec2
 	Normal   math.Vec3
 	Tangent  math.Vec3
@@ -50,9 +50,9 @@ type smoothingGroup struct {
 	iTris []indexedTriangle
 }
 
-func NewVertex(pos math.Vec3, texCoord math.Vec2, normal, tangent math.Vec3) Vertex {
+func NewVertex(position math.Vec3, texCoord math.Vec2, normal, tangent math.Vec3) Vertex {
 	var vert Vertex
-	vert.Pos = pos
+	vert.Position = position
 	vert.TexCoord = texCoord
 	vert.Normal = normal
 	vert.Tangent = tangent
@@ -64,7 +64,7 @@ func (_ *Vertex) Size() int {
 }
 
 func (_ *Vertex) PositionOffset() int {
-	return int(unsafe.Offsetof(Vertex{}.Pos))
+	return int(unsafe.Offsetof(Vertex{}.Position))
 }
 
 func (_ *Vertex) NormalOffset() int {
