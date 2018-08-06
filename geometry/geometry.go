@@ -1,7 +1,6 @@
 package geometry
 
 import (
-	stdmath "math"
 	"github.com/hersle/gl3d/math"
 )
 
@@ -18,14 +17,14 @@ type Sphere struct {
 func NewBox(point1, point2 math.Vec3) *Box {
 	var b Box
 
-	minX := float32(stdmath.Min(float64(point1.X()), float64(point2.X())))
-	minY := float32(stdmath.Min(float64(point1.Y()), float64(point2.Y())))
-	minZ := float32(stdmath.Min(float64(point1.Z()), float64(point2.Z())))
+	minX := math.Min(point1.X(), point2.X())
+	minY := math.Min(point1.Y(), point2.Y())
+	minZ := math.Min(point1.Z(), point2.Z())
 	b.Min = math.NewVec3(minX, minY, minZ)
 
-	maxX := float32(stdmath.Max(float64(point1.X()), float64(point2.X())))
-	maxY := float32(stdmath.Max(float64(point1.Y()), float64(point2.Y())))
-	maxZ := float32(stdmath.Max(float64(point1.Z()), float64(point2.Z())))
+	maxX := math.Max(point1.X(), point2.X())
+	maxY := math.Max(point1.Y(), point2.Y())
+	maxZ := math.Max(point1.Z(), point2.Z())
 	b.Max = math.NewVec3(maxX, maxY, maxZ)
 
 	return &b

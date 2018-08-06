@@ -3,7 +3,6 @@ package camera
 import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
-	stdmath "math"
 )
 
 type Camera struct {
@@ -20,7 +19,7 @@ type Camera struct {
 func NewCamera(fovYDeg, aspect, near, Far float32) *Camera {
 	var c Camera
 	c.Object.Reset()
-	c.fovY = fovYDeg / 360.0 * 2.0 * stdmath.Pi
+	c.fovY = math.Radians(fovYDeg)
 	c.SetAspect(aspect)
 	c.near = near
 	c.Far = Far
