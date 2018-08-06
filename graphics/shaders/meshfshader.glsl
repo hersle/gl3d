@@ -72,6 +72,17 @@ float CalcShadowFactorPointLight() {
 }
 
 void main() {
+	float alpha;
+	if (material.hasAlphaMap) {
+		alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
+	} else {
+		alpha = material.alpha;
+	}
+	// TODO: add proper transparency?
+	if (alpha < 1) {
+		discard;
+	}
+
 	vec3 tanNormal = vec3(0, 0, 1);
 	if (material.hasBumpMap) {
 		tanNormal = -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
@@ -79,8 +90,8 @@ void main() {
 	}
 
 	vec4 tex;
-	vec3 tanReflection = reflect(normalize(tanLightToVertex), normalize(tanNormal));
-	bool facing = dot(normalize(tanNormal), normalize(tanLightToVertex)) < 0;
+	vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));
+	bool facing = dot(tanNormal, tanLightToVertex) < 0;
 
 	switch (light.type) {
 	case 0: // ambient light
@@ -93,12 +104,12 @@ void main() {
 
 	tex = texture(material.diffuseMap, texCoordF);
 	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
-				 * max(dot(normalize(tanNormal), normalize(-tanLightToVertex)), 0)
+				 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
 				 * light.diffuse;
 
 	tex = texture(material.specularMap, texCoordF);
 	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
-				  * pow(max(dot(normalize(tanReflection), -normalize(tanCameraToVertex)), 0), material.shine)
+				  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
 				  * light.specular
 				  * (facing ? 1 : 0);
 
@@ -114,18 +125,6 @@ void main() {
 		}
 		factor = CalcShadowFactorSpotLight(lightSpacePosition);
 		break;
-	}
-
-	float alpha;
-	if (material.hasAlphaMap) {
-		alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
-	} else {
-		alpha = material.alpha;
-	}
-
-	// TODO: add proper transparency?
-	if (alpha < 1) {
-		discard;
 	}
 
 	fragColor = vec4(factor * (diffuse + specular), 1);
