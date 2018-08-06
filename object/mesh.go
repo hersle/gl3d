@@ -59,6 +59,10 @@ func NewVertex(position math.Vec3, texCoord math.Vec2, normal, tangent math.Vec3
 	return vert
 }
 
+func (v *Vertex) Bitangent() math.Vec3 {
+	return v.Normal.Cross(v.Tangent)
+}
+
 func (_ *Vertex) Size() int {
 	return int(unsafe.Sizeof(Vertex{}))
 }

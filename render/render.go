@@ -599,7 +599,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c *camera.Camera) {
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Faces {
 				p1 := subMesh.Verts[i].Position
-				p2 := p1.Add(subMesh.Verts[i].Normal.Cross(subMesh.Verts[i].Tangent))
+				p2 := p1.Add(subMesh.Verts[i].Bitangent())
 				r.points = append(r.points, p1, p2)
 			}
 		}
