@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hersle/gl3d/window"
 	"os"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"time"
@@ -8,12 +9,7 @@ import (
 )
 
 func main() {
-	win, err := NewWindow(1280, 720, "GL3D")
-	if err != nil {
-		panic(err)
-	}
-
-	renderer, err := NewSceneRenderer(win)
+	renderer, err := NewSceneRenderer()
 	if err != nil {
 		panic(err)
 	}
@@ -63,9 +59,9 @@ func main() {
 
 	var camFactor float32
 
-	skyboxRenderer := NewSkyboxRenderer(win) // disable while working with multiple lights
-	textRenderer := NewTextRenderer(win)
-	arrowRenderer := NewArrowRenderer(win)
+	skyboxRenderer := NewSkyboxRenderer() // disable while working with multiple lights
+	textRenderer := NewTextRenderer()
+	arrowRenderer := NewArrowRenderer()
 
 	// TODO: remove
 	renderer.Render(s, c)
@@ -75,7 +71,7 @@ func main() {
 	time1 := time.Now()
 	fps := int(0)
 	frameCount := int(0)
-	for !win.ShouldClose() {
+	for !window.ShouldClose() {
 		if time.Now().Sub(time1).Seconds() > 0.5 {
 			time2 := time.Now()
 			fps = int(float64(frameCount) / (time2.Sub(time1).Seconds()))
@@ -83,20 +79,20 @@ func main() {
 			frameCount = 0
 		}
 
-		c.SetAspect(win.Aspect())
+		c.SetAspect(window.Aspect())
 		defaultFramebuffer.ClearColor(NewVec4(0, 0, 0, 0))
 		defaultFramebuffer.ClearDepth(1)
 		skyboxRenderer.Render(c)
 		if drawScene {
 			renderer.Render(s, c)
 		}
-		if win.glfwWin.GetKey(glfw.Key1) == glfw.Press {
+		if window.Win.GetKey(glfw.Key1) == glfw.Press {
 			arrowRenderer.RenderTangents(s, c)
 		}
-		if win.glfwWin.GetKey(glfw.Key2) == glfw.Press {
+		if window.Win.GetKey(glfw.Key2) == glfw.Press {
 			arrowRenderer.RenderBitangents(s, c)
 		}
-		if win.glfwWin.GetKey(glfw.Key3) == glfw.Press {
+		if window.Win.GetKey(glfw.Key3) == glfw.Press {
 			arrowRenderer.RenderNormals(s, c)
 		}
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
@@ -105,55 +101,55 @@ func main() {
 		text += "draw calls: " + fmt.Sprint(RenderStats.drawCallCount) + "\n"
 		text += "vertices:   " + fmt.Sprint(RenderStats.vertexCount)
 		textRenderer.Render(NewVec2(-1, +1), text, 0.05)
-		win.Update()
+		window.Update()
 
 		RenderStats.Reset()
 
-		if win.glfwWin.GetKey(glfw.KeyLeftShift) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyLeftShift) == glfw.Press {
 			camFactor = 0.1 // for precise camera controls
 		} else {
 			camFactor = 1.0
 		}
 
-		if win.glfwWin.GetKey(glfw.KeyW) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyW) == glfw.Press {
 			c.Translate(c.Forward().Scale(camFactor * +0.1))
 		}
-		if win.glfwWin.GetKey(glfw.KeyS) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyS) == glfw.Press {
 			c.Translate(c.Forward().Scale(camFactor * -0.1))
 		}
-		if win.glfwWin.GetKey(glfw.KeyD) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyD) == glfw.Press {
 			c.Translate(c.Right().Scale(camFactor * +0.1))
 		}
-		if win.glfwWin.GetKey(glfw.KeyA) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyA) == glfw.Press {
 			c.Translate(c.Right().Scale(camFactor * -0.1))
 		}
-		if win.glfwWin.GetKey(glfw.KeyUp) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyUp) == glfw.Press {
 			c.Rotate(c.Right(), camFactor * +0.03)
 		}
-		if win.glfwWin.GetKey(glfw.KeyDown) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyDown) == glfw.Press {
 			c.Rotate(c.Right(), camFactor * -0.03)
 		}
-		if win.glfwWin.GetKey(glfw.KeyLeft) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyLeft) == glfw.Press {
 			c.Rotate(NewVec3(0, 1, 0), camFactor * +0.03)
 		}
-		if win.glfwWin.GetKey(glfw.KeyRight) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyRight) == glfw.Press {
 			c.Rotate(NewVec3(0, 1, 0), camFactor * -0.03)
 		}
-		if win.glfwWin.GetKey(glfw.KeySpace) == glfw.Press {
+		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
 			//s.pointLights[0].Place(c.position)
 			s.spotLights[0].Place(c.position)
 			s.spotLights[0].Orient(c.unitX, c.unitY) // for spotlight
 		}
-		if win.glfwWin.GetKey(glfw.KeyZ) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyZ) == glfw.Press {
 			drawScene = true
 		}
-		if win.glfwWin.GetKey(glfw.KeyX) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyX) == glfw.Press {
 			drawScene = false
 		}
-		if win.glfwWin.GetKey(glfw.KeyC) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyC) == glfw.Press {
 			renderer.SetWireframe(false)
 		}
-		if win.glfwWin.GetKey(glfw.KeyV) == glfw.Press {
+		if window.Win.GetKey(glfw.KeyV) == glfw.Press {
 			renderer.SetWireframe(true)
 		}
 

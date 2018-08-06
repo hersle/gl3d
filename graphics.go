@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hersle/gl3d/window"
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"path"
 	"golang.org/x/image/font/basicfont"
@@ -18,7 +19,6 @@ var shadowCubeMap *CubeMap = nil
 
 // TODO: redesign attr/uniform access system?
 type SceneRenderer struct {
-	win *Window
 	sp *MeshShaderProgram
 	dsp *DepthPassShaderProgram
 	vbo, ibo *Buffer
@@ -61,14 +61,13 @@ func (_ *Vertex) TangentOffset() int {
 	return int(unsafe.Offsetof(Vertex{}.tangent))
 }
 
-func NewSceneRenderer(win *Window) (*SceneRenderer, error) {
+func NewSceneRenderer() (*SceneRenderer, error) {
 	var r SceneRenderer
 
 	r.sp = NewMeshShaderProgram()
 
 	r.dsp = NewDepthPassShaderProgram()
 
-	r.win = win
 
 	r.shadowFb = NewFramebuffer()
 
@@ -159,7 +158,7 @@ func (r *SceneRenderer) SpotLightPass(s *Scene, c *Camera) {
 }
 
 func (r *SceneRenderer) Render(s *Scene, c *Camera) {
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
 
@@ -179,7 +178,6 @@ func (r *SceneRenderer) SetWireframe(wireframe bool) {
 }
 
 type SkyboxRenderer struct {
-	win *Window
 	sp *SkyboxShaderProgram
 	vbo *Buffer
 	ibo *Buffer
@@ -187,10 +185,9 @@ type SkyboxRenderer struct {
 	renderState *RenderState
 }
 
-func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
+func NewSkyboxRenderer() *SkyboxRenderer {
 	var r SkyboxRenderer
 
-	r.win = win
 
 	r.sp = NewSkyboxShaderProgram()
 
@@ -239,7 +236,7 @@ func NewSkyboxRenderer(win *Window) *SkyboxRenderer {
 }
 
 func (r *SkyboxRenderer) Render(c *Camera) {
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 	r.sp.SetCamera(c)
 	r.sp.SetSkybox(r.tex)
 
@@ -247,7 +244,6 @@ func (r *SkyboxRenderer) Render(c *Camera) {
 }
 
 type TextRenderer struct {
-	win *Window
 	sp *TextShaderProgram
 	tex *Texture2D
 	vbo *Buffer
@@ -255,10 +251,8 @@ type TextRenderer struct {
 	renderState *RenderState
 }
 
-func NewTextRenderer(win *Window) *TextRenderer {
+func NewTextRenderer() *TextRenderer {
 	var r TextRenderer
-
-	r.win = win
 
 	r.sp = NewTextShaderProgram()
 
@@ -283,7 +277,7 @@ func NewTextRenderer(win *Window) *TextRenderer {
 }
 
 func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 
 	var verts []Vertex
 	var inds []int32
@@ -439,17 +433,15 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 }
 
 type ArrowRenderer struct {
-	win *Window
 	sp *ArrowShaderProgram
 	points []Vec3
 	vbo *Buffer
 	renderState *RenderState
 }
 
-func NewArrowRenderer(win *Window) *ArrowRenderer {
+func NewArrowRenderer() *ArrowRenderer {
 	var r ArrowRenderer
 
-	r.win = win
 	r.sp = NewArrowShaderProgram()
 
 	r.renderState = NewRenderState()
@@ -466,7 +458,7 @@ func NewArrowRenderer(win *Window) *ArrowRenderer {
 }
 
 func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 	r.sp.SetCamera(c)
 	r.points = r.points[:0]
 	r.sp.SetColor(NewVec3(1, 0, 0))
@@ -485,7 +477,7 @@ func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 	r.sp.SetCamera(c)
 	r.points = r.points[:0]
 	r.sp.SetColor(NewVec3(0, 1, 0))
@@ -504,7 +496,7 @@ func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
 }
 
 func (r *ArrowRenderer) RenderNormals(s *Scene, c *Camera) {
-	r.renderState.viewportWidth, r.renderState.viewportHeight = r.win.Size()
+	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 	r.sp.SetCamera(c)
 	r.points = r.points[:0]
 	r.sp.SetColor(NewVec3(0, 0, 1))
