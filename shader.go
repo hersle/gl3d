@@ -3,8 +3,410 @@ package main
 import (
 	"github.com/hersle/gl3d/math"
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"unsafe"
+	"io/ioutil"
+	"errors"
 )
+
+type ShaderProgram struct {
+	id uint32
+	va *VertexArray
+}
+
+type Shader struct {
+	id uint32
+}
+
+type Attrib struct {
+	prog *ShaderProgram
+	id uint32
+	nComponents int
+}
+
+// TODO: store value, have Set() function and make "Uniform" an interface?
+type UniformBasic struct {
+	progID uint32
+	location uint32
+	glType uint32
+}
+
+type UniformInteger struct {
+	UniformBasic
+}
+
+type UniformFloat struct {
+	UniformBasic
+}
+
+type UniformVector2 struct {
+	UniformBasic
+}
+
+type UniformVector3 struct {
+	UniformBasic
+}
+
+type UniformVector4 struct {
+	UniformBasic
+}
+
+type UniformMatrix4 struct {
+	UniformBasic
+}
+
+type UniformSampler struct {
+	UniformBasic
+	textureUnitIndex uint32
+}
+
+type UniformBool struct {
+	UniformBasic
+}
+
+type VertexArray struct {
+	id uint32
+	hasIndexBuffer bool
+}
+
+func NewVertexArray() *VertexArray {
+	var va VertexArray
+	gl.CreateVertexArrays(1, &va.id)
+	va.hasIndexBuffer = false
+	return &va
+}
+
+// TODO: normalize should not be set for some types
+func (va *VertexArray) SetAttribFormat(a *Attrib, dim, typ int, normalize bool) {
+	gl.VertexArrayAttribFormat(va.id, a.id, int32(dim), uint32(typ), normalize, 0)
+}
+
+func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int) {
+	gl.VertexArrayAttribBinding(va.id, a.id, a.id)
+	gl.VertexArrayVertexBuffer(va.id, a.id, b.id, offset, int32(stride))
+	gl.EnableVertexArrayAttrib(va.id, a.id)
+}
+
+func (va *VertexArray) SetIndexBuffer(b *Buffer) {
+	gl.VertexArrayElementBuffer(va.id, b.id)
+	va.hasIndexBuffer = true
+}
+
+func (va *VertexArray) Bind() {
+	gl.BindVertexArray(va.id)
+}
+
+func NewShader(typ uint32, src string) (*Shader, error) {
+	var s Shader
+	s.id = gl.CreateShader(typ)
+	s.SetSource(src)
+	err := s.Compile()
+	if err != nil {
+		return nil, err
+	}
+	return &s, nil
+}
+
+func ReadShader(typ uint32, filename string) (*Shader, error) {
+	src, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return NewShader(typ, string(src))
+}
+
+func (s *Shader) SetSource(src string) {
+	cSrc, free := gl.Strs(src)
+	defer free()
+	length := int32(len(src))
+	gl.ShaderSource(s.id, 1, cSrc, &length)
+}
+
+func (s *Shader) Compiled() bool {
+	var status int32
+	gl.GetShaderiv(s.id, gl.COMPILE_STATUS, &status)
+	return status == gl.TRUE
+}
+
+func (s *Shader) Log() string {
+	var length int32
+	gl.GetShaderiv(s.id, gl.INFO_LOG_LENGTH, &length)
+	log := string(make([]byte, length + 1))
+	gl.GetShaderInfoLog(s.id, length + 1, nil, gl.Str(log))
+	log = log[:len(log)-1] // remove null terminator
+	return log
+}
+
+func (s *Shader) Compile() error {
+	gl.CompileShader(s.id)
+	if s.Compiled() {
+		return nil
+	} else {
+		return errors.New(s.Log())
+	}
+}
+
+func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error) {
+	var p ShaderProgram
+	p.id = gl.CreateProgram()
+
+	if vShader != nil {
+		gl.AttachShader(p.id, vShader.id)
+		defer gl.DetachShader(p.id, vShader.id)
+	}
+	if fShader != nil {
+		gl.AttachShader(p.id, fShader.id)
+		defer gl.DetachShader(p.id, fShader.id)
+	}
+	if gShader != nil {
+		gl.AttachShader(p.id, gShader.id)
+		defer gl.DetachShader(p.id, gShader.id)
+	}
+
+	err := p.Link()
+	if err != nil {
+		return nil, err
+	}
+
+	p.va = NewVertexArray()
+	return &p, err
+}
+
+func ReadShaderProgram(vShaderFilename, fShaderFilename, gShaderFilename string) (*ShaderProgram, error) {
+	var vShader, fShader, gShader *Shader
+	var err error
+
+	if vShaderFilename == "" {
+		vShader = nil
+	} else {
+		vShader, err = ReadShader(gl.VERTEX_SHADER, vShaderFilename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if fShaderFilename == "" {
+		fShader = nil
+	} else {
+		fShader, err = ReadShader(gl.FRAGMENT_SHADER, fShaderFilename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if gShaderFilename == "" {
+		gShader = nil
+	} else {
+		gShader, err = ReadShader(gl.GEOMETRY_SHADER, gShaderFilename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return NewShaderProgram(vShader, fShader, gShader)
+}
+
+func (p *ShaderProgram) Linked() bool {
+	var status int32
+	gl.GetProgramiv(p.id, gl.LINK_STATUS, &status)
+	return status == gl.TRUE
+}
+
+func (p *ShaderProgram) Log() string {
+	var length int32
+	gl.GetProgramiv(p.id, gl.INFO_LOG_LENGTH, &length)
+	log := string(make([]byte, length + 1))
+	gl.GetProgramInfoLog(p.id, length + 1, nil, gl.Str(log))
+	log = log[:len(log)-1] // remove null terminator
+	return log
+}
+
+func (p *ShaderProgram) Link() error {
+	gl.LinkProgram(p.id)
+	if p.Linked() {
+		return nil
+	}
+	return errors.New(p.Log())
+}
+
+func (u *UniformInteger) Set(i int) {
+	gl.ProgramUniform1i(u.progID, int32(u.location), int32(i))
+}
+
+func (u *UniformFloat) Set(f float32) {
+	gl.ProgramUniform1f(u.progID, int32(u.location), f)
+}
+
+func (u *UniformVector2) Set(v math.Vec2) {
+	gl.ProgramUniform2fv(u.progID, int32(u.location), 1, &v[0])
+}
+
+func (u *UniformVector3) Set(v math.Vec3) {
+	gl.ProgramUniform3fv(u.progID, int32(u.location), 1, &v[0])
+}
+
+func (u *UniformVector4) Set(v math.Vec4) {
+	gl.ProgramUniform4fv(u.progID, int32(u.location), 1, &v[0])
+}
+
+func (u *UniformMatrix4) Set(m *math.Mat4) {
+	gl.ProgramUniformMatrix4fv(u.progID, int32(u.location), 1, true, &m[0])
+}
+
+func (u *UniformSampler) Set2D(t *Texture2D) {
+	// TODO: other shaders can mess with this texture index
+	gl.BindTextureUnit(u.textureUnitIndex, t.id)
+	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
+}
+
+func (u *UniformSampler) SetCube(t *CubeMap) {
+	// TODO: other shaders can mess with this texture index
+	gl.BindTextureUnit(u.textureUnitIndex, t.id)
+	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
+}
+
+func (u *UniformBool) Set(b bool) {
+	var i int32
+	if b {
+		i = 1
+	} else {
+		i = 0
+	}
+	gl.ProgramUniform1i(u.progID, int32(u.location), i)
+}
+
+func (a *Attrib) SetFormat(typ int, normalize bool) {
+	a.prog.va.SetAttribFormat(a, a.nComponents, typ, normalize)
+}
+
+func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
+	a.prog.va.SetAttribSource(a, b, offset, stride)
+}
+
+func (p *ShaderProgram) SetAttribIndexBuffer(b *Buffer) {
+	p.va.SetIndexBuffer(b)
+}
+
+func (p *ShaderProgram) Bind() {
+	gl.UseProgram(p.id)
+}
+
+func (p *ShaderProgram) Attrib(name string) *Attrib {
+	var a Attrib
+	loc := gl.GetAttribLocation(p.id, gl.Str(name + "\x00"))
+	if loc == -1 {
+		return nil
+	}
+	a.id = uint32(loc)
+	a.prog = p
+
+	var size int32
+	var typ uint32
+	gl.GetActiveAttrib(a.prog.id, a.id, 0, nil, &size, &typ, nil)
+
+	switch typ {
+	case gl.FLOAT:
+		a.nComponents = 1
+	case gl.FLOAT_VEC2:
+		a.nComponents = 2
+	case gl.FLOAT_VEC3:
+		a.nComponents = 3
+	case gl.FLOAT_VEC4:
+		a.nComponents = 4
+	default:
+		panic("unrecognized attribute GL type")
+	}
+
+	return &a
+}
+
+func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
+	var u UniformBasic
+	loc := gl.GetUniformLocation(p.id, gl.Str(name + "\x00"))
+	if loc == -1 {
+		return nil
+	}
+	u.location = uint32(loc)
+	u.progID = p.id
+	index := gl.GetProgramResourceIndex(p.id, gl.UNIFORM, gl.Str(name + "\x00"))
+	gl.GetActiveUniform(p.id, index, 0, nil, nil, &u.glType, nil)
+	return &u
+}
+
+func (p *ShaderProgram) UniformInteger(name string) *UniformInteger {
+	var u UniformInteger
+	u.UniformBasic = *p.UniformBasic(name)
+	if u.glType != gl.INT {
+		return nil
+	}
+	return &u
+}
+
+func (p *ShaderProgram) UniformFloat(name string) *UniformFloat {
+	var u UniformFloat
+	u.UniformBasic = *p.UniformBasic(name)
+	if u.glType != gl.FLOAT {
+		return nil
+	}
+	return &u
+}
+
+func (p *ShaderProgram) UniformVector2(name string) *UniformVector2 {
+	var u UniformVector2
+	u.UniformBasic = *p.UniformBasic(name)
+	if u.glType != gl.FLOAT_VEC2 {
+		return nil
+	}
+	return &u
+}
+
+func (p *ShaderProgram) UniformVector3(name string) *UniformVector3 {
+	var u UniformVector3
+	u.UniformBasic = *p.UniformBasic(name)
+	if u.glType != gl.FLOAT_VEC3 {
+		return nil
+	}
+	return &u
+}
+
+func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
+	var u UniformVector4
+	u.UniformBasic = *p.UniformBasic(name)
+	if u.glType != gl.FLOAT_VEC4 {
+		return nil
+	}
+	return &u
+}
+
+func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
+	var u UniformMatrix4
+	u.UniformBasic = *p.UniformBasic(name)
+	// TODO: what if things not found?
+	if u.glType != gl.FLOAT_MAT4 {
+		return nil
+	}
+	return &u
+}
+
+var textureUnitsUsed uint32 = 0
+func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
+	var u UniformSampler
+	u.UniformBasic = *p.UniformBasic(name)
+	if u.glType != gl.SAMPLER_2D && u.glType != gl.SAMPLER_CUBE { // TODO: allow more sampler types
+		return nil
+	}
+	u.textureUnitIndex = textureUnitsUsed // TODO: make texture unit mapping more sophisticated
+	textureUnitsUsed++
+	return &u
+}
+
+func (p *ShaderProgram) UniformBool(name string) *UniformBool {
+	var u UniformBool
+	u.UniformBasic = *p.UniformBasic(name)
+	// TODO: what if things not found?
+	if u.glType != gl.BOOL {
+		return nil
+	}
+	return &u
+}
 
 type MeshShaderProgram struct {
 	*ShaderProgram
@@ -140,75 +542,6 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	return &sp
 }
 
-func (sp *MeshShaderProgram) SetCamera(c *Camera) {
-	sp.ViewMatrix.Set(c.ViewMatrix())
-	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (sp *MeshShaderProgram) SetMesh(m *Mesh) {
-	sp.ModelMatrix.Set(m.WorldMatrix())
-}
-
-func (sp *MeshShaderProgram) SetSubMesh(sm *SubMesh) {
-	mtl := sm.mtl
-
-	sp.Ambient.Set(mtl.ambient)
-	sp.AmbientMap.Set2D(mtl.ambientMap)
-	sp.Diffuse.Set(mtl.diffuse)
-	sp.DiffuseMap.Set2D(mtl.diffuseMap)
-	sp.Specular.Set(mtl.specular)
-	sp.SpecularMap.Set2D(mtl.specularMap)
-	sp.Shine.Set(mtl.shine)
-	sp.Alpha.Set(mtl.alpha)
-
-	if mtl.HasAlphaMap() {
-		sp.HasAlphaMap.Set(true)
-		sp.AlphaMap.Set2D(mtl.alphaMap)
-	} else {
-		sp.HasAlphaMap.Set(false)
-	}
-
-	if mtl.HasBumpMap() {
-		sp.HasBumpMap.Set(true)
-		sp.BumpMap.Set2D(mtl.bumpMap)
-	} else {
-		sp.HasBumpMap.Set(false)
-	}
-
-	var v Vertex
-	sp.Position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
-	sp.Normal.SetSource(sm.vbo, v.NormalOffset(), v.Size())
-	sp.TexCoord.SetSource(sm.vbo, v.TexCoordOffset(), v.Size())
-	sp.Tangent.SetSource(sm.vbo, v.TangentOffset(), v.Size())
-	sp.SetAttribIndexBuffer(sm.ibo)
-}
-
-func (sp *MeshShaderProgram) SetAmbientLight(l *AmbientLight) {
-	sp.LightType.Set(0)
-	sp.AmbientLight.Set(l.color)
-}
-
-func (sp *MeshShaderProgram) SetPointLight(l *PointLight) {
-	sp.LightType.Set(1)
-	sp.LightPos.Set(l.position)
-	sp.DiffuseLight.Set(l.diffuse)
-	sp.SpecularLight.Set(l.specular)
-	sp.CubeShadowMap.SetCube(l.shadowMap)
-	sp.ShadowFar.Set(l.shadowFar)
-}
-
-func (sp *MeshShaderProgram) SetSpotLight(l *SpotLight) {
-	sp.LightType.Set(2)
-	sp.LightPos.Set(l.position)
-	sp.LightDir.Set(l.Forward())
-	sp.DiffuseLight.Set(l.diffuse)
-	sp.SpecularLight.Set(l.specular)
-	sp.SpotShadowMap.Set2D(l.shadowMap)
-	sp.ShadowViewMatrix.Set(l.ViewMatrix())
-	sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
-	sp.ShadowFar.Set(l.Camera.far)
-}
-
 func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 	var sp SkyboxShaderProgram
 	var err error
@@ -227,21 +560,6 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 	sp.Position = sp.Attrib("positionV")
 
 	return &sp
-}
-
-func (sp *SkyboxShaderProgram) SetCamera(c *Camera) {
-	sp.ViewMatrix.Set(c.ViewMatrix())
-	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (sp *SkyboxShaderProgram) SetSkybox(skybox *CubeMap) {
-	sp.CubeMap.SetCube(skybox)
-}
-
-func (sp *SkyboxShaderProgram) SetCube(vbo, ibo *Buffer) {
-	sp.Position.SetFormat(gl.FLOAT, false)
-	sp.Position.SetSource(vbo, 0, int(unsafe.Sizeof(math.NewVec3(0, 0, 0))))
-	sp.SetAttribIndexBuffer(ibo)
 }
 
 func NewTextShaderProgram() *TextShaderProgram {
@@ -263,17 +581,6 @@ func NewTextShaderProgram() *TextShaderProgram {
 	sp.TexCoord.SetFormat(gl.FLOAT, false)
 
 	return &sp
-}
-
-func (sp *TextShaderProgram) SetAtlas(tex *Texture2D) {
-	sp.Atlas.Set2D(tex)
-}
-
-func (sp *TextShaderProgram) SetAttribs(vbo, ibo *Buffer) {
-	var v Vertex
-	sp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
-	sp.TexCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
-	sp.SetAttribIndexBuffer(ibo)
 }
 
 func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
@@ -299,23 +606,6 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 	return &sp
 }
 
-func (sp *ShadowMapShaderProgram) SetCamera(c *Camera) {
-	sp.Far.Set(c.far)
-	sp.LightPosition.Set(c.position)
-	sp.ViewMatrix.Set(c.ViewMatrix())
-	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (sp *ShadowMapShaderProgram) SetMesh(m *Mesh) {
-	sp.ModelMatrix.Set(m.WorldMatrix())
-}
-
-func (sp *ShadowMapShaderProgram) SetSubMesh(sm *SubMesh) {
-	var v Vertex
-	sp.Position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
-	sp.SetAttribIndexBuffer(sm.ibo)
-}
-
 func NewArrowShaderProgram() *ArrowShaderProgram {
 	var sp ArrowShaderProgram
 	var err error
@@ -338,24 +628,6 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	return &sp
 }
 
-func (sp *ArrowShaderProgram) SetCamera(c *Camera) {
-	sp.ViewMatrix.Set(c.ViewMatrix())
-	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (sp *ArrowShaderProgram) SetMesh(m *Mesh) {
-	sp.ModelMatrix.Set(m.WorldMatrix())
-}
-
-func (sp *ArrowShaderProgram) SetColor(color math.Vec3) {
-	sp.Color.Set(color)
-}
-
-func (sp *ArrowShaderProgram) SetPosition(vbo *Buffer) {
-	stride := int(unsafe.Sizeof(math.NewVec3(0, 0, 0)))
-	sp.Position.SetSource(vbo, 0, stride)
-}
-
 func NewDepthPassShaderProgram() *DepthPassShaderProgram {
 	var sp DepthPassShaderProgram
 	var err error
@@ -373,19 +645,4 @@ func NewDepthPassShaderProgram() *DepthPassShaderProgram {
 	sp.Position.SetFormat(gl.FLOAT, false)
 
 	return &sp
-}
-
-func (sp *DepthPassShaderProgram) SetCamera(c *Camera) {
-	sp.ViewMatrix.Set(c.ViewMatrix())
-	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (sp *DepthPassShaderProgram) SetMesh(m *Mesh) {
-	sp.ModelMatrix.Set(m.WorldMatrix())
-}
-
-func (sp *DepthPassShaderProgram) SetSubMesh(sm *SubMesh) {
-	var v Vertex
-	sp.Position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
-	sp.SetAttribIndexBuffer(sm.ibo)
 }
