@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hersle/gl3d/math"
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"unsafe"
 )
@@ -239,7 +240,7 @@ func (sp *SkyboxShaderProgram) SetSkybox(skybox *CubeMap) {
 
 func (sp *SkyboxShaderProgram) SetCube(vbo, ibo *Buffer) {
 	sp.position.SetFormat(gl.FLOAT, false)
-	sp.position.SetSource(vbo, 0, int(unsafe.Sizeof(NewVec3(0, 0, 0))))
+	sp.position.SetSource(vbo, 0, int(unsafe.Sizeof(math.NewVec3(0, 0, 0))))
 	sp.SetAttribIndexBuffer(ibo)
 }
 
@@ -346,12 +347,12 @@ func (sp *ArrowShaderProgram) SetMesh(m *Mesh) {
 	sp.modelMatrix.Set(m.WorldMatrix())
 }
 
-func (sp *ArrowShaderProgram) SetColor(color Vec3) {
+func (sp *ArrowShaderProgram) SetColor(color math.Vec3) {
 	sp.color.Set(color)
 }
 
 func (sp *ArrowShaderProgram) SetPosition(vbo *Buffer) {
-	stride := int(unsafe.Sizeof(NewVec3(0, 0, 0)))
+	stride := int(unsafe.Sizeof(math.NewVec3(0, 0, 0)))
 	sp.position.SetSource(vbo, 0, stride)
 }
 

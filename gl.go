@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hersle/gl3d/math"
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"errors"
 	"io/ioutil"
@@ -278,19 +279,19 @@ func (u *UniformFloat) Set(f float32) {
 	gl.ProgramUniform1f(u.progID, int32(u.location), f)
 }
 
-func (u *UniformVector2) Set(v Vec2) {
+func (u *UniformVector2) Set(v math.Vec2) {
 	gl.ProgramUniform2fv(u.progID, int32(u.location), 1, &v[0])
 }
 
-func (u *UniformVector3) Set(v Vec3) {
+func (u *UniformVector3) Set(v math.Vec3) {
 	gl.ProgramUniform3fv(u.progID, int32(u.location), 1, &v[0])
 }
 
-func (u *UniformVector4) Set(v Vec4) {
+func (u *UniformVector4) Set(v math.Vec4) {
 	gl.ProgramUniform4fv(u.progID, int32(u.location), 1, &v[0])
 }
 
-func (u *UniformMatrix4) Set(m *Mat4) {
+func (u *UniformMatrix4) Set(m *math.Mat4) {
 	gl.ProgramUniformMatrix4fv(u.progID, int32(u.location), 1, true, &m[0])
 }
 
@@ -534,7 +535,7 @@ func ReadTexture2D(filterMode, wrapMode int32, format uint32, filename string) (
 	return NewTexture2DFromImage(filterMode, wrapMode, format, img), nil
 }
 
-func (t *Texture2D) SetBorderColor(rgba Vec4) {
+func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
 	gl.TextureParameterfv(t.id, gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
@@ -633,7 +634,7 @@ func (f *Framebuffer) SetTextureCubeMapFace(attachment uint32, t *CubeMap, level
 	gl.NamedFramebufferTextureLayer(f.id, attachment, t.id, level, layer)
 }
 
-func (f *Framebuffer) ClearColor(rgba Vec4) {
+func (f *Framebuffer) ClearColor(rgba math.Vec4) {
 	gl.ClearNamedFramebufferfv(f.id, gl.COLOR, 0,  &rgba[0])
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hersle/gl3d/math"
 	"os"
 	"path"
 	"bufio"
@@ -74,19 +75,19 @@ func newSmoothingGroup(id int) smoothingGroup {
 	return sGroup
 }
 
-func readVec2(fields []string) Vec2 {
+func readVec2(fields []string) math.Vec2 {
 	var x, y float32
 	fmt.Sscan(fields[0], &x)
 	fmt.Sscan(fields[1], &y)
-	return NewVec2(x, y)
+	return math.NewVec2(x, y)
 }
 
-func readVec3(fields []string) Vec3 {
+func readVec3(fields []string) math.Vec3 {
 	var x, y, z float32
 	fmt.Sscan(fields[0], &x)
 	fmt.Sscan(fields[1], &y)
 	fmt.Sscan(fields[2], &z)
-	return NewVec3(x, y, z)
+	return math.NewVec3(x, y, z)
 }
 
 func readIndexedVertex(desc string, nv, nvt, nvn int) indexedVertex {
@@ -131,9 +132,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	}
 	defer file.Close()
 
-	var positions []Vec3 = []Vec3{NewVec3(0, 0, 0)}
-	var texCoords []Vec2 = []Vec2{NewVec2(0, 0)}
-	var normals []Vec3 = []Vec3{NewVec3(0, 0, 0)}
+	var positions []math.Vec3 = []math.Vec3{math.NewVec3(0, 0, 0)}
+	var texCoords []math.Vec2 = []math.Vec2{math.NewVec2(0, 0)}
+	var normals []math.Vec3 = []math.Vec3{math.NewVec3(0, 0, 0)}
 
 	var sGroupInd int = 0
 	var sGroups []smoothingGroup = []smoothingGroup{newSmoothingGroup(0)}
@@ -226,8 +227,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	}
 
 	for _, sGroup := range sGroups {
-		var weightedNormals []Vec3 = make([]Vec3, len(positions) + 1)
-		var weightedTangents []Vec3 = make([]Vec3, len(positions) + 1)
+		var weightedNormals []math.Vec3 = make([]math.Vec3, len(positions) + 1)
+		var weightedTangents []math.Vec3 = make([]math.Vec3, len(positions) + 1)
 		for i := 0; i < len(sGroup.iTris); i++ {
 			iTri := sGroup.iTris[i]
 			v1, v2, v3 := iTri.iVerts[0].v, iTri.iVerts[1].v, iTri.iVerts[2].v
@@ -245,7 +246,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			if det != 0 {
 				det = 1 / det
 			}
-			tangent := NewVec3(
+			tangent := math.NewVec3(
 				dTexCoord2.Y() * edge1.X() - dTexCoord1.Y() * edge2.X(),
 				dTexCoord2.Y() * edge1.Y() - dTexCoord1.Y() * edge2.Y(),
 				dTexCoord2.Y() * edge1.Z() - dTexCoord1.Y() * edge2.Z(),
@@ -265,7 +266,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				pos := positions[iTri.iVerts[i].v]
 				texCoord := texCoords[iTri.iVerts[i].vt]
 				normal := weightedNormals[iTri.iVerts[i].v].Norm()
-				var tangent Vec3
+				var tangent math.Vec3
 				if tangent.X() == 0 && tangent.Y() == 0 && tangent.Z() == 0 {
 					// no tangent - generate arbitrary tangent vector
 					// assume normal is not the zero vector
@@ -273,9 +274,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 						panic("cannot find vector not parallell to zero vector")
 					}
 					if normal.X() == 0 {
-						tangent = NewVec3(1, 0, 0)
+						tangent = math.NewVec3(1, 0, 0)
 					} else {
-						tangent = NewVec3(0, 1, 0)
+						tangent = math.NewVec3(0, 1, 0)
 					}
 				} else {
 					tangent = weightedTangents[iTri.iVerts[i].v].Norm()

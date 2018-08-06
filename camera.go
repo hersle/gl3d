@@ -1,7 +1,8 @@
 package main
 
 import (
-	"math"
+	stdmath "math"
+	"github.com/hersle/gl3d/math"
 )
 
 type Camera struct {
@@ -9,8 +10,8 @@ type Camera struct {
 	fovY float32
 	aspect float32
 	near, far float32
-	viewMat Mat4
-	projMat Mat4
+	viewMat math.Mat4
+	projMat math.Mat4
 	dirtyViewMat bool
 	dirtyProjMat bool
 }
@@ -18,7 +19,7 @@ type Camera struct {
 func NewCamera(fovYDeg, aspect, near, far float32) *Camera {
 	var c Camera
 	c.Object.Reset()
-	c.fovY = fovYDeg / 360.0 * 2.0 * math.Pi
+	c.fovY = fovYDeg / 360.0 * 2.0 * stdmath.Pi
 	c.SetAspect(aspect)
 	c.near = near
 	c.far = far
@@ -28,19 +29,19 @@ func NewCamera(fovYDeg, aspect, near, far float32) *Camera {
 	return &c
 }
 
-func (c *Camera) Right() Vec3 {
+func (c *Camera) Right() math.Vec3 {
 	return c.unitX
 }
 
-func (c *Camera) Up() Vec3 {
+func (c *Camera) Up() math.Vec3 {
 	return c.unitY
 }
 
-func (c *Camera) Forward() Vec3 {
+func (c *Camera) Forward() math.Vec3 {
 	return c.unitZ.Scale(-1)
 }
 
-func (c *Camera) SetForwardUp(forward, up Vec3) {
+func (c *Camera) SetForwardUp(forward, up math.Vec3) {
 	right := forward.Cross(up).Norm()
 	c.Orient(right, up) // since unitX == right and unitY == up
 }
@@ -62,7 +63,7 @@ func (c *Camera) updateProjectionMatrix() {
 	c.dirtyProjMat = false
 }
 
-func (c *Camera) ViewMatrix() *Mat4 {
+func (c *Camera) ViewMatrix() *math.Mat4 {
 	// camera view matrix dirty iff object world matrix (its inverse) is dirty
 	if c.dirtyWorldMatrix {
 		c.updateViewMatrix()
@@ -71,7 +72,7 @@ func (c *Camera) ViewMatrix() *Mat4 {
 	return &c.viewMat
 }
 
-func (c *Camera) ProjectionMatrix() *Mat4 {
+func (c *Camera) ProjectionMatrix() *math.Mat4 {
 	if c.dirtyProjMat {
 		c.updateProjectionMatrix()
 	}

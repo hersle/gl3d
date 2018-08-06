@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/hersle/gl3d/window"
+	"github.com/hersle/gl3d/math"
 	"os"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"time"
@@ -21,39 +22,39 @@ func main() {
 			panic(err)
 		}
 		if filename == "objects/car.obj" {
-			model.Scale(NewVec3(0.02, 0.02, 0.02))
+			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 			model.RotateX(-3.1415/2)
 			model.RotateY(3.1415 - 3.1415/5)
 		}
 		if filename == "objects/sponza.obj" || filename == "objects/sponza2/sponza.obj" {
-			model.Scale(NewVec3(0.02, 0.02, 0.02))
+			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 		}
 		if filename == "objects/conference.obj" {
-			model.Scale(NewVec3(0.02, 0.02, 0.02))
+			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 		}
 		if filename == "objects/scrubPine.obj" {
-			model.Scale(NewVec3(0.02, 0.02, 0.02))
+			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 		}
 		if filename == "objects/racecar.obj" {
-			model.Scale(NewVec3(0.04, 0.04, 0.04))
+			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
 		}
 		if filename == "objects/holodeck/holodeck.obj" {
-			model.Scale(NewVec3(0.04, 0.04, 0.04))
+			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
 		}
 		if filename == "objects/oak/white_oak.obj" {
-			model.Scale(NewVec3(0.04, 0.04, 0.04))
+			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
 		}
 		s.AddMesh(model)
 	}
 
-	s.ambientLight = NewAmbientLight(NewVec3(1, 1, 1))
-	s.AddSpotLight(NewSpotLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1)))
+	s.ambientLight = NewAmbientLight(math.NewVec3(1, 1, 1))
+	s.AddSpotLight(NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.spotLights[0].Camera = *NewCamera(60, 1, 0.1, 50)
-	s.spotLights[0].Place(NewVec3(0, 3, 0))
-	s.spotLights[0].Orient(s.spotLights[0].position.Scale(-1).Norm(), NewVec3(0, 0, 1))
-	s.AddPointLight(NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1)))
-	s.AddPointLight(NewPointLight(NewVec3(1, 1, 1), NewVec3(1, 1, 1)))
-	s.pointLights[1].Place(NewVec3(5, 0, 0))
+	s.spotLights[0].Place(math.NewVec3(0, 3, 0))
+	s.spotLights[0].Orient(s.spotLights[0].position.Scale(-1).Norm(), math.NewVec3(0, 0, 1))
+	s.AddPointLight(NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.AddPointLight(NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.pointLights[1].Place(math.NewVec3(5, 0, 0))
 
 	c := NewCamera(60, 1, 0.1, 50)
 
@@ -80,7 +81,7 @@ func main() {
 		}
 
 		c.SetAspect(window.Aspect())
-		defaultFramebuffer.ClearColor(NewVec4(0, 0, 0, 0))
+		defaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
 		defaultFramebuffer.ClearDepth(1)
 		skyboxRenderer.Render(c)
 		if drawScene {
@@ -100,7 +101,7 @@ func main() {
 		text += "forward:    " + c.Forward().String() + "\n"
 		text += "draw calls: " + fmt.Sprint(RenderStats.drawCallCount) + "\n"
 		text += "vertices:   " + fmt.Sprint(RenderStats.vertexCount)
-		textRenderer.Render(NewVec2(-1, +1), text, 0.05)
+		textRenderer.Render(math.NewVec2(-1, +1), text, 0.05)
 		window.Update()
 
 		RenderStats.Reset()
@@ -130,10 +131,10 @@ func main() {
 			c.Rotate(c.Right(), camFactor * -0.03)
 		}
 		if window.Win.GetKey(glfw.KeyLeft) == glfw.Press {
-			c.Rotate(NewVec3(0, 1, 0), camFactor * +0.03)
+			c.Rotate(math.NewVec3(0, 1, 0), camFactor * +0.03)
 		}
 		if window.Win.GetKey(glfw.KeyRight) == glfw.Press {
-			c.Rotate(NewVec3(0, 1, 0), camFactor * -0.03)
+			c.Rotate(math.NewVec3(0, 1, 0), camFactor * -0.03)
 		}
 		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
 			//s.pointLights[0].Place(c.position)

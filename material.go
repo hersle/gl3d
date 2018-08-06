@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hersle/gl3d/math"
 	"os"
 	"bufio"
 	"strings"
@@ -16,9 +17,9 @@ import (
 
 type Material struct {
 	name string
-	ambient Vec3
-	diffuse Vec3
-	specular Vec3
+	ambient math.Vec3
+	diffuse math.Vec3
+	specular math.Vec3
 	shine float32
 	alpha float32
 	ambientMapFilename string
@@ -40,9 +41,9 @@ var defaultTexture *Texture2D = nil
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
 	mtl.name = name
-	mtl.ambient = NewVec3(0.2, 0.2, 0.2)
-	mtl.diffuse = NewVec3(0.8, 0.8, 0.8)
-	mtl.specular = NewVec3(0, 0, 0)
+	mtl.ambient = math.NewVec3(0.2, 0.2, 0.2)
+	mtl.diffuse = math.NewVec3(0.8, 0.8, 0.8)
+	mtl.specular = math.NewVec3(0, 0, 0)
 	mtl.shine = 1
 	mtl.alpha = 1
 	return &mtl
@@ -153,7 +154,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Ka error")
 					}
 				}
-				mtl.ambient = NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.ambient = math.NewVec3(tmp[0], tmp[1], tmp[2])
 			case "Kd":
 				if len(fields[1:]) < 3 {
 					panic("Kd error")
@@ -164,7 +165,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Kd error")
 					}
 				}
-				mtl.diffuse = NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.diffuse = math.NewVec3(tmp[0], tmp[1], tmp[2])
 			case "Ks":
 				if len(fields[1:]) < 3 {
 					panic("Ks error")
@@ -175,7 +176,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Ks error")
 					}
 				}
-				mtl.specular = NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.specular = math.NewVec3(tmp[0], tmp[1], tmp[2])
 			case "Ns":
 				if len(fields[1:]) != 1 {
 					panic("shine error")

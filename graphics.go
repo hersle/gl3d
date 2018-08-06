@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/window"
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"path"
@@ -9,10 +10,10 @@ import (
 )
 
 type Vertex struct {
-	pos Vec3
-	texCoord Vec2
-	normal Vec3
-	tangent Vec3
+	pos math.Vec3
+	texCoord math.Vec2
+	normal math.Vec3
+	tangent math.Vec3
 }
 
 var shadowCubeMap *CubeMap = nil
@@ -22,7 +23,7 @@ type SceneRenderer struct {
 	sp *MeshShaderProgram
 	dsp *DepthPassShaderProgram
 	vbo, ibo *Buffer
-	normalMat Mat4
+	normalMat math.Mat4
 
 	shadowFb *Framebuffer
 
@@ -32,7 +33,7 @@ type SceneRenderer struct {
 	shadowMapRenderer *ShadowMapRenderer
 }
 
-func NewVertex(pos Vec3, texCoord Vec2, normal, tangent Vec3) Vertex {
+func NewVertex(pos math.Vec3, texCoord math.Vec2, normal, tangent math.Vec3) Vertex {
 	var vert Vertex
 	vert.pos = pos
 	vert.texCoord = texCoord
@@ -200,15 +201,15 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	r.tex = ReadCubeMap(gl.NEAREST, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
 
 	r.vbo = NewBuffer()
-	verts := []Vec3{
-		NewVec3(-1.0, -1.0, -1.0),
-		NewVec3(+1.0, -1.0, -1.0),
-		NewVec3(+1.0, +1.0, -1.0),
-		NewVec3(-1.0, +1.0, -1.0),
-		NewVec3(-1.0, -1.0, +1.0),
-		NewVec3(+1.0, -1.0, +1.0),
-		NewVec3(+1.0, +1.0, +1.0),
-		NewVec3(-1.0, +1.0, +1.0),
+	verts := []math.Vec3{
+		math.NewVec3(-1.0, -1.0, -1.0),
+		math.NewVec3(+1.0, -1.0, -1.0),
+		math.NewVec3(+1.0, +1.0, -1.0),
+		math.NewVec3(-1.0, +1.0, -1.0),
+		math.NewVec3(-1.0, -1.0, +1.0),
+		math.NewVec3(+1.0, -1.0, +1.0),
+		math.NewVec3(+1.0, +1.0, +1.0),
+		math.NewVec3(-1.0, +1.0, +1.0),
 	}
 	r.vbo.SetData(verts, 0)
 
@@ -276,7 +277,7 @@ func NewTextRenderer() *TextRenderer {
 	return &r
 }
 
-func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
+func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 
 	var verts []Vertex
@@ -300,15 +301,15 @@ func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
 				texY1 := float32(imgY1) / float32(imgH) // top
 				texX2 := float32(imgX2) / float32(imgW) // right
 				texY2 := float32(imgY2) / float32(imgH) // bottom
-				br := NewVec2(tl.X() + w, tl.Y() - h)
-				tr := NewVec2(br.X(), tl.Y())
-				bl := NewVec2(tl.X(), br.Y())
+				br := math.NewVec2(tl.X() + w, tl.Y() - h)
+				tr := math.NewVec2(br.X(), tl.Y())
+				bl := math.NewVec2(tl.X(), br.Y())
 
-				normal := NewVec3(0, 0, 0)
-				vert1 := NewVertex(bl.Vec3(0), NewVec2(texX1, texY2), normal, Vec3{})
-				vert2 := NewVertex(br.Vec3(0), NewVec2(texX2, texY2), normal, Vec3{})
-				vert3 := NewVertex(tr.Vec3(0), NewVec2(texX2, texY1), normal, Vec3{})
-				vert4 := NewVertex(tl.Vec3(0), NewVec2(texX1, texY1), normal, Vec3{})
+				normal := math.NewVec3(0, 0, 0)
+				vert1 := NewVertex(bl.Vec3(0), math.NewVec2(texX1, texY2), normal, math.Vec3{})
+				vert2 := NewVertex(br.Vec3(0), math.NewVec2(texX2, texY2), normal, math.Vec3{})
+				vert3 := NewVertex(tr.Vec3(0), math.NewVec2(texX2, texY1), normal, math.Vec3{})
+				vert4 := NewVertex(tl.Vec3(0), math.NewVec2(texX1, texY1), normal, math.Vec3{})
 				inds = append(inds, int32(len(verts) + 0))
 				inds = append(inds, int32(len(verts) + 1))
 				inds = append(inds, int32(len(verts) + 2))
@@ -321,11 +322,11 @@ func (r *TextRenderer) Render(tl Vec2, text string, height float32) {
 		}
 
 		if char == '\n' {
-			tl = NewVec2(x0, tl.Y() - h)
+			tl = math.NewVec2(x0, tl.Y() - h)
 		} else if char == '\t' {
-			tl = tl.Add(NewVec2(4 * float32(face.Advance) * h / float32(subImgH), 0))
+			tl = tl.Add(math.NewVec2(4 * float32(face.Advance) * h / float32(subImgH), 0))
 		} else {
-			tl = tl.Add(NewVec2(float32(face.Advance) * h / float32(subImgH), 0))
+			tl = tl.Add(math.NewVec2(float32(face.Advance) * h / float32(subImgH), 0))
 		}
 	}
 
@@ -364,21 +365,21 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 		return
 	}
 
-	forwards := []Vec3{
-		NewVec3(+1, 0, 0),
-		NewVec3(-1, 0, 0),
-		NewVec3(0, +1, 0),
-		NewVec3(0, -1, 0),
-		NewVec3(0, 0, +1),
-		NewVec3(0, 0, -1),
+	forwards := []math.Vec3{
+		math.NewVec3(+1, 0, 0),
+		math.NewVec3(-1, 0, 0),
+		math.NewVec3(0, +1, 0),
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, 0, +1),
+		math.NewVec3(0, 0, -1),
 	}
-	ups := []Vec3{
-		NewVec3(0, -1, 0),
-		NewVec3(0, -1, 0),
-		NewVec3(0, 0, +1),
-		NewVec3(0, 0, -1),
-		NewVec3(0, -1, 0),
-		NewVec3(0, -1, 0),
+	ups := []math.Vec3{
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, 0, +1),
+		math.NewVec3(0, 0, -1),
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, -1, 0),
 	}
 
 	c := NewCamera(90, 1, 0.1, l.shadowFar)
@@ -434,7 +435,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 
 type ArrowRenderer struct {
 	sp *ArrowShaderProgram
-	points []Vec3
+	points []math.Vec3
 	vbo *Buffer
 	renderState *RenderState
 }
@@ -461,7 +462,7 @@ func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 	r.sp.SetCamera(c)
 	r.points = r.points[:0]
-	r.sp.SetColor(NewVec3(1, 0, 0))
+	r.sp.SetColor(math.NewVec3(1, 0, 0))
 	for _, m := range s.meshes {
 		r.sp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
@@ -480,7 +481,7 @@ func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 	r.sp.SetCamera(c)
 	r.points = r.points[:0]
-	r.sp.SetColor(NewVec3(0, 1, 0))
+	r.sp.SetColor(math.NewVec3(0, 1, 0))
 	for _, m := range s.meshes {
 		r.sp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {
@@ -499,7 +500,7 @@ func (r *ArrowRenderer) RenderNormals(s *Scene, c *Camera) {
 	r.renderState.viewportWidth, r.renderState.viewportHeight = window.Size()
 	r.sp.SetCamera(c)
 	r.points = r.points[:0]
-	r.sp.SetColor(NewVec3(0, 0, 1))
+	r.sp.SetColor(math.NewVec3(0, 0, 1))
 	for _, m := range s.meshes {
 		r.sp.SetMesh(m)
 		for _, subMesh := range m.subMeshes {

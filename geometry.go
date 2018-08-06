@@ -1,31 +1,32 @@
 package main
 
 import (
-	"math"
+	stdmath "math"
+	"github.com/hersle/gl3d/math"
 )
 
 type Box struct {
-	Min Vec3
-	Max Vec3
+	Min math.Vec3
+	Max math.Vec3
 }
 
 type Sphere struct {
-	Center Vec3
+	Center math.Vec3
 	Radius float32
 }
 
-func NewBox(point1, point2 Vec3) *Box {
+func NewBox(point1, point2 math.Vec3) *Box {
 	var b Box
 
-	minX := float32(math.Min(float64(point1.X()), float64(point2.X())))
-	minY := float32(math.Min(float64(point1.Y()), float64(point2.Y())))
-	minZ := float32(math.Min(float64(point1.Z()), float64(point2.Z())))
-	b.Min = NewVec3(minX, minY, minZ)
+	minX := float32(stdmath.Min(float64(point1.X()), float64(point2.X())))
+	minY := float32(stdmath.Min(float64(point1.Y()), float64(point2.Y())))
+	minZ := float32(stdmath.Min(float64(point1.Z()), float64(point2.Z())))
+	b.Min = math.NewVec3(minX, minY, minZ)
 
-	maxX := float32(math.Max(float64(point1.X()), float64(point2.X())))
-	maxY := float32(math.Max(float64(point1.Y()), float64(point2.Y())))
-	maxZ := float32(math.Max(float64(point1.Z()), float64(point2.Z())))
-	b.Max = NewVec3(maxX, maxY, maxZ)
+	maxX := float32(stdmath.Max(float64(point1.X()), float64(point2.X())))
+	maxY := float32(stdmath.Max(float64(point1.Y()), float64(point2.Y())))
+	maxZ := float32(stdmath.Max(float64(point1.Z()), float64(point2.Z())))
+	b.Max = math.NewVec3(maxX, maxY, maxZ)
 
 	return &b
 }
@@ -42,11 +43,11 @@ func (b *Box) Dz() float32 {
 	return b.Max.Z() - b.Min.Z()
 }
 
-func (b *Box) Center() Vec3 {
+func (b *Box) Center() math.Vec3 {
 	return b.Min.Add(b.Max).Scale(0.5)
 }
 
-func NewSphere(center Vec3, radius float32) *Sphere {
+func NewSphere(center math.Vec3, radius float32) *Sphere {
 	var s Sphere
 
 	s.Center = center
