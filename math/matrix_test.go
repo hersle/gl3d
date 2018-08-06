@@ -1,9 +1,9 @@
 package math
 
 import (
-	"testing"
 	"math"
 	"math/rand"
+	"testing"
 	"time"
 )
 
@@ -25,7 +25,7 @@ func TestDeterminant(t *testing.T) {
 
 		for i := 0; i < 4; i++ {
 			for j := 0; j < 4; j++ {
-				a.Set(i, j, rand.Float32() * 100)
+				a.Set(i, j, rand.Float32()*100)
 				b.Set(i, j, a.At(i, j))
 			}
 		}

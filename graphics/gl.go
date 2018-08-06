@@ -1,55 +1,55 @@
 package graphics
 
 import (
-	"github.com/hersle/gl3d/math"
+	_ "github.com/ftrvxmtrx/tga"
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"reflect"
+	"github.com/hersle/gl3d/math"
 	"image"
 	"image/draw"
-	"unsafe"
-	"os"
 	_ "image/jpeg"
 	_ "image/png"
-	_ "github.com/ftrvxmtrx/tga"
+	"os"
+	"reflect"
+	"unsafe"
 )
 
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
-	prog *ShaderProgram
-	framebuffer *Framebuffer
-	depthTest bool
-	depthFunc uint32
-	blend bool
+	prog           *ShaderProgram
+	framebuffer    *Framebuffer
+	depthTest      bool
+	depthFunc      uint32
+	blend          bool
 	blendSrcFactor uint32
 	blendDstFactor uint32
-	viewportWidth int
+	viewportWidth  int
 	viewportHeight int
-	cull bool
-	cullFace uint32
-	polygonMode uint32
+	cull           bool
+	cullFace       uint32
+	polygonMode    uint32
 }
 
 type RenderCommand struct {
 	primitiveType uint32
-	vertexCount int
-	offset int
-	state *RenderState
+	vertexCount   int
+	offset        int
+	state         *RenderState
 }
 
 type Buffer struct {
-	id uint32
+	id   uint32
 	size int
 }
 
 type Texture2D struct {
-	id uint32
-	Width int
+	id     uint32
+	Width  int
 	Height int
 }
 
 type CubeMap struct {
-	id uint32
-	Width int
+	id     uint32
+	Width  int
 	Height int
 }
 
@@ -59,7 +59,7 @@ type Framebuffer struct {
 
 type RenderStatistics struct {
 	DrawCallCount int
-	VertexCount int
+	VertexCount   int
 }
 
 func readImage(filename string) (image.Image, error) {
@@ -98,7 +98,7 @@ func byteSlice(data interface{}) []byte {
 	}
 	size := val.Len() * int(val.Type().Elem().Size())
 	p := unsafe.Pointer(val.Index(0).UnsafeAddr())
-	bytes := (*(*[1<<31]byte)(p))[:size]
+	bytes := (*(*[1 << 31]byte)(p))[:size]
 	return bytes
 }
 
@@ -138,7 +138,7 @@ func NewTexture2DFromImage(filterMode, wrapMode int32, format uint32, img image.
 		img2 := image.NewRGBA(img.Bounds())
 		for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 			for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
-				img2.SetRGBA(x, img.Bounds().Max.Y - y, img.RGBAAt(x, y))
+				img2.SetRGBA(x, img.Bounds().Max.Y-y, img.RGBAAt(x, y))
 			}
 		}
 
@@ -235,7 +235,7 @@ func (f *Framebuffer) SetTextureCubeMapFace(attachment uint32, t *CubeMap, level
 }
 
 func (f *Framebuffer) ClearColor(rgba math.Vec4) {
-	gl.ClearNamedFramebufferfv(f.id, gl.COLOR, 0,  &rgba[0])
+	gl.ClearNamedFramebufferfv(f.id, gl.COLOR, 0, &rgba[0])
 }
 
 func (f *Framebuffer) ClearDepth(clearDepth float32) {

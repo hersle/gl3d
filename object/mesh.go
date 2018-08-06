@@ -1,14 +1,14 @@
 package object
 
 import (
-	"github.com/hersle/gl3d/math"
+	"bufio"
+	"errors"
+	"fmt"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/material"
+	"github.com/hersle/gl3d/math"
 	"os"
 	"path"
-	"bufio"
-	"fmt"
-	"errors"
 	"strings"
 	"unsafe"
 )
@@ -28,14 +28,14 @@ type Mesh struct {
 type SubMesh struct {
 	Verts []Vertex
 	Faces []int32
-	Vbo *graphics.Buffer
-	Ibo *graphics.Buffer
-	Inds int
-	Mtl *material.Material
+	Vbo   *graphics.Buffer
+	Ibo   *graphics.Buffer
+	Inds  int
+	Mtl   *material.Material
 }
 
 type indexedVertex struct {
-	v int
+	v  int
 	vt int
 	vn int
 }
@@ -46,7 +46,7 @@ type indexedTriangle struct {
 }
 
 type smoothingGroup struct {
-	id int
+	id    int
 	iTris []indexedTriangle
 }
 
@@ -89,7 +89,7 @@ func NewSubMesh() *SubMesh {
 }
 
 func (sm *SubMesh) AddTriangle(vert1, vert2, vert3 Vertex) {
-	i1, i2, i3 := len(sm.Verts) + 0, len(sm.Verts) + 1, len(sm.Verts) + 2
+	i1, i2, i3 := len(sm.Verts)+0, len(sm.Verts)+1, len(sm.Verts)+2
 	sm.Faces = append(sm.Faces, int32(i1), int32(i2), int32(i3))
 	sm.Verts = append(sm.Verts, vert1, vert2, vert3)
 }
@@ -270,8 +270,8 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	}
 
 	for _, sGroup := range sGroups {
-		var weightedNormals []math.Vec3 = make([]math.Vec3, len(positions) + 1)
-		var weightedTangents []math.Vec3 = make([]math.Vec3, len(positions) + 1)
+		var weightedNormals []math.Vec3 = make([]math.Vec3, len(positions)+1)
+		var weightedTangents []math.Vec3 = make([]math.Vec3, len(positions)+1)
 		for i := 0; i < len(sGroup.iTris); i++ {
 			iTri := sGroup.iTris[i]
 			v1, v2, v3 := iTri.iVerts[0].v, iTri.iVerts[1].v, iTri.iVerts[2].v
@@ -285,14 +285,14 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			vt1, vt2, vt3 := iTri.iVerts[0].vt, iTri.iVerts[1].vt, iTri.iVerts[2].vt
 			dTexCoord1 := texCoords[vt1].Sub(texCoords[vt3])
 			dTexCoord2 := texCoords[vt2].Sub(texCoords[vt3])
-			det := (dTexCoord1.X() * dTexCoord2.Y() - dTexCoord2.X() * dTexCoord1.Y())
+			det := (dTexCoord1.X()*dTexCoord2.Y() - dTexCoord2.X()*dTexCoord1.Y())
 			if det != 0 {
 				det = 1 / det
 			}
 			tangent := math.NewVec3(
-				dTexCoord2.Y() * edge1.X() - dTexCoord1.Y() * edge2.X(),
-				dTexCoord2.Y() * edge1.Y() - dTexCoord1.Y() * edge2.Y(),
-				dTexCoord2.Y() * edge1.Z() - dTexCoord1.Y() * edge2.Z(),
+				dTexCoord2.Y()*edge1.X()-dTexCoord1.Y()*edge2.X(),
+				dTexCoord2.Y()*edge1.Y()-dTexCoord1.Y()*edge2.Y(),
+				dTexCoord2.Y()*edge1.Z()-dTexCoord1.Y()*edge2.Z(),
 			).Scale(det)
 			if det != 0 {
 				// tangent is not zero vector

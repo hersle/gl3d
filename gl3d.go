@@ -1,18 +1,18 @@
 package main
 
 import (
-	"github.com/hersle/gl3d/window"
+	"fmt"
+	"github.com/go-gl/glfw/v3.2/glfw"
+	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
+	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
-	"github.com/hersle/gl3d/camera"
-	"github.com/hersle/gl3d/light"
-	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/render"
+	"github.com/hersle/gl3d/scene"
+	"github.com/hersle/gl3d/window"
 	"os"
-	"github.com/go-gl/glfw/v3.2/glfw"
 	"time"
-	"fmt"
 )
 
 func main() {
@@ -29,7 +29,7 @@ func main() {
 		}
 		if filename == "assets/objects/car/car.obj" {
 			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
-			model.RotateX(-3.1415/2)
+			model.RotateX(-3.1415 / 2)
 			model.RotateY(3.1415 - 3.1415/5)
 		}
 		if filename == "assets/objects/sponza/sponza.obj" || filename == "assets/objects/sponza2/sponza.obj" {
@@ -125,16 +125,16 @@ func main() {
 			c.Translate(c.Right().Scale(camFactor * -0.1))
 		}
 		if window.Win.GetKey(glfw.KeyUp) == glfw.Press {
-			c.Rotate(c.Right(), camFactor * +0.03)
+			c.Rotate(c.Right(), camFactor*+0.03)
 		}
 		if window.Win.GetKey(glfw.KeyDown) == glfw.Press {
-			c.Rotate(c.Right(), camFactor * -0.03)
+			c.Rotate(c.Right(), camFactor*-0.03)
 		}
 		if window.Win.GetKey(glfw.KeyLeft) == glfw.Press {
-			c.Rotate(math.NewVec3(0, 1, 0), camFactor * +0.03)
+			c.Rotate(math.NewVec3(0, 1, 0), camFactor*+0.03)
 		}
 		if window.Win.GetKey(glfw.KeyRight) == glfw.Press {
-			c.Rotate(math.NewVec3(0, 1, 0), camFactor * -0.03)
+			c.Rotate(math.NewVec3(0, 1, 0), camFactor*-0.03)
 		}
 		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
 			//s.pointLights[0].Place(c.position)

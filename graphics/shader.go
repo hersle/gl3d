@@ -1,10 +1,10 @@
 package graphics
 
 import (
-	"github.com/hersle/gl3d/math"
-	"github.com/go-gl/gl/v4.5-core/gl"
-	"io/ioutil"
 	"errors"
+	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/hersle/gl3d/math"
+	"io/ioutil"
 )
 
 type ShaderProgram struct {
@@ -17,16 +17,16 @@ type Shader struct {
 }
 
 type Attrib struct {
-	prog *ShaderProgram
-	id uint32
+	prog        *ShaderProgram
+	id          uint32
 	nComponents int
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
 type UniformBasic struct {
-	progID uint32
+	progID   uint32
 	location uint32
-	glType uint32
+	glType   uint32
 }
 
 type UniformInteger struct {
@@ -63,7 +63,7 @@ type UniformBool struct {
 }
 
 type VertexArray struct {
-	id uint32
+	id             uint32
 	hasIndexBuffer bool
 }
 
@@ -129,8 +129,8 @@ func (s *Shader) Compiled() bool {
 func (s *Shader) Log() string {
 	var length int32
 	gl.GetShaderiv(s.id, gl.INFO_LOG_LENGTH, &length)
-	log := string(make([]byte, length + 1))
-	gl.GetShaderInfoLog(s.id, length + 1, nil, gl.Str(log))
+	log := string(make([]byte, length+1))
+	gl.GetShaderInfoLog(s.id, length+1, nil, gl.Str(log))
 	log = log[:len(log)-1] // remove null terminator
 	return log
 }
@@ -213,8 +213,8 @@ func (p *ShaderProgram) Linked() bool {
 func (p *ShaderProgram) Log() string {
 	var length int32
 	gl.GetProgramiv(p.id, gl.INFO_LOG_LENGTH, &length)
-	log := string(make([]byte, length + 1))
-	gl.GetProgramInfoLog(p.id, length + 1, nil, gl.Str(log))
+	log := string(make([]byte, length+1))
+	gl.GetProgramInfoLog(p.id, length+1, nil, gl.Str(log))
 	log = log[:len(log)-1] // remove null terminator
 	return log
 }
@@ -291,7 +291,7 @@ func (p *ShaderProgram) Bind() {
 
 func (p *ShaderProgram) Attrib(name string) *Attrib {
 	var a Attrib
-	loc := gl.GetAttribLocation(p.id, gl.Str(name + "\x00"))
+	loc := gl.GetAttribLocation(p.id, gl.Str(name+"\x00"))
 	if loc == -1 {
 		return nil
 	}
@@ -320,13 +320,13 @@ func (p *ShaderProgram) Attrib(name string) *Attrib {
 
 func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 	var u UniformBasic
-	loc := gl.GetUniformLocation(p.id, gl.Str(name + "\x00"))
+	loc := gl.GetUniformLocation(p.id, gl.Str(name+"\x00"))
 	if loc == -1 {
 		return nil
 	}
 	u.location = uint32(loc)
 	u.progID = p.id
-	index := gl.GetProgramResourceIndex(p.id, gl.UNIFORM, gl.Str(name + "\x00"))
+	index := gl.GetProgramResourceIndex(p.id, gl.UNIFORM, gl.Str(name+"\x00"))
 	gl.GetActiveUniform(p.id, index, 0, nil, nil, &u.glType, nil)
 	return &u
 }
@@ -387,6 +387,7 @@ func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
 }
 
 var textureUnitsUsed uint32 = 0
+
 func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 	var u UniformSampler
 	u.UniformBasic = *p.UniformBasic(name)
@@ -413,79 +414,79 @@ type MeshShaderProgram struct {
 
 	Position *Attrib
 	TexCoord *Attrib
-	Normal *Attrib
-	Tangent *Attrib
+	Normal   *Attrib
+	Tangent  *Attrib
 
-	ModelMatrix *UniformMatrix4
-	ViewMatrix *UniformMatrix4
+	ModelMatrix      *UniformMatrix4
+	ViewMatrix       *UniformMatrix4
 	ProjectionMatrix *UniformMatrix4
 
-	Ambient *UniformVector3
-	AmbientMap *UniformSampler
-	Diffuse *UniformVector3
-	DiffuseMap *UniformSampler
-	Specular *UniformVector3
+	Ambient     *UniformVector3
+	AmbientMap  *UniformSampler
+	Diffuse     *UniformVector3
+	DiffuseMap  *UniformSampler
+	Specular    *UniformVector3
 	SpecularMap *UniformSampler
-	Shine *UniformFloat
-	Alpha *UniformFloat
-	AlphaMap *UniformSampler
+	Shine       *UniformFloat
+	Alpha       *UniformFloat
+	AlphaMap    *UniformSampler
 	HasAlphaMap *UniformBool
-	BumpMap *UniformSampler
-	HasBumpMap *UniformBool
+	BumpMap     *UniformSampler
+	HasBumpMap  *UniformBool
 
-	LightType *UniformInteger
-	LightPos *UniformVector3
-	LightDir *UniformVector3
-	AmbientLight *UniformVector3
-	DiffuseLight *UniformVector3
-	SpecularLight *UniformVector3
-	ShadowViewMatrix *UniformMatrix4
+	LightType              *UniformInteger
+	LightPos               *UniformVector3
+	LightDir               *UniformVector3
+	AmbientLight           *UniformVector3
+	DiffuseLight           *UniformVector3
+	SpecularLight          *UniformVector3
+	ShadowViewMatrix       *UniformMatrix4
 	ShadowProjectionMatrix *UniformMatrix4
-	SpotShadowMap *UniformSampler
-	CubeShadowMap *UniformSampler
-	ShadowFar *UniformFloat
+	SpotShadowMap          *UniformSampler
+	CubeShadowMap          *UniformSampler
+	ShadowFar              *UniformFloat
 }
 
 type SkyboxShaderProgram struct {
 	*ShaderProgram
-	ViewMatrix *UniformMatrix4
+	ViewMatrix       *UniformMatrix4
 	ProjectionMatrix *UniformMatrix4
-	CubeMap *UniformSampler
-	Position *Attrib
+	CubeMap          *UniformSampler
+	Position         *Attrib
 }
 
 type TextShaderProgram struct {
 	*ShaderProgram
-	Atlas *UniformSampler
+	Atlas    *UniformSampler
 	Position *Attrib
 	TexCoord *Attrib
 }
 
 type ShadowMapShaderProgram struct {
 	*ShaderProgram
-	ModelMatrix *UniformMatrix4
-	ViewMatrix *UniformMatrix4
+	ModelMatrix      *UniformMatrix4
+	ViewMatrix       *UniformMatrix4
 	ProjectionMatrix *UniformMatrix4
-	LightPosition *UniformVector3
-	Far *UniformFloat
-	Position *Attrib
+	LightPosition    *UniformVector3
+	Far              *UniformFloat
+	Position         *Attrib
 }
 
 type ArrowShaderProgram struct {
 	*ShaderProgram
-	ModelMatrix *UniformMatrix4
-	ViewMatrix *UniformMatrix4
+	ModelMatrix      *UniformMatrix4
+	ViewMatrix       *UniformMatrix4
 	ProjectionMatrix *UniformMatrix4
-	Color *UniformVector3
-	Position *Attrib
+	Color            *UniformVector3
+	Position         *Attrib
 }
 
 type DepthPassShaderProgram struct {
 	*ShaderProgram
-	ModelMatrix *UniformMatrix4
-	ViewMatrix *UniformMatrix4
+	ModelMatrix      *UniformMatrix4
+	ViewMatrix       *UniformMatrix4
 	ProjectionMatrix *UniformMatrix4
-	Position *Attrib
+	Position         *Attrib
 }
 
 func NewMeshShaderProgram() *MeshShaderProgram {

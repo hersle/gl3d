@@ -2,13 +2,13 @@ package render
 
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"github.com/hersle/gl3d/graphics"
-	"github.com/hersle/gl3d/math"
-	"github.com/hersle/gl3d/window"
-	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/camera"
+	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/light"
+	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
+	"github.com/hersle/gl3d/window"
 	"golang.org/x/image/font/basicfont"
 	"path"
 	"unsafe"

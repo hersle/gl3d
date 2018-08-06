@@ -1,11 +1,11 @@
 package light
 
 import (
-	"github.com/hersle/gl3d/math"
-	"github.com/hersle/gl3d/graphics"
-	"github.com/hersle/gl3d/object"
-	"github.com/hersle/gl3d/camera"
 	"github.com/go-gl/gl/v4.5-core/gl"
+	"github.com/hersle/gl3d/camera"
+	"github.com/hersle/gl3d/graphics"
+	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/object"
 )
 
 type AmbientLight struct {
@@ -14,18 +14,18 @@ type AmbientLight struct {
 
 type PointLight struct {
 	object.Object
-	Diffuse math.Vec3
-	Specular math.Vec3
-	ShadowMap *graphics.CubeMap
+	Diffuse        math.Vec3
+	Specular       math.Vec3
+	ShadowMap      *graphics.CubeMap
 	DirtyShadowMap bool
-	ShadowFar float32
+	ShadowFar      float32
 }
 
 type SpotLight struct {
 	camera.Camera
-	Diffuse math.Vec3
-	Specular math.Vec3
-	ShadowMap *graphics.Texture2D
+	Diffuse        math.Vec3
+	Specular       math.Vec3
+	ShadowMap      *graphics.Texture2D
 	DirtyShadowMap bool
 }
 

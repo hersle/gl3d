@@ -1,8 +1,8 @@
 package math
 
 import (
-	"math"
 	"fmt"
+	"math"
 )
 
 type Vec2 [2]float32
@@ -86,27 +86,27 @@ func (a Vec4) Vec3() Vec3 {
 }
 
 func (a Vec2) Add(b Vec2) Vec2 {
-	return NewVec2(a.X() + b.X(), a.Y() + b.Y())
+	return NewVec2(a.X()+b.X(), a.Y()+b.Y())
 }
 
 func (a Vec3) Add(b Vec3) Vec3 {
-	return NewVec3(a.X() + b.X(), a.Y() + b.Y(), a.Z() + b.Z())
+	return NewVec3(a.X()+b.X(), a.Y()+b.Y(), a.Z()+b.Z())
 }
 
 func (a Vec4) Add(b Vec4) Vec4 {
-	return NewVec4(a.X() + b.X(), a.Y() + b.Y(), a.Z() + b.Z(), a.W() + b.W())
+	return NewVec4(a.X()+b.X(), a.Y()+b.Y(), a.Z()+b.Z(), a.W()+b.W())
 }
 
 func (a Vec2) Scale(factor float32) Vec2 {
-	return NewVec2(factor * a.X(), factor * a.Y())
+	return NewVec2(factor*a.X(), factor*a.Y())
 }
 
 func (a Vec3) Scale(factor float32) Vec3 {
-	return NewVec3(factor * a.X(), factor * a.Y(), factor * a.Z())
+	return NewVec3(factor*a.X(), factor*a.Y(), factor*a.Z())
 }
 
 func (a Vec4) Scale(factor float32) Vec4 {
-	return NewVec4(factor * a.X(), factor * a.Y(), factor * a.Z(), factor * a.W())
+	return NewVec4(factor*a.X(), factor*a.Y(), factor*a.Z(), factor*a.W())
 }
 
 func (a Vec2) Sub(b Vec2) Vec2 {
@@ -122,27 +122,27 @@ func (a Vec4) Sub(b Vec4) Vec4 {
 }
 
 func (a Vec2) Mult(b Vec2) Vec2 {
-	return NewVec2(a.X() * b.X(), a.Y() * b.Y())
+	return NewVec2(a.X()*b.X(), a.Y()*b.Y())
 }
 
 func (a Vec3) Mult(b Vec3) Vec3 {
-	return NewVec3(a.X() * b.X(), a.Y() * b.Y(), a.Z() * b.Z())
+	return NewVec3(a.X()*b.X(), a.Y()*b.Y(), a.Z()*b.Z())
 }
 
 func (a Vec4) Mult(b Vec4) Vec4 {
-	return NewVec4(a.X() * b.X(), a.Y() * b.Y(), a.Z() * b.Z(), a.W() * b.W())
+	return NewVec4(a.X()*b.X(), a.Y()*b.Y(), a.Z()*b.Z(), a.W()*b.W())
 }
 
 func (a Vec2) Dot(b Vec2) float32 {
-	return a.X() * b.X() + a.Y() * b.Y()
+	return a.X()*b.X() + a.Y()*b.Y()
 }
 
 func (a Vec3) Dot(b Vec3) float32 {
-	return a.X() * b.X() + a.Y() * b.Y() + a.Z() * b.Z()
+	return a.X()*b.X() + a.Y()*b.Y() + a.Z()*b.Z()
 }
 
 func (a Vec4) Dot(b Vec4) float32 {
-	return a.X() * b.X() + a.Y() * b.Y() + a.Z() * b.Z() + a.W() * b.W()
+	return a.X()*b.X() + a.Y()*b.Y() + a.Z()*b.Z() + a.W()*b.W()
 }
 
 func (a Vec2) Length() float32 {
@@ -170,9 +170,9 @@ func (a Vec4) Norm() Vec4 {
 }
 
 func (a Vec3) Cross(b Vec3) Vec3 {
-	x := a.Y() * b.Z() - a.Z() * b.Y()
-	y := a.Z() * b.X() - a.X() * b.Z()
-	z := a.X() * b.Y() - a.Y() * b.X()
+	x := a.Y()*b.Z() - a.Z()*b.Y()
+	y := a.Z()*b.X() - a.X()*b.Z()
+	z := a.X()*b.Y() - a.Y()*b.X()
 	return NewVec3(x, y, z)
 }
 

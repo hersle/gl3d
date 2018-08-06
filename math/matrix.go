@@ -1,15 +1,15 @@
 package math
 
 import (
-	"math"
 	"fmt"
+	"math"
 )
 
-type Mat4 [4*4]float32
+type Mat4 [4 * 4]float32
 
 type MatrixStack struct {
 	matrices []*Mat4
-	top int
+	top      int
 }
 
 var internalMatStack *MatrixStack
@@ -24,7 +24,7 @@ func (ms *MatrixStack) New() *Mat4 {
 		ms.matrices = append(ms.matrices, NewMat4Zero())
 	}
 	ms.top++
-	return ms.matrices[ms.top - 1]
+	return ms.matrices[ms.top-1]
 }
 
 func (ms *MatrixStack) Pop() {
@@ -46,7 +46,7 @@ func NewMat4Identity() *Mat4 {
 }
 
 func (a *Mat4) index(i, j int) int {
-	return i * 4 + j
+	return i*4 + j
 }
 
 func (a *Mat4) At(i, j int) float32 {
@@ -144,17 +144,17 @@ func (a *Mat4) Determinant() float32 {
 	a41, a42, a43, a44 := a.At(3, 0), a.At(3, 1), a.At(3, 2), a.At(3, 3)
 
 	// 2D determinans (aijkl = aij * akl - ail * akj)
-	a3142 := a31 * a42 - a32 * a41
-	a3143 := a31 * a43 - a33 * a41
-	a3144 := a31 * a44 - a34 * a41
-	a3243 := a32 * a43 - a33 * a42
-	a3244 := a32 * a44 - a34 * a42
-	a3344 := a33 * a44 - a34 * a43
+	a3142 := a31*a42 - a32*a41
+	a3143 := a31*a43 - a33*a41
+	a3144 := a31*a44 - a34*a41
+	a3243 := a32*a43 - a33*a42
+	a3244 := a32*a44 - a34*a42
+	a3344 := a33*a44 - a34*a43
 
-	t1 := +1 * a11 * (a22 * a3344 - a23 * a3244 + a24 * a3243)
-	t2 := -1 * a12 * (a21 * a3344 - a23 * a3144 + a24 * a3143)
-	t3 := +1 * a13 * (a21 * a3244 - a22 * a3144 + a24 * a3142)
-	t4 := -1 * a14 * (a21 * a3243 - a22 * a3143 + a23 * a3142)
+	t1 := +1 * a11 * (a22*a3344 - a23*a3244 + a24*a3243)
+	t2 := -1 * a12 * (a21*a3344 - a23*a3144 + a24*a3143)
+	t3 := +1 * a13 * (a21*a3244 - a22*a3144 + a24*a3142)
+	t4 := -1 * a14 * (a21*a3243 - a22*a3143 + a23*a3142)
 
 	return t1 + t2 + t3 + t4
 }
@@ -290,25 +290,25 @@ func (a *Mat4) RotationZ(ang float32) *Mat4 {
 }
 
 func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
-	a.Scaling(NewVec3(2 / size.X(), 2 / size.Y(), -2 / size.Z()))
+	a.Scaling(NewVec3(2/size.X(), 2/size.Y(), -2/size.Z()))
 	return a
 }
 
 func (a *Mat4) Frustum(l, b, r, t, n, f float32) *Mat4 {
-	a.SetRow(0, NewVec4(2 * n / (r - l), 0, (r + l) / (r - l), 0))
-	a.SetRow(1, NewVec4(0, 2 * n / (t - b), (t + b) / (t - b), 0))
-	a.SetRow(2, NewVec4(0, 0, -(f + n) / (f - n), -2 * f * n / (f - n)))
+	a.SetRow(0, NewVec4(2*n/(r-l), 0, (r+l)/(r-l), 0))
+	a.SetRow(1, NewVec4(0, 2*n/(t-b), (t+b)/(t-b), 0))
+	a.SetRow(2, NewVec4(0, 0, -(f+n)/(f-n), -2*f*n/(f-n)))
 	a.SetRow(3, NewVec4(0, 0, -1, 0))
 	return a
 }
 
 func (a *Mat4) FrustumCentered(w, h, n, f float32) *Mat4 {
-	a.Frustum(-w / 2, -h / 2, +w / 2, +h / 2, n, f)
+	a.Frustum(-w/2, -h/2, +w/2, +h/2, n, f)
 	return a
 }
 
 func (a *Mat4) Perspective(fovY, aspect, n, f float32) *Mat4 {
-	h := 2 * n * float32(math.Tan(float64(fovY / 2)))
+	h := 2 * n * float32(math.Tan(float64(fovY/2)))
 	w := aspect * h
 	a.FrustumCentered(w, h, n, f)
 	return a
