@@ -3,17 +3,18 @@ package main
 import (
 	stdmath "math"
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/object"
 )
 
 type Camera struct {
-	Object
+	object.Object
 	fovY float32
 	aspect float32
 	near, far float32
 	viewMat math.Mat4
 	projMat math.Mat4
-	dirtyViewMat bool
-	dirtyProjMat bool
+	DirtyViewMat bool
+	DirtyProjMat bool
 }
 
 func NewCamera(fovYDeg, aspect, near, far float32) *Camera {
@@ -23,22 +24,22 @@ func NewCamera(fovYDeg, aspect, near, far float32) *Camera {
 	c.SetAspect(aspect)
 	c.near = near
 	c.far = far
-	c.dirtyViewMat = true
+	c.DirtyViewMat = true
 	c.updateViewMatrix()
 	c.updateProjectionMatrix()
 	return &c
 }
 
 func (c *Camera) Right() math.Vec3 {
-	return c.unitX
+	return c.UnitX
 }
 
 func (c *Camera) Up() math.Vec3 {
-	return c.unitY
+	return c.UnitY
 }
 
 func (c *Camera) Forward() math.Vec3 {
-	return c.unitZ.Scale(-1)
+	return c.UnitZ.Scale(-1)
 }
 
 func (c *Camera) SetForwardUp(forward, up math.Vec3) {
@@ -48,24 +49,24 @@ func (c *Camera) SetForwardUp(forward, up math.Vec3) {
 
 func (c *Camera) SetAspect(aspect float32) {
 	c.aspect = aspect
-	c.dirtyProjMat = true
+	c.DirtyProjMat = true
 }
 
 func (c *Camera) updateViewMatrix() {
 	// TODO: elegantly make the inverse of the underlying object world matrix
 	//c.viewMat.Copy(c.WorldMatrix()).MultScaling(NewVec3(1, 1, -1)).Invert()
-	c.viewMat.LookAt(c.position, c.position.Add(c.Forward()), c.Up())
-	c.dirtyViewMat = false
+	c.viewMat.LookAt(c.Position, c.Position.Add(c.Forward()), c.Up())
+	c.DirtyViewMat = false
 }
 
 func (c *Camera) updateProjectionMatrix() {
 	c.projMat.Perspective(c.fovY, c.aspect, c.near, c.far)
-	c.dirtyProjMat = false
+	c.DirtyProjMat = false
 }
 
 func (c *Camera) ViewMatrix() *math.Mat4 {
 	// camera view matrix dirty iff object world matrix (its inverse) is dirty
-	if c.dirtyWorldMatrix {
+	if c.DirtyWorldMatrix {
 		c.updateViewMatrix()
 	}
 	c.updateViewMatrix()
@@ -73,7 +74,7 @@ func (c *Camera) ViewMatrix() *math.Mat4 {
 }
 
 func (c *Camera) ProjectionMatrix() *math.Mat4 {
-	if c.dirtyProjMat {
+	if c.DirtyProjMat {
 		c.updateProjectionMatrix()
 	}
 	return &c.projMat

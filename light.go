@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/graphics"
+	"github.com/hersle/gl3d/object"
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
@@ -11,7 +12,7 @@ type AmbientLight struct {
 }
 
 type PointLight struct {
-	Object
+	object.Object
 	Diffuse math.Vec3
 	Specular math.Vec3
 	ShadowMap *graphics.CubeMap

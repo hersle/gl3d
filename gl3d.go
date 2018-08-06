@@ -4,6 +4,7 @@ import (
 	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/object"
 	"os"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"time"
@@ -18,7 +19,7 @@ func main() {
 
 	s := NewScene()
 	for _, filename := range os.Args[1:] {
-		model, err := ReadMesh(filename)
+		model, err := object.ReadMesh(filename)
 		if err != nil {
 			panic(err)
 		}
@@ -52,7 +53,7 @@ func main() {
 	s.AddSpotLight(NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.spotLights[0].Camera = *NewCamera(60, 1, 0.1, 50)
 	s.spotLights[0].Place(math.NewVec3(0, 3, 0))
-	s.spotLights[0].Orient(s.spotLights[0].position.Scale(-1).Norm(), math.NewVec3(0, 0, 1))
+	s.spotLights[0].Orient(s.spotLights[0].Position.Scale(-1).Norm(), math.NewVec3(0, 0, 1))
 	s.AddPointLight(NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.AddPointLight(NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.pointLights[1].Place(math.NewVec3(5, 0, 0))
@@ -98,7 +99,7 @@ func main() {
 			arrowRenderer.RenderNormals(s, c)
 		}
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
-		text += "position:   " + c.position.String() + "\n"
+		text += "position:   " + c.Position.String() + "\n"
 		text += "forward:    " + c.Forward().String() + "\n"
 		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
 		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
@@ -139,8 +140,8 @@ func main() {
 		}
 		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
 			//s.pointLights[0].Place(c.position)
-			s.spotLights[0].Place(c.position)
-			s.spotLights[0].Orient(c.unitX, c.unitY) // for spotlight
+			s.spotLights[0].Place(c.Position)
+			s.spotLights[0].Orient(c.UnitX, c.UnitY) // for spotlight
 		}
 		if window.Win.GetKey(glfw.KeyZ) == glfw.Press {
 			drawScene = true

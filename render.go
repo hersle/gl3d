@@ -5,17 +5,11 @@ import (
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/window"
+	"github.com/hersle/gl3d/object"
 	"golang.org/x/image/font/basicfont"
 	"path"
 	"unsafe"
 )
-
-type Vertex struct {
-	pos      math.Vec3
-	texCoord math.Vec2
-	normal   math.Vec3
-	tangent  math.Vec3
-}
 
 var shadowCubeMap *graphics.CubeMap = nil
 
@@ -32,35 +26,6 @@ type SceneRenderer struct {
 	depthRenderState *graphics.RenderState
 
 	shadowMapRenderer *ShadowMapRenderer
-}
-
-func NewVertex(pos math.Vec3, texCoord math.Vec2, normal, tangent math.Vec3) Vertex {
-	var vert Vertex
-	vert.pos = pos
-	vert.texCoord = texCoord
-	vert.normal = normal
-	vert.tangent = tangent
-	return vert
-}
-
-func (_ *Vertex) Size() int {
-	return int(unsafe.Sizeof(Vertex{}))
-}
-
-func (_ *Vertex) PositionOffset() int {
-	return int(unsafe.Offsetof(Vertex{}.pos))
-}
-
-func (_ *Vertex) NormalOffset() int {
-	return int(unsafe.Offsetof(Vertex{}.normal))
-}
-
-func (_ *Vertex) TexCoordOffset() int {
-	return int(unsafe.Offsetof(Vertex{}.texCoord))
-}
-
-func (_ *Vertex) TangentOffset() int {
-	return int(unsafe.Offsetof(Vertex{}.tangent))
 }
 
 func NewSceneRenderer() (*SceneRenderer, error) {
@@ -98,13 +63,13 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	return &r, nil
 }
 
-func (r *SceneRenderer) renderMesh(m *Mesh, c *Camera) {
+func (r *SceneRenderer) renderMesh(m *object.Mesh, c *Camera) {
 	r.SetMesh(m)
 	r.SetCamera(c)
 
-	for _, subMesh := range m.subMeshes {
+	for _, subMesh := range m.SubMeshes {
 		r.SetSubMesh(subMesh)
-		graphics.NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
+		graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.renderState).Execute()
 	}
 }
 
@@ -120,9 +85,9 @@ func (r *SceneRenderer) DepthPass(s *Scene, c *Camera) {
 	r.SetDepthCamera(c)
 	for _, m := range s.meshes {
 		r.SetDepthMesh(m)
-		for _, subMesh := range m.subMeshes {
+		for _, subMesh := range m.SubMeshes {
 			r.SetDepthSubMesh(subMesh)
-			graphics.NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.depthRenderState).Execute()
+			graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.depthRenderState).Execute()
 		}
 	}
 }
@@ -183,12 +148,12 @@ func (r *SceneRenderer) SetCamera(c *Camera) {
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *SceneRenderer) SetMesh(m *Mesh) {
+func (r *SceneRenderer) SetMesh(m *object.Mesh) {
 	r.sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *SceneRenderer) SetSubMesh(sm *SubMesh) {
-	mtl := sm.mtl
+func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
+	mtl := sm.Mtl
 
 	r.sp.Ambient.Set(mtl.Ambient)
 	r.sp.AmbientMap.Set2D(mtl.AmbientMap)
@@ -213,12 +178,12 @@ func (r *SceneRenderer) SetSubMesh(sm *SubMesh) {
 		r.sp.HasBumpMap.Set(false)
 	}
 
-	var v Vertex
-	r.sp.Position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
-	r.sp.Normal.SetSource(sm.vbo, v.NormalOffset(), v.Size())
-	r.sp.TexCoord.SetSource(sm.vbo, v.TexCoordOffset(), v.Size())
-	r.sp.Tangent.SetSource(sm.vbo, v.TangentOffset(), v.Size())
-	r.sp.SetAttribIndexBuffer(sm.ibo)
+	var v object.Vertex
+	r.sp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
+	r.sp.Normal.SetSource(sm.Vbo, v.NormalOffset(), v.Size())
+	r.sp.TexCoord.SetSource(sm.Vbo, v.TexCoordOffset(), v.Size())
+	r.sp.Tangent.SetSource(sm.Vbo, v.TangentOffset(), v.Size())
+	r.sp.SetAttribIndexBuffer(sm.Ibo)
 }
 
 func (r *SceneRenderer) SetAmbientLight(l *AmbientLight) {
@@ -228,7 +193,7 @@ func (r *SceneRenderer) SetAmbientLight(l *AmbientLight) {
 
 func (r *SceneRenderer) SetPointLight(l *PointLight) {
 	r.sp.LightType.Set(1)
-	r.sp.LightPos.Set(l.position)
+	r.sp.LightPos.Set(l.Position)
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
 	r.sp.CubeShadowMap.SetCube(l.ShadowMap)
@@ -237,7 +202,7 @@ func (r *SceneRenderer) SetPointLight(l *PointLight) {
 
 func (r *SceneRenderer) SetSpotLight(l *SpotLight) {
 	r.sp.LightType.Set(2)
-	r.sp.LightPos.Set(l.position)
+	r.sp.LightPos.Set(l.Position)
 	r.sp.LightDir.Set(l.Forward())
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
@@ -252,14 +217,14 @@ func (r *SceneRenderer) SetDepthCamera(c *Camera) {
 	r.dsp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *SceneRenderer) SetDepthMesh(m *Mesh) {
+func (r *SceneRenderer) SetDepthMesh(m *object.Mesh) {
 	r.dsp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *SceneRenderer) SetDepthSubMesh(sm *SubMesh) {
-	var v Vertex
-	r.dsp.Position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
-	r.dsp.SetAttribIndexBuffer(sm.ibo)
+func (r *SceneRenderer) SetDepthSubMesh(sm *object.SubMesh) {
+	var v object.Vertex
+	r.dsp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
+	r.dsp.SetAttribIndexBuffer(sm.Ibo)
 }
 
 type SkyboxRenderer struct {
@@ -380,7 +345,7 @@ func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
 }
 
 func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
-	var v Vertex
+	var v object.Vertex
 	r.sp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
 	r.sp.TexCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
 	r.sp.SetAttribIndexBuffer(ibo)
@@ -389,7 +354,7 @@ func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
 func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
 	r.renderState.SetViewport(window.Size())
 
-	var verts []Vertex
+	var verts []object.Vertex
 	var inds []int32
 
 	face := basicfont.Face7x13
@@ -415,10 +380,10 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
 				bl := math.NewVec2(tl.X(), br.Y())
 
 				normal := math.NewVec3(0, 0, 0)
-				vert1 := NewVertex(bl.Vec3(0), math.NewVec2(texX1, texY2), normal, math.Vec3{})
-				vert2 := NewVertex(br.Vec3(0), math.NewVec2(texX2, texY2), normal, math.Vec3{})
-				vert3 := NewVertex(tr.Vec3(0), math.NewVec2(texX2, texY1), normal, math.Vec3{})
-				vert4 := NewVertex(tl.Vec3(0), math.NewVec2(texX1, texY1), normal, math.Vec3{})
+				vert1 := object.NewVertex(bl.Vec3(0), math.NewVec2(texX1, texY2), normal, math.Vec3{})
+				vert2 := object.NewVertex(br.Vec3(0), math.NewVec2(texX2, texY2), normal, math.Vec3{})
+				vert3 := object.NewVertex(tr.Vec3(0), math.NewVec2(texX2, texY1), normal, math.Vec3{})
+				vert4 := object.NewVertex(tl.Vec3(0), math.NewVec2(texX1, texY1), normal, math.Vec3{})
 				inds = append(inds, int32(len(verts)+0))
 				inds = append(inds, int32(len(verts)+1))
 				inds = append(inds, int32(len(verts)+2))
@@ -469,19 +434,19 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 
 func (r *ShadowMapRenderer) SetCamera(c *Camera) {
 	r.sp.Far.Set(c.far)
-	r.sp.LightPosition.Set(c.position)
+	r.sp.LightPosition.Set(c.Position)
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *ShadowMapRenderer) SetMesh(m *Mesh) {
+func (r *ShadowMapRenderer) SetMesh(m *object.Mesh) {
 	r.sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *ShadowMapRenderer) SetSubMesh(sm *SubMesh) {
-	var v Vertex
-	r.sp.Position.SetSource(sm.vbo, v.PositionOffset(), v.Size())
-	r.sp.SetAttribIndexBuffer(sm.ibo)
+func (r *ShadowMapRenderer) SetSubMesh(sm *object.SubMesh) {
+	var v object.Vertex
+	r.sp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
+	r.sp.SetAttribIndexBuffer(sm.Ibo)
 }
 
 // render shadow map to l's shadow map
@@ -509,7 +474,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 	}
 
 	c := NewCamera(90, 1, 0.1, l.ShadowFar)
-	c.Place(l.position)
+	c.Place(l.Position)
 
 	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
 
@@ -525,10 +490,10 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 
 		for _, m := range s.meshes {
 			r.SetMesh(m)
-			for _, subMesh := range m.subMeshes {
+			for _, subMesh := range m.SubMeshes {
 				r.SetSubMesh(subMesh)
 
-				graphics.NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
+				graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.renderState).Execute()
 			}
 		}
 	}
@@ -549,10 +514,10 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
 
 	for _, m := range s.meshes {
 		r.SetMesh(m)
-		for _, subMesh := range m.subMeshes {
+		for _, subMesh := range m.SubMeshes {
 			r.SetSubMesh(subMesh)
 
-			graphics.NewRenderCommand(gl.TRIANGLES, subMesh.inds, 0, r.renderState).Execute()
+			graphics.NewRenderCommand(gl.TRIANGLES, subMesh.Inds, 0, r.renderState).Execute()
 		}
 	}
 
@@ -589,7 +554,7 @@ func (r *ArrowRenderer) SetCamera(c *Camera) {
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *ArrowRenderer) SetMesh(m *Mesh) {
+func (r *ArrowRenderer) SetMesh(m *object.Mesh) {
 	r.sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
@@ -609,10 +574,10 @@ func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
 	r.SetColor(math.NewVec3(1, 0, 0))
 	for _, m := range s.meshes {
 		r.SetMesh(m)
-		for _, subMesh := range m.subMeshes {
-			for _, i := range subMesh.faces {
-				p1 := subMesh.verts[i].pos
-				p2 := p1.Add(subMesh.verts[i].tangent)
+		for _, subMesh := range m.SubMeshes {
+			for _, i := range subMesh.Faces {
+				p1 := subMesh.Verts[i].Pos
+				p2 := p1.Add(subMesh.Verts[i].Tangent)
 				r.points = append(r.points, p1, p2)
 			}
 		}
@@ -628,10 +593,10 @@ func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
 	r.SetColor(math.NewVec3(0, 1, 0))
 	for _, m := range s.meshes {
 		r.SetMesh(m)
-		for _, subMesh := range m.subMeshes {
-			for _, i := range subMesh.faces {
-				p1 := subMesh.verts[i].pos
-				p2 := p1.Add(subMesh.verts[i].normal.Cross(subMesh.verts[i].tangent))
+		for _, subMesh := range m.SubMeshes {
+			for _, i := range subMesh.Faces {
+				p1 := subMesh.Verts[i].Pos
+				p2 := p1.Add(subMesh.Verts[i].Normal.Cross(subMesh.Verts[i].Tangent))
 				r.points = append(r.points, p1, p2)
 			}
 		}
@@ -647,10 +612,10 @@ func (r *ArrowRenderer) RenderNormals(s *Scene, c *Camera) {
 	r.SetColor(math.NewVec3(0, 0, 1))
 	for _, m := range s.meshes {
 		r.SetMesh(m)
-		for _, subMesh := range m.subMeshes {
-			for _, i := range subMesh.faces {
-				p1 := subMesh.verts[i].pos
-				p2 := p1.Add(subMesh.verts[i].normal)
+		for _, subMesh := range m.SubMeshes {
+			for _, i := range subMesh.Faces {
+				p1 := subMesh.Verts[i].Pos
+				p2 := p1.Add(subMesh.Verts[i].Normal)
 				r.points = append(r.points, p1, p2)
 			}
 		}

@@ -1,4 +1,4 @@
-package main
+package object
 
 import (
 	"github.com/hersle/gl3d/math"
@@ -10,20 +10,28 @@ import (
 	"fmt"
 	"errors"
 	"strings"
+	"unsafe"
 )
+
+type Vertex struct {
+	Pos      math.Vec3
+	TexCoord math.Vec2
+	Normal   math.Vec3
+	Tangent  math.Vec3
+}
 
 type Mesh struct {
 	Object
-	subMeshes []*SubMesh
+	SubMeshes []*SubMesh
 }
 
 type SubMesh struct {
-	verts []Vertex
-	faces []int32
-	vbo *graphics.Buffer
-	ibo *graphics.Buffer
-	inds int
-	mtl *material.Material
+	Verts []Vertex
+	Faces []int32
+	Vbo *graphics.Buffer
+	Ibo *graphics.Buffer
+	Inds int
+	Mtl *material.Material
 }
 
 type indexedVertex struct {
@@ -42,25 +50,54 @@ type smoothingGroup struct {
 	iTris []indexedTriangle
 }
 
+func NewVertex(pos math.Vec3, texCoord math.Vec2, normal, tangent math.Vec3) Vertex {
+	var vert Vertex
+	vert.Pos = pos
+	vert.TexCoord = texCoord
+	vert.Normal = normal
+	vert.Tangent = tangent
+	return vert
+}
+
+func (_ *Vertex) Size() int {
+	return int(unsafe.Sizeof(Vertex{}))
+}
+
+func (_ *Vertex) PositionOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.Pos))
+}
+
+func (_ *Vertex) NormalOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.Normal))
+}
+
+func (_ *Vertex) TexCoordOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.TexCoord))
+}
+
+func (_ *Vertex) TangentOffset() int {
+	return int(unsafe.Offsetof(Vertex{}.Tangent))
+}
+
 func NewSubMesh() *SubMesh {
 	var sm SubMesh
 	return &sm
 }
 
 func (sm *SubMesh) AddTriangle(vert1, vert2, vert3 Vertex) {
-	i1, i2, i3 := len(sm.verts) + 0, len(sm.verts) + 1, len(sm.verts) + 2
-	sm.faces = append(sm.faces, int32(i1), int32(i2), int32(i3))
-	sm.verts = append(sm.verts, vert1, vert2, vert3)
+	i1, i2, i3 := len(sm.Verts) + 0, len(sm.Verts) + 1, len(sm.Verts) + 2
+	sm.Faces = append(sm.Faces, int32(i1), int32(i2), int32(i3))
+	sm.Verts = append(sm.Verts, vert1, vert2, vert3)
 }
 
 func (sm *SubMesh) Finish() {
-	sm.vbo = graphics.NewBuffer()
-	sm.ibo = graphics.NewBuffer()
-	sm.vbo.SetData(sm.verts, 0)
-	sm.ibo.SetData(sm.faces, 0)
-	sm.inds = len(sm.faces)
-	if sm.mtl == nil {
-		sm.mtl = material.NewDefaultMaterial("")
+	sm.Vbo = graphics.NewBuffer()
+	sm.Ibo = graphics.NewBuffer()
+	sm.Vbo.SetData(sm.Verts, 0)
+	sm.Ibo.SetData(sm.Faces, 0)
+	sm.Inds = len(sm.Faces)
+	if sm.Mtl == nil {
+		sm.Mtl = material.NewDefaultMaterial("")
 	}
 }
 
@@ -222,10 +259,10 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	}
 
 	var m Mesh
-	m.subMeshes = make([]*SubMesh, len(mtls)) // one submesh per material
-	for i, _ := range m.subMeshes {
-		m.subMeshes[i] = NewSubMesh()
-		m.subMeshes[i].mtl = mtls[i]
+	m.SubMeshes = make([]*SubMesh, len(mtls)) // one submesh per material
+	for i, _ := range m.SubMeshes {
+		m.SubMeshes[i] = NewSubMesh()
+		m.SubMeshes[i].Mtl = mtls[i]
 	}
 
 	for _, sGroup := range sGroups {
@@ -286,18 +323,18 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				tangent = tangent.Sub(normal.Scale(tangent.Dot(normal))).Norm() // gram schmidt
 				verts[i] = NewVertex(pos, texCoord, normal, tangent)
 			}
-			m.subMeshes[iTri.mtlInd].AddTriangle(verts[0], verts[1], verts[2])
+			m.SubMeshes[iTri.mtlInd].AddTriangle(verts[0], verts[1], verts[2])
 		}
 	}
 
-	if len(m.subMeshes[0].verts) == 0 {
-		m.subMeshes = m.subMeshes[1:]
+	if len(m.SubMeshes[0].Verts) == 0 {
+		m.SubMeshes = m.SubMeshes[1:]
 	}
 
-	for i, _ := range m.subMeshes {
-		println("submesh", i, "with", len(m.subMeshes[i].verts), "verts")
-		m.subMeshes[i].Finish()
-		m.subMeshes[i].mtl.Finish()
+	for i, _ := range m.SubMeshes {
+		println("submesh", i, "with", len(m.SubMeshes[i].Verts), "verts")
+		m.SubMeshes[i].Finish()
+		m.SubMeshes[i].Mtl.Finish()
 	}
 
 	return &m, nil
