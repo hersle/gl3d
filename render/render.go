@@ -243,7 +243,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 
 	r.sp = graphics.NewSkyboxShaderProgram()
 
-	dir := "images/skybox/mountain/"
+	dir := "assets/skyboxes/mountain/"
 	names := []string{"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"}
 	var filenames [6]string
 	for i, name := range names {
