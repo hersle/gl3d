@@ -1,15 +1,15 @@
 package graphics
 
 import (
-	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"os"
 	"github.com/hersle/gl3d/math"
+	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"image"
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
 	_ "github.com/ftrvxmtrx/tga"
+	"os"
 	"unsafe"
 )
 
@@ -31,13 +31,13 @@ type WrapMode int
 
 const (
 	NearestFilter FilterMode = FilterMode(gl.NEAREST)
-	LinearFilter FilterMode = FilterMode(gl.LINEAR)
+	LinearFilter  FilterMode = FilterMode(gl.LINEAR)
 )
 
 const (
-	EdgeClampWrap WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
+	EdgeClampWrap   WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
 	BorderClampWrap WrapMode = WrapMode(gl.CLAMP_TO_BORDER)
-	RepeatWrap WrapMode = WrapMode(gl.REPEAT)
+	RepeatWrap      WrapMode = WrapMode(gl.REPEAT)
 )
 
 func readImage(filename string) (image.Image, error) {

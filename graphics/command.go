@@ -1,22 +1,22 @@
 package graphics
 
 import (
-	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"github.com/go-gl/gl/v4.5-core/gl"
+	_ "github.com/hersle/gl3d/window" // initialize graphics
 )
 
 type RenderCommand struct {
-	primitive Primitive
-	vertexCount   int
-	offset        int
-	state         *RenderState
+	primitive   Primitive
+	vertexCount int
+	offset      int
+	state       *RenderState
 }
 
 type Primitive int
 
 const (
-	Point Primitive = Primitive(gl.POINTS)
-	Line Primitive = Primitive(gl.LINES)
+	Point    Primitive = Primitive(gl.POINTS)
+	Line     Primitive = Primitive(gl.LINES)
 	Triangle Primitive = Primitive(gl.TRIANGLES)
 )
 

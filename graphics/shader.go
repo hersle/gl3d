@@ -1,10 +1,10 @@
 package graphics
 
 import (
-	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"errors"
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/math"
+	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"io/ioutil"
 )
 
