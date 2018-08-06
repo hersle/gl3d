@@ -8,6 +8,7 @@ import (
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/light"
+	"github.com/hersle/gl3d/scene"
 	"golang.org/x/image/font/basicfont"
 	"path"
 	"unsafe"
@@ -75,17 +76,17 @@ func (r *SceneRenderer) renderMesh(m *object.Mesh, c *camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) shadowPassPointLight(s *Scene, l *light.PointLight) {
+func (r *SceneRenderer) shadowPassPointLight(s *scene.Scene, l *light.PointLight) {
 	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
 }
 
-func (r *SceneRenderer) shadowPassSpotLight(s *Scene, l *light.SpotLight) {
+func (r *SceneRenderer) shadowPassSpotLight(s *scene.Scene, l *light.SpotLight) {
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
-func (r *SceneRenderer) DepthPass(s *Scene, c *camera.Camera) {
+func (r *SceneRenderer) DepthPass(s *scene.Scene, c *camera.Camera) {
 	r.SetDepthCamera(c)
-	for _, m := range s.meshes {
+	for _, m := range s.Meshes {
 		r.SetDepthMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			r.SetDepthSubMesh(subMesh)
@@ -94,38 +95,38 @@ func (r *SceneRenderer) DepthPass(s *Scene, c *camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) AmbientPass(s *Scene, c *camera.Camera) {
-	r.SetAmbientLight(s.ambientLight)
-	for _, m := range s.meshes {
+func (r *SceneRenderer) AmbientPass(s *scene.Scene, c *camera.Camera) {
+	r.SetAmbientLight(s.AmbientLight)
+	for _, m := range s.Meshes {
 		r.renderMesh(m, c)
 	}
 }
 
-func (r *SceneRenderer) PointLightPass(s *Scene, c *camera.Camera) {
-	for _, l := range s.pointLights {
+func (r *SceneRenderer) PointLightPass(s *scene.Scene, c *camera.Camera) {
+	for _, l := range s.PointLights {
 		r.shadowPassPointLight(s, l)
 
 		r.SetPointLight(l)
 
-		for _, m := range s.meshes {
+		for _, m := range s.Meshes {
 			r.renderMesh(m, c)
 		}
 	}
 }
 
-func (r *SceneRenderer) SpotLightPass(s *Scene, c *camera.Camera) {
-	for _, l := range s.spotLights {
+func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c *camera.Camera) {
+	for _, l := range s.SpotLights {
 		r.shadowPassSpotLight(s, l)
 
 		r.SetSpotLight(l)
 
-		for _, m := range s.meshes {
+		for _, m := range s.Meshes {
 			r.renderMesh(m, c)
 		}
 	}
 }
 
-func (r *SceneRenderer) Render(s *Scene, c *camera.Camera) {
+func (r *SceneRenderer) Render(s *scene.Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
@@ -452,7 +453,7 @@ func (r *ShadowMapRenderer) SetSubMesh(sm *object.SubMesh) {
 }
 
 // render shadow map to l's shadow map
-func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *light.PointLight) {
+func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
 	// TODO: re-render also when objects have moved
 	if !l.DirtyShadowMap {
 		return
@@ -490,7 +491,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *light.PointLi
 
 		r.SetCamera(c)
 
-		for _, m := range s.meshes {
+		for _, m := range s.Meshes {
 			r.SetMesh(m)
 			for _, subMesh := range m.SubMeshes {
 				r.SetSubMesh(subMesh)
@@ -503,7 +504,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *light.PointLi
 	l.DirtyShadowMap = false
 }
 
-func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *light.SpotLight) {
+func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
 	// TODO: re-render also when objects have moved
 	if !l.DirtyShadowMap {
 		return
@@ -514,7 +515,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *light.SpotLigh
 	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
 	r.SetCamera(&l.Camera)
 
-	for _, m := range s.meshes {
+	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			r.SetSubMesh(subMesh)
@@ -569,12 +570,12 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
 	r.sp.Position.SetSource(vbo, 0, stride)
 }
 
-func (r *ArrowRenderer) RenderTangents(s *Scene, c *camera.Camera) {
+func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(1, 0, 0))
-	for _, m := range s.meshes {
+	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Faces {
@@ -588,12 +589,12 @@ func (r *ArrowRenderer) RenderTangents(s *Scene, c *camera.Camera) {
 	graphics.NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderBitangents(s *Scene, c *camera.Camera) {
+func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 1, 0))
-	for _, m := range s.meshes {
+	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Faces {
@@ -607,12 +608,12 @@ func (r *ArrowRenderer) RenderBitangents(s *Scene, c *camera.Camera) {
 	graphics.NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderNormals(s *Scene, c *camera.Camera) {
+func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 0, 1))
-	for _, m := range s.meshes {
+	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Faces {

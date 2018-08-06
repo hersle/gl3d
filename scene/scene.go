@@ -1,4 +1,4 @@
-package main
+package scene
 
 import (
 	"github.com/hersle/gl3d/object"
@@ -6,17 +6,17 @@ import (
 )
 
 type Scene struct {
-	meshes []*object.Mesh
-	ambientLight *light.AmbientLight
-	spotLights []*light.SpotLight
-	pointLights []*light.PointLight
-	quad *object.Mesh
+	Meshes []*object.Mesh
+	AmbientLight *light.AmbientLight
+	SpotLights []*light.SpotLight
+	PointLights []*light.PointLight
+	Quad *object.Mesh
 }
 
 func NewScene() *Scene {
 	var s Scene
 	var err error
-	s.quad, err = object.ReadMesh("objects/quad.obj")
+	s.Quad, err = object.ReadMesh("objects/quad.obj")
 	if err != nil {
 		panic(err)
 	}
@@ -24,13 +24,13 @@ func NewScene() *Scene {
 }
 
 func (s *Scene) AddMesh(m *object.Mesh) {
-	s.meshes = append(s.meshes, m)
+	s.Meshes = append(s.Meshes, m)
 }
 
 func (s *Scene) AddPointLight(l *light.PointLight) {
-	s.pointLights = append(s.pointLights, l)
+	s.PointLights = append(s.PointLights, l)
 }
 
 func (s *Scene) AddSpotLight(l *light.SpotLight) {
-	s.spotLights = append(s.spotLights, l)
+	s.SpotLights = append(s.SpotLights, l)
 }
