@@ -8,6 +8,7 @@ import (
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/scene"
+	"github.com/hersle/gl3d/render"
 	"os"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"time"
@@ -15,7 +16,7 @@ import (
 )
 
 func main() {
-	renderer, err := NewSceneRenderer()
+	renderer, err := render.NewSceneRenderer()
 	if err != nil {
 		panic(err)
 	}
@@ -65,9 +66,9 @@ func main() {
 
 	var camFactor float32
 
-	skyboxRenderer := NewSkyboxRenderer() // disable while working with multiple lights
-	textRenderer := NewTextRenderer()
-	arrowRenderer := NewArrowRenderer()
+	skyboxRenderer := render.NewSkyboxRenderer() // disable while working with multiple lights
+	textRenderer := render.NewTextRenderer()
+	arrowRenderer := render.NewArrowRenderer()
 
 	// TODO: remove
 	renderer.Render(s, c)
