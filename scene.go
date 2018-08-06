@@ -2,13 +2,14 @@ package main
 
 import (
 	"github.com/hersle/gl3d/object"
+	"github.com/hersle/gl3d/light"
 )
 
 type Scene struct {
 	meshes []*object.Mesh
-	ambientLight *AmbientLight
-	spotLights []*SpotLight
-	pointLights []*PointLight
+	ambientLight *light.AmbientLight
+	spotLights []*light.SpotLight
+	pointLights []*light.PointLight
 	quad *object.Mesh
 }
 
@@ -26,10 +27,10 @@ func (s *Scene) AddMesh(m *object.Mesh) {
 	s.meshes = append(s.meshes, m)
 }
 
-func (s *Scene) AddPointLight(l *PointLight) {
+func (s *Scene) AddPointLight(l *light.PointLight) {
 	s.pointLights = append(s.pointLights, l)
 }
 
-func (s *Scene) AddSpotLight(l *SpotLight) {
+func (s *Scene) AddSpotLight(l *light.SpotLight) {
 	s.spotLights = append(s.spotLights, l)
 }

@@ -5,6 +5,8 @@ import (
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
+	"github.com/hersle/gl3d/camera"
+	"github.com/hersle/gl3d/light"
 	"os"
 	"github.com/go-gl/glfw/v3.2/glfw"
 	"time"
@@ -49,16 +51,16 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	s.ambientLight = NewAmbientLight(math.NewVec3(1, 1, 1))
-	s.AddSpotLight(NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
-	s.spotLights[0].Camera = *NewCamera(60, 1, 0.1, 50)
+	s.ambientLight = light.NewAmbientLight(math.NewVec3(1, 1, 1))
+	s.AddSpotLight(light.NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.spotLights[0].Camera = *camera.NewCamera(60, 1, 0.1, 50)
 	s.spotLights[0].Place(math.NewVec3(0, 3, 0))
 	s.spotLights[0].Orient(s.spotLights[0].Position.Scale(-1).Norm(), math.NewVec3(0, 0, 1))
-	s.AddPointLight(NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
-	s.AddPointLight(NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.pointLights[1].Place(math.NewVec3(5, 0, 0))
 
-	c := NewCamera(60, 1, 0.1, 50)
+	c := camera.NewCamera(60, 1, 0.1, 50)
 
 	var camFactor float32
 

@@ -1,29 +1,29 @@
-package main
+package camera
 
 import (
-	stdmath "math"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
+	stdmath "math"
 )
 
 type Camera struct {
 	object.Object
-	fovY float32
-	aspect float32
-	near, far float32
-	viewMat math.Mat4
-	projMat math.Mat4
+	fovY         float32
+	aspect       float32
+	near, Far    float32
+	viewMat      math.Mat4
+	projMat      math.Mat4
 	DirtyViewMat bool
 	DirtyProjMat bool
 }
 
-func NewCamera(fovYDeg, aspect, near, far float32) *Camera {
+func NewCamera(fovYDeg, aspect, near, Far float32) *Camera {
 	var c Camera
 	c.Object.Reset()
 	c.fovY = fovYDeg / 360.0 * 2.0 * stdmath.Pi
 	c.SetAspect(aspect)
 	c.near = near
-	c.far = far
+	c.Far = Far
 	c.DirtyViewMat = true
 	c.updateViewMatrix()
 	c.updateProjectionMatrix()
@@ -60,7 +60,7 @@ func (c *Camera) updateViewMatrix() {
 }
 
 func (c *Camera) updateProjectionMatrix() {
-	c.projMat.Perspective(c.fovY, c.aspect, c.near, c.far)
+	c.projMat.Perspective(c.fovY, c.aspect, c.near, c.Far)
 	c.DirtyProjMat = false
 }
 

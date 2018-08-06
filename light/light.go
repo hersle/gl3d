@@ -1,14 +1,15 @@
-package main
+package light
 
 import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/object"
+	"github.com/hersle/gl3d/camera"
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 type AmbientLight struct {
-	color math.Vec3
+	Color math.Vec3
 }
 
 type PointLight struct {
@@ -21,7 +22,7 @@ type PointLight struct {
 }
 
 type SpotLight struct {
-	Camera
+	camera.Camera
 	Diffuse math.Vec3
 	Specular math.Vec3
 	ShadowMap *graphics.Texture2D
@@ -30,7 +31,7 @@ type SpotLight struct {
 
 func NewAmbientLight(color math.Vec3) *AmbientLight {
 	var l AmbientLight
-	l.color = color
+	l.Color = color
 	return &l
 }
 

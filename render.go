@@ -6,6 +6,8 @@ import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/object"
+	"github.com/hersle/gl3d/camera"
+	"github.com/hersle/gl3d/light"
 	"golang.org/x/image/font/basicfont"
 	"path"
 	"unsafe"
@@ -63,7 +65,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	return &r, nil
 }
 
-func (r *SceneRenderer) renderMesh(m *object.Mesh, c *Camera) {
+func (r *SceneRenderer) renderMesh(m *object.Mesh, c *camera.Camera) {
 	r.SetMesh(m)
 	r.SetCamera(c)
 
@@ -73,15 +75,15 @@ func (r *SceneRenderer) renderMesh(m *object.Mesh, c *Camera) {
 	}
 }
 
-func (r *SceneRenderer) shadowPassPointLight(s *Scene, l *PointLight) {
+func (r *SceneRenderer) shadowPassPointLight(s *Scene, l *light.PointLight) {
 	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
 }
 
-func (r *SceneRenderer) shadowPassSpotLight(s *Scene, l *SpotLight) {
+func (r *SceneRenderer) shadowPassSpotLight(s *Scene, l *light.SpotLight) {
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
-func (r *SceneRenderer) DepthPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) DepthPass(s *Scene, c *camera.Camera) {
 	r.SetDepthCamera(c)
 	for _, m := range s.meshes {
 		r.SetDepthMesh(m)
@@ -92,14 +94,14 @@ func (r *SceneRenderer) DepthPass(s *Scene, c *Camera) {
 	}
 }
 
-func (r *SceneRenderer) AmbientPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) AmbientPass(s *Scene, c *camera.Camera) {
 	r.SetAmbientLight(s.ambientLight)
 	for _, m := range s.meshes {
 		r.renderMesh(m, c)
 	}
 }
 
-func (r *SceneRenderer) PointLightPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) PointLightPass(s *Scene, c *camera.Camera) {
 	for _, l := range s.pointLights {
 		r.shadowPassPointLight(s, l)
 
@@ -111,7 +113,7 @@ func (r *SceneRenderer) PointLightPass(s *Scene, c *Camera) {
 	}
 }
 
-func (r *SceneRenderer) SpotLightPass(s *Scene, c *Camera) {
+func (r *SceneRenderer) SpotLightPass(s *Scene, c *camera.Camera) {
 	for _, l := range s.spotLights {
 		r.shadowPassSpotLight(s, l)
 
@@ -123,7 +125,7 @@ func (r *SceneRenderer) SpotLightPass(s *Scene, c *Camera) {
 	}
 }
 
-func (r *SceneRenderer) Render(s *Scene, c *Camera) {
+func (r *SceneRenderer) Render(s *Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
@@ -143,7 +145,7 @@ func (r *SceneRenderer) SetWireframe(wireframe bool) {
 	}
 }
 
-func (r *SceneRenderer) SetCamera(c *Camera) {
+func (r *SceneRenderer) SetCamera(c *camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -186,12 +188,12 @@ func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.SetAttribIndexBuffer(sm.Ibo)
 }
 
-func (r *SceneRenderer) SetAmbientLight(l *AmbientLight) {
+func (r *SceneRenderer) SetAmbientLight(l *light.AmbientLight) {
 	r.sp.LightType.Set(0)
-	r.sp.AmbientLight.Set(l.color)
+	r.sp.AmbientLight.Set(l.Color)
 }
 
-func (r *SceneRenderer) SetPointLight(l *PointLight) {
+func (r *SceneRenderer) SetPointLight(l *light.PointLight) {
 	r.sp.LightType.Set(1)
 	r.sp.LightPos.Set(l.Position)
 	r.sp.DiffuseLight.Set(l.Diffuse)
@@ -200,7 +202,7 @@ func (r *SceneRenderer) SetPointLight(l *PointLight) {
 	r.sp.ShadowFar.Set(l.ShadowFar)
 }
 
-func (r *SceneRenderer) SetSpotLight(l *SpotLight) {
+func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.LightType.Set(2)
 	r.sp.LightPos.Set(l.Position)
 	r.sp.LightDir.Set(l.Forward())
@@ -209,10 +211,10 @@ func (r *SceneRenderer) SetSpotLight(l *SpotLight) {
 	r.sp.SpotShadowMap.Set2D(l.ShadowMap)
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
-	r.sp.ShadowFar.Set(l.Camera.far)
+	r.sp.ShadowFar.Set(l.Camera.Far)
 }
 
-func (r *SceneRenderer) SetDepthCamera(c *Camera) {
+func (r *SceneRenderer) SetDepthCamera(c *camera.Camera) {
 	r.dsp.ViewMatrix.Set(c.ViewMatrix())
 	r.dsp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -284,7 +286,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	return &r
 }
 
-func (r *SkyboxRenderer) SetCamera(c *Camera) {
+func (r *SkyboxRenderer) SetCamera(c *camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -299,7 +301,7 @@ func (r *SkyboxRenderer) SetCube(vbo, ibo *graphics.Buffer) {
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 
-func (r *SkyboxRenderer) Render(c *Camera) {
+func (r *SkyboxRenderer) Render(c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.SetSkybox(r.tex)
@@ -432,8 +434,8 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 	return &r
 }
 
-func (r *ShadowMapRenderer) SetCamera(c *Camera) {
-	r.sp.Far.Set(c.far)
+func (r *ShadowMapRenderer) SetCamera(c *camera.Camera) {
+	r.sp.Far.Set(c.Far)
 	r.sp.LightPosition.Set(c.Position)
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
@@ -450,7 +452,7 @@ func (r *ShadowMapRenderer) SetSubMesh(sm *object.SubMesh) {
 }
 
 // render shadow map to l's shadow map
-func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
+func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *light.PointLight) {
 	// TODO: re-render also when objects have moved
 	if !l.DirtyShadowMap {
 		return
@@ -473,7 +475,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 		math.NewVec3(0, -1, 0),
 	}
 
-	c := NewCamera(90, 1, 0.1, l.ShadowFar)
+	c := camera.NewCamera(90, 1, 0.1, l.ShadowFar)
 	c.Place(l.Position)
 
 	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
@@ -501,7 +503,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *Scene, l *PointLight) {
 	l.DirtyShadowMap = false
 }
 
-func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *SpotLight) {
+func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *Scene, l *light.SpotLight) {
 	// TODO: re-render also when objects have moved
 	if !l.DirtyShadowMap {
 		return
@@ -549,7 +551,7 @@ func NewArrowRenderer() *ArrowRenderer {
 	return &r
 }
 
-func (r *ArrowRenderer) SetCamera(c *Camera) {
+func (r *ArrowRenderer) SetCamera(c *camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -567,7 +569,7 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
 	r.sp.Position.SetSource(vbo, 0, stride)
 }
 
-func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
+func (r *ArrowRenderer) RenderTangents(s *Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
@@ -586,7 +588,7 @@ func (r *ArrowRenderer) RenderTangents(s *Scene, c *Camera) {
 	graphics.NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
+func (r *ArrowRenderer) RenderBitangents(s *Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
@@ -605,7 +607,7 @@ func (r *ArrowRenderer) RenderBitangents(s *Scene, c *Camera) {
 	graphics.NewRenderCommand(gl.LINES, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderNormals(s *Scene, c *Camera) {
+func (r *ArrowRenderer) RenderNormals(s *Scene, c *camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
