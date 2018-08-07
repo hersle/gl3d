@@ -63,6 +63,7 @@ func main() {
 	skyboxRenderer := render.NewSkyboxRenderer() // disable while working with multiple lights
 	textRenderer := render.NewTextRenderer()
 	arrowRenderer := render.NewArrowRenderer()
+	quadRenderer := render.NewQuadRenderer()
 
 	// TODO: remove
 	renderer.Render(s, c)
@@ -87,6 +88,7 @@ func main() {
 		if drawScene {
 			renderer.Render(s, c)
 		}
+		quadRenderer.Render(renderer.RenderTarget)
 		if window.Win.GetKey(glfw.Key1) == glfw.Press {
 			arrowRenderer.RenderTangents(s, c)
 		}

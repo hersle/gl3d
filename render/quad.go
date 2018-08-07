@@ -37,6 +37,7 @@ func NewQuadRenderer() *QuadRenderer {
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetDepthTest(false)
+	r.renderState.SetBlend(false)
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetCull(false)

@@ -23,6 +23,10 @@ type SceneRenderer struct {
 	renderState      *graphics.RenderState
 	depthRenderState *graphics.RenderState
 
+	framebuffer *graphics.Framebuffer
+	RenderTarget *graphics.Texture2D
+	DepthRenderTarget *graphics.Texture2D
+
 	shadowMapRenderer *ShadowMapRenderer
 }
 
@@ -33,9 +37,17 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 
 	r.dsp = graphics.NewDepthPassShaderProgram()
 
+	w, h := window.Size()
+	w, h = w / 4, h / 4
+	r.RenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
+	r.DepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
+	r.framebuffer = graphics.NewFramebuffer()
+	r.framebuffer.SetTexture2D(graphics.ColorAttachment, r.RenderTarget, 0)
+	r.framebuffer.SetTexture2D(graphics.DepthAttachment, r.DepthRenderTarget, 0)
+
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
-	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
+	r.renderState.SetFramebuffer(r.framebuffer)
 	r.renderState.SetDepthTest(true)
 	r.renderState.SetDepthFunc(gl.LEQUAL) // enable drawing after depth prepass
 	r.renderState.SetBlend(true)
@@ -43,16 +55,18 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState.SetCull(true)
 	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.renderState.SetPolygonMode(gl.FILL)
+	r.renderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
 	r.depthRenderState = graphics.NewRenderState()
 	r.depthRenderState.SetShaderProgram(r.dsp.ShaderProgram)
-	r.depthRenderState.SetFramebuffer(graphics.DefaultFramebuffer)
+	r.depthRenderState.SetFramebuffer(r.framebuffer)
 	r.depthRenderState.SetDepthTest(true)
 	r.depthRenderState.SetDepthFunc(gl.LESS) // enable drawing after depth prepass
 	r.depthRenderState.SetBlend(false)
 	r.depthRenderState.SetCull(true)
 	r.depthRenderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.depthRenderState.SetPolygonMode(gl.FILL)
+	r.depthRenderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 
@@ -120,8 +134,8 @@ func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
-	r.renderState.SetViewport(window.Size())
-
+	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
+	r.framebuffer.ClearDepth(1)
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
 
 	r.renderState.SetBlend(false) // replace framebuffer contents
