@@ -19,6 +19,13 @@ type Plane struct {
 	Normal math.Vec3
 }
 
+type Frustum struct {
+	Width float32
+	Height float32
+	Near float32
+	Far float32
+}
+
 func NewBox(point1, point2 math.Vec3) *Box {
 	var b Box
 
@@ -77,4 +84,77 @@ func NewPlaneFromPoints(point1, point2, point3 math.Vec3) *Plane {
 
 func (p *Plane) Distance(point math.Vec3) {
 	return point.Sub(p.Point).Dot(p.Normal).Length()
+}
+
+func NewFrustum(width, height, near, far float32) *Frustum {
+	var f Frustum
+	f.Width = width
+	f.Height = height
+	f.Near = near
+	f.Far = far
+	return &f
+}
+
+func (f *Frustum) NearBottomLeft() math.Vec3 {
+	return NewVec3(-f.Width / 2, -f.Height / 2, -f.Near)
+}
+
+func (f *Frustum) NearBottomRight() math.Vec3 {
+	return f.NearBottomLeft().Add(NewVec3(f.Width, 0, 0))
+}
+
+func (f *Frustum) NearTopRight() math.Vec3 {
+	return f.NearBottomLeft().Add(NewVec3(f.Width, f.Height, 0))
+}
+
+func (f *Frustum) NearTopLeft() math.Vec3 {
+	return f.NearBottomLeft().Add(NewVec3(0, f.Height, 0))
+}
+
+func (f *Frustum) FarWidth() float32 {
+	return nearWidth * far / near
+}
+
+func (f *Frustum) FarHeight() float32 {
+	return f.FarWidth() * f.Height / f.Width
+}
+
+func (f *Frustum) FarBottomLeft() math.Vec3 {
+	return NewVec3(-f.FarWidth() / 2, -f.FarHeight() / 2, -f.Far)
+}
+
+func (f *Frustum) FarBottomRight() math.Vec3 {
+	return f.FarBottomLeft().Add(NewVec3(f.FarWidth(), 0, 0))
+}
+
+func (f *Frustum) FarTopRight() math.Vec3 {
+	return f.FarBottomLeft().Add(NewVec3(f.FarWidth(), f.FarHeight(), 0))
+}
+
+func (f *Frustum) FarTopLeft() math.Vec3 {
+	return f.FarBottomLeft().Add(NewVec3(0, f.FarHeight(), 0))
+}
+
+func (f *Frustum) NearPlane() *Plane {
+	return NewPlane(NewVec3(0, 0, -f.Near), NewVec3(0, 0, 1))
+}
+
+func (f *Frustum) FarPlane() *Plane {
+	return NewPlane(NewVec3(0, 0, -f.Far), NewVec3(0, 0, -1))
+}
+
+func (f *Frustum) LeftPlane() *Plane {
+	return NewPlaneFromPoints(f.NearBottomLeft(), f.NearTopLeft(), f.FarTopLeft())
+}
+
+func (f *Frustum) RightPlane() *Plane {
+	return NewPlaneFromPoints(f.NearTopRight(), f.NearBottomRight(), f.FarBottomRight())
+}
+
+func (f *Frustum) TopPlane() *Plane {
+	return NewPlaneFromPoints(f.NearTopLeft(), f.NearTopRight(), f.FarTopRight())
+}
+
+func (f *Frustum) BottomPlane() *Plane {
+	return NewPlaneFromPoints(f.NearBottomRight(), f.NearBottomLeft(), f.FarBottomLeft())
 }
