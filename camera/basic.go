@@ -48,14 +48,14 @@ func (c *BasicCamera) SetAspect(aspect float32) {
 	c.DirtyProjMat = true
 }
 
-func (c *PerspectiveCamera) updateViewMatrix() {
+func (c *BasicCamera) updateViewMatrix() {
 	// TODO: elegantly make the inverse of the underlying object world matrix
 	//c.viewMat.Copy(c.WorldMatrix()).MultScaling(NewVec3(1, 1, -1)).Invert()
 	c.viewMat.LookAt(c.Position, c.Position.Add(c.Forward()), c.Up())
 	c.DirtyViewMat = false
 }
 
-func (c *PerspectiveCamera) ViewMatrix() *math.Mat4 {
+func (c *BasicCamera) ViewMatrix() *math.Mat4 {
 	// camera view matrix dirty iff object world matrix (its inverse) is dirty
 	if c.DirtyWorldMatrix {
 		c.updateViewMatrix()
