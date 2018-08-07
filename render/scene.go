@@ -20,8 +20,6 @@ type SceneRenderer struct {
 	vbo, ibo  *graphics.Buffer
 	normalMat math.Mat4
 
-	shadowFb *graphics.Framebuffer
-
 	renderState      *graphics.RenderState
 	depthRenderState *graphics.RenderState
 
@@ -34,8 +32,6 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.sp = graphics.NewMeshShaderProgram()
 
 	r.dsp = graphics.NewDepthPassShaderProgram()
-
-	r.shadowFb = graphics.NewFramebuffer()
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
