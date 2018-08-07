@@ -496,6 +496,14 @@ type QuadShaderProgram struct {
 	Texture *UniformSampler
 }
 
+type DirectionalLightShadowMapShaderProgram struct {
+	*ShaderProgram
+	ModelMatrix *UniformMatrix4
+	ViewMatrix *UniformMatrix4
+	ProjectionMatrix *UniformMatrix4
+	Position *Attrib
+}
+
 func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
@@ -668,6 +676,25 @@ func NewQuadShaderProgram() *QuadShaderProgram {
 
 	sp.Position = sp.Attrib("position")
 	sp.Texture = sp.UniformSampler("tex")
+
+	return &sp
+}
+
+func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShaderProgram {
+	var sp DirectionalLightShadowMapShaderProgram
+	var err error
+
+	vShaderFilename := "graphics/shaders/directionallightvshader.glsl"
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, "", "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.Position = sp.Attrib("position")
+	sp.Position.SetFormat(gl.FLOAT, false)
 
 	return &sp
 }
