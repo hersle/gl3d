@@ -56,6 +56,7 @@ func main() {
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.PointLights[1].Place(math.NewVec3(5, 0, 0))
 	s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
+	s.AddDirectionalLight(light.NewDirectionalLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 

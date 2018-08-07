@@ -47,7 +47,12 @@ void main() {
 	mat3 tanToView = mat3(viewTangent, viewBitangent, viewNormal);
 	mat3 viewToTan = transpose(tanToView); // orthonormal
 
-	vec3 worldLightToVertex = worldPosition - light.position;
+	vec3 worldLightToVertex;
+	if (light.type == 3) {
+		worldLightToVertex = light.direction;
+	} else {
+		worldLightToVertex = worldPosition - light.position;
+	}
 	vec3 viewLightToVertex = vec3(viewMatrix * vec4(worldLightToVertex, 0));
 	tanLightToVertex = viewToTan * viewLightToVertex;
 

@@ -135,6 +135,16 @@ func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
+func (r *SceneRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
+	for _, l := range s.DirectionalLights {
+		// r.shadowPassDirectionalLight(s, l) TODO
+		r.SetDirectionalLight(l)
+		for _, m := range s.Meshes {
+			r.renderMesh(m, c)
+		}
+	}
+}
+
 func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
 	r.framebuffer.ClearDepth(1)
@@ -150,6 +160,7 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.renderState.SetBlend(true) // add to framebuffer contents
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
+	r.DirectionalLightPass(s, c)
 }
 
 func (r *SceneRenderer) SetWireframe(wireframe bool) {
@@ -227,6 +238,19 @@ func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
+}
+
+func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
+	r.sp.LightType.Set(3)
+	r.sp.LightDir.Set(l.Forward())
+	r.sp.DiffuseLight.Set(l.Diffuse)
+	r.sp.SpecularLight.Set(l.Specular)
+
+	// TODO:
+	//r.sp.SpotShadowMap.Set2D(l.ShadowMap)
+	//r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
+	//r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
+	//r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
 }
 
 func (r *SceneRenderer) SetDepthCamera(c camera.Camera) {
