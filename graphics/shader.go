@@ -490,6 +490,12 @@ type DepthPassShaderProgram struct {
 	Position         *Attrib
 }
 
+type QuadShaderProgram struct {
+	*ShaderProgram
+	Position *Attrib
+	Texture *UniformSampler
+}
+
 func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
@@ -645,6 +651,23 @@ func NewDepthPassShaderProgram() *DepthPassShaderProgram {
 	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
 	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
 	sp.Position.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
+func NewQuadShaderProgram() *QuadShaderProgram {
+	var sp QuadShaderProgram
+	var err error
+
+	vShaderFilename := "graphics/shaders/quadvshader.glsl" // TODO: make independent...
+	fShaderFilename := "graphics/shaders/quadfshader.glsl" // TODO: make independent...
+	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.Position = sp.Attrib("position")
+	sp.Texture = sp.UniformSampler("tex")
 
 	return &sp
 }
