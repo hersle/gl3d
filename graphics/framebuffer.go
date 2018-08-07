@@ -10,6 +10,14 @@ type Framebuffer struct {
 	id uint32
 }
 
+type FramebufferAttachment int
+
+const (
+	ColorAttachment FramebufferAttachment = FramebufferAttachment(gl.COLOR_ATTACHMENT0)
+	DepthAttachment FramebufferAttachment = FramebufferAttachment(gl.DEPTH_ATTACHMENT)
+	StencilAttachment FramebufferAttachment = FramebufferAttachment(gl.STENCIL_ATTACHMENT)
+)
+
 var DefaultFramebuffer *Framebuffer = &Framebuffer{0}
 
 func NewFramebuffer() *Framebuffer {
@@ -18,12 +26,12 @@ func NewFramebuffer() *Framebuffer {
 	return &f
 }
 
-func (f *Framebuffer) SetTexture2D(attachment uint32, t *Texture2D, level int32) {
-	gl.NamedFramebufferTexture(f.id, attachment, t.id, level)
+func (f *Framebuffer) AttachTexture2D(attachment FramebufferAttachment, t *Texture2D, level int32) {
+	gl.NamedFramebufferTexture(f.id, uint32(attachment), t.id, level)
 }
 
-func (f *Framebuffer) SetTextureCubeMapFace(attachment uint32, t *CubeMap, level int32, layer int32) {
-	gl.NamedFramebufferTextureLayer(f.id, attachment, t.id, level, layer)
+func (f *Framebuffer) AttachCubeMapFace(attachment FramebufferAttachment, cf *CubeMapFace, level int32) {
+	gl.NamedFramebufferTextureLayer(f.id, uint32(attachment), cf.CubeMap.id, level, int32(cf.layer))
 }
 
 func (f *Framebuffer) ClearColor(rgba math.Vec4) {

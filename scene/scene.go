@@ -3,6 +3,7 @@ package scene
 import (
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/object"
+	"github.com/hersle/gl3d/graphics"
 )
 
 type Scene struct {
@@ -10,6 +11,7 @@ type Scene struct {
 	AmbientLight *light.AmbientLight
 	SpotLights   []*light.SpotLight
 	PointLights  []*light.PointLight
+	Skybox       *graphics.CubeMap
 }
 
 func NewScene() *Scene {
@@ -31,4 +33,8 @@ func (s *Scene) AddPointLight(l *light.PointLight) {
 
 func (s *Scene) AddSpotLight(l *light.SpotLight) {
 	s.SpotLights = append(s.SpotLights, l)
+}
+
+func (s *Scene) AddSkybox(skybox *graphics.CubeMap) {
+	s.Skybox = skybox
 }

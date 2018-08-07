@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/light"
@@ -82,7 +81,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.P
 	//shadowCubeMap = l.shadowMap
 
 	for face := 0; face < 6; face++ {
-		r.framebuffer.SetTextureCubeMapFace(gl.DEPTH_ATTACHMENT, l.ShadowMap, 0, int32(face))
+		r.framebuffer.AttachCubeMapFace(graphics.DepthAttachment, l.ShadowMap.Face(graphics.CubeMapLayer(face)), 0)
 		r.framebuffer.ClearDepth(1)
 		c.SetForwardUp(forwards[face], ups[face])
 
@@ -107,7 +106,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.Sp
 		return
 	}
 
-	r.framebuffer.SetTexture2D(gl.DEPTH_ATTACHMENT, l.ShadowMap, 0)
+	r.framebuffer.AttachTexture2D(graphics.DepthAttachment, l.ShadowMap, 0)
 	r.framebuffer.ClearDepth(1)
 	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
 	r.SetCamera(&l.PerspectiveCamera)

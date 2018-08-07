@@ -5,8 +5,6 @@ import (
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
-	"github.com/hersle/gl3d/window"
-	"path"
 	"unsafe"
 )
 
@@ -22,14 +20,6 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	var r SkyboxRenderer
 
 	r.sp = graphics.NewSkyboxShaderProgram()
-
-	dir := "assets/skyboxes/mountain/"
-	names := []string{"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"}
-	var filenames [6]string
-	for i, name := range names {
-		filenames[i] = path.Join(dir, name)
-	}
-	r.tex = graphics.ReadCubeMap(graphics.NearestFilter, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
 
 	r.vbo = graphics.NewBuffer()
 	verts := []math.Vec3{
@@ -67,6 +57,14 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	return &r
 }
 
+func (r *SkyboxRenderer) SetFramebuffer(framebuffer *graphics.Framebuffer) {
+	r.renderState.SetFramebuffer(framebuffer)
+}
+
+func (r *SkyboxRenderer) SetFramebufferSize(width, height int) {
+	r.renderState.SetViewport(width, height)
+}
+
 func (r *SkyboxRenderer) SetCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
@@ -83,9 +81,7 @@ func (r *SkyboxRenderer) SetCube(vbo, ibo *graphics.Buffer) {
 }
 
 func (r *SkyboxRenderer) Render(c camera.Camera) {
-	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
-	r.SetSkybox(r.tex)
 
 	graphics.NewRenderCommand(graphics.Triangle, 36, 0, r.renderState).Execute()
 }
