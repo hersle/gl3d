@@ -66,7 +66,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	return &r, nil
 }
 
-func (r *SceneRenderer) renderMesh(m *object.Mesh, c *camera.Camera) {
+func (r *SceneRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
 	r.SetMesh(m)
 	r.SetCamera(c)
 
@@ -84,7 +84,7 @@ func (r *SceneRenderer) shadowPassSpotLight(s *scene.Scene, l *light.SpotLight) 
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
-func (r *SceneRenderer) DepthPass(s *scene.Scene, c *camera.Camera) {
+func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
 	r.SetDepthCamera(c)
 	for _, m := range s.Meshes {
 		r.SetDepthMesh(m)
@@ -95,14 +95,14 @@ func (r *SceneRenderer) DepthPass(s *scene.Scene, c *camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) AmbientPass(s *scene.Scene, c *camera.Camera) {
+func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	r.SetAmbientLight(s.AmbientLight)
 	for _, m := range s.Meshes {
 		r.renderMesh(m, c)
 	}
 }
 
-func (r *SceneRenderer) PointLightPass(s *scene.Scene, c *camera.Camera) {
+func (r *SceneRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.PointLights {
 		r.shadowPassPointLight(s, l)
 
@@ -114,7 +114,7 @@ func (r *SceneRenderer) PointLightPass(s *scene.Scene, c *camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c *camera.Camera) {
+func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.SpotLights {
 		r.shadowPassSpotLight(s, l)
 
@@ -126,7 +126,7 @@ func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c *camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) Render(s *scene.Scene, c *camera.Camera) {
+func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
@@ -146,7 +146,7 @@ func (r *SceneRenderer) SetWireframe(wireframe bool) {
 	}
 }
 
-func (r *SceneRenderer) SetCamera(c *camera.Camera) {
+func (r *SceneRenderer) SetCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -212,10 +212,10 @@ func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.SpotShadowMap.Set2D(l.ShadowMap)
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
-	r.sp.ShadowFar.Set(l.Camera.Far)
+	r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
 }
 
-func (r *SceneRenderer) SetDepthCamera(c *camera.Camera) {
+func (r *SceneRenderer) SetDepthCamera(c camera.Camera) {
 	r.dsp.ViewMatrix.Set(c.ViewMatrix())
 	r.dsp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -287,7 +287,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	return &r
 }
 
-func (r *SkyboxRenderer) SetCamera(c *camera.Camera) {
+func (r *SkyboxRenderer) SetCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -302,7 +302,7 @@ func (r *SkyboxRenderer) SetCube(vbo, ibo *graphics.Buffer) {
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 
-func (r *SkyboxRenderer) Render(c *camera.Camera) {
+func (r *SkyboxRenderer) Render(c camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.SetSkybox(r.tex)
@@ -435,7 +435,7 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 	return &r
 }
 
-func (r *ShadowMapRenderer) SetCamera(c *camera.Camera) {
+func (r *ShadowMapRenderer) SetCamera(c *camera.PerspectiveCamera) {
 	r.sp.Far.Set(c.Far)
 	r.sp.LightPosition.Set(c.Position)
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
@@ -476,7 +476,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.P
 		math.NewVec3(0, -1, 0),
 	}
 
-	c := camera.NewCamera(90, 1, 0.1, l.ShadowFar)
+	c := camera.NewPerspectiveCamera(90, 1, 0.1, l.ShadowFar)
 	c.Place(l.Position)
 
 	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
@@ -513,7 +513,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.Sp
 	r.framebuffer.SetTexture2D(gl.DEPTH_ATTACHMENT, l.ShadowMap, 0)
 	r.framebuffer.ClearDepth(1)
 	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
-	r.SetCamera(&l.Camera)
+	r.SetCamera(&l.PerspectiveCamera)
 
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
@@ -552,7 +552,7 @@ func NewArrowRenderer() *ArrowRenderer {
 	return &r
 }
 
-func (r *ArrowRenderer) SetCamera(c *camera.Camera) {
+func (r *ArrowRenderer) SetCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
@@ -570,7 +570,7 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
 	r.sp.Position.SetSource(vbo, 0, stride)
 }
 
-func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c *camera.Camera) {
+func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
@@ -589,7 +589,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c *camera.Camera) {
 	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c *camera.Camera) {
+func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]
@@ -608,7 +608,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c *camera.Camera) {
 	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c *camera.Camera) {
+func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera) {
 	r.renderState.SetViewport(window.Size())
 	r.SetCamera(c)
 	r.points = r.points[:0]

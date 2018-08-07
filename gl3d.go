@@ -49,14 +49,14 @@ func main() {
 
 	s.AmbientLight = light.NewAmbientLight(math.NewVec3(1, 1, 1))
 	s.AddSpotLight(light.NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
-	s.SpotLights[0].Camera = *camera.NewCamera(60, 1, 0.1, 50)
+	s.SpotLights[0].PerspectiveCamera = *camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 	s.SpotLights[0].Place(math.NewVec3(0, 3, 0))
 	s.SpotLights[0].Orient(s.SpotLights[0].Position.Scale(-1).Norm(), math.NewVec3(0, 0, 1))
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.PointLights[1].Place(math.NewVec3(5, 0, 0))
 
-	c := camera.NewCamera(60, 1, 0.1, 50)
+	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
 	var camFactor float32
 

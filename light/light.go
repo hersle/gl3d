@@ -22,7 +22,7 @@ type PointLight struct {
 }
 
 type SpotLight struct {
-	camera.Camera
+	camera.PerspectiveCamera
 	Diffuse        math.Vec3
 	Specular       math.Vec3
 	ShadowMap      *graphics.Texture2D
@@ -54,7 +54,7 @@ func NewSpotLight(diffuse, specular math.Vec3) *SpotLight {
 	var l SpotLight
 	l.Diffuse = diffuse
 	l.Specular = specular
-	l.Camera.Object.Reset()
+	l.PerspectiveCamera.Object.Reset()
 	l.ShadowMap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
 	l.ShadowMap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 	l.DirtyShadowMap = true
