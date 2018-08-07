@@ -14,6 +14,11 @@ type Sphere struct {
 	Radius float32
 }
 
+type Plane struct {
+	Point math.Vec3
+	Normal math.Vec3
+}
+
 func NewBox(point1, point2 math.Vec3) *Box {
 	var b Box
 
@@ -53,4 +58,23 @@ func NewSphere(center math.Vec3, radius float32) *Sphere {
 	s.Radius = radius
 
 	return &s
+}
+
+func NewPlane(point, normal math.Vec3) *Plane {
+	var p Plane
+	p.Point = point
+	p.Normal = normal.Norm()
+	return &p
+}
+
+func NewPlaneFromTangents(point, tangent1, tangent2 math.Vec3) *Plane {
+	return NewPlane(point, tangent.Cross(tangent2))
+}
+
+func NewPlaneFromPoints(point1, point2, point3 math.Vec3) *Plane {
+	return NewPlaneFromTangents(point1, point2.Sub(point1), point3.Sub(point1))
+}
+
+func (p *Plane) Distance(point math.Vec3) {
+	return point.Sub(p.Point).Dot(p.Normal).Length()
 }
