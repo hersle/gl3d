@@ -10,13 +10,11 @@ type Scene struct {
 	AmbientLight *light.AmbientLight
 	SpotLights   []*light.SpotLight
 	PointLights  []*light.PointLight
-	Quad         *object.Mesh
 }
 
 func NewScene() *Scene {
 	var s Scene
 	var err error
-	s.Quad, err = object.ReadMesh("assets/objects/quad/quad.obj")
 	if err != nil {
 		panic(err)
 	}
