@@ -28,6 +28,7 @@ type SceneRenderer struct {
 	DepthRenderTarget *graphics.Texture2D
 
 	shadowMapRenderer *ShadowMapRenderer
+	skyboxRenderer *SkyboxRenderer
 }
 
 func NewSceneRenderer() (*SceneRenderer, error) {
@@ -69,6 +70,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.depthRenderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
+	r.skyboxRenderer = NewSkyboxRenderer()
 
 	return &r, nil
 }
@@ -137,6 +139,11 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
 	r.framebuffer.ClearDepth(1)
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
+
+	r.skyboxRenderer.SetFramebuffer(r.framebuffer)
+	r.skyboxRenderer.SetFramebufferSize(r.RenderTarget.Width, r.RenderTarget.Height)
+	r.skyboxRenderer.SetSkybox(s.Skybox)
+	r.skyboxRenderer.Render(c)
 
 	r.renderState.SetBlend(false) // replace framebuffer contents
 	r.AmbientPass(s, c)

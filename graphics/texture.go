@@ -11,6 +11,7 @@ import (
 	_ "github.com/ftrvxmtrx/tga"
 	"os"
 	"unsafe"
+	"path"
 )
 
 type Texture2D struct {
@@ -171,6 +172,16 @@ func ReadCubeMap(filter FilterMode, filename1, filename2, filename3, filename4, 
 		}
 	}
 	return NewCubeMapFromImages(filter, imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5])
+}
+
+func ReadCubeMapFromDir(filter FilterMode, dir string) *CubeMap {
+	names := []string{"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"}
+	var filenames [6]string
+	for i, name := range names {
+		filenames[i] = path.Join(dir, name)
+		println(filenames[i])
+	}
+	return ReadCubeMap(filter, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
 }
 
 func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {

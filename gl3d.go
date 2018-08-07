@@ -55,12 +55,12 @@ func main() {
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.PointLights[1].Place(math.NewVec3(5, 0, 0))
+	s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
 	var camFactor float32
 
-	skyboxRenderer := render.NewSkyboxRenderer() // disable while working with multiple lights
 	textRenderer := render.NewTextRenderer()
 	arrowRenderer := render.NewArrowRenderer()
 	quadRenderer := render.NewQuadRenderer()
@@ -84,7 +84,6 @@ func main() {
 		c.SetAspect(window.Aspect())
 		graphics.DefaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
 		graphics.DefaultFramebuffer.ClearDepth(1)
-		skyboxRenderer.Render(c)
 		if drawScene {
 			renderer.Render(s, c)
 		}
