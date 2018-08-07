@@ -26,11 +26,11 @@ func NewFramebuffer() *Framebuffer {
 	return &f
 }
 
-func (f *Framebuffer) SetTexture2D(attachment FramebufferAttachment, t *Texture2D, level int32) {
+func (f *Framebuffer) AttachTexture2D(attachment FramebufferAttachment, t *Texture2D, level int32) {
 	gl.NamedFramebufferTexture(f.id, uint32(attachment), t.id, level)
 }
 
-func (f *Framebuffer) SetTextureCubeMapFace(attachment FramebufferAttachment, cf *CubeMapFace, level int32) {
+func (f *Framebuffer) AttachCubeMapFace(attachment FramebufferAttachment, cf *CubeMapFace, level int32) {
 	gl.NamedFramebufferTextureLayer(f.id, uint32(attachment), cf.CubeMap.id, level, int32(cf.layer))
 }
 

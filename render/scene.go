@@ -42,8 +42,8 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.RenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
 	r.DepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
 	r.framebuffer = graphics.NewFramebuffer()
-	r.framebuffer.SetTexture2D(graphics.ColorAttachment, r.RenderTarget, 0)
-	r.framebuffer.SetTexture2D(graphics.DepthAttachment, r.DepthRenderTarget, 0)
+	r.framebuffer.AttachTexture2D(graphics.ColorAttachment, r.RenderTarget, 0)
+	r.framebuffer.AttachTexture2D(graphics.DepthAttachment, r.DepthRenderTarget, 0)
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
