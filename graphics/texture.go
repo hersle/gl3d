@@ -25,9 +25,16 @@ type CubeMap struct {
 	Height int
 }
 
+type CubeMapFace struct {
+	*CubeMap
+	layer CubeMapLayer
+}
+
 type FilterMode int
 
 type WrapMode int
+
+type CubeMapLayer int // TODO: rename?
 
 const (
 	NearestFilter FilterMode = FilterMode(gl.NEAREST)
@@ -38,6 +45,15 @@ const (
 	EdgeClampWrap   WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
 	BorderClampWrap WrapMode = WrapMode(gl.CLAMP_TO_BORDER)
 	RepeatWrap      WrapMode = WrapMode(gl.REPEAT)
+)
+
+const (
+	PositiveX CubeMapLayer = CubeMapLayer(0)
+	NegativeX CubeMapLayer = CubeMapLayer(1)
+	PositiveY CubeMapLayer = CubeMapLayer(2)
+	NegativeY CubeMapLayer = CubeMapLayer(3)
+	PositiveZ CubeMapLayer = CubeMapLayer(4)
+	NegativeZ CubeMapLayer = CubeMapLayer(5)
 )
 
 func readImage(filename string) (image.Image, error) {
@@ -155,4 +171,11 @@ func ReadCubeMap(filter FilterMode, filename1, filename2, filename3, filename4, 
 		}
 	}
 	return NewCubeMapFromImages(filter, imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5])
+}
+
+func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {
+	var f CubeMapFace
+	f.CubeMap = c
+	f.layer = layer
+	return &f
 }

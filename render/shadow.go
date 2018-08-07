@@ -81,7 +81,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.P
 	//shadowCubeMap = l.shadowMap
 
 	for face := 0; face < 6; face++ {
-		r.framebuffer.SetTextureCubeMapFace(graphics.DepthAttachment, l.ShadowMap, 0, int32(face))
+		r.framebuffer.SetTextureCubeMapFace(graphics.DepthAttachment, l.ShadowMap.Face(graphics.CubeMapLayer(face)), 0)
 		r.framebuffer.ClearDepth(1)
 		c.SetForwardUp(forwards[face], ups[face])
 
