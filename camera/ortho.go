@@ -8,6 +8,8 @@ type OrthoCamera struct {
 	BasicCamera
 	height         float32
 }
+// TODO: make projection matrix project area in front of camera
+// TODO: (constructor takes height, aspect, depth parameters)
 
 func NewOrthoCamera(height, aspect, near, Far float32) *OrthoCamera {
 	var c OrthoCamera

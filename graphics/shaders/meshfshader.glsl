@@ -79,12 +79,12 @@ float CalcShadowFactorPointLight() {
 float CalcShadowFactorDirLight(vec4 lightSpacePos) {
 	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
-	float depth = ndcCoords.z;
+	float depth = 0.5 + 0.5 * ndcCoords.z; // make into [0, 1]
 	if (texCoordS.x < 0 || texCoordS.y < 0 || texCoordS.x > 1 || texCoordS.y > 1 || depth < 0 || depth > 1) {
 		return 1.0;
 	}
 	float depthFront = texture(dirShadowMap, texCoordS).r;
-	bool inShadow = depth > depthFront + 0.0;
+	bool inShadow = depth > depthFront + 0.1;
 	if (inShadow) {
 		return 0.5;
 	} else {
