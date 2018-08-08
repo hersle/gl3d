@@ -109,6 +109,9 @@ func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
+	// TODO: WHY MUST THIS BE SET FOR AMBIENT LIGHT?!?! GRAPHICS DRIVER BUG?
+	// TODO: FIX: AVOID BRANCHING IN SHADERS!!!!!!!!!!!!!
+	r.sp.CubeShadowMap.SetCube(s.PointLights[0].ShadowMap)
 	r.SetAmbientLight(s.AmbientLight)
 	for _, m := range s.Meshes {
 		r.renderMesh(m, c)
