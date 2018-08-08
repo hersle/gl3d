@@ -40,10 +40,15 @@ uniform struct Light {
 
 uniform mat4 viewMatrix;
 
+uniform mat4 shadowViewMatrix;
+uniform mat4 shadowProjectionMatrix;
+
 // for spotlight
 uniform sampler2D spotShadowMap;
 
 uniform samplerCube cubeShadowMap;
+
+uniform sampler2D dirShadowMap;
 
 uniform mat4 normalMatrix;
 
@@ -64,6 +69,22 @@ float CalcShadowFactorPointLight() {
 	float depth = length(worldPosition - light.position);
 	float depthFront = textureCube(cubeShadowMap, worldPosition - light.position).r * light.far;
 	bool inShadow = depth > depthFront + 1.0;
+	if (inShadow) {
+		return 0.5;
+	} else {
+		return 1.0;
+	}
+}
+
+float CalcShadowFactorDirLight(vec4 lightSpacePos) {
+	vec3 ndcCoords = lightSpacePos.xyz / lightSpacePos.w;
+	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
+	float depth = ndcCoords.z;
+	if (texCoordS.x < 0 || texCoordS.y < 0 || texCoordS.x > 1 || texCoordS.y > 1 || depth < 0 || depth > 1) {
+		return 1.0;
+	}
+	float depthFront = texture(dirShadowMap, texCoordS).r;
+	bool inShadow = depth > depthFront + 0.0;
 	if (inShadow) {
 		return 0.5;
 	} else {
@@ -124,6 +145,12 @@ void main() {
 			specular = vec3(0, 0, 0);
 		}
 		factor = CalcShadowFactorSpotLight(lightSpacePosition);
+		break;
+	case 3: // directional light
+		factor = CalcShadowFactorDirLight(lightSpacePosition);
+		//factor /= CalcShadowFactorDirLight(lightSpacePosition);
+		//fragColor = vec4(factor, 0, 0, 1);
+		//return;
 		break;
 	}
 

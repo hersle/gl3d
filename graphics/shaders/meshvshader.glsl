@@ -63,6 +63,7 @@ void main() {
 
 	switch (light.type) {
 	case 2: // spotlight
+	case 3:
 		mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
 		lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
 	}

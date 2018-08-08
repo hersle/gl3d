@@ -83,6 +83,7 @@ func NewDirectionalLight(diffuse, specular math.Vec3) *DirectionalLight {
 	var l DirectionalLight
 	l.Diffuse = diffuse
 	l.Specular = specular
+	l.OrthoCamera = *camera.NewOrthoCamera(50, 1, 0, 25)
 	l.OrthoCamera.Object.Reset()
 	l.ShadowMap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
 	l.ShadowMap.SetBorderColor(math.NewVec4(1, 1, 1, 1))

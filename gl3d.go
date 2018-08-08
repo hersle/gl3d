@@ -89,6 +89,7 @@ func main() {
 			renderer.Render(s, c)
 		}
 		quadRenderer.Render(renderer.RenderTarget)
+		//quadRenderer.Render(s.DirectionalLights[0].ShadowMap)
 		if window.Win.GetKey(glfw.Key1) == glfw.Press {
 			arrowRenderer.RenderTangents(s, c)
 		}
@@ -140,8 +141,9 @@ func main() {
 		}
 		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
 			//s.pointLights[0].Place(c.position)
-			s.SpotLights[0].Place(c.Position)
-			s.SpotLights[0].Orient(c.UnitX, c.UnitY) // for spotlight
+			//s.SpotLights[0].Place(c.Position)
+			//s.SpotLights[0].Orient(c.UnitX, c.UnitY) // for spotlight
+			s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
 		}
 		if window.Win.GetKey(glfw.KeyZ) == glfw.Press {
 			drawScene = true

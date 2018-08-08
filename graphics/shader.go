@@ -445,6 +445,7 @@ type MeshShaderProgram struct {
 	ShadowProjectionMatrix *UniformMatrix4
 	SpotShadowMap          *UniformSampler
 	CubeShadowMap          *UniformSampler
+	DirShadowMap           *UniformSampler
 	ShadowFar              *UniformFloat
 }
 
@@ -513,7 +514,8 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
-		panic("error loading mesh shader")
+		//panic("error loading mesh shader")
+		panic(err)
 	}
 
 	sp.Position = sp.Attrib("position")
@@ -548,6 +550,7 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	sp.ShadowProjectionMatrix = sp.UniformMatrix4("shadowProjectionMatrix")
 	sp.CubeShadowMap = sp.UniformSampler("cubeShadowMap")
 	sp.SpotShadowMap = sp.UniformSampler("spotShadowMap")
+	sp.DirShadowMap = sp.UniformSampler("dirShadowMap")
 	sp.ShadowFar = sp.UniformFloat("light.far")
 
 	sp.Position.SetFormat(gl.FLOAT, false)
