@@ -31,9 +31,9 @@ type SpotLight struct {
 
 type DirectionalLight struct {
 	camera.OrthoCamera
-	Diffuse math.Vec3
-	Specular math.Vec3
-	ShadowMap *graphics.Texture2D
+	Diffuse        math.Vec3
+	Specular       math.Vec3
+	ShadowMap      *graphics.Texture2D
 	DirtyShadowMap bool
 }
 

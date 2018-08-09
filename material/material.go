@@ -12,17 +12,17 @@ import (
 )
 
 type Material struct {
-	Name                string
-	Ambient             math.Vec3
-	Diffuse             math.Vec3
-	Specular            math.Vec3
-	Shine               float32
-	Alpha               float32
-	AmbientMap          *graphics.Texture2D
-	DiffuseMap          *graphics.Texture2D
-	SpecularMap         *graphics.Texture2D
-	BumpMap             *graphics.Texture2D
-	AlphaMap            *graphics.Texture2D
+	Name        string
+	Ambient     math.Vec3
+	Diffuse     math.Vec3
+	Specular    math.Vec3
+	Shine       float32
+	Alpha       float32
+	AmbientMap  *graphics.Texture2D
+	DiffuseMap  *graphics.Texture2D
+	SpecularMap *graphics.Texture2D
+	BumpMap     *graphics.Texture2D
+	AlphaMap    *graphics.Texture2D
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/

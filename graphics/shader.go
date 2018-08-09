@@ -492,15 +492,15 @@ type DepthPassShaderProgram struct {
 type QuadShaderProgram struct {
 	*ShaderProgram
 	Position *Attrib
-	Texture *UniformSampler
+	Texture  *UniformSampler
 }
 
 type DirectionalLightShadowMapShaderProgram struct {
 	*ShaderProgram
-	ModelMatrix *UniformMatrix4
-	ViewMatrix *UniformMatrix4
+	ModelMatrix      *UniformMatrix4
+	ViewMatrix       *UniformMatrix4
 	ProjectionMatrix *UniformMatrix4
-	Position *Attrib
+	Position         *Attrib
 }
 
 func NewMeshShaderProgram() *MeshShaderProgram {

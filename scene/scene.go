@@ -1,18 +1,18 @@
 package scene
 
 import (
+	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/object"
-	"github.com/hersle/gl3d/graphics"
 )
 
 type Scene struct {
-	Meshes       []*object.Mesh
-	AmbientLight *light.AmbientLight
-	SpotLights   []*light.SpotLight
-	PointLights  []*light.PointLight
-	DirectionalLights  []*light.DirectionalLight
-	Skybox       *graphics.CubeMap
+	Meshes            []*object.Mesh
+	AmbientLight      *light.AmbientLight
+	SpotLights        []*light.SpotLight
+	PointLights       []*light.PointLight
+	DirectionalLights []*light.DirectionalLight
+	Skybox            *graphics.CubeMap
 }
 
 func NewScene() *Scene {

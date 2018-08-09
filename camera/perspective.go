@@ -6,7 +6,7 @@ import (
 
 type PerspectiveCamera struct {
 	BasicCamera
-	fovY         float32
+	fovY float32
 }
 
 func NewPerspectiveCamera(fovYDeg, aspect, near, Far float32) *PerspectiveCamera {

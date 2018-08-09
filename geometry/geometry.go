@@ -15,7 +15,7 @@ type Sphere struct {
 }
 
 type Plane struct {
-	Point math.Vec3
+	Point  math.Vec3
 	Normal math.Vec3
 }
 

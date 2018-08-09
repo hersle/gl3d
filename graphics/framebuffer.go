@@ -13,8 +13,8 @@ type Framebuffer struct {
 type FramebufferAttachment int
 
 const (
-	ColorAttachment FramebufferAttachment = FramebufferAttachment(gl.COLOR_ATTACHMENT0)
-	DepthAttachment FramebufferAttachment = FramebufferAttachment(gl.DEPTH_ATTACHMENT)
+	ColorAttachment   FramebufferAttachment = FramebufferAttachment(gl.COLOR_ATTACHMENT0)
+	DepthAttachment   FramebufferAttachment = FramebufferAttachment(gl.DEPTH_ATTACHMENT)
 	StencilAttachment FramebufferAttachment = FramebufferAttachment(gl.STENCIL_ATTACHMENT)
 )
 

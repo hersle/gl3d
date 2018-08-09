@@ -22,12 +22,12 @@ type SceneRenderer struct {
 	renderState      *graphics.RenderState
 	depthRenderState *graphics.RenderState
 
-	framebuffer *graphics.Framebuffer
-	RenderTarget *graphics.Texture2D
+	framebuffer       *graphics.Framebuffer
+	RenderTarget      *graphics.Texture2D
 	DepthRenderTarget *graphics.Texture2D
 
 	shadowMapRenderer *ShadowMapRenderer
-	skyboxRenderer *SkyboxRenderer
+	skyboxRenderer    *SkyboxRenderer
 }
 
 func NewSceneRenderer() (*SceneRenderer, error) {
@@ -38,7 +38,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.dsp = graphics.NewDepthPassShaderProgram()
 
 	w, h := 1920, 1080
-	w, h = w / 1, h / 1
+	w, h = w/1, h/1
 	r.RenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
 	r.DepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
 	r.framebuffer = graphics.NewFramebuffer()
@@ -120,9 +120,7 @@ func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 func (r *SceneRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.PointLights {
 		r.shadowPassPointLight(s, l)
-
 		r.SetPointLight(l)
-
 		for _, m := range s.Meshes {
 			r.renderMesh(m, c)
 		}
@@ -132,9 +130,7 @@ func (r *SceneRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.SpotLights {
 		r.shadowPassSpotLight(s, l)
-
 		r.SetSpotLight(l)
-
 		for _, m := range s.Meshes {
 			r.renderMesh(m, c)
 		}

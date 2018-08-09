@@ -1,18 +1,18 @@
 package graphics
 
 import (
+	_ "github.com/ftrvxmtrx/tga"
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/math"
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"image"
-	"image/draw"
 	"image/color"
+	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
-	_ "github.com/ftrvxmtrx/tga"
 	"os"
-	"unsafe"
 	"path"
+	"unsafe"
 )
 
 type Texture2D struct {
@@ -96,7 +96,6 @@ func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img 
 				img2.SetRGBA(x, img.Bounds().Max.Y-y-1, img.RGBAAt(x, y))
 			}
 		}
-
 
 		t := NewTexture2D(filter, wrap, format, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)

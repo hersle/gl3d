@@ -6,7 +6,7 @@ import (
 
 type OrthoCamera struct {
 	BasicCamera
-	height         float32
+	height float32
 }
 
 func NewOrthoCamera(height, aspect, near, Far float32) *OrthoCamera {
@@ -26,8 +26,8 @@ func (c *OrthoCamera) width() float32 {
 }
 
 func (c *OrthoCamera) updateProjectionMatrix() {
-	c.projMat.OrthoCentered(math.NewVec3(c.width(), c.height, c.Far - c.near))
-	c.projMat.MultTranslation(math.NewVec3(0, 0, +((c.Far - c.near) / 2) + c.near))
+	c.projMat.OrthoCentered(math.NewVec3(c.width(), c.height, c.Far-c.near))
+	c.projMat.MultTranslation(math.NewVec3(0, 0, +((c.Far-c.near)/2)+c.near))
 	c.DirtyProjMat = false
 }
 
