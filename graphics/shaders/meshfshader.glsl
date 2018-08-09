@@ -24,7 +24,6 @@ uniform struct Material {
 	float alpha; // TODO: let textures modify alpha
 	bool hasBumpMap;
 	sampler2D bumpMap;
-	bool hasAlphaMap;
 	sampler2D alphaMap;
 } material;
 
@@ -93,12 +92,7 @@ float CalcShadowFactorDirLight(vec4 lightSpacePos) {
 }
 
 void main() {
-	float alpha;
-	if (material.hasAlphaMap) {
-		alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
-	} else {
-		alpha = material.alpha;
-	}
+	float alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
 	// TODO: add proper transparency?
 	if (alpha < 1) {
 		discard;

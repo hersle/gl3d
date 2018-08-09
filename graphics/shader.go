@@ -431,7 +431,6 @@ type MeshShaderProgram struct {
 	Shine       *UniformFloat
 	Alpha       *UniformFloat
 	AlphaMap    *UniformSampler
-	HasAlphaMap *UniformBool
 	BumpMap     *UniformSampler
 	HasBumpMap  *UniformBool
 
@@ -535,7 +534,6 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	sp.Shine = sp.UniformFloat("material.shine")
 	sp.Alpha = sp.UniformFloat("material.alpha")
 	sp.AlphaMap = sp.UniformSampler("material.alphaMap")
-	sp.HasAlphaMap = sp.UniformBool("material.hasAlphaMap")
 	sp.BumpMap = sp.UniformSampler("material.bumpMap")
 	sp.HasBumpMap = sp.UniformBool("material.hasBumpMap")
 

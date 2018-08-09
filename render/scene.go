@@ -197,13 +197,7 @@ func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.SpecularMap.Set2D(mtl.SpecularMap)
 	r.sp.Shine.Set(mtl.Shine)
 	r.sp.Alpha.Set(mtl.Alpha)
-
-	if mtl.HasAlphaMap() {
-		r.sp.HasAlphaMap.Set(true)
-		r.sp.AlphaMap.Set2D(mtl.AlphaMap)
-	} else {
-		r.sp.HasAlphaMap.Set(false)
-	}
+	r.sp.AlphaMap.Set2D(mtl.AlphaMap)
 
 	if mtl.HasBumpMap() {
 		r.sp.HasBumpMap.Set(true)

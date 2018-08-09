@@ -57,10 +57,6 @@ func (mtl *Material) HasBumpMap() bool {
 	return mtl.BumpMap != nil
 }
 
-func (mtl *Material) HasAlphaMap() bool {
-	return mtl.AlphaMap != nil
-}
-
 func (mtl *Material) Finish() {
 	var err error
 
@@ -101,6 +97,11 @@ func (mtl *Material) Finish() {
 
 	if mtl.alphaMapFilename != "" {
 		mtl.AlphaMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.R8, mtl.alphaMapFilename)
+		if err != nil {
+			mtl.AlphaMap = defaultTexture
+		}
+	} else {
+		mtl.AlphaMap = defaultTexture
 	}
 }
 
