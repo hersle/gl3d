@@ -29,6 +29,14 @@ type SpotLight struct {
 	DirtyShadowMap bool
 }
 
+type DirectionalLight struct {
+	camera.OrthoCamera
+	Diffuse math.Vec3
+	Specular math.Vec3
+	ShadowMap *graphics.Texture2D
+	DirtyShadowMap bool
+}
+
 func NewAmbientLight(color math.Vec3) *AmbientLight {
 	var l AmbientLight
 	l.Color = color
@@ -67,6 +75,28 @@ func (l *SpotLight) Place(position math.Vec3) {
 }
 
 func (l *SpotLight) Orient(unitX, unitY math.Vec3) {
+	l.Object.Orient(unitX, unitY)
+	l.DirtyShadowMap = true
+}
+
+func NewDirectionalLight(diffuse, specular math.Vec3) *DirectionalLight {
+	var l DirectionalLight
+	l.Diffuse = diffuse
+	l.Specular = specular
+	l.OrthoCamera = *camera.NewOrthoCamera(50, 1, 0, 25)
+	l.OrthoCamera.Object.Reset()
+	l.ShadowMap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
+	l.ShadowMap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
+	l.DirtyShadowMap = true
+	return &l
+}
+
+func (l *DirectionalLight) Place(position math.Vec3) {
+	l.Object.Place(position)
+	l.DirtyShadowMap = true
+}
+
+func (l *DirectionalLight) Orient(unitX, unitY math.Vec3) {
 	l.Object.Orient(unitX, unitY)
 	l.DirtyShadowMap = true
 }

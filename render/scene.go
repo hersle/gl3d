@@ -93,6 +93,10 @@ func (r *SceneRenderer) shadowPassSpotLight(s *scene.Scene, l *light.SpotLight) 
 	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
 }
 
+func (r *SceneRenderer) shadowPassDirectionalLight(s *scene.Scene, l *light.DirectionalLight) {
+	r.shadowMapRenderer.RenderDirectionalLightShadowMap(s, l)
+}
+
 func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
 	r.SetDepthCamera(c)
 	for _, m := range s.Meshes {
@@ -105,6 +109,9 @@ func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
+	// TODO: WHY MUST THIS BE SET FOR AMBIENT LIGHT?!?! GRAPHICS DRIVER BUG?
+	// TODO: FIX: AVOID BRANCHING IN SHADERS!!!!!!!!!!!!!
+	r.sp.CubeShadowMap.SetCube(s.PointLights[0].ShadowMap)
 	r.SetAmbientLight(s.AmbientLight)
 	for _, m := range s.Meshes {
 		r.renderMesh(m, c)
@@ -135,6 +142,16 @@ func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
+func (r *SceneRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
+	for _, l := range s.DirectionalLights {
+		r.shadowPassDirectionalLight(s, l)
+		r.SetDirectionalLight(l)
+		for _, m := range s.Meshes {
+			r.renderMesh(m, c)
+		}
+	}
+}
+
 func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
 	r.framebuffer.ClearDepth(1)
@@ -150,6 +167,7 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.renderState.SetBlend(true) // add to framebuffer contents
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
+	r.DirectionalLightPass(s, c)
 }
 
 func (r *SceneRenderer) SetWireframe(wireframe bool) {
@@ -227,6 +245,16 @@ func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
+}
+
+func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
+	r.sp.LightType.Set(3)
+	r.sp.LightDir.Set(l.Forward())
+	r.sp.DiffuseLight.Set(l.Diffuse)
+	r.sp.SpecularLight.Set(l.Specular)
+	r.sp.DirShadowMap.Set2D(l.ShadowMap)
+	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
+	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 }
 
 func (r *SceneRenderer) SetDepthCamera(c camera.Camera) {

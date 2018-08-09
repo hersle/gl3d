@@ -56,6 +56,7 @@ func main() {
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 	s.PointLights[1].Place(math.NewVec3(5, 0, 0))
 	s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
+	s.AddDirectionalLight(light.NewDirectionalLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
@@ -88,6 +89,7 @@ func main() {
 			renderer.Render(s, c)
 		}
 		quadRenderer.Render(renderer.RenderTarget)
+		//quadRenderer.Render(s.DirectionalLights[0].ShadowMap)
 		if window.Win.GetKey(glfw.Key1) == glfw.Press {
 			arrowRenderer.RenderTangents(s, c)
 		}
@@ -139,8 +141,10 @@ func main() {
 		}
 		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
 			//s.pointLights[0].Place(c.position)
-			s.SpotLights[0].Place(c.Position)
-			s.SpotLights[0].Orient(c.UnitX, c.UnitY) // for spotlight
+			//s.SpotLights[0].Place(c.Position)
+			//s.SpotLights[0].Orient(c.UnitX, c.UnitY) // for spotlight
+			s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
+			s.DirectionalLights[0].Place(c.Position)
 		}
 		if window.Win.GetKey(glfw.KeyZ) == glfw.Press {
 			drawScene = true
