@@ -6,8 +6,6 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
-	"image"
-	"image/color"
 	"os"
 	"path"
 	"strings"
@@ -48,9 +46,7 @@ func NewDefaultMaterial(name string) *Material {
 }
 
 func initDefaultTexture() {
-	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
-	img.Set(0, 0, color.RGBA{0xff, 0xff, 0xff, 0})
-	defaultTexture = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.RepeatWrap, gl.RGBA8, img)
+	defaultTexture = graphics.NewTexture2DUniform(math.NewVec4(1, 1, 1, 0))
 }
 
 func (mtl *Material) HasBumpMap() bool {

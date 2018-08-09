@@ -6,6 +6,7 @@ import (
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"image"
 	"image/draw"
+	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
 	_ "github.com/ftrvxmtrx/tga"
@@ -115,6 +116,17 @@ func ReadTexture2D(filter FilterMode, wrap WrapMode, format uint32, filename str
 		return nil, err
 	}
 	return NewTexture2DFromImage(filter, wrap, format, img), nil
+}
+
+func NewTexture2DUniform(rgba math.Vec4) *Texture2D {
+	// TODO: floating point errors?
+	r := uint8(float32(0xff) * rgba.X())
+	g := uint8(float32(0xff) * rgba.Y())
+	b := uint8(float32(0xff) * rgba.Z())
+	a := uint8(float32(0xff) * rgba.W())
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.RGBA{r, g, b, a})
+	return NewTexture2DFromImage(NearestFilter, EdgeClampWrap, gl.RGBA8, img)
 }
 
 func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
