@@ -43,56 +43,12 @@ func NewDefaultMaterial(name string) *Material {
 	mtl.Specular = math.NewVec3(0, 0, 0)
 	mtl.Shine = 1
 	mtl.Alpha = 1
+	mtl.AmbientMap = whiteTransparentTexture
+	mtl.DiffuseMap = whiteTransparentTexture
+	mtl.SpecularMap = whiteTransparentTexture
+	mtl.AlphaMap = whiteTransparentTexture
+	mtl.BumpMap = defaultNormalTexture
 	return &mtl
-}
-
-func (mtl *Material) Finish() {
-	var err error
-
-	if mtl.ambientMapFilename != "" {
-		mtl.AmbientMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.ambientMapFilename)
-		if err != nil {
-			mtl.AmbientMap = whiteTransparentTexture
-		}
-	} else {
-		mtl.AmbientMap = whiteTransparentTexture
-	}
-
-	if mtl.diffuseMapFilename != "" {
-		mtl.DiffuseMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.diffuseMapFilename)
-		if err != nil {
-			mtl.DiffuseMap = whiteTransparentTexture
-		}
-	} else {
-		mtl.DiffuseMap = whiteTransparentTexture
-	}
-
-	if mtl.specularMapFilename != "" {
-		mtl.SpecularMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.specularMapFilename)
-		if err != nil {
-			mtl.SpecularMap = whiteTransparentTexture
-		}
-	} else {
-		mtl.SpecularMap = whiteTransparentTexture
-	}
-
-	if mtl.bumpMapFilename != "" {
-		mtl.BumpMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGB8, mtl.bumpMapFilename)
-		if err != nil {
-			mtl.BumpMap = defaultNormalTexture
-		}
-	} else {
-		mtl.BumpMap = defaultNormalTexture
-	}
-
-	if mtl.alphaMapFilename != "" {
-		mtl.AlphaMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.R8, mtl.alphaMapFilename)
-		if err != nil {
-			mtl.AlphaMap = whiteTransparentTexture
-		}
-	} else {
-		mtl.AlphaMap = whiteTransparentTexture
-	}
 }
 
 func ReadMaterials(filenames []string) []*Material {
@@ -128,7 +84,6 @@ func ReadMaterials(filenames []string) []*Material {
 					panic("newmtl error")
 				}
 				if mtl != nil {
-					mtl.Finish()
 					mtls = append(mtls, mtl)
 				}
 				name := fields[1]
@@ -183,6 +138,10 @@ func ReadMaterials(filenames []string) []*Material {
 				} else {
 					mtl.ambientMapFilename = path.Join(path.Dir(filename), fields[1])
 				}
+				ambientMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.ambientMapFilename)
+				if err == nil {
+					mtl.AmbientMap = ambientMap
+				}
 			case "map_Kd":
 				if len(fields[1:]) != 1 {
 					panic("diffuse map error")
@@ -191,6 +150,10 @@ func ReadMaterials(filenames []string) []*Material {
 					mtl.diffuseMapFilename = fields[1]
 				} else {
 					mtl.diffuseMapFilename = path.Join(path.Dir(filename), fields[1])
+				}
+				diffuseMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.diffuseMapFilename)
+				if err == nil {
+					mtl.DiffuseMap = diffuseMap
 				}
 			case "map_Ks":
 				if len(fields[1:]) != 1 {
@@ -201,6 +164,10 @@ func ReadMaterials(filenames []string) []*Material {
 				} else {
 					mtl.specularMapFilename = path.Join(path.Dir(filename), fields[1])
 				}
+				specularMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.specularMapFilename)
+				if err == nil {
+					mtl.SpecularMap = specularMap
+				}
 			case "bump":
 				if len(fields[1:]) != 1 {
 					panic("bump map error")
@@ -210,6 +177,10 @@ func ReadMaterials(filenames []string) []*Material {
 				} else {
 					mtl.bumpMapFilename = path.Join(path.Dir(filename), fields[1])
 				}
+				bumpMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.bumpMapFilename)
+				if err == nil {
+					mtl.BumpMap = bumpMap
+				}
 			case "map_d":
 				if len(fields[1:]) != 1 {
 					panic("alpha map error")
@@ -218,6 +189,10 @@ func ReadMaterials(filenames []string) []*Material {
 					mtl.alphaMapFilename = fields[1]
 				} else {
 					mtl.alphaMapFilename = path.Join(path.Dir(filename), fields[1])
+				}
+				alphaMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.alphaMapFilename)
+				if err == nil {
+					mtl.AlphaMap = alphaMap
 				}
 			case "d":
 				if len(fields[1:]) != 1 {
@@ -233,7 +208,6 @@ func ReadMaterials(filenames []string) []*Material {
 		}
 
 		if mtl != nil {
-			mtl.Finish()
 			mtls = append(mtls, mtl)
 		}
 	}

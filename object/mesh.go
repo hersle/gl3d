@@ -338,7 +338,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	for i, _ := range m.SubMeshes {
 		println("submesh", i, "with", len(m.SubMeshes[i].Verts), "verts")
 		m.SubMeshes[i].Finish()
-		m.SubMeshes[i].Mtl.Finish()
 	}
 
 	return &m, nil
