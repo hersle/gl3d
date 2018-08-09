@@ -18,15 +18,10 @@ type Material struct {
 	Specular            math.Vec3
 	Shine               float32
 	Alpha               float32
-	ambientMapFilename  string
 	AmbientMap          *graphics.Texture2D
-	diffuseMapFilename  string
 	DiffuseMap          *graphics.Texture2D
-	specularMapFilename string
 	SpecularMap         *graphics.Texture2D
-	bumpMapFilename     string
 	BumpMap             *graphics.Texture2D
-	alphaMapFilename    string
 	AlphaMap            *graphics.Texture2D
 }
 
@@ -133,12 +128,11 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("ambient map error")
 				}
-				if path.IsAbs(fields[1]) {
-					mtl.ambientMapFilename = fields[1]
-				} else {
-					mtl.ambientMapFilename = path.Join(path.Dir(filename), fields[1])
+				ambientMapFilename := fields[1]
+				if !path.IsAbs(ambientMapFilename) {
+					ambientMapFilename = path.Join(path.Dir(filename), ambientMapFilename)
 				}
-				ambientMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.ambientMapFilename)
+				ambientMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, ambientMapFilename)
 				if err == nil {
 					mtl.AmbientMap = ambientMap
 				}
@@ -146,12 +140,11 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("diffuse map error")
 				}
-				if path.IsAbs(fields[1]) {
-					mtl.diffuseMapFilename = fields[1]
-				} else {
-					mtl.diffuseMapFilename = path.Join(path.Dir(filename), fields[1])
+				diffuseMapFilename := fields[1]
+				if !path.IsAbs(diffuseMapFilename) {
+					diffuseMapFilename = path.Join(path.Dir(filename), diffuseMapFilename)
 				}
-				diffuseMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.diffuseMapFilename)
+				diffuseMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, diffuseMapFilename)
 				if err == nil {
 					mtl.DiffuseMap = diffuseMap
 				}
@@ -159,12 +152,11 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("specular map error")
 				}
-				if path.IsAbs(fields[1]) {
-					mtl.specularMapFilename = fields[1]
-				} else {
-					mtl.specularMapFilename = path.Join(path.Dir(filename), fields[1])
+				specularMapFilename := fields[1]
+				if !path.IsAbs(specularMapFilename) {
+					specularMapFilename = path.Join(path.Dir(filename), specularMapFilename)
 				}
-				specularMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.specularMapFilename)
+				specularMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, specularMapFilename)
 				if err == nil {
 					mtl.SpecularMap = specularMap
 				}
@@ -172,12 +164,11 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("bump map error")
 				}
-				if path.IsAbs(fields[1]) {
-					mtl.bumpMapFilename = fields[1]
-				} else {
-					mtl.bumpMapFilename = path.Join(path.Dir(filename), fields[1])
+				bumpMapFilename := fields[1]
+				if !path.IsAbs(bumpMapFilename) {
+					bumpMapFilename = path.Join(path.Dir(filename), bumpMapFilename)
 				}
-				bumpMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.bumpMapFilename)
+				bumpMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, bumpMapFilename)
 				if err == nil {
 					mtl.BumpMap = bumpMap
 				}
@@ -185,12 +176,11 @@ func ReadMaterials(filenames []string) []*Material {
 				if len(fields[1:]) != 1 {
 					panic("alpha map error")
 				}
-				if path.IsAbs(fields[1]) {
-					mtl.alphaMapFilename = fields[1]
-				} else {
-					mtl.alphaMapFilename = path.Join(path.Dir(filename), fields[1])
+				alphaMapFilename := fields[1]
+				if !path.IsAbs(alphaMapFilename) {
+					alphaMapFilename = path.Join(path.Dir(filename), alphaMapFilename)
 				}
-				alphaMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.alphaMapFilename)
+				alphaMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, alphaMapFilename)
 				if err == nil {
 					mtl.AlphaMap = alphaMap
 				}
