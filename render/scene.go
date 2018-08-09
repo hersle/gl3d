@@ -252,12 +252,9 @@ func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.LightDir.Set(l.Forward())
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
-
-	// TODO
 	r.sp.DirShadowMap.Set2D(l.ShadowMap)
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
-	//r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
 }
 
 func (r *SceneRenderer) SetDepthCamera(c camera.Camera) {

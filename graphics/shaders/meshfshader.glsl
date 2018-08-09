@@ -134,6 +134,7 @@ void main() {
 				  * light.specular
 				  * (facing ? 1 : 0);
 
+	// TODO: AVOID BRANCHING!! CAUSES DRIVER BUGS!! USE SEPARATE SHADERS!!
 	float factor;
 	switch (light.type) {
 	case 1: // point light
@@ -148,9 +149,6 @@ void main() {
 		break;
 	case 3: // directional light
 		factor = CalcShadowFactorDirLight(lightSpacePosition);
-		//factor /= CalcShadowFactorDirLight(lightSpacePosition);
-		//fragColor = vec4(factor, 0, 0, 1);
-		//return;
 		break;
 	}
 

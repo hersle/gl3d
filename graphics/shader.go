@@ -514,7 +514,6 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 
 	sp.ShaderProgram, err = ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
-		//panic("error loading mesh shader")
 		panic(err)
 	}
 
