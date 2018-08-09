@@ -8,7 +8,6 @@ import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
-	"github.com/hersle/gl3d/window"
 )
 
 var shadowCubeMap *graphics.CubeMap = nil
@@ -38,8 +37,8 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 
 	r.dsp = graphics.NewDepthPassShaderProgram()
 
-	w, h := window.Size()
-	w, h = w / 4, h / 4
+	w, h := 1920, 1080
+	w, h = w / 1, h / 1
 	r.RenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
 	r.DepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
 	r.framebuffer = graphics.NewFramebuffer()
