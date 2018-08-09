@@ -12,6 +12,6 @@ type RenderStatistics struct {
 var RenderStats *RenderStatistics = &RenderStatistics{}
 
 func (stats *RenderStatistics) Reset() {
-	stats.DrawCallCount = -1 // TODO: ?
+	stats.DrawCallCount = 0
 	stats.VertexCount = 0
 }
