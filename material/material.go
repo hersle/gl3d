@@ -32,7 +32,8 @@ type Material struct {
 
 // spec: http://paulbourke.net/dataformats/mtl/
 
-var defaultTexture *graphics.Texture2D
+var whiteTransparentTexture *graphics.Texture2D
+var defaultNormalTexture *graphics.Texture2D
 
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
@@ -45,51 +46,52 @@ func NewDefaultMaterial(name string) *Material {
 	return &mtl
 }
 
-func (mtl *Material) HasBumpMap() bool {
-	return mtl.BumpMap != nil
-}
-
 func (mtl *Material) Finish() {
 	var err error
 
 	if mtl.ambientMapFilename != "" {
 		mtl.AmbientMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.ambientMapFilename)
 		if err != nil {
-			mtl.AmbientMap = defaultTexture
+			mtl.AmbientMap = whiteTransparentTexture
 		}
 	} else {
-		mtl.AmbientMap = defaultTexture
+		mtl.AmbientMap = whiteTransparentTexture
 	}
 
 	if mtl.diffuseMapFilename != "" {
 		mtl.DiffuseMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.diffuseMapFilename)
 		if err != nil {
-			mtl.DiffuseMap = defaultTexture
+			mtl.DiffuseMap = whiteTransparentTexture
 		}
 	} else {
-		mtl.DiffuseMap = defaultTexture
+		mtl.DiffuseMap = whiteTransparentTexture
 	}
 
 	if mtl.specularMapFilename != "" {
 		mtl.SpecularMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.specularMapFilename)
 		if err != nil {
-			mtl.SpecularMap = defaultTexture
+			mtl.SpecularMap = whiteTransparentTexture
 		}
 	} else {
-		mtl.SpecularMap = defaultTexture
+		mtl.SpecularMap = whiteTransparentTexture
 	}
 
 	if mtl.bumpMapFilename != "" {
 		mtl.BumpMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGB8, mtl.bumpMapFilename)
+		if err != nil {
+			mtl.BumpMap = defaultNormalTexture
+		}
+	} else {
+		mtl.BumpMap = defaultNormalTexture
 	}
 
 	if mtl.alphaMapFilename != "" {
 		mtl.AlphaMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.R8, mtl.alphaMapFilename)
 		if err != nil {
-			mtl.AlphaMap = defaultTexture
+			mtl.AlphaMap = whiteTransparentTexture
 		}
 	} else {
-		mtl.AlphaMap = defaultTexture
+		mtl.AlphaMap = whiteTransparentTexture
 	}
 }
 
@@ -240,5 +242,6 @@ func ReadMaterials(filenames []string) []*Material {
 }
 
 func init() {
-	defaultTexture = graphics.NewTexture2DUniform(math.NewVec4(1, 1, 1, 0))
+	whiteTransparentTexture = graphics.NewTexture2DUniform(math.NewVec4(1, 1, 1, 0))
+	defaultNormalTexture = graphics.NewTexture2DUniform(math.NewVec4(0.5, 0.5, 1, 0))
 }

@@ -432,7 +432,6 @@ type MeshShaderProgram struct {
 	Alpha       *UniformFloat
 	AlphaMap    *UniformSampler
 	BumpMap     *UniformSampler
-	HasBumpMap  *UniformBool
 
 	LightType              *UniformInteger
 	LightPos               *UniformVector3
@@ -535,7 +534,6 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	sp.Alpha = sp.UniformFloat("material.alpha")
 	sp.AlphaMap = sp.UniformSampler("material.alphaMap")
 	sp.BumpMap = sp.UniformSampler("material.bumpMap")
-	sp.HasBumpMap = sp.UniformBool("material.hasBumpMap")
 
 	sp.LightType = sp.UniformInteger("light.type")
 	sp.LightPos = sp.UniformVector3("light.position")

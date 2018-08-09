@@ -22,7 +22,6 @@ uniform struct Material {
 	sampler2D diffuseMap;
 	sampler2D specularMap;
 	float alpha; // TODO: let textures modify alpha
-	bool hasBumpMap;
 	sampler2D bumpMap;
 	sampler2D alphaMap;
 } material;
@@ -98,11 +97,8 @@ void main() {
 		discard;
 	}
 
-	vec3 tanNormal = vec3(0, 0, 1);
-	if (material.hasBumpMap) {
-		tanNormal = -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
-		tanNormal = normalize(tanNormal);
-	}
+	vec3 tanNormal = vec3(-1, -1, -1) + 2 * texture(material.bumpMap, texCoordF).rgb;
+	tanNormal = normalize(tanNormal);
 
 	vec4 tex;
 	vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));

@@ -198,13 +198,7 @@ func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.Shine.Set(mtl.Shine)
 	r.sp.Alpha.Set(mtl.Alpha)
 	r.sp.AlphaMap.Set2D(mtl.AlphaMap)
-
-	if mtl.HasBumpMap() {
-		r.sp.HasBumpMap.Set(true)
-		r.sp.BumpMap.Set2D(mtl.BumpMap)
-	} else {
-		r.sp.HasBumpMap.Set(false)
-	}
+	r.sp.BumpMap.Set2D(mtl.BumpMap)
 
 	var v object.Vertex
 	r.sp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
