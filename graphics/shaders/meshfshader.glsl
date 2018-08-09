@@ -104,53 +104,86 @@ void main() {
 		discard;
 	}
 
-	vec3 tanNormal = vec3(0, 0, 1);
-	if (material.hasBumpMap) {
-		tanNormal = -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
-		tanNormal = normalize(tanNormal);
-	}
-
-	vec4 tex;
-	vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));
-	bool facing = dot(tanNormal, tanLightToVertex) < 0;
-
-	switch (light.type) {
-	case 0: // ambient light
-		tex = texture(material.ambientMap, texCoordF);
+	if (light.type == 0) { // ambient light
+		vec4 tex = texture(material.ambientMap, texCoordF);
 		vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
 					 * light.ambient;
 		fragColor = vec4(ambient, 1);
-		return;
-	}
+	} else if (light.type == 1) { // point light
+		vec3 tanNormal = vec3(0, 0, 1);
+		if (material.hasBumpMap) {
+			tanNormal = -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
+			tanNormal = normalize(tanNormal);
+		}
 
-	tex = texture(material.diffuseMap, texCoordF);
-	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
-				 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
-				 * light.diffuse;
+		vec4 tex;
+		vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));
+		bool facing = dot(tanNormal, tanLightToVertex) < 0;
 
-	tex = texture(material.specularMap, texCoordF);
-	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
-				  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
-				  * light.specular
-				  * (facing ? 1 : 0);
+		tex = texture(material.diffuseMap, texCoordF);
+		vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
+					 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
+					 * light.diffuse;
 
-	// TODO: AVOID BRANCHING!! CAUSES DRIVER BUGS!! USE SEPARATE SHADERS!!
-	float factor;
-	switch (light.type) {
-	case 1: // point light
-		factor = CalcShadowFactorPointLight();
-		break;
-	case 2: // spot light
+		tex = texture(material.specularMap, texCoordF);
+		vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
+					  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
+					  * light.specular
+					  * (facing ? 1 : 0);
+
+		float factor = CalcShadowFactorPointLight();
+		fragColor = vec4(factor * (diffuse + specular), 1);
+	} else if (light.type == 2) { // spot light
+		vec3 tanNormal = vec3(0, 0, 1);
+		if (material.hasBumpMap) {
+			tanNormal = -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
+			tanNormal = normalize(tanNormal);
+		}
+
+		vec4 tex;
+		vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));
+		bool facing = dot(tanNormal, tanLightToVertex) < 0;
+
+		tex = texture(material.diffuseMap, texCoordF);
+		vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
+					 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
+					 * light.diffuse;
+
+		tex = texture(material.specularMap, texCoordF);
+		vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
+					  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
+					  * light.specular
+					  * (facing ? 1 : 0);
+
 		if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
 			diffuse = vec3(0, 0, 0);
 			specular = vec3(0, 0, 0);
 		}
-		factor = CalcShadowFactorSpotLight(lightSpacePosition);
-		break;
-	case 3: // directional light
-		factor = CalcShadowFactorDirLight(lightSpacePosition);
-		break;
-	}
+		float factor = CalcShadowFactorSpotLight(lightSpacePosition);
+		fragColor = vec4(factor * (diffuse + specular), 1);
+	} else if (light.type == 3) { // directional light
+		vec3 tanNormal = vec3(0, 0, 1);
+		if (material.hasBumpMap) {
+			tanNormal = -1 + 2 * normalize(texture(material.bumpMap, texCoordF).rgb);
+			tanNormal = normalize(tanNormal);
+		}
 
-	fragColor = vec4(factor * (diffuse + specular), 1);
+		vec4 tex;
+		vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));
+		bool facing = dot(tanNormal, tanLightToVertex) < 0;
+
+		tex = texture(material.diffuseMap, texCoordF);
+		vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
+					 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
+					 * light.diffuse;
+
+		tex = texture(material.specularMap, texCoordF);
+		vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
+					  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
+					  * light.specular
+					  * (facing ? 1 : 0);
+
+		float factor = CalcShadowFactorDirLight(lightSpacePosition);
+		fragColor = vec4(factor * (diffuse + specular), 1);
+	}
 }
