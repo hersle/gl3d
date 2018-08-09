@@ -84,7 +84,7 @@ float CalcShadowFactorDirLight(vec4 lightSpacePos) {
 		return 1.0;
 	}
 	float depthFront = texture(dirShadowMap, texCoordS).r;
-	bool inShadow = depth > depthFront + 0.1;
+	bool inShadow = depth > depthFront + 0.05;
 	if (inShadow) {
 		return 0.5;
 	} else {
