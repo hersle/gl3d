@@ -144,6 +144,7 @@ func main() {
 			//s.SpotLights[0].Place(c.Position)
 			//s.SpotLights[0].Orient(c.UnitX, c.UnitY) // for spotlight
 			s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
+			s.DirectionalLights[0].Place(c.Position)
 		}
 		if window.Win.GetKey(glfw.KeyZ) == glfw.Press {
 			drawScene = true
