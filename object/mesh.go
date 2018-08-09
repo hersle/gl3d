@@ -94,17 +94,6 @@ func (sm *SubMesh) AddTriangle(vert1, vert2, vert3 Vertex) {
 	sm.Verts = append(sm.Verts, vert1, vert2, vert3)
 }
 
-func (sm *SubMesh) Finish() {
-	sm.Vbo = graphics.NewBuffer()
-	sm.Ibo = graphics.NewBuffer()
-	sm.Vbo.SetData(sm.Verts, 0)
-	sm.Ibo.SetData(sm.Faces, 0)
-	sm.Inds = len(sm.Faces)
-	if sm.Mtl == nil {
-		sm.Mtl = material.NewDefaultMaterial("")
-	}
-}
-
 func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
 	var iTri indexedTriangle
 	iTri.iVerts[0], iTri.iVerts[1], iTri.iVerts[2] = iv1, iv2, iv3
@@ -335,9 +324,16 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		m.SubMeshes = m.SubMeshes[1:]
 	}
 
-	for i, _ := range m.SubMeshes {
-		println("submesh", i, "with", len(m.SubMeshes[i].Verts), "verts")
-		m.SubMeshes[i].Finish()
+	for i, sm := range m.SubMeshes {
+		println("submesh", i, "with", len(sm.Verts), "verts")
+		sm.Vbo = graphics.NewBuffer()
+		sm.Ibo = graphics.NewBuffer()
+		sm.Vbo.SetData(sm.Verts, 0)
+		sm.Ibo.SetData(sm.Faces, 0)
+		sm.Inds = len(sm.Faces)
+		if sm.Mtl == nil {
+			sm.Mtl = material.NewDefaultMaterial("")
+		}
 	}
 
 	return &m, nil
