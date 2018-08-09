@@ -92,9 +92,10 @@ func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img 
 		img2 := image.NewRGBA(img.Bounds())
 		for y := img.Bounds().Min.Y; y < img.Bounds().Max.Y; y++ {
 			for x := img.Bounds().Min.X; x < img.Bounds().Max.X; x++ {
-				img2.SetRGBA(x, img.Bounds().Max.Y-y, img.RGBAAt(x, y))
+				img2.SetRGBA(x, img.Bounds().Max.Y-y-1, img.RGBAAt(x, y))
 			}
 		}
+
 
 		t := NewTexture2D(filter, wrap, format, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
