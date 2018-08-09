@@ -32,7 +32,7 @@ type Material struct {
 
 // spec: http://paulbourke.net/dataformats/mtl/
 
-var defaultTexture *graphics.Texture2D = nil
+var defaultTexture *graphics.Texture2D
 
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
@@ -45,20 +45,12 @@ func NewDefaultMaterial(name string) *Material {
 	return &mtl
 }
 
-func initDefaultTexture() {
-	defaultTexture = graphics.NewTexture2DUniform(math.NewVec4(1, 1, 1, 0))
-}
-
 func (mtl *Material) HasBumpMap() bool {
 	return mtl.BumpMap != nil
 }
 
 func (mtl *Material) Finish() {
 	var err error
-
-	if defaultTexture == nil {
-		initDefaultTexture()
-	}
 
 	if mtl.ambientMapFilename != "" {
 		mtl.AmbientMap, err = graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.ambientMapFilename)
@@ -245,4 +237,8 @@ func ReadMaterials(filenames []string) []*Material {
 	}
 
 	return mtls
+}
+
+func init() {
+	defaultTexture = graphics.NewTexture2DUniform(math.NewVec4(1, 1, 1, 0))
 }
