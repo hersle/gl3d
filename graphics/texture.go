@@ -169,6 +169,17 @@ func NewCubeMapFromImages(filter FilterMode, img1, img2, img3, img4, img5, img6 
 	return t
 }
 
+func NewCubeMapUniform(rgba math.Vec4) *CubeMap {
+	// TODO: floating point errors?
+	r := uint8(float32(0xff) * rgba.X())
+	g := uint8(float32(0xff) * rgba.Y())
+	b := uint8(float32(0xff) * rgba.Z())
+	a := uint8(float32(0xff) * rgba.W())
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.Set(0, 0, color.RGBA{r, g, b, a})
+	return NewCubeMapFromImages(NearestFilter, img, img, img, img, img, img)
+}
+
 func ReadCubeMap(filter FilterMode, filename1, filename2, filename3, filename4, filename5, filename6 string) *CubeMap {
 	var imgs [6]image.Image
 	var errs [6]error

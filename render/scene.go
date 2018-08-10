@@ -28,6 +28,8 @@ type SceneRenderer struct {
 
 	shadowMapRenderer *ShadowMapRenderer
 	skyboxRenderer    *SkyboxRenderer
+
+	emptyShadowCubeMap *graphics.CubeMap
 }
 
 func NewSceneRenderer() (*SceneRenderer, error) {
@@ -63,6 +65,8 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 	r.skyboxRenderer = NewSkyboxRenderer()
+
+	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.NewVec4(0, 0, 0, 0))
 
 	return &r, nil
 }
@@ -103,7 +107,7 @@ func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
 func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	// TODO: WHY MUST THIS BE SET FOR AMBIENT LIGHT?!?! GRAPHICS DRIVER BUG?
 	// TODO: FIX: AVOID BRANCHING IN SHADERS!!!!!!!!!!!!!
-	r.sp.CubeShadowMap.SetCube(s.PointLights[0].ShadowMap)
+	r.sp.CubeShadowMap.SetCube(r.emptyShadowCubeMap)
 	r.SetAmbientLight(s.AmbientLight)
 	for _, m := range s.Meshes {
 		r.renderMesh(m, c)
