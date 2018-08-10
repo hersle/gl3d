@@ -23,7 +23,7 @@ func NewArrowRenderer() *ArrowRenderer {
 	r.sp = graphics.NewArrowShaderProgram()
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
+	r.renderState.Program = r.sp.ShaderProgram
 
 	r.vbo = graphics.NewBuffer()
 	r.SetPosition(r.vbo)
@@ -50,7 +50,7 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
 }
 
 func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera) {
-	r.renderState.SetViewport(window.Size())
+	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(1, 0, 0))
@@ -69,7 +69,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
-	r.renderState.SetViewport(window.Size())
+	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 1, 0))
@@ -88,7 +88,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera) {
-	r.renderState.SetViewport(window.Size())
+	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 0, 1))

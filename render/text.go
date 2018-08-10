@@ -31,8 +31,9 @@ func NewTextRenderer() *TextRenderer {
 	r.tex = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
-	r.renderState.SetBlendFactors(graphics.OneMinusDestinationColorBlendFactor, graphics.OneMinusSourceColorBlendFactor)
+	r.renderState.Program = r.sp.ShaderProgram
+	r.renderState.BlendSourceFactor = graphics.OneMinusDestinationColorBlendFactor
+	r.renderState.BlendDestinationFactor = graphics.OneMinusSourceColorBlendFactor
 
 	return &r
 }
@@ -49,7 +50,7 @@ func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
 }
 
 func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
-	r.renderState.SetViewport(window.Size())
+	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 
 	var verts []object.Vertex
 	var inds []int32

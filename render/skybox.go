@@ -48,17 +48,18 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	r.SetCube(r.vbo, r.ibo)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
+	r.renderState.Program = r.sp.ShaderProgram
 
 	return &r
 }
 
 func (r *SkyboxRenderer) SetFramebuffer(framebuffer *graphics.Framebuffer) {
-	r.renderState.SetFramebuffer(framebuffer)
+	r.renderState.Framebuffer = framebuffer
 }
 
 func (r *SkyboxRenderer) SetFramebufferSize(width, height int) {
-	r.renderState.SetViewport(width, height)
+	r.renderState.ViewportWidth = width
+	r.renderState.ViewportHeight = height
 }
 
 func (r *SkyboxRenderer) SetCamera(c camera.Camera) {

@@ -25,9 +25,9 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 	r.framebuffer = graphics.NewFramebuffer()
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetFramebuffer(r.framebuffer)
-	r.renderState.SetDepthTest(graphics.LessDepthTest)
-	r.renderState.SetCull(graphics.CullBack)
+	r.renderState.Framebuffer = r.framebuffer
+	r.renderState.DepthTest = graphics.LessDepthTest
+	r.renderState.Cull = graphics.CullBack
 
 	return &r
 }
@@ -91,8 +91,9 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.P
 	c := camera.NewPerspectiveCamera(90, 1, 0.1, l.ShadowFar)
 	c.Place(l.Position)
 
-	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
+	r.renderState.ViewportWidth = l.ShadowMap.Width
+	r.renderState.ViewportHeight = l.ShadowMap.Height
+	r.renderState.Program = r.sp.ShaderProgram
 
 	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
 	//shadowCubeMap = l.shadowMap
@@ -125,8 +126,9 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.Sp
 
 	r.framebuffer.AttachTexture2D(graphics.DepthAttachment, l.ShadowMap, 0)
 	r.framebuffer.ClearDepth(1)
-	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
+	r.renderState.ViewportWidth = l.ShadowMap.Width
+	r.renderState.ViewportHeight = l.ShadowMap.Height
+	r.renderState.Program = r.sp.ShaderProgram
 	r.SetCamera(&l.PerspectiveCamera)
 
 	for _, m := range s.Meshes {
@@ -149,8 +151,9 @@ func (r *ShadowMapRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *l
 
 	r.framebuffer.AttachTexture2D(graphics.DepthAttachment, l.ShadowMap, 0)
 	r.framebuffer.ClearDepth(1)
-	r.renderState.SetViewport(l.ShadowMap.Width, l.ShadowMap.Height)
-	r.renderState.SetShaderProgram(r.sp2.ShaderProgram)
+	r.renderState.ViewportWidth = l.ShadowMap.Width
+	r.renderState.ViewportHeight = l.ShadowMap.Height
+	r.renderState.Program = r.sp2.ShaderProgram
 	r.SetCamera2(&l.OrthoCamera)
 
 	for _, m := range s.Meshes {

@@ -62,42 +62,13 @@ type RenderState struct {
 func NewRenderState() *RenderState {
 	var rs RenderState
 	rs.DisableBlending()
-	rs.SetFramebuffer(DefaultFramebuffer)
+	rs.Framebuffer = DefaultFramebuffer
 	return &rs
 }
 
-func (rs *RenderState) SetShaderProgram(prog *ShaderProgram) {
-	rs.Program = prog
-}
-
-func (rs *RenderState) SetFramebuffer(fb *Framebuffer) {
-	rs.Framebuffer = fb
-}
-
-func (rs *RenderState) SetDepthTest(depthTest DepthTest) {
-	rs.DepthTest = depthTest
-}
-
-func (rs *RenderState) SetBlendFactors(blendSrcFactor, blendDstFactor BlendFactor) {
-	rs.BlendSourceFactor = blendSrcFactor
-	rs.BlendDestinationFactor = blendDstFactor
-}
-
 func (rs *RenderState) DisableBlending() {
-	rs.SetBlendFactors(OneBlendFactor, ZeroBlendFactor)
-}
-
-func (rs *RenderState) SetViewport(width, height int) {
-	rs.ViewportWidth = width
-	rs.ViewportHeight = height
-}
-
-func (rs *RenderState) SetCull(cull CullMode) {
-	rs.Cull = cull
-}
-
-func (rs *RenderState) SetTriangleMode(mode TriangleMode) {
-	rs.TriangleMode = mode
+	rs.BlendSourceFactor = OneBlendFactor
+	rs.BlendDestinationFactor = ZeroBlendFactor
 }
 
 func (rs *RenderState) Apply() {

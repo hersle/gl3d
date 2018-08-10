@@ -36,13 +36,13 @@ func NewQuadRenderer() *QuadRenderer {
 	r.sp.Position.SetSource(r.vbo, 0, stride)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
+	r.renderState.Program = r.sp.ShaderProgram
 
 	return &r
 }
 
 func (r *QuadRenderer) Render(tex *graphics.Texture2D) {
 	r.sp.Texture.Set2D(tex)
-	r.renderState.SetViewport(window.Size())
+	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	graphics.NewRenderCommand(graphics.Triangle, 6, 0, r.renderState).Execute()
 }

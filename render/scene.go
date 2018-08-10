@@ -46,18 +46,20 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.framebuffer.AttachTexture2D(graphics.DepthAttachment, r.DepthRenderTarget, 0)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
-	r.renderState.SetFramebuffer(r.framebuffer)
-	r.renderState.SetDepthTest(graphics.LessEqualDepthTest) // enable drawing after depth prepass
-	r.renderState.SetCull(graphics.CullBack)
-	r.renderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
+	r.renderState.Program = r.sp.ShaderProgram
+	r.renderState.Framebuffer = r.framebuffer
+	r.renderState.DepthTest = graphics.LessEqualDepthTest // enable drawing after depth prepass
+	r.renderState.Cull = graphics.CullBack
+	r.renderState.ViewportWidth = r.RenderTarget.Width
+	r.renderState.ViewportHeight = r.RenderTarget.Height
 
 	r.depthRenderState = graphics.NewRenderState()
-	r.depthRenderState.SetShaderProgram(r.dsp.ShaderProgram)
-	r.depthRenderState.SetFramebuffer(r.framebuffer)
-	r.depthRenderState.SetDepthTest(graphics.LessDepthTest)
-	r.depthRenderState.SetCull(graphics.CullBack)
-	r.depthRenderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
+	r.depthRenderState.Program = r.dsp.ShaderProgram
+	r.depthRenderState.Framebuffer = r.framebuffer
+	r.depthRenderState.DepthTest = graphics.LessDepthTest
+	r.depthRenderState.Cull = graphics.CullBack
+	r.depthRenderState.ViewportWidth = r.RenderTarget.Width
+	r.depthRenderState.ViewportHeight = r.RenderTarget.Height
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 	r.skyboxRenderer = NewSkyboxRenderer()
@@ -150,7 +152,8 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 
 	r.renderState.DisableBlending()
 	r.AmbientPass(s, c)
-	r.renderState.SetBlendFactors(graphics.OneBlendFactor, graphics.OneBlendFactor) // add to framebuffer contents
+	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
+	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
 	r.DirectionalLightPass(s, c)
@@ -158,9 +161,9 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 
 func (r *SceneRenderer) SetWireframe(wireframe bool) {
 	if wireframe {
-		r.renderState.SetTriangleMode(graphics.LineTriangleMode)
+		r.renderState.TriangleMode = graphics.LineTriangleMode
 	} else {
-		r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
+		r.renderState.TriangleMode = graphics.TriangleTriangleMode
 	}
 }
 
