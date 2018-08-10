@@ -72,10 +72,20 @@ func (rs *RenderState) DisableBlending() {
 }
 
 func (rs *RenderState) Apply() {
-	rs.Program.va.Bind()
-	rs.Program.Bind()
+	switch rs.Program {
+	case nil:
+		panic("tried to apply a render state with no shader program")
+	default:
+		rs.Program.va.Bind()
+		rs.Program.Bind()
+	}
 
-	rs.Framebuffer.BindDraw()
+	switch rs.Framebuffer {
+	case nil:
+		panic("tried to apply a render state with no framebuffer")
+	default:
+		rs.Framebuffer.BindDraw()
+	}
 
 	switch (rs.DepthTest) {
 	case NeverDepthTest:
