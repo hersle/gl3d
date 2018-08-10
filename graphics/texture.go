@@ -1,7 +1,6 @@
 package graphics
 
 import (
-	_ "github.com/ftrvxmtrx/tga"
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/math"
 	_ "github.com/hersle/gl3d/window" // initialize graphics
@@ -10,6 +9,7 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
+	_ "github.com/ftrvxmtrx/tga"
 	"os"
 	"path"
 	"unsafe"
