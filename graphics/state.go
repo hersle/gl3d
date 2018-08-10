@@ -48,15 +48,15 @@ const (
 
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
-	prog           *ShaderProgram
-	framebuffer    *Framebuffer
-	depthTest      DepthTest
-	blendSrcFactor BlendFactor
-	blendDstFactor BlendFactor
-	viewportWidth  int
-	viewportHeight int
-	cull           CullMode
-	triangleMode   TriangleMode
+	Program        *ShaderProgram
+	Framebuffer    *Framebuffer
+	DepthTest      DepthTest
+	BlendSourceFactor BlendFactor
+	BlendDestinationFactor BlendFactor
+	ViewportWidth  int
+	ViewportHeight int
+	Cull           CullMode
+	TriangleMode   TriangleMode
 }
 
 func NewRenderState() *RenderState {
@@ -67,20 +67,20 @@ func NewRenderState() *RenderState {
 }
 
 func (rs *RenderState) SetShaderProgram(prog *ShaderProgram) {
-	rs.prog = prog
+	rs.Program = prog
 }
 
 func (rs *RenderState) SetFramebuffer(fb *Framebuffer) {
-	rs.framebuffer = fb
+	rs.Framebuffer = fb
 }
 
 func (rs *RenderState) SetDepthTest(depthTest DepthTest) {
-	rs.depthTest = depthTest
+	rs.DepthTest = depthTest
 }
 
 func (rs *RenderState) SetBlendFactors(blendSrcFactor, blendDstFactor BlendFactor) {
-	rs.blendSrcFactor = blendSrcFactor
-	rs.blendDstFactor = blendDstFactor
+	rs.BlendSourceFactor = blendSrcFactor
+	rs.BlendDestinationFactor = blendDstFactor
 }
 
 func (rs *RenderState) DisableBlending() {
@@ -88,25 +88,25 @@ func (rs *RenderState) DisableBlending() {
 }
 
 func (rs *RenderState) SetViewport(width, height int) {
-	rs.viewportWidth = width
-	rs.viewportHeight = height
+	rs.ViewportWidth = width
+	rs.ViewportHeight = height
 }
 
 func (rs *RenderState) SetCull(cull CullMode) {
-	rs.cull = cull
+	rs.Cull = cull
 }
 
 func (rs *RenderState) SetTriangleMode(mode TriangleMode) {
-	rs.triangleMode = mode
+	rs.TriangleMode = mode
 }
 
 func (rs *RenderState) Apply() {
-	rs.prog.va.Bind()
-	rs.prog.Bind()
+	rs.Program.va.Bind()
+	rs.Program.Bind()
 
-	rs.framebuffer.BindDraw()
+	rs.Framebuffer.BindDraw()
 
-	switch (rs.depthTest) {
+	switch (rs.DepthTest) {
 	case NeverDepthTest:
 		gl.Enable(gl.DEPTH_TEST)
 		gl.DepthFunc(gl.NEVER)
@@ -136,8 +136,8 @@ func (rs *RenderState) Apply() {
 
 	var factors [2]BlendFactor
 	var funcs [2]uint32
-	factors[0] = rs.blendSrcFactor
-	factors[1] = rs.blendDstFactor
+	factors[0] = rs.BlendSourceFactor
+	factors[1] = rs.BlendDestinationFactor
 	for i := 0; i < 2; i++ {
 		switch factors[i] {
 		case ZeroBlendFactor:
@@ -166,7 +166,7 @@ func (rs *RenderState) Apply() {
 	}
 	gl.BlendFunc(funcs[0], funcs[1])
 
-	switch rs.cull {
+	switch rs.Cull {
 	case CullNothing:
 		gl.Disable(gl.CULL_FACE)
 	case CullFront:
@@ -179,7 +179,7 @@ func (rs *RenderState) Apply() {
 		panic("tried to apply a render state with an unknown culling mode")
 	}
 
-	switch rs.triangleMode {
+	switch rs.TriangleMode {
 	case PointTriangleMode:
 		gl.PolygonMode(gl.FRONT_AND_BACK, gl.POINT)
 	case LineTriangleMode:
@@ -190,7 +190,7 @@ func (rs *RenderState) Apply() {
 		panic("tried to apply a render state with an unknown polygonmode")
 	}
 
-	gl.Viewport(0, 0, int32(rs.viewportWidth), int32(rs.viewportHeight))
+	gl.Viewport(0, 0, int32(rs.ViewportWidth), int32(rs.ViewportHeight))
 }
 
 func init() {

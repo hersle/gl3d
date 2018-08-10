@@ -31,7 +31,7 @@ func NewRenderCommand(primitive Primitive, vertexCount, offset int, state *Rende
 
 func (cmd *RenderCommand) Execute() {
 	cmd.state.Apply()
-	if cmd.state.prog.va.hasIndexBuffer {
+	if cmd.state.Program.va.hasIndexBuffer {
 		gl.DrawElements(uint32(cmd.primitive), int32(cmd.vertexCount), gl.UNSIGNED_INT, nil)
 	} else {
 		gl.DrawArrays(uint32(cmd.primitive), int32(cmd.offset), int32(cmd.vertexCount))
