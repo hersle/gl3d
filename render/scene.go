@@ -58,7 +58,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.depthRenderState.SetShaderProgram(r.dsp.ShaderProgram)
 	r.depthRenderState.SetFramebuffer(r.framebuffer)
 	r.depthRenderState.SetDepthTest(graphics.LessDepthTest)
-	r.depthRenderState.SetBlendFactors(graphics.OneBlendFactor, graphics.ZeroBlendFactor)
+	r.depthRenderState.DisableBlending()
 	r.depthRenderState.SetCull(true)
 	r.depthRenderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.depthRenderState.SetPolygonMode(gl.FILL)
@@ -153,7 +153,7 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.skyboxRenderer.SetSkybox(s.Skybox)
 	r.skyboxRenderer.Render(c)
 
-	r.renderState.SetBlendFactors(graphics.OneBlendFactor, graphics.ZeroBlendFactor) // add to framebuffer contents
+	r.renderState.DisableBlending()
 	r.AmbientPass(s, c)
 	r.renderState.SetBlendFactors(graphics.OneBlendFactor, graphics.OneBlendFactor) // add to framebuffer contents
 	r.PointLightPass(s, c)

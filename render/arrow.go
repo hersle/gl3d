@@ -23,7 +23,7 @@ func NewArrowRenderer() *ArrowRenderer {
 	r.sp = graphics.NewArrowShaderProgram()
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetBlendFactors(graphics.OneBlendFactor, graphics.ZeroBlendFactor)
+	r.renderState.DisableBlending()
 	r.renderState.SetCull(false)
 	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)

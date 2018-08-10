@@ -69,6 +69,10 @@ func (rs *RenderState) SetBlendFactors(blendSrcFactor, blendDstFactor BlendFacto
 	rs.blendDstFactor = blendDstFactor
 }
 
+func (rs *RenderState) DisableBlending() {
+	rs.SetBlendFactors(OneBlendFactor, ZeroBlendFactor)
+}
+
 func (rs *RenderState) SetViewport(width, height int) {
 	rs.viewportWidth = width
 	rs.viewportHeight = height
