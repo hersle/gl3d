@@ -49,8 +49,6 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetFramebuffer(r.framebuffer)
 	r.renderState.SetDepthTest(graphics.LessEqualDepthTest) // enable drawing after depth prepass
-	r.renderState.SetBlend(true)
-	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
 	r.renderState.SetCull(true)
 	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.renderState.SetPolygonMode(gl.FILL)
@@ -60,7 +58,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.depthRenderState.SetShaderProgram(r.dsp.ShaderProgram)
 	r.depthRenderState.SetFramebuffer(r.framebuffer)
 	r.depthRenderState.SetDepthTest(graphics.LessDepthTest)
-	r.depthRenderState.SetBlend(false)
+	r.depthRenderState.SetBlendFactors(graphics.OneBlendFactor, graphics.ZeroBlendFactor)
 	r.depthRenderState.SetCull(true)
 	r.depthRenderState.SetCullFace(gl.BACK) // CCW treated as front face by default
 	r.depthRenderState.SetPolygonMode(gl.FILL)
@@ -155,9 +153,9 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.skyboxRenderer.SetSkybox(s.Skybox)
 	r.skyboxRenderer.Render(c)
 
-	r.renderState.SetBlend(false) // replace framebuffer contents
+	r.renderState.SetBlendFactors(graphics.OneBlendFactor, graphics.ZeroBlendFactor) // add to framebuffer contents
 	r.AmbientPass(s, c)
-	r.renderState.SetBlend(true) // add to framebuffer contents
+	r.renderState.SetBlendFactors(graphics.OneBlendFactor, graphics.OneBlendFactor) // add to framebuffer contents
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
 	r.DirectionalLightPass(s, c)

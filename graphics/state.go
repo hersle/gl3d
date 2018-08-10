@@ -18,14 +18,28 @@ const (
 	AlwaysDepthTest
 )
 
+type BlendFactor int
+const (
+	UnknownBlendFactor BlendFactor = iota
+	ZeroBlendFactor
+	OneBlendFactor
+	SourceColorBlendFactor
+	OneMinusSourceColorBlendFactor
+	DestinationColorBlendFactor
+	OneMinusDestinationColorBlendFactor
+	SourceAlphaBlendFactor
+	OneMinusSourceAlphaBlendFactor
+	DestinationAlphaBlendFactor
+	OneMinusDestinationAlphaBlendFactor
+)
+
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
 	prog           *ShaderProgram
 	framebuffer    *Framebuffer
 	depthTest      DepthTest
-	blend          bool
-	blendSrcFactor uint32
-	blendDstFactor uint32
+	blendSrcFactor BlendFactor
+	blendDstFactor BlendFactor
 	viewportWidth  int
 	viewportHeight int
 	cull           bool
@@ -50,11 +64,7 @@ func (rs *RenderState) SetDepthTest(depthTest DepthTest) {
 	rs.depthTest = depthTest
 }
 
-func (rs *RenderState) SetBlend(blend bool) {
-	rs.blend = blend
-}
-
-func (rs *RenderState) SetBlendFunction(blendSrcFactor, blendDstFactor uint32) {
+func (rs *RenderState) SetBlendFactors(blendSrcFactor, blendDstFactor BlendFactor) {
 	rs.blendSrcFactor = blendSrcFactor
 	rs.blendDstFactor = blendDstFactor
 }
@@ -110,12 +120,37 @@ func (rs *RenderState) Apply() {
 		panic("tried to apply a render state with unknown depth test")
 	}
 
-	if rs.blend {
-		gl.Enable(gl.BLEND)
-		gl.BlendFunc(rs.blendSrcFactor, rs.blendDstFactor)
-	} else {
-		gl.Disable(gl.BLEND)
+	var factors [2]BlendFactor
+	var funcs [2]uint32
+	factors[0] = rs.blendSrcFactor
+	factors[1] = rs.blendDstFactor
+	for i := 0; i < 2; i++ {
+		switch factors[i] {
+		case ZeroBlendFactor:
+			funcs[i] = gl.ZERO
+		case OneBlendFactor:
+			funcs[i] = gl.ONE
+		case SourceColorBlendFactor:
+			funcs[i] = gl.SRC_COLOR
+		case OneMinusSourceColorBlendFactor:
+			funcs[i] = gl.ONE_MINUS_SRC_COLOR
+		case DestinationColorBlendFactor:
+			funcs[i] = gl.DST_COLOR
+		case OneMinusDestinationColorBlendFactor:
+			funcs[i] = gl.ONE_MINUS_DST_COLOR
+		case SourceAlphaBlendFactor:
+			funcs[i] = gl.SRC_ALPHA
+		case OneMinusSourceAlphaBlendFactor:
+			funcs[i] = gl.ONE_MINUS_SRC_ALPHA
+		case DestinationAlphaBlendFactor:
+			funcs[i] = gl.DST_ALPHA
+		case OneMinusDestinationAlphaBlendFactor:
+			funcs[i] = gl.ONE_MINUS_DST_ALPHA
+		default:
+			panic("tried to apply a render state with an unknown blending factor")
+		}
 	}
+	gl.BlendFunc(funcs[0], funcs[1])
 
 	if rs.cull {
 		gl.Enable(gl.CULL_FACE)
@@ -127,4 +162,8 @@ func (rs *RenderState) Apply() {
 	gl.PolygonMode(gl.FRONT_AND_BACK, rs.polygonMode)
 
 	gl.Viewport(0, 0, int32(rs.viewportWidth), int32(rs.viewportHeight))
+}
+
+func init() {
+	gl.Enable(gl.BLEND)
 }

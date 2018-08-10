@@ -34,8 +34,7 @@ func NewTextRenderer() *TextRenderer {
 	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
-	r.renderState.SetBlend(true)
-	r.renderState.SetBlendFunction(gl.ONE_MINUS_DST_COLOR, gl.ONE_MINUS_SRC_COLOR)
+	r.renderState.SetBlendFactors(graphics.OneMinusDestinationColorBlendFactor, graphics.OneMinusSourceColorBlendFactor)
 	r.renderState.SetCull(false)
 	r.renderState.SetPolygonMode(gl.FILL)
 

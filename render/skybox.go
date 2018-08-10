@@ -53,6 +53,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetCull(false)
 	r.renderState.SetPolygonMode(gl.FILL)
+	r.renderState.SetBlendFactors(graphics.OneBlendFactor, graphics.ZeroBlendFactor)
 
 	return &r
 }
