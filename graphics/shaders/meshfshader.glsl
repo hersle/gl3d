@@ -34,6 +34,7 @@ uniform struct Light {
 	vec3 diffuse;
 	vec3 specular;
 	float far;
+	float attenuationQuadratic;
 } light;
 
 uniform mat4 viewMatrix;
@@ -104,6 +105,8 @@ void main() {
 	vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));
 	bool facing = dot(tanNormal, tanLightToVertex) < 0;
 
+	float attenuation = 1 / (1.0 + light.attenuationQuadratic * dot(tanLightToVertex, tanLightToVertex));
+
 	switch (light.type) {
 	case 0: // ambient light
 		tex = texture(material.ambientMap, texCoordF);
@@ -116,13 +119,15 @@ void main() {
 	tex = texture(material.diffuseMap, texCoordF);
 	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
 				 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
-				 * light.diffuse;
+				 * light.diffuse
+				 * attenuation;
 
 	tex = texture(material.specularMap, texCoordF);
 	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
 				  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
 				  * light.specular
-				  * (facing ? 1 : 0);
+				  * (facing ? 1 : 0)
+				  * attenuation;
 
 	// TODO: AVOID BRANCHING!! CAUSES DRIVER BUGS!! USE SEPARATE SHADERS!!
 	float factor;

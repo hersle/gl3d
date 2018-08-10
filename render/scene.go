@@ -205,6 +205,7 @@ func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
 func (r *SceneRenderer) SetAmbientLight(l *light.AmbientLight) {
 	r.sp.LightType.Set(0)
 	r.sp.AmbientLight.Set(l.Color)
+	r.sp.LightAttQuad.Set(0)
 }
 
 func (r *SceneRenderer) SetPointLight(l *light.PointLight) {
@@ -214,6 +215,7 @@ func (r *SceneRenderer) SetPointLight(l *light.PointLight) {
 	r.sp.SpecularLight.Set(l.Specular)
 	r.sp.CubeShadowMap.SetCube(l.ShadowMap)
 	r.sp.ShadowFar.Set(l.ShadowFar)
+	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
 }
 
 func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
@@ -226,6 +228,7 @@ func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
+	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
 }
 
 func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
@@ -236,6 +239,7 @@ func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.DirShadowMap.Set2D(l.ShadowMap)
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
+	r.sp.LightAttQuad.Set(0)
 }
 
 func (r *SceneRenderer) SetDepthCamera(c camera.Camera) {

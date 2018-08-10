@@ -445,6 +445,7 @@ type MeshShaderProgram struct {
 	CubeShadowMap          *UniformSampler
 	DirShadowMap           *UniformSampler
 	ShadowFar              *UniformFloat
+	LightAttQuad           *UniformFloat
 }
 
 type SkyboxShaderProgram struct {
@@ -547,6 +548,7 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	sp.SpotShadowMap = sp.UniformSampler("spotShadowMap")
 	sp.DirShadowMap = sp.UniformSampler("dirShadowMap")
 	sp.ShadowFar = sp.UniformFloat("light.far")
+	sp.LightAttQuad = sp.UniformFloat("light.attenuationQuadratic")
 
 	sp.Position.SetFormat(gl.FLOAT, false)
 	sp.Normal.SetFormat(gl.FLOAT, false)

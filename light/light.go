@@ -19,6 +19,7 @@ type PointLight struct {
 	ShadowMap      *graphics.CubeMap
 	DirtyShadowMap bool
 	ShadowFar      float32
+	AttenuationQuadratic float32
 }
 
 type SpotLight struct {
@@ -27,6 +28,7 @@ type SpotLight struct {
 	Specular       math.Vec3
 	ShadowMap      *graphics.Texture2D
 	DirtyShadowMap bool
+	AttenuationQuadratic float32
 }
 
 type DirectionalLight struct {
@@ -50,6 +52,7 @@ func NewPointLight(diffuse, specular math.Vec3) *PointLight {
 	l.ShadowMap = graphics.NewCubeMap(graphics.NearestFilter, gl.DEPTH_COMPONENT16, 512, 512)
 	l.DirtyShadowMap = true
 	l.ShadowFar = 50
+	l.AttenuationQuadratic = 0
 	return &l
 }
 
@@ -66,6 +69,7 @@ func NewSpotLight(diffuse, specular math.Vec3) *SpotLight {
 	l.ShadowMap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
 	l.ShadowMap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 	l.DirtyShadowMap = true
+	l.AttenuationQuadratic = 0
 	return &l
 }
 
