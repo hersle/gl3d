@@ -36,7 +36,7 @@ func NewQuadRenderer() *QuadRenderer {
 	r.sp.Position.SetSource(r.vbo, 0, stride)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetDepthTest(false)
+	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
 	r.renderState.SetBlend(false)
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)

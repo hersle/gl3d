@@ -5,12 +5,24 @@ import (
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 )
 
+type DepthTest int
+const (
+	UnknownDepthTest DepthTest = iota
+	NeverDepthTest
+	LessDepthTest
+	LessEqualDepthTest
+	EqualDepthTest
+	NotEqualDepthTest
+	GreaterDepthTest
+	GreaterEqualDepthTest
+	AlwaysDepthTest
+)
+
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
 	prog           *ShaderProgram
 	framebuffer    *Framebuffer
-	depthTest      bool
-	depthFunc      uint32
+	depthTest      DepthTest
 	blend          bool
 	blendSrcFactor uint32
 	blendDstFactor uint32
@@ -34,12 +46,8 @@ func (rs *RenderState) SetFramebuffer(fb *Framebuffer) {
 	rs.framebuffer = fb
 }
 
-func (rs *RenderState) SetDepthTest(depthTest bool) {
+func (rs *RenderState) SetDepthTest(depthTest DepthTest) {
 	rs.depthTest = depthTest
-}
-
-func (rs *RenderState) SetDepthFunc(depthFunc uint32) {
-	rs.depthFunc = depthFunc
 }
 
 func (rs *RenderState) SetBlend(blend bool) {
@@ -74,11 +82,32 @@ func (rs *RenderState) Apply() {
 
 	rs.framebuffer.BindDraw()
 
-	if rs.depthTest {
+	switch (rs.depthTest) {
+	case NeverDepthTest:
 		gl.Enable(gl.DEPTH_TEST)
-		gl.DepthFunc(rs.depthFunc)
-	} else {
+		gl.DepthFunc(gl.NEVER)
+	case LessDepthTest:
+		gl.Enable(gl.DEPTH_TEST)
+		gl.DepthFunc(gl.LESS)
+	case LessEqualDepthTest:
+		gl.Enable(gl.DEPTH_TEST)
+		gl.DepthFunc(gl.LEQUAL)
+	case EqualDepthTest:
+		gl.Enable(gl.DEPTH_TEST)
+		gl.DepthFunc(gl.EQUAL)
+	case NotEqualDepthTest:
+		gl.Enable(gl.DEPTH_TEST)
+		gl.DepthFunc(gl.NOTEQUAL)
+	case GreaterDepthTest:
+		gl.Enable(gl.DEPTH_TEST)
+		gl.DepthFunc(gl.GREATER)
+	case GreaterEqualDepthTest:
+		gl.Enable(gl.DEPTH_TEST)
+		gl.DepthFunc(gl.GEQUAL)
+	case AlwaysDepthTest:
 		gl.Disable(gl.DEPTH_TEST)
+	default:
+		panic("tried to apply a render state with unknown depth test")
 	}
 
 	if rs.blend {

@@ -26,7 +26,7 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetFramebuffer(r.framebuffer)
-	r.renderState.SetDepthTest(true)
+	r.renderState.SetDepthTest(graphics.LessDepthTest)
 	r.renderState.SetBlend(false)
 
 	return &r

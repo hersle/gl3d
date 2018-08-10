@@ -48,8 +48,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetFramebuffer(r.framebuffer)
-	r.renderState.SetDepthTest(true)
-	r.renderState.SetDepthFunc(gl.LEQUAL) // enable drawing after depth prepass
+	r.renderState.SetDepthTest(graphics.LessEqualDepthTest) // enable drawing after depth prepass
 	r.renderState.SetBlend(true)
 	r.renderState.SetBlendFunction(gl.ONE, gl.ONE) // add to framebuffer contents
 	r.renderState.SetCull(true)
@@ -60,8 +59,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.depthRenderState = graphics.NewRenderState()
 	r.depthRenderState.SetShaderProgram(r.dsp.ShaderProgram)
 	r.depthRenderState.SetFramebuffer(r.framebuffer)
-	r.depthRenderState.SetDepthTest(true)
-	r.depthRenderState.SetDepthFunc(gl.LESS) // enable drawing after depth prepass
+	r.depthRenderState.SetDepthTest(graphics.LessDepthTest)
 	r.depthRenderState.SetBlend(false)
 	r.depthRenderState.SetCull(true)
 	r.depthRenderState.SetCullFace(gl.BACK) // CCW treated as front face by default

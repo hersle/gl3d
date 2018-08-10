@@ -31,7 +31,7 @@ func NewTextRenderer() *TextRenderer {
 	r.tex = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetDepthTest(false)
+	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetBlend(true)

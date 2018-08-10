@@ -25,7 +25,7 @@ func NewArrowRenderer() *ArrowRenderer {
 	r.renderState = graphics.NewRenderState()
 	r.renderState.SetBlend(false)
 	r.renderState.SetCull(false)
-	r.renderState.SetDepthTest(true)
+	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 

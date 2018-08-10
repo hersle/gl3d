@@ -48,7 +48,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	r.SetCube(r.vbo, r.ibo)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetDepthTest(false)
+	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetCull(false)
