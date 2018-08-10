@@ -36,12 +36,7 @@ func NewQuadRenderer() *QuadRenderer {
 	r.sp.Position.SetSource(r.vbo, 0, stride)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
-	r.renderState.DisableBlending()
-	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
-	r.renderState.SetCull(graphics.CullNothing)
-	r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
 
 	return &r
 }

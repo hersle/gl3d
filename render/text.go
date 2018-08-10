@@ -31,12 +31,8 @@ func NewTextRenderer() *TextRenderer {
 	r.tex = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
-	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetBlendFactors(graphics.OneMinusDestinationColorBlendFactor, graphics.OneMinusSourceColorBlendFactor)
-	r.renderState.SetCull(graphics.CullNothing)
-	r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
 
 	return &r
 }

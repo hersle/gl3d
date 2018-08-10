@@ -50,16 +50,13 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState.SetFramebuffer(r.framebuffer)
 	r.renderState.SetDepthTest(graphics.LessEqualDepthTest) // enable drawing after depth prepass
 	r.renderState.SetCull(graphics.CullBack)
-	r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
 	r.renderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
 	r.depthRenderState = graphics.NewRenderState()
 	r.depthRenderState.SetShaderProgram(r.dsp.ShaderProgram)
 	r.depthRenderState.SetFramebuffer(r.framebuffer)
 	r.depthRenderState.SetDepthTest(graphics.LessDepthTest)
-	r.depthRenderState.DisableBlending()
 	r.depthRenderState.SetCull(graphics.CullBack)
-	r.depthRenderState.SetTriangleMode(graphics.TriangleTriangleMode)
 	r.depthRenderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
 	r.shadowMapRenderer = NewShadowMapRenderer()

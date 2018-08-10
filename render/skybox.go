@@ -48,12 +48,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	r.SetCube(r.vbo, r.ibo)
 
 	r.renderState = graphics.NewRenderState()
-	r.renderState.SetDepthTest(graphics.AlwaysDepthTest)
-	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
-	r.renderState.SetCull(graphics.CullNothing)
-	r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
-	r.renderState.DisableBlending()
 
 	return &r
 }

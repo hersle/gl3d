@@ -7,7 +7,8 @@ import (
 
 type DepthTest int
 const (
-	UnknownDepthTest DepthTest = iota
+	AlwaysDepthTest DepthTest = iota
+	UnknownDepthTest
 	NeverDepthTest
 	LessDepthTest
 	LessEqualDepthTest
@@ -15,13 +16,11 @@ const (
 	NotEqualDepthTest
 	GreaterDepthTest
 	GreaterEqualDepthTest
-	AlwaysDepthTest
 )
 
 type BlendFactor int
 const (
-	UnknownBlendFactor BlendFactor = iota
-	ZeroBlendFactor
+	ZeroBlendFactor BlendFactor = iota
 	OneBlendFactor
 	SourceColorBlendFactor
 	OneMinusSourceColorBlendFactor
@@ -35,18 +34,16 @@ const (
 
 type CullMode int
 const (
-	CullUnknown CullMode = iota
-	CullNothing
+	CullNothing CullMode = iota
 	CullFront
 	CullBack
 )
 
 type TriangleMode int
 const (
-	UnknownTriangleMode TriangleMode = iota
+	TriangleTriangleMode TriangleMode = iota
 	PointTriangleMode
 	LineTriangleMode
-	TriangleTriangleMode
 )
 
 // TODO: enable sorting of these states to reduce state changes?
@@ -64,6 +61,8 @@ type RenderState struct {
 
 func NewRenderState() *RenderState {
 	var rs RenderState
+	rs.DisableBlending()
+	rs.SetFramebuffer(DefaultFramebuffer)
 	return &rs
 }
 
