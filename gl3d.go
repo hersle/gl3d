@@ -47,16 +47,22 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	s.AmbientLight = light.NewAmbientLight(math.NewVec3(1, 1, 1))
-	s.AddSpotLight(light.NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
-	s.SpotLights[0].PerspectiveCamera = *camera.NewPerspectiveCamera(60, 1, 0.1, 50)
-	s.SpotLights[0].Place(math.NewVec3(0, 3, 0))
-	s.SpotLights[0].Orient(s.SpotLights[0].Position.Scale(-1).Norm(), math.NewVec3(0, 0, 1))
+	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0.1, 0.1, 0.1))
+
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.PointLights[0].AttenuationQuadratic = 0.1
+
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
-	s.PointLights[1].Place(math.NewVec3(5, 0, 0))
-	s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
-	s.AddDirectionalLight(light.NewDirectionalLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.PointLights[1].AttenuationQuadratic = 0.1
+	s.PointLights[1].Place(math.NewVec3(5, 5, 0))
+
+	//s.AddSpotLight(light.NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	//s.SpotLights[0].AttenuationQuadratic = 0.1
+
+	//s.AddDirectionalLight(light.NewDirectionalLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+
+	//s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
+	s.AddSkybox(graphics.NewCubeMapUniform(math.NewVec4(0.0, 0.0, 0.0, 0)))
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
@@ -140,11 +146,10 @@ func main() {
 			c.Rotate(math.NewVec3(0, 1, 0), camFactor*-0.03)
 		}
 		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
-			//s.pointLights[0].Place(c.position)
+			s.PointLights[0].Place(c.Position)
 			//s.SpotLights[0].Place(c.Position)
-			//s.SpotLights[0].Orient(c.UnitX, c.UnitY) // for spotlight
-			s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
-			s.DirectionalLights[0].Place(c.Position)
+			//s.SpotLights[0].Orient(c.UnitX, c.UnitY)
+			//s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
 		}
 		if window.Win.GetKey(glfw.KeyZ) == glfw.Press {
 			drawScene = true
