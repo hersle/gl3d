@@ -49,8 +49,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetFramebuffer(r.framebuffer)
 	r.renderState.SetDepthTest(graphics.LessEqualDepthTest) // enable drawing after depth prepass
-	r.renderState.SetCull(true)
-	r.renderState.SetCullFace(gl.BACK) // CCW treated as front face by default
+	r.renderState.SetCull(graphics.CullBack)
 	r.renderState.SetPolygonMode(gl.FILL)
 	r.renderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
@@ -59,8 +58,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.depthRenderState.SetFramebuffer(r.framebuffer)
 	r.depthRenderState.SetDepthTest(graphics.LessDepthTest)
 	r.depthRenderState.DisableBlending()
-	r.depthRenderState.SetCull(true)
-	r.depthRenderState.SetCullFace(gl.BACK) // CCW treated as front face by default
+	r.depthRenderState.SetCull(graphics.CullBack)
 	r.depthRenderState.SetPolygonMode(gl.FILL)
 	r.depthRenderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 

@@ -40,7 +40,7 @@ func NewQuadRenderer() *QuadRenderer {
 	r.renderState.DisableBlending()
 	r.renderState.SetFramebuffer(graphics.DefaultFramebuffer)
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
-	r.renderState.SetCull(false)
+	r.renderState.SetCull(graphics.CullNothing)
 	r.renderState.SetPolygonMode(gl.FILL)
 
 	return &r

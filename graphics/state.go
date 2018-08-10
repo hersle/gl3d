@@ -33,6 +33,14 @@ const (
 	OneMinusDestinationAlphaBlendFactor
 )
 
+type CullMode int
+const (
+	CullUnknown CullMode = iota
+	CullNothing
+	CullFront
+	CullBack
+)
+
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
 	prog           *ShaderProgram
@@ -42,8 +50,7 @@ type RenderState struct {
 	blendDstFactor BlendFactor
 	viewportWidth  int
 	viewportHeight int
-	cull           bool
-	cullFace       uint32
+	cull           CullMode
 	polygonMode    uint32
 }
 
@@ -78,12 +85,8 @@ func (rs *RenderState) SetViewport(width, height int) {
 	rs.viewportHeight = height
 }
 
-func (rs *RenderState) SetCull(cull bool) {
+func (rs *RenderState) SetCull(cull CullMode) {
 	rs.cull = cull
-}
-
-func (rs *RenderState) SetCullFace(cullFace uint32) {
-	rs.cullFace = cullFace
 }
 
 func (rs *RenderState) SetPolygonMode(mode uint32) {
@@ -156,11 +159,17 @@ func (rs *RenderState) Apply() {
 	}
 	gl.BlendFunc(funcs[0], funcs[1])
 
-	if rs.cull {
-		gl.Enable(gl.CULL_FACE)
-		gl.CullFace(rs.cullFace)
-	} else {
+	switch rs.cull {
+	case CullNothing:
 		gl.Disable(gl.CULL_FACE)
+	case CullFront:
+		gl.Enable(gl.CULL_FACE)
+		gl.CullFace(gl.FRONT)
+	case CullBack:
+		gl.Enable(gl.CULL_FACE)
+		gl.CullFace(gl.BACK)
+	default:
+		panic("tried to apply a render state with an unknown culling mode")
 	}
 
 	gl.PolygonMode(gl.FRONT_AND_BACK, rs.polygonMode)
