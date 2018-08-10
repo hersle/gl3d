@@ -41,6 +41,14 @@ const (
 	CullBack
 )
 
+type TriangleMode int
+const (
+	UnknownTriangleMode TriangleMode = iota
+	PointTriangleMode
+	LineTriangleMode
+	TriangleTriangleMode
+)
+
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
 	prog           *ShaderProgram
@@ -51,7 +59,7 @@ type RenderState struct {
 	viewportWidth  int
 	viewportHeight int
 	cull           CullMode
-	polygonMode    uint32
+	triangleMode   TriangleMode
 }
 
 func NewRenderState() *RenderState {
@@ -89,8 +97,8 @@ func (rs *RenderState) SetCull(cull CullMode) {
 	rs.cull = cull
 }
 
-func (rs *RenderState) SetPolygonMode(mode uint32) {
-	rs.polygonMode = mode
+func (rs *RenderState) SetTriangleMode(mode TriangleMode) {
+	rs.triangleMode = mode
 }
 
 func (rs *RenderState) Apply() {
@@ -172,7 +180,16 @@ func (rs *RenderState) Apply() {
 		panic("tried to apply a render state with an unknown culling mode")
 	}
 
-	gl.PolygonMode(gl.FRONT_AND_BACK, rs.polygonMode)
+	switch rs.triangleMode {
+	case PointTriangleMode:
+		gl.PolygonMode(gl.FRONT_AND_BACK, gl.POINT)
+	case LineTriangleMode:
+		gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
+	case TriangleTriangleMode:
+		gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
+	default:
+		panic("tried to apply a render state with an unknown polygonmode")
+	}
 
 	gl.Viewport(0, 0, int32(rs.viewportWidth), int32(rs.viewportHeight))
 }

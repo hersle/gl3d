@@ -50,7 +50,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState.SetFramebuffer(r.framebuffer)
 	r.renderState.SetDepthTest(graphics.LessEqualDepthTest) // enable drawing after depth prepass
 	r.renderState.SetCull(graphics.CullBack)
-	r.renderState.SetPolygonMode(gl.FILL)
+	r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
 	r.renderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
 	r.depthRenderState = graphics.NewRenderState()
@@ -59,7 +59,7 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.depthRenderState.SetDepthTest(graphics.LessDepthTest)
 	r.depthRenderState.DisableBlending()
 	r.depthRenderState.SetCull(graphics.CullBack)
-	r.depthRenderState.SetPolygonMode(gl.FILL)
+	r.depthRenderState.SetTriangleMode(graphics.TriangleTriangleMode)
 	r.depthRenderState.SetViewport(r.RenderTarget.Width, r.RenderTarget.Height)
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
@@ -161,9 +161,9 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 
 func (r *SceneRenderer) SetWireframe(wireframe bool) {
 	if wireframe {
-		r.renderState.SetPolygonMode(gl.LINE)
+		r.renderState.SetTriangleMode(graphics.LineTriangleMode)
 	} else {
-		r.renderState.SetPolygonMode(gl.FILL)
+		r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
 	}
 }
 

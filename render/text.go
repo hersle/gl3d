@@ -36,7 +36,7 @@ func NewTextRenderer() *TextRenderer {
 	r.renderState.SetShaderProgram(r.sp.ShaderProgram)
 	r.renderState.SetBlendFactors(graphics.OneMinusDestinationColorBlendFactor, graphics.OneMinusSourceColorBlendFactor)
 	r.renderState.SetCull(graphics.CullNothing)
-	r.renderState.SetPolygonMode(gl.FILL)
+	r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
 
 	return &r
 }

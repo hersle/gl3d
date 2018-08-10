@@ -29,6 +29,7 @@ func NewShadowMapRenderer() *ShadowMapRenderer {
 	r.renderState.SetDepthTest(graphics.LessDepthTest)
 	r.renderState.SetCull(graphics.CullBack)
 	r.renderState.DisableBlending()
+	r.renderState.SetTriangleMode(graphics.TriangleTriangleMode)
 
 	return &r
 }
