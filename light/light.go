@@ -14,20 +14,20 @@ type AmbientLight struct {
 
 type PointLight struct {
 	object.Object
-	Diffuse        math.Vec3
-	Specular       math.Vec3
-	ShadowMap      *graphics.CubeMap
-	DirtyShadowMap bool
-	ShadowFar      float32
+	Diffuse              math.Vec3
+	Specular             math.Vec3
+	ShadowMap            *graphics.CubeMap
+	DirtyShadowMap       bool
+	ShadowFar            float32
 	AttenuationQuadratic float32
 }
 
 type SpotLight struct {
 	camera.PerspectiveCamera
-	Diffuse        math.Vec3
-	Specular       math.Vec3
-	ShadowMap      *graphics.Texture2D
-	DirtyShadowMap bool
+	Diffuse              math.Vec3
+	Specular             math.Vec3
+	ShadowMap            *graphics.Texture2D
+	DirtyShadowMap       bool
 	AttenuationQuadratic float32
 }
 

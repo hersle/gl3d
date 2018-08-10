@@ -6,6 +6,7 @@ import (
 )
 
 type DepthTest int
+
 const (
 	AlwaysDepthTest DepthTest = iota
 	UnknownDepthTest
@@ -19,6 +20,7 @@ const (
 )
 
 type BlendFactor int
+
 const (
 	ZeroBlendFactor BlendFactor = iota
 	OneBlendFactor
@@ -33,6 +35,7 @@ const (
 )
 
 type CullMode int
+
 const (
 	CullNothing CullMode = iota
 	CullFront
@@ -40,6 +43,7 @@ const (
 )
 
 type TriangleMode int
+
 const (
 	TriangleTriangleMode TriangleMode = iota
 	PointTriangleMode
@@ -48,15 +52,15 @@ const (
 
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
-	Program        *ShaderProgram
-	Framebuffer    *Framebuffer
-	DepthTest      DepthTest
-	BlendSourceFactor BlendFactor
+	Program                *ShaderProgram
+	Framebuffer            *Framebuffer
+	DepthTest              DepthTest
+	BlendSourceFactor      BlendFactor
 	BlendDestinationFactor BlendFactor
-	ViewportWidth  int
-	ViewportHeight int
-	Cull           CullMode
-	TriangleMode   TriangleMode
+	ViewportWidth          int
+	ViewportHeight         int
+	Cull                   CullMode
+	TriangleMode           TriangleMode
 }
 
 var currentState RenderState
@@ -96,7 +100,7 @@ func (rs *RenderState) Apply() {
 	}
 
 	if currentState.DepthTest != rs.DepthTest {
-		switch (rs.DepthTest) {
+		switch rs.DepthTest {
 		case NeverDepthTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.NEVER)
