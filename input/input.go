@@ -149,12 +149,24 @@ const (
 	MouseButtonMiddle MouseButton = MouseButton(glfw.MouseButtonMiddle)
 )
 
+var keyPressed [KeyLast]bool
+
+func (key Key) Pressed() bool {
+	return keyPressed[key]
+}
+
 func init() {
 	window.Win.SetCharCallback(func(w *glfw.Window, char rune) {
 	})
 	window.Win.SetCursorPosCallback(func(w *glfw.Window, x, y float64) {
 	})
 	window.Win.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scan int, action glfw.Action, mods glfw.ModifierKey) {
+		switch action {
+		case glfw.Release:
+			keyPressed[key] = false
+		case glfw.Press:
+			keyPressed[key] = true
+		}
 	})
 	window.Win.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
 	})
