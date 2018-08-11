@@ -164,6 +164,8 @@ func main() {
 			renderer.SetWireframe(true)
 		}
 
+		input.Update()
+
 		frameCount++
 	}
 }

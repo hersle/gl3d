@@ -151,16 +151,51 @@ const (
 	MouseButtonMiddle MouseButton = MouseButton(glfw.MouseButtonMiddle)
 )
 
+type Action int
+
+const (
+	Press   Action = Action(glfw.Press)
+	Hold    Action = Action(glfw.Repeat)
+	Release Action = Action(glfw.Release)
+)
+
+var keyHeld [KeyLast]bool
 var keyPressed [KeyLast]bool
+var keyReleased [KeyLast]bool
+var buttonHeld [MouseButtonLast]bool
 var buttonPressed [MouseButtonLast]bool
+var buttonReleased [MouseButtonLast]bool
 var MousePosition math.Vec2
+
+func (key Key) Held() bool {
+	return keyHeld[key]
+}
 
 func (key Key) Pressed() bool {
 	return keyPressed[key]
 }
 
+func (key Key) Released() bool {
+	return keyReleased[key]
+}
+
+func (button MouseButton) Held() bool {
+	return buttonHeld[button]
+}
+
 func (button MouseButton) Pressed() bool {
 	return buttonPressed[button]
+}
+
+func (button MouseButton) Released() bool {
+	return buttonReleased[button]
+}
+
+func Update() {
+	for key := Key(0); key < KeyLast; key++ {
+		keyPressed[key] = false // not pressed after this frame
+		keyReleased[key] = false // not released after this frame
+	}
 }
 
 func init() {
@@ -172,16 +207,20 @@ func init() {
 	window.Win.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scan int, action glfw.Action, mods glfw.ModifierKey) {
 		switch action {
 		case glfw.Release:
-			keyPressed[key] = false
+			keyHeld[key] = false
+			keyReleased[key] = true
 		case glfw.Press:
+			keyHeld[key] = true
 			keyPressed[key] = true
 		}
 	})
 	window.Win.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
 		switch action {
 		case glfw.Release:
-			buttonPressed[button] = false
+			buttonHeld[button] = false
+			buttonReleased[button] = true
 		case glfw.Press:
+			buttonHeld[button] = true
 			buttonPressed[button] = true
 		}
 	})
