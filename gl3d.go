@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"github.com/go-gl/glfw/v3.2/glfw"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/light"
@@ -11,6 +10,7 @@ import (
 	"github.com/hersle/gl3d/render"
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/window"
+	"github.com/hersle/gl3d/input"
 	"os"
 	"time"
 )
@@ -96,13 +96,13 @@ func main() {
 		}
 		quadRenderer.Render(renderer.RenderTarget)
 		//quadRenderer.Render(s.DirectionalLights[0].ShadowMap)
-		if window.Win.GetKey(glfw.Key1) == glfw.Press {
+		if input.Key1.Pressed() {
 			arrowRenderer.RenderTangents(s, c)
 		}
-		if window.Win.GetKey(glfw.Key2) == glfw.Press {
+		if input.Key2.Pressed() {
 			arrowRenderer.RenderBitangents(s, c)
 		}
-		if window.Win.GetKey(glfw.Key3) == glfw.Press {
+		if input.Key3.Pressed() {
 			arrowRenderer.RenderNormals(s, c)
 		}
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
@@ -115,52 +115,52 @@ func main() {
 
 		graphics.RenderStats.Reset()
 
-		if window.Win.GetKey(glfw.KeyLeftShift) == glfw.Press {
+		if input.KeyLeftShift.Pressed() {
 			camFactor = 0.1 // for precise camera controls
 		} else {
 			camFactor = 1.0
 		}
 
-		if window.Win.GetKey(glfw.KeyW) == glfw.Press {
+		if input.KeyW.Pressed() {
 			c.Translate(c.Forward().Scale(camFactor * +0.1))
 		}
-		if window.Win.GetKey(glfw.KeyS) == glfw.Press {
+		if input.KeyS.Pressed() {
 			c.Translate(c.Forward().Scale(camFactor * -0.1))
 		}
-		if window.Win.GetKey(glfw.KeyD) == glfw.Press {
+		if input.KeyD.Pressed() {
 			c.Translate(c.Right().Scale(camFactor * +0.1))
 		}
-		if window.Win.GetKey(glfw.KeyA) == glfw.Press {
+		if input.KeyA.Pressed() {
 			c.Translate(c.Right().Scale(camFactor * -0.1))
 		}
-		if window.Win.GetKey(glfw.KeyUp) == glfw.Press {
+		if input.KeyUp.Pressed() {
 			c.Rotate(c.Right(), camFactor*+0.03)
 		}
-		if window.Win.GetKey(glfw.KeyDown) == glfw.Press {
+		if input.KeyDown.Pressed() {
 			c.Rotate(c.Right(), camFactor*-0.03)
 		}
-		if window.Win.GetKey(glfw.KeyLeft) == glfw.Press {
+		if input.KeyLeft.Pressed() {
 			c.Rotate(math.NewVec3(0, 1, 0), camFactor*+0.03)
 		}
-		if window.Win.GetKey(glfw.KeyRight) == glfw.Press {
+		if input.KeyRight.Pressed() {
 			c.Rotate(math.NewVec3(0, 1, 0), camFactor*-0.03)
 		}
-		if window.Win.GetKey(glfw.KeySpace) == glfw.Press {
+		if input.KeySpace.Pressed() {
 			s.PointLights[0].Place(c.Position)
 			//s.SpotLights[0].Place(c.Position)
 			//s.SpotLights[0].Orient(c.UnitX, c.UnitY)
 			//s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
 		}
-		if window.Win.GetKey(glfw.KeyZ) == glfw.Press {
+		if input.KeyZ.Pressed() {
 			drawScene = true
 		}
-		if window.Win.GetKey(glfw.KeyX) == glfw.Press {
+		if input.KeyX.Pressed() {
 			drawScene = false
 		}
-		if window.Win.GetKey(glfw.KeyC) == glfw.Press {
+		if input.KeyC.Pressed() {
 			renderer.SetWireframe(false)
 		}
-		if window.Win.GetKey(glfw.KeyV) == glfw.Press {
+		if input.KeyV.Pressed() {
 			renderer.SetWireframe(true)
 		}
 
