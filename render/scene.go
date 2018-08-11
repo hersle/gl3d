@@ -50,7 +50,6 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
 	r.renderState.Framebuffer = r.framebuffer
-	r.renderState.DepthTest = graphics.LessEqualDepthTest // enable drawing after depth prepass
 	r.renderState.Cull = graphics.CullBack
 	r.renderState.ViewportWidth = r.RenderTarget.Width
 	r.renderState.ViewportHeight = r.RenderTarget.Height
@@ -155,7 +154,9 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.skyboxRenderer.Render(c)
 
 	r.renderState.DisableBlending()
+	r.renderState.DepthTest = graphics.LessDepthTest
 	r.AmbientPass(s, c)
+	r.renderState.DepthTest = graphics.EqualDepthTest
 	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
 	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
 	r.PointLightPass(s, c)
