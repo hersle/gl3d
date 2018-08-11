@@ -159,6 +159,8 @@ const (
 	Release Action = Action(glfw.Release)
 )
 
+type KeyListener func(action Action)
+
 var keyHeld [KeyLast]bool
 var keyPressed [KeyLast]bool
 var keyReleased [KeyLast]bool
@@ -166,6 +168,8 @@ var buttonHeld [MouseButtonLast]bool
 var buttonPressed [MouseButtonLast]bool
 var buttonReleased [MouseButtonLast]bool
 var MousePosition math.Vec2
+
+var keyListeners [KeyLast][]KeyListener
 
 func (key Key) Held() bool {
 	return keyHeld[key]
@@ -177,6 +181,10 @@ func (key Key) Pressed() bool {
 
 func (key Key) Released() bool {
 	return keyReleased[key]
+}
+
+func (key Key) Listen(listener KeyListener) {
+	keyListeners[key] = append(keyListeners[key], listener)
 }
 
 func (button MouseButton) Held() bool {
@@ -193,6 +201,17 @@ func (button MouseButton) Released() bool {
 
 func Update() {
 	for key := Key(0); key < KeyLast; key++ {
+		for _, listener := range keyListeners[key] {
+			if key.Pressed() {
+				listener(Press)
+			}
+			if key.Held() {
+				listener(Hold)
+			}
+			if key.Released() {
+				listener(Release)
+			}
+		}
 		keyPressed[key] = false // not pressed after this frame
 		keyReleased[key] = false // not released after this frame
 	}
