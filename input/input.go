@@ -144,15 +144,21 @@ const (
 	MouseButton7      MouseButton = MouseButton(glfw.MouseButton7)
 	MouseButton8      MouseButton = MouseButton(glfw.MouseButton8)
 	MouseButtonLast   MouseButton = MouseButton(glfw.MouseButtonLast)
+
 	MouseButtonLeft   MouseButton = MouseButton(glfw.MouseButtonLeft)
 	MouseButtonRight  MouseButton = MouseButton(glfw.MouseButtonRight)
 	MouseButtonMiddle MouseButton = MouseButton(glfw.MouseButtonMiddle)
 )
 
 var keyPressed [KeyLast]bool
+var buttonPressed [MouseButtonLast]bool
 
 func (key Key) Pressed() bool {
 	return keyPressed[key]
+}
+
+func (button MouseButton) Pressed() bool {
+	return buttonPressed[button]
 }
 
 func init() {
@@ -169,5 +175,11 @@ func init() {
 		}
 	})
 	window.Win.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
+		switch action {
+		case glfw.Release:
+			buttonPressed[button] = false
+		case glfw.Press:
+			buttonPressed[button] = true
+		}
 	})
 }
