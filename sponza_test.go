@@ -43,17 +43,9 @@ func TestMain(t *testing.M) {
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
-	drawScene := true
-
 	input.AddCameraFPSControls(c)
 	input.KeySpace.Listen(func(action input.Action) {
 		s.PointLights[0].Place(c.Position)
-	})
-	input.KeyZ.Listen(func(action input.Action) {
-		drawScene = true
-	})
-	input.KeyX.Listen(func(action input.Action) {
-		drawScene = false
 	})
 	input.KeyC.Listen(func(action input.Action) {
 		renderer.SetWireframe(false)
@@ -64,26 +56,23 @@ func TestMain(t *testing.M) {
 
 	for !window.ShouldClose() {
 		c.SetAspect(window.Aspect())
-		graphics.DefaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
-		graphics.DefaultFramebuffer.ClearDepth(1)
-		if drawScene {
-			renderer.Render(s, c)
-		}
+
+		renderer.Render(s, c)
 		quadRenderer.Render(renderer.RenderTarget)
-		if input.Key1.JustPressed() {
+		if input.Key1.Held() {
 			arrowRenderer.RenderTangents(s, c)
 		}
-		if input.Key2.JustPressed() {
+		if input.Key2.Held() {
 			arrowRenderer.RenderBitangents(s, c)
 		}
-		if input.Key3.JustPressed() {
+		if input.Key3.Held() {
 			arrowRenderer.RenderNormals(s, c)
 		}
-		textRenderer.Render(math.NewVec2(-1, +1), graphics.RenderStats.String(), 0.05)
-		window.Update()
 
+		textRenderer.Render(math.NewVec2(-1, +1), graphics.RenderStats.String(), 0.05)
 		graphics.RenderStats.Reset()
 
+		window.Update()
 		input.Update()
 	}
 }
