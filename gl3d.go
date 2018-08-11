@@ -96,13 +96,13 @@ func main() {
 		}
 		quadRenderer.Render(renderer.RenderTarget)
 		//quadRenderer.Render(s.DirectionalLights[0].ShadowMap)
-		if input.Key1.Pressed() {
+		if input.Key1.JustPressed() {
 			arrowRenderer.RenderTangents(s, c)
 		}
-		if input.Key2.Pressed() {
+		if input.Key2.JustPressed() {
 			arrowRenderer.RenderBitangents(s, c)
 		}
-		if input.Key3.Pressed() {
+		if input.Key3.JustPressed() {
 			arrowRenderer.RenderNormals(s, c)
 		}
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
@@ -115,22 +115,22 @@ func main() {
 
 		graphics.RenderStats.Reset()
 
-		if input.KeySpace.Pressed() {
+		if input.KeySpace.JustPressed() {
 			s.PointLights[0].Place(c.Position)
 			//s.SpotLights[0].Place(c.Position)
 			//s.SpotLights[0].Orient(c.UnitX, c.UnitY)
 			//s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
 		}
-		if input.KeyZ.Pressed() {
+		if input.KeyZ.JustPressed() {
 			drawScene = true
 		}
-		if input.KeyX.Pressed() {
+		if input.KeyX.JustPressed() {
 			drawScene = false
 		}
-		if input.KeyC.Pressed() {
+		if input.KeyC.JustPressed() {
 			renderer.SetWireframe(false)
 		}
-		if input.KeyV.Pressed() {
+		if input.KeyV.JustPressed() {
 			renderer.SetWireframe(true)
 		}
 

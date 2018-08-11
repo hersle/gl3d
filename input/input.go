@@ -175,11 +175,11 @@ func (key Key) Held() bool {
 	return keyHeld[key]
 }
 
-func (key Key) Pressed() bool {
+func (key Key) JustPressed() bool {
 	return keyPressed[key]
 }
 
-func (key Key) Released() bool {
+func (key Key) JustReleased() bool {
 	return keyReleased[key]
 }
 
@@ -191,11 +191,11 @@ func (button MouseButton) Held() bool {
 	return buttonHeld[button]
 }
 
-func (button MouseButton) Pressed() bool {
+func (button MouseButton) JustPressed() bool {
 	return buttonPressed[button]
 }
 
-func (button MouseButton) Released() bool {
+func (button MouseButton) JustReleased() bool {
 	return buttonReleased[button]
 }
 
@@ -206,13 +206,13 @@ func Update() {
 		keyReleased[key] = keyHeld[key] && !keyHeldNew
 		keyHeld[key] = keyHeldNew
 		for _, listener := range keyListeners[key] {
-			if key.Pressed() {
+			if key.JustPressed() {
 				listener(Press)
 			}
 			if key.Held() {
 				listener(Hold)
 			}
-			if key.Released() {
+			if key.JustReleased() {
 				listener(Release)
 			}
 		}
