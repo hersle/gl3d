@@ -34,8 +34,7 @@ func TestMain(t *testing.M) {
 	point := light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1))
 	point.AttenuationQuadratic = 0.1
 	point.Place(math.NewVec3(0, 2, 0))
-
-	s.AmbientLight = ambient
+	s.AddAmbientLight(ambient)
 	s.AddPointLight(point)
 
 	//s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))

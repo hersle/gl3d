@@ -4,6 +4,7 @@ import (
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/object"
+	"github.com/hersle/gl3d/math"
 )
 
 type Scene struct {
@@ -21,11 +22,16 @@ func NewScene() *Scene {
 	if err != nil {
 		panic(err)
 	}
+	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0, 0, 0))
 	return &s
 }
 
 func (s *Scene) AddMesh(m *object.Mesh) {
 	s.Meshes = append(s.Meshes, m)
+}
+
+func (s *Scene) AddAmbientLight(l *light.AmbientLight) {
+	s.AmbientLight.Color = s.AmbientLight.Color.Add(l.Color)
 }
 
 func (s *Scene) AddPointLight(l *light.PointLight) {
