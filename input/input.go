@@ -200,7 +200,11 @@ func (button MouseButton) Released() bool {
 }
 
 func Update() {
-	for key := Key(0); key < KeyLast; key++ {
+	for key := KeySpace; key < KeyLast; key++ {
+		keyHeldNew := window.Win.GetKey(glfw.Key(key)) == glfw.Press
+		keyPressed[key] = !keyHeld[key] && keyHeldNew
+		keyReleased[key] = keyHeld[key] && !keyHeldNew
+		keyHeld[key] = keyHeldNew
 		for _, listener := range keyListeners[key] {
 			if key.Pressed() {
 				listener(Press)
