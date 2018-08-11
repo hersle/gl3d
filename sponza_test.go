@@ -11,7 +11,6 @@ import (
 	"github.com/hersle/gl3d/render"
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/input"
-	"time"
 	"testing"
 )
 
@@ -64,17 +63,7 @@ func TestMain(t *testing.M) {
 		renderer.SetWireframe(true)
 	})
 
-	time1 := time.Now()
-	fps := int(0)
-	frameCount := int(0)
 	for !window.ShouldClose() {
-		if time.Now().Sub(time1).Seconds() > 0.0 {
-			time2 := time.Now()
-			fps = int(float64(frameCount) / (time2.Sub(time1).Seconds()))
-			time1 = time2
-			frameCount = 0
-		}
-
 		c.SetAspect(window.Aspect())
 		graphics.DefaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
 		graphics.DefaultFramebuffer.ClearDepth(1)
@@ -91,7 +80,7 @@ func TestMain(t *testing.M) {
 		if input.Key3.JustPressed() {
 			arrowRenderer.RenderNormals(s, c)
 		}
-		text := "FPS:        " + fmt.Sprint(fps) + "\n"
+		text := "FPS:        " + fmt.Sprint(graphics.RenderStats.FramesPerSecond) + "\n"
 		text += "position:   " + c.Position.String() + "\n"
 		text += "forward:    " + c.Forward().String() + "\n"
 		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
@@ -102,7 +91,5 @@ func TestMain(t *testing.M) {
 		graphics.RenderStats.Reset()
 
 		input.Update()
-
-		frameCount++
 	}
 }
