@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
@@ -80,12 +79,7 @@ func TestMain(t *testing.M) {
 		if input.Key3.JustPressed() {
 			arrowRenderer.RenderNormals(s, c)
 		}
-		text := "FPS:        " + fmt.Sprint(graphics.RenderStats.FramesPerSecond) + "\n"
-		text += "position:   " + c.Position.String() + "\n"
-		text += "forward:    " + c.Forward().String() + "\n"
-		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
-		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
-		textRenderer.Render(math.NewVec2(-1, +1), text, 0.05)
+		textRenderer.Render(math.NewVec2(-1, +1), graphics.RenderStats.String(), 0.05)
 		window.Update()
 
 		graphics.RenderStats.Reset()
