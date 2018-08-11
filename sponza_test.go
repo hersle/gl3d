@@ -23,11 +23,11 @@ func TestMain(t *testing.M) {
 	}
 
 	s := scene.NewScene()
-	model, err := object.ReadMesh("assets/objects/cube/cube.obj")
+	model, err := object.ReadMesh("assets/objects/sponza/sponza.obj")
 	if err != nil {
 		panic(err)
 	}
-	//model.Scale(math.NewVec3(0.02, 0.02, 0.02))
+	model.Scale(math.NewVec3(0.02, 0.02, 0.02))
 	s.AddMesh(model)
 
 	ambient := light.NewAmbientLight(math.NewVec3(0.1, 0.1, 0.1))
@@ -37,8 +37,8 @@ func TestMain(t *testing.M) {
 	s.AddAmbientLight(ambient)
 	s.AddPointLight(point)
 
-	//s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
-	s.AddSkybox(graphics.NewCubeMapUniform(math.NewVec4(0.0, 0.0, 0.0, 0)))
+	skybox := graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/")
+	s.AddSkybox(skybox)
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
