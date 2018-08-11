@@ -66,7 +66,7 @@ func main() {
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
-	var camFactor float32
+	input.AddCameraFPSControls(c)
 
 	textRenderer := render.NewTextRenderer()
 	arrowRenderer := render.NewArrowRenderer()
@@ -115,36 +115,6 @@ func main() {
 
 		graphics.RenderStats.Reset()
 
-		if input.KeyLeftShift.Pressed() {
-			camFactor = 0.1 // for precise camera controls
-		} else {
-			camFactor = 1.0
-		}
-
-		if input.KeyW.Pressed() {
-			c.Translate(c.Forward().Scale(camFactor * +0.1))
-		}
-		if input.KeyS.Pressed() {
-			c.Translate(c.Forward().Scale(camFactor * -0.1))
-		}
-		if input.KeyD.Pressed() {
-			c.Translate(c.Right().Scale(camFactor * +0.1))
-		}
-		if input.KeyA.Pressed() {
-			c.Translate(c.Right().Scale(camFactor * -0.1))
-		}
-		if input.KeyUp.Pressed() {
-			c.Rotate(c.Right(), camFactor*+0.03)
-		}
-		if input.KeyDown.Pressed() {
-			c.Rotate(c.Right(), camFactor*-0.03)
-		}
-		if input.KeyLeft.Pressed() {
-			c.Rotate(math.NewVec3(0, 1, 0), camFactor*+0.03)
-		}
-		if input.KeyRight.Pressed() {
-			c.Rotate(math.NewVec3(0, 1, 0), camFactor*-0.03)
-		}
 		if input.KeySpace.Pressed() {
 			s.PointLights[0].Place(c.Position)
 			//s.SpotLights[0].Place(c.Position)
