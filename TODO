@@ -1,0 +1,53 @@
+add shader for non-normal-map lighting (lighting in camera space?)
+
+forward rendering, multiple lights:
+1. draw everything once (to fill depth buffer) without blending
+2. clear colors, but not depth buffer
+3. draw everything again with additive blending
+
+geometry shader
+
+update shadow map only when light has moved and when some geometry moves
+
+directional lights and shadows
+geometry (bounding box, bounding sphere, euclidean geometry, ...)
+fog
+attentuation (?)
+texture types (height, normal, depth map, etc)
+separate geometry and material
+
+fix transparency again. bug because depth pass does not skip what should be transparent fragments?
+
+couple scene and objects (meshes, lights, etc) in one "scene" module!? "world"?
+
+input module
+
+set uniforms shader-wise with UBOs?
+
+variable resolution render target
+
+remove branching in shaders and ubershaders!!
+phongmeshpointlitv
+phongmeshpointlitv
+phongmeshdirlitv
+etc.
+
+directional light and spotlight should use same shader, point light use own shader
+
+render target must track window size somehow
+
+one buffer for whole mesh (not submesh), if using same vertex type?
+
+see "go doc log" for example singleton package
+
+shadow renderer: remove setcamera2() etc.
+
+to avoid branching in shaders: compute everything, also irrelevant things, in each shader regardless of light type
+
+add render state complete() method do to check whether it's complete before draw calls?
+
+uniform buffer objects per program!
+
+normal map not working properly?
+
+equal depth test?
