@@ -8,17 +8,40 @@ import (
 	"unsafe"
 )
 
+type QuadShaderProgram struct {
+	*graphics.ShaderProgram
+	Position *graphics.Attrib
+	Texture  *graphics.UniformSampler
+}
+
 type QuadRenderer struct {
-	sp          *graphics.QuadShaderProgram
+	sp          *QuadShaderProgram
 	vbo         *graphics.Buffer
 	tex         *graphics.Texture2D
 	renderState *graphics.RenderState
 }
 
+func NewQuadShaderProgram() *QuadShaderProgram {
+	var sp QuadShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/quadvshader.glsl" // TODO: make independent...
+	fShaderFilename := "render/shaders/quadfshader.glsl" // TODO: make independent...
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.Position = sp.Attrib("position")
+	sp.Texture = sp.UniformSampler("tex")
+
+	return &sp
+}
+
 func NewQuadRenderer() *QuadRenderer {
 	var r QuadRenderer
 
-	r.sp = graphics.NewQuadShaderProgram()
+	r.sp = NewQuadShaderProgram()
 
 	verts := []math.Vec2{
 		math.NewVec2(-1.0, -1.0),

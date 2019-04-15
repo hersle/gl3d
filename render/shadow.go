@@ -7,20 +7,81 @@ import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
+type ShadowMapShaderProgram struct {
+	*graphics.ShaderProgram
+	ModelMatrix      *graphics.UniformMatrix4
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+	LightPosition    *graphics.UniformVector3
+	Far              *graphics.UniformFloat
+	Position         *graphics.Attrib
+}
+
+type DirectionalLightShadowMapShaderProgram struct {
+	*graphics.ShaderProgram
+	ModelMatrix      *graphics.UniformMatrix4
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+	Position         *graphics.Attrib
+}
+
 type ShadowMapRenderer struct {
-	sp          *graphics.ShadowMapShaderProgram
-	sp2         *graphics.DirectionalLightShadowMapShaderProgram
+	sp          *ShadowMapShaderProgram
+	sp2         *DirectionalLightShadowMapShaderProgram
 	framebuffer *graphics.Framebuffer
 	renderState *graphics.RenderState
+}
+
+func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
+	var sp ShadowMapShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/pointlightshadowmapvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "render/shaders/pointlightshadowmapfshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.LightPosition = sp.UniformVector3("lightPosition")
+	sp.Far = sp.UniformFloat("far")
+	sp.Position = sp.Attrib("position")
+
+	sp.Position.SetFormat(gl.FLOAT, false) // TODO: remove dependency on GL constants
+
+	return &sp
+}
+
+func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShaderProgram {
+	var sp DirectionalLightShadowMapShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/directionallightvshader.glsl"
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "", "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.Position = sp.Attrib("position")
+	sp.Position.SetFormat(gl.FLOAT, false)
+
+	return &sp
 }
 
 func NewShadowMapRenderer() *ShadowMapRenderer {
 	var r ShadowMapRenderer
 
-	r.sp = graphics.NewShadowMapShaderProgram()
-	r.sp2 = graphics.NewDirectionalLightShadowMapShaderProgram()
+	r.sp = NewShadowMapShaderProgram()
+	r.sp2 = NewDirectionalLightShadowMapShaderProgram()
 
 	r.framebuffer = graphics.NewFramebuffer()
 

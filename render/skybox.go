@@ -8,18 +8,46 @@ import (
 	"unsafe"
 )
 
+type SkyboxShaderProgram struct {
+	*graphics.ShaderProgram
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+	CubeMap          *graphics.UniformSampler
+	Position         *graphics.Attrib
+}
+
 type SkyboxRenderer struct {
-	sp          *graphics.SkyboxShaderProgram
+	sp          *SkyboxShaderProgram
 	vbo         *graphics.Buffer
 	ibo         *graphics.Buffer
 	tex         *graphics.CubeMap
 	renderState *graphics.RenderState
 }
 
+func NewSkyboxShaderProgram() *SkyboxShaderProgram {
+	var sp SkyboxShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/skyboxvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "render/shaders/skyboxfshader.glsl" // TODO: make independent from executable directory
+
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.CubeMap = sp.UniformSampler("cubeMap")
+	sp.Position = sp.Attrib("positionV")
+
+	return &sp
+}
+
 func NewSkyboxRenderer() *SkyboxRenderer {
 	var r SkyboxRenderer
 
-	r.sp = graphics.NewSkyboxShaderProgram()
+	r.sp = NewSkyboxShaderProgram()
 
 	r.vbo = graphics.NewBuffer()
 	verts := []math.Vec3{

@@ -12,10 +12,56 @@ import (
 
 var shadowCubeMap *graphics.CubeMap = nil
 
+type MeshShaderProgram struct {
+	*graphics.ShaderProgram
+
+	Position *graphics.Attrib
+	TexCoord *graphics.Attrib
+	Normal   *graphics.Attrib
+	Tangent  *graphics.Attrib
+
+	ModelMatrix      *graphics.UniformMatrix4
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+
+	Ambient     *graphics.UniformVector3
+	AmbientMap  *graphics.UniformSampler
+	Diffuse     *graphics.UniformVector3
+	DiffuseMap  *graphics.UniformSampler
+	Specular    *graphics.UniformVector3
+	SpecularMap *graphics.UniformSampler
+	Shine       *graphics.UniformFloat
+	Alpha       *graphics.UniformFloat
+	AlphaMap    *graphics.UniformSampler
+	BumpMap     *graphics.UniformSampler
+
+	LightType              *graphics.UniformInteger
+	LightPos               *graphics.UniformVector3
+	LightDir               *graphics.UniformVector3
+	AmbientLight           *graphics.UniformVector3
+	DiffuseLight           *graphics.UniformVector3
+	SpecularLight          *graphics.UniformVector3
+	ShadowViewMatrix       *graphics.UniformMatrix4
+	ShadowProjectionMatrix *graphics.UniformMatrix4
+	SpotShadowMap          *graphics.UniformSampler
+	CubeShadowMap          *graphics.UniformSampler
+	DirShadowMap           *graphics.UniformSampler
+	ShadowFar              *graphics.UniformFloat
+	LightAttQuad           *graphics.UniformFloat
+}
+
+type DepthPassShaderProgram struct {
+	*graphics.ShaderProgram
+	ModelMatrix      *graphics.UniformMatrix4
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+	Position         *graphics.Attrib
+}
+
 // TODO: redesign attr/uniform access system?
 type SceneRenderer struct {
-	sp        *graphics.MeshShaderProgram
-	dsp       *graphics.DepthPassShaderProgram
+	sp        *MeshShaderProgram
+	dsp       *DepthPassShaderProgram
 	vbo, ibo  *graphics.Buffer
 	normalMat math.Mat4
 
@@ -32,12 +78,85 @@ type SceneRenderer struct {
 	emptyShadowCubeMap *graphics.CubeMap
 }
 
+func NewMeshShaderProgram() *MeshShaderProgram {
+	var sp MeshShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/meshvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "render/shaders/meshfshader.glsl" // TODO: make independent from executable directory
+
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.Position = sp.Attrib("position")
+	sp.TexCoord = sp.Attrib("texCoordV")
+	sp.Normal = sp.Attrib("normalV")
+	sp.Tangent = sp.Attrib("tangentV")
+
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+
+	sp.Ambient = sp.UniformVector3("material.ambient")
+	sp.AmbientMap = sp.UniformSampler("material.ambientMap")
+	sp.Diffuse = sp.UniformVector3("material.diffuse")
+	sp.DiffuseMap = sp.UniformSampler("material.diffuseMap")
+	sp.Specular = sp.UniformVector3("material.specular")
+	sp.SpecularMap = sp.UniformSampler("material.specularMap")
+	sp.Shine = sp.UniformFloat("material.shine")
+	sp.Alpha = sp.UniformFloat("material.alpha")
+	sp.AlphaMap = sp.UniformSampler("material.alphaMap")
+	sp.BumpMap = sp.UniformSampler("material.bumpMap")
+
+	sp.LightType = sp.UniformInteger("light.type")
+	sp.LightPos = sp.UniformVector3("light.position")
+	sp.LightDir = sp.UniformVector3("light.direction")
+	sp.AmbientLight = sp.UniformVector3("light.ambient")
+	sp.DiffuseLight = sp.UniformVector3("light.diffuse")
+	sp.SpecularLight = sp.UniformVector3("light.specular")
+	sp.ShadowViewMatrix = sp.UniformMatrix4("shadowViewMatrix")
+	sp.ShadowProjectionMatrix = sp.UniformMatrix4("shadowProjectionMatrix")
+	sp.CubeShadowMap = sp.UniformSampler("cubeShadowMap")
+	sp.SpotShadowMap = sp.UniformSampler("spotShadowMap")
+	sp.DirShadowMap = sp.UniformSampler("dirShadowMap")
+	sp.ShadowFar = sp.UniformFloat("light.far")
+	sp.LightAttQuad = sp.UniformFloat("light.attenuationQuadratic")
+
+	sp.Position.SetFormat(gl.FLOAT, false)
+	sp.Normal.SetFormat(gl.FLOAT, false)
+	sp.TexCoord.SetFormat(gl.FLOAT, false)
+	sp.Tangent.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
+func NewDepthPassShaderProgram() *DepthPassShaderProgram {
+	var sp DepthPassShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/depthpassvshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "", "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.Position = sp.Attrib("position")
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.Position.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
 func NewSceneRenderer() (*SceneRenderer, error) {
 	var r SceneRenderer
 
-	r.sp = graphics.NewMeshShaderProgram()
+	r.sp = NewMeshShaderProgram()
 
-	r.dsp = graphics.NewDepthPassShaderProgram()
+	r.dsp = NewDepthPassShaderProgram()
 
 	w, h := 1920, 1080
 	w, h = w/1, h/1

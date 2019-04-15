@@ -9,18 +9,46 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
+type TextShaderProgram struct {
+	*graphics.ShaderProgram
+	Atlas    *graphics.UniformSampler
+	Position *graphics.Attrib
+	TexCoord *graphics.Attrib
+}
+
 type TextRenderer struct {
-	sp          *graphics.TextShaderProgram
+	sp          *TextShaderProgram
 	tex         *graphics.Texture2D
 	vbo         *graphics.Buffer
 	ibo         *graphics.Buffer
 	renderState *graphics.RenderState
 }
 
+func NewTextShaderProgram() *TextShaderProgram {
+	var sp TextShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/textvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "render/shaders/textfshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.Atlas = sp.UniformSampler("fontAtlas")
+	sp.Position = sp.Attrib("position")
+	sp.TexCoord = sp.Attrib("texCoordV")
+
+	sp.Position.SetFormat(gl.FLOAT, false)
+	sp.TexCoord.SetFormat(gl.FLOAT, false)
+
+	return &sp
+}
+
 func NewTextRenderer() *TextRenderer {
 	var r TextRenderer
 
-	r.sp = graphics.NewTextShaderProgram()
+	r.sp = NewTextShaderProgram()
 
 	r.vbo = graphics.NewBuffer()
 	r.ibo = graphics.NewBuffer()

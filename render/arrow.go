@@ -8,19 +8,51 @@ import (
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/window"
 	"unsafe"
+	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 type ArrowRenderer struct {
-	sp          *graphics.ArrowShaderProgram
+	sp          *ArrowShaderProgram
 	points      []math.Vec3
 	vbo         *graphics.Buffer
 	renderState *graphics.RenderState
 }
 
+type ArrowShaderProgram struct {
+	*graphics.ShaderProgram
+	ModelMatrix      *graphics.UniformMatrix4
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+	Color            *graphics.UniformVector3
+	Position         *graphics.Attrib
+}
+
+func NewArrowShaderProgram() *ArrowShaderProgram {
+	var sp ArrowShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/arrowvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "render/shaders/arrowfshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.Position = sp.Attrib("position")
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.Color = sp.UniformVector3("color")
+
+	sp.Position.SetFormat(gl.FLOAT, false) // TODO: remove dependency on GL constants
+
+	return &sp
+}
+
 func NewArrowRenderer() *ArrowRenderer {
 	var r ArrowRenderer
 
-	r.sp = graphics.NewArrowShaderProgram()
+	r.sp = NewArrowShaderProgram()
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
