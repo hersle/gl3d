@@ -24,10 +24,13 @@ func (o *Object) updateUnitZVector() {
 }
 
 func (o *Object) updateWorldMatrix() {
+	mat := math.Mat4Stack.New()
+	defer math.Mat4Stack.Pop()
+
 	o.worldMatrix.Identity()
-	o.worldMatrix.MultTranslation(o.Position)
-	o.worldMatrix.MultOrientation(o.UnitX, o.UnitY, o.UnitZ)
-	o.worldMatrix.MultScaling(o.Scaling)
+	o.worldMatrix.Mult(mat.Translation(o.Position))
+	o.worldMatrix.Mult(mat.Orientation(o.UnitX, o.UnitY, o.UnitZ))
+	o.worldMatrix.Mult(mat.Scaling(o.Scaling))
 	o.DirtyWorldMatrix = false
 }
 

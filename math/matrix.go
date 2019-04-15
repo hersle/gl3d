@@ -12,16 +12,17 @@ type MatrixStack struct {
 	top      int
 }
 
-var internalMatStack *MatrixStack
+var Mat4Stack *MatrixStack
 
 func NewMatrixStack() *MatrixStack {
 	var ms MatrixStack
+	ms.top = 0
 	return &ms
 }
 
 func (ms *MatrixStack) New() *Mat4 {
 	if ms.top >= len(ms.matrices) {
-		ms.matrices = append(ms.matrices, NewMat4Zero())
+		ms.matrices = append(ms.matrices, &Mat4{})
 	}
 	ms.top++
 	return ms.matrices[ms.top-1]
@@ -31,18 +32,6 @@ func (ms *MatrixStack) Pop() {
 	if ms.top > 0 {
 		ms.top--
 	}
-}
-
-func NewMat4Zero() *Mat4 {
-	var a Mat4
-	a.Zero()
-	return &a
-}
-
-func NewMat4Identity() *Mat4 {
-	var a Mat4
-	a.Identity()
-	return &a
 }
 
 func (a *Mat4) index(i, j int) int {
@@ -79,13 +68,6 @@ func (a *Mat4) SetRow(i int, row Vec4) {
 	a.Set(i, 3, row.W())
 }
 
-func (a *Mat4) Copy(b *Mat4) *Mat4 {
-	for i := 0; i < 4; i++ {
-		a.SetRow(i, b.Row(i))
-	}
-	return a
-}
-
 func (a *Mat4) Add(b *Mat4) *Mat4 {
 	for i := 0; i < 4; i++ {
 		a.SetRow(i, a.Row(i).Add(b.Row(i)))
@@ -115,16 +97,6 @@ func (a *Mat4) Mult(b *Mat4) *Mat4 {
 			a.Set(i, j, aRow.Dot(bCol))
 		}
 	}
-	return a
-}
-
-func (a *Mat4) MultRight(b *Mat4) *Mat4 {
-	return a.Mult(b)
-}
-
-func (a *Mat4) MultLeft(b *Mat4) *Mat4 {
-	b.MultRight(a)
-	a.Copy(b)
 	return a
 }
 
@@ -333,76 +305,10 @@ func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
 	return a
 }
 
-func (a *Mat4) MultScaling(factor Vec3) *Mat4 {
-	a.Mult(internalMatStack.New().Scaling(factor))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultTranslation(d Vec3) *Mat4 {
-	a.Mult(internalMatStack.New().Translation(d))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultRotationX(ang float32) *Mat4 {
-	a.Mult(internalMatStack.New().RotationX(ang))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultRotationY(ang float32) *Mat4 {
-	a.Mult(internalMatStack.New().RotationY(ang))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultRotationZ(ang float32) *Mat4 {
-	a.Mult(internalMatStack.New().RotationZ(ang))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultOrthoCentered(size Vec3) *Mat4 {
-	a.Mult(internalMatStack.New().OrthoCentered(size))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultFrustum(l, b, r, t, n, f float32) *Mat4 {
-	a.Mult(internalMatStack.New().Frustum(l, b, r, t, n, f))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultFrustumCentered(w, h, n, f float32) *Mat4 {
-	a.Mult(internalMatStack.New().FrustumCentered(w, h, n, f))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultPerspective(fovY, aspect, n, f float32) *Mat4 {
-	a.Mult(internalMatStack.New().Perspective(fovY, aspect, n, f))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultLookAt(eye, target, up Vec3) *Mat4 {
-	a.Mult(internalMatStack.New().LookAt(eye, target, up))
-	internalMatStack.Pop()
-	return a
-}
-
-func (a *Mat4) MultOrientation(right, up, forward Vec3) *Mat4 {
-	a.Mult(internalMatStack.New().Orientation(right, up, forward))
-	internalMatStack.Pop()
-	return a
-}
-
 func (a *Mat4) String() string {
 	return fmt.Sprintf("%v\n%v\n%v\n%v\n", a.Row(0), a.Row(1), a.Row(2), a.Row(3))
 }
 
 func init() {
-	internalMatStack = NewMatrixStack()
+	Mat4Stack = NewMatrixStack()
 }
