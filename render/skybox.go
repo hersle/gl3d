@@ -73,7 +73,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	}
 	r.ibo.SetData(inds, 0)
 
-	r.SetCube(r.vbo, r.ibo)
+	r.setCube(r.vbo, r.ibo)
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
@@ -81,32 +81,31 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	return &r
 }
 
-func (r *SkyboxRenderer) SetFramebuffer(framebuffer *graphics.Framebuffer) {
+func (r *SkyboxRenderer) setFramebuffer(framebuffer *graphics.Framebuffer) {
 	r.renderState.Framebuffer = framebuffer
+	r.renderState.ViewportWidth = framebuffer.Width
+	r.renderState.ViewportHeight = framebuffer.Height
 }
 
-func (r *SkyboxRenderer) SetFramebufferSize(width, height int) {
-	r.renderState.ViewportWidth = width
-	r.renderState.ViewportHeight = height
-}
-
-func (r *SkyboxRenderer) SetCamera(c camera.Camera) {
+func (r *SkyboxRenderer) setCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *SkyboxRenderer) SetSkybox(skybox *graphics.CubeMap) {
+func (r *SkyboxRenderer) setSkybox(skybox *graphics.CubeMap) {
 	r.sp.CubeMap.SetCube(skybox)
 }
 
-func (r *SkyboxRenderer) SetCube(vbo, ibo *graphics.Buffer) {
+func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {
 	r.sp.Position.SetFormat(gl.FLOAT, false)
 	r.sp.Position.SetSource(vbo, 0, int(unsafe.Sizeof(math.NewVec3(0, 0, 0))))
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 
-func (r *SkyboxRenderer) Render(c camera.Camera) {
-	r.SetCamera(c)
+func (r *SkyboxRenderer) Render(sb *graphics.CubeMap, c camera.Camera, fb *graphics.Framebuffer) {
+	r.setSkybox(sb)
+	r.setCamera(c)
+	r.setFramebuffer(fb)
 
 	graphics.NewRenderCommand(graphics.Triangle, 36, 0, r.renderState).Execute()
 }

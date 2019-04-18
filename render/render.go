@@ -41,10 +41,10 @@ func (r *Renderer) Render(s *scene.Scene, c camera.Camera) {
 	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
 	r.framebuffer.ClearDepth(1)
 
-	r.skyboxRenderer.SetFramebuffer(r.framebuffer)
-	r.skyboxRenderer.SetFramebufferSize(r.RenderTarget.Width, r.RenderTarget.Height)
-	r.skyboxRenderer.SetSkybox(s.Skybox)
-	r.skyboxRenderer.Render(c)
+	//r.skyboxRenderer.SetFramebuffer(r.framebuffer)
+	//r.skyboxRenderer.SetFramebufferSize(r.RenderTarget.Width, r.RenderTarget.Height)
+	//r.skyboxRenderer.SetSkybox(s.Skybox)
+	r.skyboxRenderer.Render(s.Skybox, c, r.framebuffer)
 
 	// TODO: update shadows
 	r.shadowMapRenderer.RenderShadowMaps(s)
