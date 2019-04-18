@@ -11,7 +11,7 @@ import (
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
-	//"github.com/hersle/gl3d/scene"
+	"github.com/hersle/gl3d/scene"
 )
 
 var shadowCubeMap *graphics.CubeMap = nil
@@ -193,7 +193,7 @@ func (r *Renderer) addInstruction(instr RenderInstruction) {
 	r.instructions = append(r.instructions, instr)
 }
 
-func (r *Renderer) SubmitMesh(m *object.Mesh, c camera.Camera) {
+func (r *Renderer) submitMesh(m *object.Mesh, c camera.Camera) {
 	var instr RenderInstruction
 	instr.mesh = m
 	instr.camera = c
@@ -202,6 +202,13 @@ func (r *Renderer) SubmitMesh(m *object.Mesh, c camera.Camera) {
 		instr.subMesh = subMesh
 		r.addInstruction(instr)
 	}
+}
+
+func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
+	for _, mesh := range s.Meshes {
+		r.submitMesh(mesh, c)
+	}
+	r.render()
 }
 
 func (r *Renderer) executeInstruction(instr RenderInstruction) {
@@ -225,8 +232,7 @@ func (r *Renderer) executeInstruction(instr RenderInstruction) {
 	}
 }
 
-
-func (r *Renderer) Render() {
+func (r *Renderer) render() {
 	for _, instr := range r.instructions {
 		r.executeInstruction(instr)
 	}
