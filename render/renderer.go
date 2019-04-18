@@ -1,5 +1,9 @@
 package render
 
+// https://gamedev.stackexchange.com/questions/3404/architecture-a-for-a-central-renderer-rather-than-self-rendering/3408
+// http://realtimecollisiondetection.net/blog/?p=86
+// https://gamedev.stackexchange.com/questions/14133/should-actors-in-a-game-be-responsible-for-drawing-themselves
+
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
@@ -7,7 +11,7 @@ import (
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
-	"github.com/hersle/gl3d/scene"
+	//"github.com/hersle/gl3d/scene"
 )
 
 var shadowCubeMap *graphics.CubeMap = nil
@@ -50,32 +54,33 @@ type MeshShaderProgram struct {
 	LightAttQuad           *graphics.UniformFloat
 }
 
-type DepthPassShaderProgram struct {
-	*graphics.ShaderProgram
-	ModelMatrix      *graphics.UniformMatrix4
-	ViewMatrix       *graphics.UniformMatrix4
-	ProjectionMatrix *graphics.UniformMatrix4
-	Position         *graphics.Attrib
+// Instruction to render a submesh (with ONE material)
+// lit by zero or one light
+// in some way
+type RenderInstruction struct {
+	mesh *object.Mesh // parent geometry
+	subMesh *object.SubMesh // (local) geometry and appearance
+	camera camera.Camera
+	// sp *graphics.ShaderProgram // shader
+	// framebuffer, framebuffer size
+	// light, shadow
+	// blending
+	// depth test
+	// or just render pass?
 }
 
 // TODO: redesign attr/uniform access system?
-type SceneRenderer struct {
+type Renderer struct {
+	instructions []RenderInstruction
 	sp        *MeshShaderProgram
-	dsp       *DepthPassShaderProgram
-	vbo, ibo  *graphics.Buffer
-	normalMat math.Mat4
-
-	renderState      *graphics.RenderState
-	depthRenderState *graphics.RenderState
-
-	framebuffer       *graphics.Framebuffer
-	RenderTarget      *graphics.Texture2D
-	DepthRenderTarget *graphics.Texture2D
-
-	shadowMapRenderer *ShadowMapRenderer
-	skyboxRenderer    *SkyboxRenderer
-
 	emptyShadowCubeMap *graphics.CubeMap
+
+	//framebuffer       *graphics.Framebuffer
+	//RenderTarget      *graphics.Texture2D
+	//DepthRenderTarget *graphics.Texture2D
+
+	//shadowMapRenderer *ShadowMapRenderer
+	//skyboxRenderer    *SkyboxRenderer
 }
 
 func NewMeshShaderProgram() *MeshShaderProgram {
@@ -132,73 +137,104 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	return &sp
 }
 
-func NewDepthPassShaderProgram() *DepthPassShaderProgram {
-	var sp DepthPassShaderProgram
-	var err error
-
-	vShaderFilename := "render/shaders/depthpassvshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "", "")
-	if err != nil {
-		panic(err)
-	}
-
-	sp.Position = sp.Attrib("position")
-	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
-	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
-	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
-	sp.Position.SetFormat(gl.FLOAT, false)
-
-	return &sp
+func (sp *MeshShaderProgram) SetMesh(m *object.Mesh) {
+	sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func NewSceneRenderer() (*SceneRenderer, error) {
-	var r SceneRenderer
+func (sp *MeshShaderProgram) SetSubMesh(sm *object.SubMesh) {
+	mtl := sm.Mtl
+
+	sp.Ambient.Set(mtl.Ambient)
+	sp.AmbientMap.Set2D(mtl.AmbientMap)
+	sp.Diffuse.Set(mtl.Diffuse)
+	sp.DiffuseMap.Set2D(mtl.DiffuseMap)
+	sp.Specular.Set(mtl.Specular)
+	sp.SpecularMap.Set2D(mtl.SpecularMap)
+	sp.Shine.Set(mtl.Shine)
+	sp.Alpha.Set(mtl.Alpha)
+	sp.AlphaMap.Set2D(mtl.AlphaMap)
+	sp.BumpMap.Set2D(mtl.BumpMap)
+
+	var v object.Vertex
+	sp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
+	sp.Normal.SetSource(sm.Vbo, v.NormalOffset(), v.Size())
+	sp.TexCoord.SetSource(sm.Vbo, v.TexCoordOffset(), v.Size())
+	sp.Tangent.SetSource(sm.Vbo, v.TangentOffset(), v.Size())
+	sp.SetAttribIndexBuffer(sm.Ibo)
+}
+func (sp *MeshShaderProgram) SetCamera(c camera.Camera) {
+	sp.ViewMatrix.Set(c.ViewMatrix())
+	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
+}
+
+func (sp *MeshShaderProgram) SetAmbientLight(l *light.AmbientLight) {
+	sp.LightType.Set(0)
+	sp.AmbientLight.Set(l.Color)
+	sp.LightAttQuad.Set(0)
+}
+
+func NewRenderer(width, height int) (*Renderer, error) {
+	var r Renderer
 
 	r.sp = NewMeshShaderProgram()
-
-	r.dsp = NewDepthPassShaderProgram()
-
-	w, h := 1920, 1080
-	w, h = w/1, h/1
-	r.RenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
-	r.DepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
-	r.framebuffer = graphics.NewFramebuffer()
-	r.framebuffer.AttachTexture2D(graphics.ColorAttachment, r.RenderTarget, 0)
-	r.framebuffer.AttachTexture2D(graphics.DepthAttachment, r.DepthRenderTarget, 0)
-
-	r.renderState = graphics.NewRenderState()
-	r.renderState.Program = r.sp.ShaderProgram
-	r.renderState.Framebuffer = r.framebuffer
-	r.renderState.Cull = graphics.CullBack
-	r.renderState.ViewportWidth = r.RenderTarget.Width
-	r.renderState.ViewportHeight = r.RenderTarget.Height
-
-	r.depthRenderState = graphics.NewRenderState()
-	r.depthRenderState.Program = r.dsp.ShaderProgram
-	r.depthRenderState.Framebuffer = r.framebuffer
-	r.depthRenderState.DepthTest = graphics.LessDepthTest
-	r.depthRenderState.Cull = graphics.CullBack
-	r.depthRenderState.ViewportWidth = r.RenderTarget.Width
-	r.depthRenderState.ViewportHeight = r.RenderTarget.Height
-
-	r.shadowMapRenderer = NewShadowMapRenderer()
-	r.skyboxRenderer = NewSkyboxRenderer()
-
+	ambient := light.NewAmbientLight(math.NewVec3(1, 1, 1))
+	r.sp.SetAmbientLight(ambient)
 	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.NewVec4(0, 0, 0, 0))
+	r.SetViewportSize(width, height)
 
 	return &r, nil
 }
 
-func (r *SceneRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
-	r.SetMesh(m)
-	r.SetCamera(c)
+func (r *Renderer) SetViewportSize(width, height int) {
+	gl.Viewport(0, 0, int32(width), int32(height))
+}
+
+func (r *Renderer) addInstruction(instr RenderInstruction) {
+	r.instructions = append(r.instructions, instr)
+}
+
+func (r *Renderer) SubmitMesh(m *object.Mesh, c camera.Camera) {
+	var instr RenderInstruction
+	instr.mesh = m
+	instr.camera = c
 
 	for _, subMesh := range m.SubMeshes {
-		r.SetSubMesh(subMesh)
-		graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
+		instr.subMesh = subMesh
+		r.addInstruction(instr)
 	}
 }
 
+func (r *Renderer) executeInstruction(instr RenderInstruction) {
+	r.sp.Va.Bind()
+	r.sp.Bind()
+	r.sp.SetMesh(instr.mesh)
+	r.sp.SetSubMesh(instr.subMesh)
+	r.sp.SetCamera(instr.camera)
+	r.sp.CubeShadowMap.SetCube(r.emptyShadowCubeMap)
+
+	graphics.DefaultFramebuffer.BindDraw()
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
+	gl.Disable(gl.BLEND)
+	gl.Disable(gl.CULL_FACE)
+
+	if r.sp.Va.HasIndexBuffer {
+		gl.DrawElements(gl.TRIANGLES, int32(instr.subMesh.Inds), gl.UNSIGNED_INT, nil)
+	} else {
+		gl.DrawArrays(gl.TRIANGLES, 0, int32(instr.subMesh.Inds))
+	}
+}
+
+
+func (r *Renderer) Render() {
+	for _, instr := range r.instructions {
+		r.executeInstruction(instr)
+	}
+
+	r.instructions = r.instructions[:0]
+}
+
+/*
 func (r *SceneRenderer) shadowPassPointLight(s *scene.Scene, l *light.PointLight) {
 	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
 }
@@ -210,18 +246,9 @@ func (r *SceneRenderer) shadowPassSpotLight(s *scene.Scene, l *light.SpotLight) 
 func (r *SceneRenderer) shadowPassDirectionalLight(s *scene.Scene, l *light.DirectionalLight) {
 	r.shadowMapRenderer.RenderDirectionalLightShadowMap(s, l)
 }
+*/
 
-func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
-	r.SetDepthCamera(c)
-	for _, m := range s.Meshes {
-		r.SetDepthMesh(m)
-		for _, subMesh := range m.SubMeshes {
-			r.SetDepthSubMesh(subMesh)
-			graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.depthRenderState).Execute()
-		}
-	}
-}
-
+/*
 func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.DisableBlending()
 	r.renderState.DepthTest = graphics.LessDepthTest
@@ -234,7 +261,9 @@ func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 		r.renderMesh(m, c)
 	}
 }
+*/
 
+/*
 func (r *SceneRenderer) LightPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.DepthTest = graphics.EqualDepthTest
 	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
@@ -273,8 +302,10 @@ func (r *SceneRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 		}
 	}
 }
+*/
 
-func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
+/*
+func (r *SceneRenderer) Submit(s *scene.Scene, c camera.Camera) {
 	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
 	r.framebuffer.ClearDepth(1)
 	//r.DepthPass(s, c) // use ambient pass as depth pass too
@@ -287,15 +318,9 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.AmbientPass(s, c) // also works as depth pass
 	r.LightPass(s, c)
 }
+*/
 
-func (r *SceneRenderer) SetWireframe(wireframe bool) {
-	if wireframe {
-		r.renderState.TriangleMode = graphics.LineTriangleMode
-	} else {
-		r.renderState.TriangleMode = graphics.TriangleTriangleMode
-	}
-}
-
+/*
 func (r *SceneRenderer) SetCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
@@ -326,7 +351,9 @@ func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.Tangent.SetSource(sm.Vbo, v.TangentOffset(), v.Size())
 	r.sp.SetAttribIndexBuffer(sm.Ibo)
 }
+*/
 
+/*
 func (r *SceneRenderer) SetAmbientLight(l *light.AmbientLight) {
 	r.sp.LightType.Set(0)
 	r.sp.AmbientLight.Set(l.Color)
@@ -366,18 +393,4 @@ func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.LightAttQuad.Set(0)
 }
-
-func (r *SceneRenderer) SetDepthCamera(c camera.Camera) {
-	r.dsp.ViewMatrix.Set(c.ViewMatrix())
-	r.dsp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (r *SceneRenderer) SetDepthMesh(m *object.Mesh) {
-	r.dsp.ModelMatrix.Set(m.WorldMatrix())
-}
-
-func (r *SceneRenderer) SetDepthSubMesh(sm *object.SubMesh) {
-	var v object.Vertex
-	r.dsp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
-	r.dsp.SetAttribIndexBuffer(sm.Ibo)
-}
+*/

@@ -10,7 +10,7 @@ import (
 
 type ShaderProgram struct {
 	id uint32
-	va *VertexArray
+	Va *VertexArray
 }
 
 type Shader struct {
@@ -65,13 +65,13 @@ type UniformBool struct {
 
 type VertexArray struct {
 	id             uint32
-	hasIndexBuffer bool
+	HasIndexBuffer bool
 }
 
 func NewVertexArray() *VertexArray {
 	var va VertexArray
 	gl.CreateVertexArrays(1, &va.id)
-	va.hasIndexBuffer = false
+	va.HasIndexBuffer = false
 	return &va
 }
 
@@ -88,7 +88,7 @@ func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int)
 
 func (va *VertexArray) SetIndexBuffer(b *Buffer) {
 	gl.VertexArrayElementBuffer(va.id, b.id)
-	va.hasIndexBuffer = true
+	va.HasIndexBuffer = true
 }
 
 func (va *VertexArray) Bind() {
@@ -167,7 +167,7 @@ func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error)
 		return nil, err
 	}
 
-	p.va = NewVertexArray()
+	p.Va = NewVertexArray()
 	return &p, err
 }
 
@@ -275,15 +275,15 @@ func (u *UniformBool) Set(b bool) {
 }
 
 func (a *Attrib) SetFormat(typ int, normalize bool) {
-	a.prog.va.SetAttribFormat(a, a.nComponents, typ, normalize)
+	a.prog.Va.SetAttribFormat(a, a.nComponents, typ, normalize)
 }
 
 func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
-	a.prog.va.SetAttribSource(a, b, offset, stride)
+	a.prog.Va.SetAttribSource(a, b, offset, stride)
 }
 
 func (p *ShaderProgram) SetAttribIndexBuffer(b *Buffer) {
-	p.va.SetIndexBuffer(b)
+	p.Va.SetIndexBuffer(b)
 }
 
 func (p *ShaderProgram) Bind() {
