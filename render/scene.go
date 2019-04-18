@@ -223,6 +223,9 @@ func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
+	r.renderState.DisableBlending()
+	r.renderState.DepthTest = graphics.LessDepthTest
+
 	// TODO: WHY MUST THIS BE SET FOR AMBIENT LIGHT?!?! GRAPHICS DRIVER BUG?
 	// TODO: FIX: AVOID BRANCHING IN SHADERS!!!!!!!!!!!!!
 	r.sp.CubeShadowMap.SetCube(r.emptyShadowCubeMap)
@@ -230,6 +233,15 @@ func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	for _, m := range s.Meshes {
 		r.renderMesh(m, c)
 	}
+}
+
+func (r *SceneRenderer) LightPass(s *scene.Scene, c camera.Camera) {
+	r.renderState.DepthTest = graphics.EqualDepthTest
+	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
+	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
+	r.PointLightPass(s, c)
+	r.SpotLightPass(s, c)
+	r.DirectionalLightPass(s, c)
 }
 
 func (r *SceneRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
@@ -272,15 +284,8 @@ func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.skyboxRenderer.SetSkybox(s.Skybox)
 	r.skyboxRenderer.Render(c)
 
-	r.renderState.DisableBlending()
-	r.renderState.DepthTest = graphics.LessDepthTest
-	r.AmbientPass(s, c)
-	r.renderState.DepthTest = graphics.EqualDepthTest
-	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
-	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
-	r.PointLightPass(s, c)
-	r.SpotLightPass(s, c)
-	r.DirectionalLightPass(s, c)
+	r.AmbientPass(s, c) // also works as depth pass
+	r.LightPass(s, c)
 }
 
 func (r *SceneRenderer) SetWireframe(wireframe bool) {
