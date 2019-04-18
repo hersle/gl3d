@@ -228,3 +228,15 @@ func (r *ShadowMapRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *l
 
 	l.DirtyShadowMap = false
 }
+
+func (r *ShadowMapRenderer) RenderShadowMaps(s *scene.Scene) {
+	for _, l := range s.PointLights {
+		r.RenderPointLightShadowMap(s, l)
+	}
+	for _, l := range s.SpotLights {
+		r.RenderSpotLightShadowMap(s, l)
+	}
+	for _, l := range s.DirectionalLights {
+		r.RenderDirectionalLightShadowMap(s, l)
+	}
+}

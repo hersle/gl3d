@@ -51,17 +51,10 @@ type MeshShaderProgram struct {
 }
 
 // TODO: redesign attr/uniform access system?
-type SceneRenderer struct {
+type MeshRenderer struct {
 	sp        *MeshShaderProgram
 
 	renderState      *graphics.RenderState
-
-	framebuffer       *graphics.Framebuffer
-	RenderTarget      *graphics.Texture2D
-	DepthRenderTarget *graphics.Texture2D
-
-	shadowMapRenderer *ShadowMapRenderer
-	skyboxRenderer    *SkyboxRenderer
 
 	emptyShadowCubeMap *graphics.CubeMap
 }
@@ -120,35 +113,21 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	return &sp
 }
 
-func NewSceneRenderer() (*SceneRenderer, error) {
-	var r SceneRenderer
+func NewMeshRenderer() (*MeshRenderer, error) {
+	var r MeshRenderer
 
 	r.sp = NewMeshShaderProgram()
 
-	w, h := 1920, 1080
-	w, h = w/1, h/1
-	r.RenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
-	r.DepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
-	r.framebuffer = graphics.NewFramebuffer()
-	r.framebuffer.AttachTexture2D(graphics.ColorAttachment, r.RenderTarget, 0)
-	r.framebuffer.AttachTexture2D(graphics.DepthAttachment, r.DepthRenderTarget, 0)
-
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
-	r.renderState.Framebuffer = r.framebuffer
 	r.renderState.Cull = graphics.CullBack
-	r.renderState.ViewportWidth = r.RenderTarget.Width
-	r.renderState.ViewportHeight = r.RenderTarget.Height
-
-	r.shadowMapRenderer = NewShadowMapRenderer()
-	r.skyboxRenderer = NewSkyboxRenderer()
 
 	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.NewVec4(0, 0, 0, 0))
 
 	return &r, nil
 }
 
-func (r *SceneRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
+func (r *MeshRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
 	r.SetMesh(m)
 	r.SetCamera(c)
 
@@ -158,19 +137,7 @@ func (r *SceneRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) shadowPassPointLight(s *scene.Scene, l *light.PointLight) {
-	r.shadowMapRenderer.RenderPointLightShadowMap(s, l)
-}
-
-func (r *SceneRenderer) shadowPassSpotLight(s *scene.Scene, l *light.SpotLight) {
-	r.shadowMapRenderer.RenderSpotLightShadowMap(s, l)
-}
-
-func (r *SceneRenderer) shadowPassDirectionalLight(s *scene.Scene, l *light.DirectionalLight) {
-	r.shadowMapRenderer.RenderDirectionalLightShadowMap(s, l)
-}
-
-func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.DisableBlending()
 	r.renderState.DepthTest = graphics.LessDepthTest
 
@@ -183,7 +150,7 @@ func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) LightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) LightPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.DepthTest = graphics.EqualDepthTest
 	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
 	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
@@ -192,9 +159,8 @@ func (r *SceneRenderer) LightPass(s *scene.Scene, c camera.Camera) {
 	r.DirectionalLightPass(s, c)
 }
 
-func (r *SceneRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.PointLights {
-		r.shadowPassPointLight(s, l)
 		r.SetPointLight(l)
 		for _, m := range s.Meshes {
 			r.renderMesh(m, c)
@@ -202,9 +168,8 @@ func (r *SceneRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.SpotLights {
-		r.shadowPassSpotLight(s, l)
 		r.SetSpotLight(l)
 		for _, m := range s.Meshes {
 			r.renderMesh(m, c)
@@ -212,9 +177,8 @@ func (r *SceneRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.DirectionalLights {
-		r.shadowPassDirectionalLight(s, l)
 		r.SetDirectionalLight(l)
 		for _, m := range s.Meshes {
 			r.renderMesh(m, c)
@@ -222,20 +186,16 @@ func (r *SceneRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
-	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
-	r.framebuffer.ClearDepth(1)
-
-	r.skyboxRenderer.SetFramebuffer(r.framebuffer)
-	r.skyboxRenderer.SetFramebufferSize(r.RenderTarget.Width, r.RenderTarget.Height)
-	r.skyboxRenderer.SetSkybox(s.Skybox)
-	r.skyboxRenderer.Render(c)
+func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+	r.renderState.Framebuffer = fb
+	r.renderState.ViewportWidth = 1920 // TODO: fix
+	r.renderState.ViewportHeight = 1080 // TODO: fix
 
 	r.AmbientPass(s, c) // also works as depth pass
 	r.LightPass(s, c)
 }
 
-func (r *SceneRenderer) SetWireframe(wireframe bool) {
+func (r *MeshRenderer) SetWireframe(wireframe bool) {
 	if wireframe {
 		r.renderState.TriangleMode = graphics.LineTriangleMode
 	} else {
@@ -243,16 +203,16 @@ func (r *SceneRenderer) SetWireframe(wireframe bool) {
 	}
 }
 
-func (r *SceneRenderer) SetCamera(c camera.Camera) {
+func (r *MeshRenderer) SetCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *SceneRenderer) SetMesh(m *object.Mesh) {
+func (r *MeshRenderer) SetMesh(m *object.Mesh) {
 	r.sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
+func (r *MeshRenderer) SetSubMesh(sm *object.SubMesh) {
 	mtl := sm.Mtl
 
 	r.sp.Ambient.Set(mtl.Ambient)
@@ -274,13 +234,13 @@ func (r *SceneRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.SetAttribIndexBuffer(sm.Ibo)
 }
 
-func (r *SceneRenderer) SetAmbientLight(l *light.AmbientLight) {
+func (r *MeshRenderer) SetAmbientLight(l *light.AmbientLight) {
 	r.sp.LightType.Set(0)
 	r.sp.AmbientLight.Set(l.Color)
 	r.sp.LightAttQuad.Set(0)
 }
 
-func (r *SceneRenderer) SetPointLight(l *light.PointLight) {
+func (r *MeshRenderer) SetPointLight(l *light.PointLight) {
 	r.sp.LightType.Set(1)
 	r.sp.LightPos.Set(l.Position)
 	r.sp.DiffuseLight.Set(l.Diffuse)
@@ -290,7 +250,7 @@ func (r *SceneRenderer) SetPointLight(l *light.PointLight) {
 	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
 }
 
-func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
+func (r *MeshRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.LightType.Set(2)
 	r.sp.LightPos.Set(l.Position)
 	r.sp.LightDir.Set(l.Forward())
@@ -303,7 +263,7 @@ func (r *SceneRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
 }
 
-func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
+func (r *MeshRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.LightType.Set(3)
 	r.sp.LightDir.Set(l.Forward())
 	r.sp.DiffuseLight.Set(l.Diffuse)

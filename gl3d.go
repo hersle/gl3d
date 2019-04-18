@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	renderer, err := render.NewSceneRenderer()
+	renderer, err := render.NewRenderer()
 	if err != nil {
 		panic(err)
 	}
