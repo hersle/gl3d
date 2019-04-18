@@ -5,7 +5,6 @@ import (
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
-	"github.com/hersle/gl3d/window"
 	"golang.org/x/image/font/basicfont"
 )
 
@@ -78,8 +77,6 @@ func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
 }
 
 func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
-	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
-
 	var verts []object.Vertex
 	var inds []int32
 

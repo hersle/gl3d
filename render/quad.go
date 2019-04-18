@@ -4,7 +4,6 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
-	"github.com/hersle/gl3d/window"
 	"unsafe"
 )
 
@@ -66,6 +65,5 @@ func NewQuadRenderer() *QuadRenderer {
 
 func (r *QuadRenderer) Render(tex *graphics.Texture2D) {
 	r.sp.Texture.Set2D(tex)
-	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	graphics.NewRenderCommand(graphics.Triangle, 6, 0, r.renderState).Execute()
 }

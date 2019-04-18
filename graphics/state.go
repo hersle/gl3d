@@ -2,7 +2,6 @@ package graphics
 
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
-	"github.com/hersle/gl3d/window" // initialize graphics
 )
 
 type DepthTest int
@@ -57,8 +56,6 @@ type RenderState struct {
 	DepthTest              DepthTest
 	BlendSourceFactor      BlendFactor
 	BlendDestinationFactor BlendFactor
-	ViewportWidth          int
-	ViewportHeight         int
 	Cull                   CullMode
 	TriangleMode           TriangleMode
 }
@@ -95,6 +92,7 @@ func (rs *RenderState) Apply() {
 			panic("tried to apply a render state with no framebuffer")
 		default:
 			rs.Framebuffer.BindDraw()
+			gl.Viewport(0, 0, int32(rs.Framebuffer.Width()), int32(rs.Framebuffer.Height()))
 		}
 		currentState.Framebuffer = rs.Framebuffer
 	}
@@ -195,12 +193,6 @@ func (rs *RenderState) Apply() {
 		}
 		currentState.TriangleMode = rs.TriangleMode
 	}
-
-	if currentState.ViewportWidth != rs.ViewportWidth && currentState.ViewportHeight != rs.ViewportHeight {
-		gl.Viewport(0, 0, int32(rs.ViewportWidth), int32(rs.ViewportHeight))
-		currentState.ViewportWidth = rs.ViewportWidth
-		currentState.ViewportHeight = rs.ViewportHeight
-	}
 }
 
 func init() {
@@ -211,7 +203,6 @@ func init() {
 	currentState.Framebuffer = nil
 	currentState.DepthTest = AlwaysDepthTest
 	currentState.DisableBlending()
-	currentState.ViewportWidth, currentState.ViewportHeight = window.Size()
 	currentState.Cull = CullNothing
 	currentState.TriangleMode = TriangleTriangleMode
 }

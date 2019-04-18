@@ -6,7 +6,6 @@ import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
-	"github.com/hersle/gl3d/window"
 	"unsafe"
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
@@ -82,7 +81,6 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
 }
 
 func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera) {
-	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(1, 0, 0))
@@ -101,7 +99,6 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
-	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 1, 0))
@@ -120,7 +117,6 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera) {
-	r.renderState.ViewportWidth, r.renderState.ViewportHeight = window.Size()
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 0, 1))

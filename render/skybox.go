@@ -83,8 +83,6 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 
 func (r *SkyboxRenderer) setFramebuffer(framebuffer *graphics.Framebuffer) {
 	r.renderState.Framebuffer = framebuffer
-	r.renderState.ViewportWidth = framebuffer.Width
-	r.renderState.ViewportHeight = framebuffer.Height
 }
 
 func (r *SkyboxRenderer) setCamera(c camera.Camera) {
