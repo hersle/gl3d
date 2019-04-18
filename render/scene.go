@@ -50,23 +50,11 @@ type MeshShaderProgram struct {
 	LightAttQuad           *graphics.UniformFloat
 }
 
-type DepthPassShaderProgram struct {
-	*graphics.ShaderProgram
-	ModelMatrix      *graphics.UniformMatrix4
-	ViewMatrix       *graphics.UniformMatrix4
-	ProjectionMatrix *graphics.UniformMatrix4
-	Position         *graphics.Attrib
-}
-
 // TODO: redesign attr/uniform access system?
 type SceneRenderer struct {
 	sp        *MeshShaderProgram
-	dsp       *DepthPassShaderProgram
-	vbo, ibo  *graphics.Buffer
-	normalMat math.Mat4
 
 	renderState      *graphics.RenderState
-	depthRenderState *graphics.RenderState
 
 	framebuffer       *graphics.Framebuffer
 	RenderTarget      *graphics.Texture2D
@@ -132,31 +120,10 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	return &sp
 }
 
-func NewDepthPassShaderProgram() *DepthPassShaderProgram {
-	var sp DepthPassShaderProgram
-	var err error
-
-	vShaderFilename := "render/shaders/depthpassvshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "", "")
-	if err != nil {
-		panic(err)
-	}
-
-	sp.Position = sp.Attrib("position")
-	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
-	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
-	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
-	sp.Position.SetFormat(gl.FLOAT, false)
-
-	return &sp
-}
-
 func NewSceneRenderer() (*SceneRenderer, error) {
 	var r SceneRenderer
 
 	r.sp = NewMeshShaderProgram()
-
-	r.dsp = NewDepthPassShaderProgram()
 
 	w, h := 1920, 1080
 	w, h = w/1, h/1
@@ -172,14 +139,6 @@ func NewSceneRenderer() (*SceneRenderer, error) {
 	r.renderState.Cull = graphics.CullBack
 	r.renderState.ViewportWidth = r.RenderTarget.Width
 	r.renderState.ViewportHeight = r.RenderTarget.Height
-
-	r.depthRenderState = graphics.NewRenderState()
-	r.depthRenderState.Program = r.dsp.ShaderProgram
-	r.depthRenderState.Framebuffer = r.framebuffer
-	r.depthRenderState.DepthTest = graphics.LessDepthTest
-	r.depthRenderState.Cull = graphics.CullBack
-	r.depthRenderState.ViewportWidth = r.RenderTarget.Width
-	r.depthRenderState.ViewportHeight = r.RenderTarget.Height
 
 	r.shadowMapRenderer = NewShadowMapRenderer()
 	r.skyboxRenderer = NewSkyboxRenderer()
@@ -209,17 +168,6 @@ func (r *SceneRenderer) shadowPassSpotLight(s *scene.Scene, l *light.SpotLight) 
 
 func (r *SceneRenderer) shadowPassDirectionalLight(s *scene.Scene, l *light.DirectionalLight) {
 	r.shadowMapRenderer.RenderDirectionalLightShadowMap(s, l)
-}
-
-func (r *SceneRenderer) DepthPass(s *scene.Scene, c camera.Camera) {
-	r.SetDepthCamera(c)
-	for _, m := range s.Meshes {
-		r.SetDepthMesh(m)
-		for _, subMesh := range m.SubMeshes {
-			r.SetDepthSubMesh(subMesh)
-			graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.depthRenderState).Execute()
-		}
-	}
 }
 
 func (r *SceneRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
@@ -277,7 +225,6 @@ func (r *SceneRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 func (r *SceneRenderer) Render(s *scene.Scene, c camera.Camera) {
 	r.framebuffer.ClearColor(math.NewVec4(0, 0, 0, 1))
 	r.framebuffer.ClearDepth(1)
-	//r.DepthPass(s, c) // use ambient pass as depth pass too
 
 	r.skyboxRenderer.SetFramebuffer(r.framebuffer)
 	r.skyboxRenderer.SetFramebufferSize(r.RenderTarget.Width, r.RenderTarget.Height)
@@ -365,19 +312,4 @@ func (r *SceneRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.LightAttQuad.Set(0)
-}
-
-func (r *SceneRenderer) SetDepthCamera(c camera.Camera) {
-	r.dsp.ViewMatrix.Set(c.ViewMatrix())
-	r.dsp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (r *SceneRenderer) SetDepthMesh(m *object.Mesh) {
-	r.dsp.ModelMatrix.Set(m.WorldMatrix())
-}
-
-func (r *SceneRenderer) SetDepthSubMesh(sm *object.SubMesh) {
-	var v object.Vertex
-	r.dsp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
-	r.dsp.SetAttribIndexBuffer(sm.Ibo)
 }
