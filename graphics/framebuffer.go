@@ -8,6 +8,7 @@ import (
 
 type Framebuffer struct {
 	id uint32
+	Width, Height int
 }
 
 type FramebufferAttachment int
@@ -18,19 +19,37 @@ const (
 	StencilAttachment FramebufferAttachment = FramebufferAttachment(gl.STENCIL_ATTACHMENT)
 )
 
-var DefaultFramebuffer *Framebuffer = &Framebuffer{0}
+var DefaultFramebuffer *Framebuffer = &Framebuffer{0, 800, 800}
 
 func NewFramebuffer() *Framebuffer {
 	var f Framebuffer
 	gl.CreateFramebuffers(1, &f.id)
+	f.Width = 0
+	f.Height = 0
 	return &f
 }
 
+func (f *Framebuffer) compatibleAttachmentSize(width, height int) bool {
+	return f.Width != 0 && f.Height != 0 && f.Width != width && f.Height != height
+}
+
 func (f *Framebuffer) AttachTexture2D(attachment FramebufferAttachment, t *Texture2D, level int32) {
+	if f.Width == 0 && f.Height == 0 {
+		f.Width = t.Width
+		f.Height = t.Height
+	} else if f.Width != t.Width || f.Height != t.Height {
+		panic("incompatible framebuffer attachment size")
+	}
 	gl.NamedFramebufferTexture(f.id, uint32(attachment), t.id, level)
 }
 
 func (f *Framebuffer) AttachCubeMapFace(attachment FramebufferAttachment, cf *CubeMapFace, level int32) {
+	if f.Width == 0 && f.Height == 0 {
+		f.Width = cf.CubeMap.Width
+		f.Height = cf.CubeMap.Height
+	} else if f.Width != cf.CubeMap.Width || f.Height != cf.CubeMap.Height {
+		panic("incompatible framebuffer attachment size")
+	}
 	gl.NamedFramebufferTextureLayer(f.id, uint32(attachment), cf.CubeMap.id, level, int32(cf.layer))
 }
 

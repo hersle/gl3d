@@ -188,8 +188,8 @@ func (r *MeshRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 
 func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.renderState.Framebuffer = fb
-	r.renderState.ViewportWidth = 1920 // TODO: fix
-	r.renderState.ViewportHeight = 1080 // TODO: fix
+	r.renderState.ViewportWidth = fb.Width
+	r.renderState.ViewportHeight = fb.Height
 
 	r.AmbientPass(s, c) // also works as depth pass
 	r.LightPass(s, c)
