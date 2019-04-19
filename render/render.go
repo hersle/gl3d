@@ -14,6 +14,7 @@ type Renderer struct {
 	shadowMapRenderer *ShadowMapRenderer
 	skyboxRenderer    *SkyboxRenderer
 	textRenderer *TextRenderer
+	quadRenderer *QuadRenderer
 
 	framebuffer       *graphics.Framebuffer
 	RenderTarget      *graphics.Texture2D
@@ -27,6 +28,7 @@ func NewRenderer() (*Renderer, error) {
 	r.shadowMapRenderer = NewShadowMapRenderer()
 	r.skyboxRenderer = NewSkyboxRenderer()
 	r.textRenderer = NewTextRenderer()
+	r.quadRenderer = NewQuadRenderer()
 
 	w, h := 1920, 1080
 	w, h = w/1, h/1
@@ -52,6 +54,14 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 
 func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {
 	r.textRenderer.Render(tl, text, height, r.framebuffer)
+}
+
+func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
+	r.quadRenderer.Render(tex, graphics.DefaultFramebuffer)
+}
+
+func (r *Renderer) Render() {
+	r.RenderQuad(r.RenderTarget)
 }
 
 func (r *Renderer) SetWireframe(wireframe bool) {

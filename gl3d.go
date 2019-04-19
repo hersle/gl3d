@@ -69,7 +69,6 @@ func main() {
 	input.AddCameraFPSControls(c)
 
 	arrowRenderer := render.NewArrowRenderer()
-	quadRenderer := render.NewQuadRenderer()
 
 	// TODO: remove
 	renderer.RenderScene(s, c)
@@ -93,7 +92,6 @@ func main() {
 		if drawScene {
 			renderer.RenderScene(s, c)
 		}
-		//quadRenderer.Render(s.DirectionalLights[0].ShadowMap)
 		if input.Key1.JustPressed() {
 			arrowRenderer.RenderTangents(s, c)
 		}
@@ -109,7 +107,7 @@ func main() {
 		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
 		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
 		renderer.RenderText(math.NewVec2(-1, +1), text, 0.05)
-		quadRenderer.Render(renderer.RenderTarget)
+		renderer.Render()
 		window.Update()
 
 		graphics.RenderStats.Reset()

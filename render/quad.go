@@ -63,7 +63,8 @@ func NewQuadRenderer() *QuadRenderer {
 	return &r
 }
 
-func (r *QuadRenderer) Render(tex *graphics.Texture2D) {
+func (r *QuadRenderer) Render(tex *graphics.Texture2D, fb *graphics.Framebuffer) {
 	r.sp.Texture.Set2D(tex)
+	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(graphics.Triangle, 6, 0, r.renderState).Execute()
 }
