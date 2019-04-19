@@ -87,9 +87,9 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
-			for _, i := range subMesh.Faces {
-				p1 := subMesh.Verts[i].Position
-				p2 := p1.Add(subMesh.Verts[i].Tangent)
+			for _, i := range subMesh.Geo.Faces {
+				p1 := subMesh.Geo.Verts[i].Position
+				p2 := p1.Add(subMesh.Geo.Verts[i].Tangent)
 				r.points = append(r.points, p1, p2)
 			}
 		}
@@ -106,9 +106,9 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
-			for _, i := range subMesh.Faces {
-				p1 := subMesh.Verts[i].Position
-				p2 := p1.Add(subMesh.Verts[i].Bitangent())
+			for _, i := range subMesh.Geo.Faces {
+				p1 := subMesh.Geo.Verts[i].Position
+				p2 := p1.Add(subMesh.Geo.Verts[i].Bitangent())
 				r.points = append(r.points, p1, p2)
 			}
 		}
@@ -125,9 +125,9 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graph
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
-			for _, i := range subMesh.Faces {
-				p1 := subMesh.Verts[i].Position
-				p2 := p1.Add(subMesh.Verts[i].Normal)
+			for _, i := range subMesh.Geo.Faces {
+				p1 := subMesh.Geo.Verts[i].Position
+				p2 := p1.Add(subMesh.Geo.Verts[i].Normal)
 				r.points = append(r.points, p1, p2)
 			}
 		}

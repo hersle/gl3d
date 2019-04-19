@@ -133,7 +133,7 @@ func (r *MeshRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
 
 	for _, subMesh := range m.SubMeshes {
 		r.SetSubMesh(subMesh)
-		graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
+		graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
 	}
 }
 
@@ -225,11 +225,11 @@ func (r *MeshRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.BumpMap.Set2D(mtl.BumpMap)
 
 	var v object.Vertex
-	r.sp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
-	r.sp.Normal.SetSource(sm.Vbo, v.NormalOffset(), v.Size())
-	r.sp.TexCoord.SetSource(sm.Vbo, v.TexCoordOffset(), v.Size())
-	r.sp.Tangent.SetSource(sm.Vbo, v.TangentOffset(), v.Size())
-	r.sp.SetAttribIndexBuffer(sm.Ibo)
+	r.sp.Position.SetSource(sm.Geo.Vbo, v.PositionOffset(), v.Size())
+	r.sp.Normal.SetSource(sm.Geo.Vbo, v.NormalOffset(), v.Size())
+	r.sp.TexCoord.SetSource(sm.Geo.Vbo, v.TexCoordOffset(), v.Size())
+	r.sp.Tangent.SetSource(sm.Geo.Vbo, v.TangentOffset(), v.Size())
+	r.sp.SetAttribIndexBuffer(sm.Geo.Ibo)
 }
 
 func (r *MeshRenderer) SetAmbientLight(l *light.AmbientLight) {

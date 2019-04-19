@@ -25,12 +25,16 @@ type Mesh struct {
 	SubMeshes []*SubMesh
 }
 
-type SubMesh struct {
+type Geometry struct {
 	Verts []Vertex
 	Faces []int32
 	Vbo   *graphics.Buffer
 	Ibo   *graphics.Buffer
 	Inds  int
+}
+
+type SubMesh struct {
+	Geo *Geometry
 	Mtl   *material.Material
 }
 
@@ -88,10 +92,10 @@ func NewSubMesh() *SubMesh {
 	return &sm
 }
 
-func (sm *SubMesh) AddTriangle(vert1, vert2, vert3 Vertex) {
-	i1, i2, i3 := len(sm.Verts)+0, len(sm.Verts)+1, len(sm.Verts)+2
-	sm.Faces = append(sm.Faces, int32(i1), int32(i2), int32(i3))
-	sm.Verts = append(sm.Verts, vert1, vert2, vert3)
+func (geo *Geometry) AddTriangle(vert1, vert2, vert3 Vertex) {
+	i1, i2, i3 := len(geo.Verts)+0, len(geo.Verts)+1, len(geo.Verts)+2
+	geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
+	geo.Verts = append(geo.Verts, vert1, vert2, vert3)
 }
 
 func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
@@ -256,6 +260,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	for i, _ := range m.SubMeshes {
 		m.SubMeshes[i] = NewSubMesh()
 		m.SubMeshes[i].Mtl = mtls[i]
+		m.SubMeshes[i].Geo = &Geometry{}
 	}
 
 	for _, sGroup := range sGroups {
@@ -316,21 +321,21 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				tangent = tangent.Sub(normal.Scale(tangent.Dot(normal))).Norm() // gram schmidt
 				verts[i] = NewVertex(pos, texCoord, normal, tangent)
 			}
-			m.SubMeshes[iTri.mtlInd].AddTriangle(verts[0], verts[1], verts[2])
+			m.SubMeshes[iTri.mtlInd].Geo.AddTriangle(verts[0], verts[1], verts[2])
 		}
 	}
 
-	if len(m.SubMeshes[0].Verts) == 0 {
+	if len(m.SubMeshes[0].Geo.Verts) == 0 {
 		m.SubMeshes = m.SubMeshes[1:]
 	}
 
 	for i, sm := range m.SubMeshes {
-		println("submesh", i, "with", len(sm.Verts), "verts")
-		sm.Vbo = graphics.NewBuffer()
-		sm.Ibo = graphics.NewBuffer()
-		sm.Vbo.SetData(sm.Verts, 0)
-		sm.Ibo.SetData(sm.Faces, 0)
-		sm.Inds = len(sm.Faces)
+		println("submesh", i, "with", len(sm.Geo.Verts), "verts")
+		sm.Geo.Vbo = graphics.NewBuffer()
+		sm.Geo.Ibo = graphics.NewBuffer()
+		sm.Geo.Vbo.SetData(sm.Geo.Verts, 0)
+		sm.Geo.Ibo.SetData(sm.Geo.Faces, 0)
+		sm.Geo.Inds = len(sm.Geo.Faces)
 		if sm.Mtl == nil {
 			sm.Mtl = material.NewDefaultMaterial("")
 		}

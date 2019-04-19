@@ -106,8 +106,8 @@ func (r *ShadowMapRenderer) SetMesh(m *object.Mesh) {
 
 func (r *ShadowMapRenderer) SetSubMesh(sm *object.SubMesh) {
 	var v object.Vertex
-	r.sp.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
-	r.sp.SetAttribIndexBuffer(sm.Ibo)
+	r.sp.Position.SetSource(sm.Geo.Vbo, v.PositionOffset(), v.Size())
+	r.sp.SetAttribIndexBuffer(sm.Geo.Ibo)
 }
 
 func (r *ShadowMapRenderer) SetCamera2(c *camera.OrthoCamera) {
@@ -121,8 +121,8 @@ func (r *ShadowMapRenderer) SetMesh2(m *object.Mesh) {
 
 func (r *ShadowMapRenderer) SetSubMesh2(sm *object.SubMesh) {
 	var v object.Vertex
-	r.sp2.Position.SetSource(sm.Vbo, v.PositionOffset(), v.Size())
-	r.sp2.SetAttribIndexBuffer(sm.Ibo)
+	r.sp2.Position.SetSource(sm.Geo.Vbo, v.PositionOffset(), v.Size())
+	r.sp2.SetAttribIndexBuffer(sm.Geo.Ibo)
 }
 
 // render shadow map to l's shadow map
@@ -169,7 +169,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.P
 			for _, subMesh := range m.SubMeshes {
 				r.SetSubMesh(subMesh)
 
-				graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
+				graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
 			}
 		}
 	}
@@ -193,7 +193,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.Sp
 		for _, subMesh := range m.SubMeshes {
 			r.SetSubMesh(subMesh)
 
-			graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
+			graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
 		}
 	}
 
@@ -216,7 +216,7 @@ func (r *ShadowMapRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *l
 		for _, subMesh := range m.SubMeshes {
 			r.SetSubMesh2(subMesh)
 
-			graphics.NewRenderCommand(graphics.Triangle, subMesh.Inds, 0, r.renderState).Execute()
+			graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
 		}
 	}
 
