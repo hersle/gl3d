@@ -80,7 +80,7 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
 	r.sp.Position.SetSource(vbo, 0, stride)
 }
 
-func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera) {
+func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(1, 0, 0))
@@ -95,10 +95,11 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 		}
 	}
 	r.vbo.SetData(r.points, 0)
+	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
+func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 1, 0))
@@ -113,10 +114,11 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
 		}
 	}
 	r.vbo.SetData(r.points, 0)
+	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera) {
+func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.NewVec3(0, 0, 1))
@@ -131,5 +133,6 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera) {
 		}
 	}
 	r.vbo.SetData(r.points, 0)
+	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(graphics.Line, len(r.points), 0, r.renderState).Execute()
 }

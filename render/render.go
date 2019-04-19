@@ -15,6 +15,7 @@ type Renderer struct {
 	skyboxRenderer    *SkyboxRenderer
 	textRenderer *TextRenderer
 	quadRenderer *QuadRenderer
+	arrowRenderer *ArrowRenderer
 
 	framebuffer       *graphics.Framebuffer
 	RenderTarget      *graphics.Texture2D
@@ -29,6 +30,7 @@ func NewRenderer() (*Renderer, error) {
 	r.skyboxRenderer = NewSkyboxRenderer()
 	r.textRenderer = NewTextRenderer()
 	r.quadRenderer = NewQuadRenderer()
+	r.arrowRenderer = NewArrowRenderer()
 
 	w, h := 1920, 1080
 	w, h = w/1, h/1
@@ -58,6 +60,18 @@ func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {
 
 func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
 	r.quadRenderer.Render(tex, graphics.DefaultFramebuffer)
+}
+
+func (r *Renderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
+	r.arrowRenderer.RenderBitangents(s, c, r.framebuffer)
+}
+
+func (r *Renderer) RenderNormals(s *scene.Scene, c camera.Camera) {
+	r.arrowRenderer.RenderNormals(s, c, r.framebuffer)
+}
+
+func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
+	r.arrowRenderer.RenderTangents(s, c, r.framebuffer)
 }
 
 func (r *Renderer) Render() {

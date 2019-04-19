@@ -68,8 +68,6 @@ func main() {
 
 	input.AddCameraFPSControls(c)
 
-	arrowRenderer := render.NewArrowRenderer()
-
 	// TODO: remove
 	renderer.RenderScene(s, c)
 
@@ -93,25 +91,14 @@ func main() {
 			renderer.RenderScene(s, c)
 		}
 		if input.Key1.JustPressed() {
-			arrowRenderer.RenderTangents(s, c)
+			renderer.RenderTangents(s, c)
 		}
 		if input.Key2.JustPressed() {
-			arrowRenderer.RenderBitangents(s, c)
+			renderer.RenderBitangents(s, c)
 		}
 		if input.Key3.JustPressed() {
-			arrowRenderer.RenderNormals(s, c)
+			renderer.RenderNormals(s, c)
 		}
-		text := "FPS:        " + fmt.Sprint(fps) + "\n"
-		text += "position:   " + c.Position.String() + "\n"
-		text += "forward:    " + c.Forward().String() + "\n"
-		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
-		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
-		renderer.RenderText(math.NewVec2(-1, +1), text, 0.05)
-		renderer.Render()
-		window.Update()
-
-		graphics.RenderStats.Reset()
-
 		if input.KeySpace.JustPressed() {
 			s.PointLights[0].Place(c.Position)
 			//s.SpotLights[0].Place(c.Position)
@@ -131,7 +118,17 @@ func main() {
 			renderer.SetWireframe(true)
 		}
 
-		input.Update()
+		text := "FPS:        " + fmt.Sprint(fps) + "\n"
+		text += "position:   " + c.Position.String() + "\n"
+		text += "forward:    " + c.Forward().String() + "\n"
+		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
+		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
+		renderer.RenderText(math.NewVec2(-1, +1), text, 0.05)
+
+		renderer.Render()
+		input.Update() // TODO: make line order not matter
+		window.Update() // TODO: make line order not matter
+		graphics.RenderStats.Reset()
 
 		frameCount++
 	}
