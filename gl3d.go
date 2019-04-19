@@ -68,12 +68,11 @@ func main() {
 
 	input.AddCameraFPSControls(c)
 
-	textRenderer := render.NewTextRenderer()
 	arrowRenderer := render.NewArrowRenderer()
 	quadRenderer := render.NewQuadRenderer()
 
 	// TODO: remove
-	renderer.Render(s, c)
+	renderer.RenderScene(s, c)
 
 	drawScene := true
 
@@ -92,9 +91,8 @@ func main() {
 		graphics.DefaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
 		graphics.DefaultFramebuffer.ClearDepth(1)
 		if drawScene {
-			renderer.Render(s, c)
+			renderer.RenderScene(s, c)
 		}
-		quadRenderer.Render(renderer.RenderTarget)
 		//quadRenderer.Render(s.DirectionalLights[0].ShadowMap)
 		if input.Key1.JustPressed() {
 			arrowRenderer.RenderTangents(s, c)
@@ -110,7 +108,8 @@ func main() {
 		text += "forward:    " + c.Forward().String() + "\n"
 		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
 		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
-		textRenderer.Render(math.NewVec2(-1, +1), text, 0.05)
+		renderer.RenderText(math.NewVec2(-1, +1), text, 0.05)
+		quadRenderer.Render(renderer.RenderTarget)
 		window.Update()
 
 		graphics.RenderStats.Reset()

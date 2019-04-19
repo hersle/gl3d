@@ -76,7 +76,7 @@ func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 
-func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
+func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *graphics.Framebuffer) {
 	var verts []object.Vertex
 	var inds []int32
 
@@ -130,5 +130,6 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32) {
 	r.SetAtlas(r.tex)
 	r.vbo.SetData(verts, 0)
 	r.ibo.SetData(inds, 0)
+	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(graphics.Triangle, len(inds), 0, r.renderState).Execute()
 }
