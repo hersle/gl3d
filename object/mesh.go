@@ -28,8 +28,8 @@ type Mesh struct {
 type Geometry struct {
 	Verts []Vertex
 	Faces []int32
-	Vbo   *graphics.Buffer
-	Ibo   *graphics.Buffer
+	vbo   *graphics.Buffer
+	ibo   *graphics.Buffer
 	Inds  int
 	uploaded bool
 }
@@ -104,20 +104,33 @@ func (geo *Geometry) AddTriangle(vert1, vert2, vert3 Vertex) {
 	geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
 	geo.Verts = append(geo.Verts, vert1, vert2, vert3)
 	geo.Inds += 3
+	geo.uploaded = false
 }
 
-func (geo *Geometry) Upload() {
-	if !geo.uploaded {
-		if geo.Vbo == nil {
-			geo.Vbo = graphics.NewBuffer()
-		}
-		if geo.Ibo == nil {
-			geo.Ibo = graphics.NewBuffer()
-		}
-		geo.Vbo.SetData(geo.Verts, 0)
-		geo.Ibo.SetData(geo.Faces, 0)
-		geo.uploaded = true
+func (geo *Geometry) upload() {
+	if geo.vbo == nil {
+		geo.vbo = graphics.NewBuffer()
 	}
+	if geo.ibo == nil {
+		geo.ibo = graphics.NewBuffer()
+	}
+	geo.vbo.SetData(geo.Verts, 0)
+	geo.ibo.SetData(geo.Faces, 0)
+	geo.uploaded = true
+}
+
+func (geo *Geometry) VertexBuffer() *graphics.Buffer {
+	if !geo.uploaded {
+		geo.upload()
+	}
+	return geo.vbo
+}
+
+func (geo *Geometry) IndexBuffer() *graphics.Buffer {
+	if !geo.uploaded {
+		geo.upload()
+	}
+	return geo.ibo
 }
 
 func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
@@ -345,7 +358,6 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	for i, _ := range geos {
 		if len(geos[i].Verts) > 0 {
 			println("submesh", i, "with", len(geos[i].Verts), "verts")
-			geos[i].Upload()
 			if mtls[i] == nil {
 				mtls[i] = material.NewDefaultMaterial("")
 			}

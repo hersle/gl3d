@@ -106,8 +106,8 @@ func (r *ShadowMapRenderer) SetMesh(m *object.Mesh) {
 
 func (r *ShadowMapRenderer) SetSubMesh(sm *object.SubMesh) {
 	var v object.Vertex
-	r.sp.Position.SetSource(sm.Geo.Vbo, v.PositionOffset(), v.Size())
-	r.sp.SetAttribIndexBuffer(sm.Geo.Ibo)
+	r.sp.Position.SetSource(sm.Geo.VertexBuffer(), v.PositionOffset(), v.Size())
+	r.sp.SetAttribIndexBuffer(sm.Geo.IndexBuffer())
 }
 
 func (r *ShadowMapRenderer) SetCamera2(c *camera.OrthoCamera) {
@@ -121,8 +121,8 @@ func (r *ShadowMapRenderer) SetMesh2(m *object.Mesh) {
 
 func (r *ShadowMapRenderer) SetSubMesh2(sm *object.SubMesh) {
 	var v object.Vertex
-	r.sp2.Position.SetSource(sm.Geo.Vbo, v.PositionOffset(), v.Size())
-	r.sp2.SetAttribIndexBuffer(sm.Geo.Ibo)
+	r.sp2.Position.SetSource(sm.Geo.VertexBuffer(), v.PositionOffset(), v.Size())
+	r.sp2.SetAttribIndexBuffer(sm.Geo.IndexBuffer())
 }
 
 // render shadow map to l's shadow map

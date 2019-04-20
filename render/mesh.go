@@ -225,11 +225,11 @@ func (r *MeshRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.BumpMap.Set2D(mtl.BumpMap)
 
 	var v object.Vertex
-	r.sp.Position.SetSource(sm.Geo.Vbo, v.PositionOffset(), v.Size())
-	r.sp.Normal.SetSource(sm.Geo.Vbo, v.NormalOffset(), v.Size())
-	r.sp.TexCoord.SetSource(sm.Geo.Vbo, v.TexCoordOffset(), v.Size())
-	r.sp.Tangent.SetSource(sm.Geo.Vbo, v.TangentOffset(), v.Size())
-	r.sp.SetAttribIndexBuffer(sm.Geo.Ibo)
+	r.sp.Position.SetSource(sm.Geo.VertexBuffer(), v.PositionOffset(), v.Size())
+	r.sp.Normal.SetSource(sm.Geo.VertexBuffer(), v.NormalOffset(), v.Size())
+	r.sp.TexCoord.SetSource(sm.Geo.VertexBuffer(), v.TexCoordOffset(), v.Size())
+	r.sp.Tangent.SetSource(sm.Geo.VertexBuffer(), v.TangentOffset(), v.Size())
+	r.sp.SetAttribIndexBuffer(sm.Geo.IndexBuffer())
 }
 
 func (r *MeshRenderer) SetAmbientLight(l *light.AmbientLight) {
