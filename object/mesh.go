@@ -31,6 +31,7 @@ type Geometry struct {
 	Vbo   *graphics.Buffer
 	Ibo   *graphics.Buffer
 	Inds  int
+	uploaded bool
 }
 
 type SubMesh struct {
@@ -87,8 +88,14 @@ func (_ *Vertex) TangentOffset() int {
 	return int(unsafe.Offsetof(Vertex{}.Tangent))
 }
 
-func NewSubMesh() *SubMesh {
+func (m *Mesh) AddSubMesh(sm *SubMesh) {
+	m.SubMeshes = append(m.SubMeshes, sm)
+}
+
+func NewSubMesh(geo *Geometry, mtl *material.Material) *SubMesh {
 	var sm SubMesh
+	sm.Geo = geo
+	sm.Mtl = mtl
 	return &sm
 }
 
@@ -96,6 +103,21 @@ func (geo *Geometry) AddTriangle(vert1, vert2, vert3 Vertex) {
 	i1, i2, i3 := len(geo.Verts)+0, len(geo.Verts)+1, len(geo.Verts)+2
 	geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
 	geo.Verts = append(geo.Verts, vert1, vert2, vert3)
+	geo.Inds += 3
+}
+
+func (geo *Geometry) Upload() {
+	if !geo.uploaded {
+		if geo.Vbo == nil {
+			geo.Vbo = graphics.NewBuffer()
+		}
+		if geo.Ibo == nil {
+			geo.Ibo = graphics.NewBuffer()
+		}
+		geo.Vbo.SetData(geo.Verts, 0)
+		geo.Ibo.SetData(geo.Faces, 0)
+		geo.uploaded = true
+	}
 }
 
 func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
@@ -255,13 +277,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		}
 	}
 
-	var m Mesh
-	m.SubMeshes = make([]*SubMesh, len(mtls)) // one submesh per material
-	for i, _ := range m.SubMeshes {
-		m.SubMeshes[i] = NewSubMesh()
-		m.SubMeshes[i].Mtl = mtls[i]
-		m.SubMeshes[i].Geo = &Geometry{}
-	}
+	var geos []Geometry = make([]Geometry, len(mtls)) // one submesh per material
 
 	for _, sGroup := range sGroups {
 		var weightedNormals []math.Vec3 = make([]math.Vec3, len(positions)+1)
@@ -321,23 +337,19 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				tangent = tangent.Sub(normal.Scale(tangent.Dot(normal))).Norm() // gram schmidt
 				verts[i] = NewVertex(pos, texCoord, normal, tangent)
 			}
-			m.SubMeshes[iTri.mtlInd].Geo.AddTriangle(verts[0], verts[1], verts[2])
+			geos[iTri.mtlInd].AddTriangle(verts[0], verts[1], verts[2])
 		}
 	}
 
-	if len(m.SubMeshes[0].Geo.Verts) == 0 {
-		m.SubMeshes = m.SubMeshes[1:]
-	}
-
-	for i, sm := range m.SubMeshes {
-		println("submesh", i, "with", len(sm.Geo.Verts), "verts")
-		sm.Geo.Vbo = graphics.NewBuffer()
-		sm.Geo.Ibo = graphics.NewBuffer()
-		sm.Geo.Vbo.SetData(sm.Geo.Verts, 0)
-		sm.Geo.Ibo.SetData(sm.Geo.Faces, 0)
-		sm.Geo.Inds = len(sm.Geo.Faces)
-		if sm.Mtl == nil {
-			sm.Mtl = material.NewDefaultMaterial("")
+	var m Mesh
+	for i, _ := range geos {
+		if len(geos[i].Verts) > 0 {
+			println("submesh", i, "with", len(geos[i].Verts), "verts")
+			geos[i].Upload()
+			if mtls[i] == nil {
+				mtls[i] = material.NewDefaultMaterial("")
+			}
+			m.AddSubMesh(NewSubMesh(&geos[i], mtls[i]))
 		}
 	}
 
