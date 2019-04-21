@@ -65,14 +65,6 @@ func (b *Box) Geometry() *object.Geometry {
 	p8 := math.NewVec3(b.Min.X(), b.Max.Y(), b.Max.Z())
 	p := []math.Vec3{p1, p2, p3, p4, p5, p6, p7, p8}
 
-	n1 := math.NewVec3(0, 0, +1)
-	n2 := math.NewVec3(+1, 0, 0)
-	n3 := math.NewVec3(0, 0, -1)
-	n4 := math.NewVec3(-1, 0, 0)
-	n5 := math.NewVec3(0, +1, 0)
-	n6 := math.NewVec3(0, -1, 0)
-	n := []math.Vec3{n1, n2, n3, n4, n5, n6}
-
 	pi := [][]int{
 		{5, 6, 7, 8},
 		{6, 2, 3, 7},
@@ -89,10 +81,6 @@ func (b *Box) Geometry() *object.Geometry {
 		v2.Position = p[pi[i][1]-1]
 		v3.Position = p[pi[i][2]-1]
 		v4.Position = p[pi[i][3]-1]
-		v1.Normal = n[i]
-		v2.Normal = n[i]
-		v3.Normal = n[i]
-		v4.Normal = n[i]
 		v1.Tangent = tangent
 		v2.Tangent = tangent
 		v3.Tangent = tangent
@@ -100,6 +88,8 @@ func (b *Box) Geometry() *object.Geometry {
 		geo.AddTriangle(v1, v2, v3)
 		geo.AddTriangle(v1, v3, v4)
 	}
+
+	geo.CalculateNormals()
 
 	return &geo
 }

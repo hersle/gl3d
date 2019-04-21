@@ -107,6 +107,35 @@ func (geo *Geometry) AddTriangle(vert1, vert2, vert3 Vertex) {
 	geo.uploaded = false
 }
 
+func (geo *Geometry) CalculateNormals() {
+	for i, _ := range geo.Verts {
+		geo.Verts[i].Normal = math.NewVec3(0, 0, 0)
+	}
+
+	for i := 0; i < geo.Inds; i += 3 {
+		v1 := geo.Verts[geo.Faces[i+0]]
+		v2 := geo.Verts[geo.Faces[i+1]]
+		v3 := geo.Verts[geo.Faces[i+2]]
+
+		edge1 := v1.Position.Sub(v3.Position)
+		edge2 := v2.Position.Sub(v3.Position)
+		normal := edge1.Cross(edge2).Norm()
+		v1.Normal = v1.Normal.Add(normal)
+		v2.Normal = v2.Normal.Add(normal)
+		v3.Normal = v3.Normal.Add(normal)
+
+		geo.Verts[geo.Faces[i+0]] = v1
+		geo.Verts[geo.Faces[i+1]] = v2
+		geo.Verts[geo.Faces[i+2]] = v3
+	}
+
+	for i, v := range geo.Verts {
+		geo.Verts[i].Normal = v.Normal.Norm()
+	}
+
+	geo.uploaded = false
+}
+
 func (geo *Geometry) upload() {
 	if geo.vbo == nil {
 		geo.vbo = graphics.NewBuffer()

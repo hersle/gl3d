@@ -98,13 +98,13 @@ func main() {
 		if drawScene {
 			renderer.RenderScene(s, c)
 		}
-		if input.Key1.JustPressed() {
+		if input.Key1.Held() {
 			renderer.RenderTangents(s, c)
 		}
-		if input.Key2.JustPressed() {
+		if input.Key2.Held() {
 			renderer.RenderBitangents(s, c)
 		}
-		if input.Key3.JustPressed() {
+		if input.Key3.Held() {
 			renderer.RenderNormals(s, c)
 		}
 		if input.KeySpace.JustPressed() {
