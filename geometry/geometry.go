@@ -2,6 +2,7 @@ package geometry
 
 import (
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/object"
 )
 
 type Box struct {
@@ -51,6 +52,58 @@ func (b *Box) Center() math.Vec3 {
 	return b.Min.Add(b.Max).Scale(0.5)
 }
 
+func (b *Box) Geometry() *object.Geometry {
+	var geo object.Geometry
+
+	p1 := math.NewVec3(b.Min.X(), b.Min.Y(), b.Min.Z())
+	p2 := math.NewVec3(b.Max.X(), b.Min.Y(), b.Min.Z())
+	p3 := math.NewVec3(b.Max.X(), b.Max.Y(), b.Min.Z())
+	p4 := math.NewVec3(b.Min.X(), b.Max.Y(), b.Min.Z())
+	p5 := math.NewVec3(b.Min.X(), b.Min.Y(), b.Max.Z())
+	p6 := math.NewVec3(b.Max.X(), b.Min.Y(), b.Max.Z())
+	p7 := math.NewVec3(b.Max.X(), b.Max.Y(), b.Max.Z())
+	p8 := math.NewVec3(b.Min.X(), b.Max.Y(), b.Max.Z())
+	p := []math.Vec3{p1, p2, p3, p4, p5, p6, p7, p8}
+
+	n1 := math.NewVec3(0, 0, +1)
+	n2 := math.NewVec3(+1, 0, 0)
+	n3 := math.NewVec3(0, 0, -1)
+	n4 := math.NewVec3(-1, 0, 0)
+	n5 := math.NewVec3(0, +1, 0)
+	n6 := math.NewVec3(0, -1, 0)
+	n := []math.Vec3{n1, n2, n3, n4, n5, n6}
+
+	pi := [][]int{
+		{5, 6, 7, 8},
+		{6, 2, 3, 7},
+		{2, 1, 4, 3},
+		{1, 5, 8, 4},
+		{8, 7, 3, 4},
+		{6, 5, 1, 2},
+	}
+
+	tangent := math.NewVec3(1, 1, 1).Norm()
+	var v1, v2, v3, v4 object.Vertex
+	for i := 0; i < 6; i++ {
+		v1.Position = p[pi[i][0]-1]
+		v2.Position = p[pi[i][1]-1]
+		v3.Position = p[pi[i][2]-1]
+		v4.Position = p[pi[i][3]-1]
+		v1.Normal = n[i]
+		v2.Normal = n[i]
+		v3.Normal = n[i]
+		v4.Normal = n[i]
+		v1.Tangent = tangent
+		v2.Tangent = tangent
+		v3.Tangent = tangent
+		v4.Tangent = tangent
+		geo.AddTriangle(v1, v2, v3)
+		geo.AddTriangle(v1, v3, v4)
+	}
+
+	return &geo
+}
+
 func NewSphere(center math.Vec3, radius float32) *Sphere {
 	var s Sphere
 
@@ -68,13 +121,13 @@ func NewPlane(point, normal math.Vec3) *Plane {
 }
 
 func NewPlaneFromTangents(point, tangent1, tangent2 math.Vec3) *Plane {
-	return NewPlane(point, tangent.Cross(tangent2))
+	return NewPlane(point, tangent1.Cross(tangent2))
 }
 
 func NewPlaneFromPoints(point1, point2, point3 math.Vec3) *Plane {
 	return NewPlaneFromTangents(point1, point2.Sub(point1), point3.Sub(point1))
 }
 
-func (p *Plane) Distance(point math.Vec3) {
-	return point.Sub(p.Point).Dot(p.Normal).Length()
+func (p *Plane) Distance(point math.Vec3) float32 {
+	return point.Sub(p.Point).Dot(p.Normal)
 }

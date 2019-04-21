@@ -11,6 +11,8 @@ import (
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/input"
+	"github.com/hersle/gl3d/geometry"
+	"github.com/hersle/gl3d/material"
 	"os"
 	"time"
 )
@@ -46,6 +48,12 @@ func main() {
 		}
 		s.AddMesh(model)
 	}
+
+	box := geometry.NewBox(math.NewVec3(-1, -1, -1), math.NewVec3(+1, +1, +1))
+	var m object.Mesh
+	m.AddSubMesh(object.NewSubMesh(box.Geometry(), material.NewDefaultMaterial("")))
+	m.Object.Reset()
+	s.AddMesh(&m)
 
 	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0.1, 0.1, 0.1))
 
