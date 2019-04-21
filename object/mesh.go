@@ -136,6 +136,64 @@ func (geo *Geometry) CalculateNormals() {
 	geo.uploaded = false
 }
 
+func (geo *Geometry) CalculateTangents() {
+	for i, _ := range geo.Verts {
+		geo.Verts[i].Tangent = math.NewVec3(0, 0, 0)
+	}
+
+	for i := 0; i < geo.Inds; i += 3 {
+		v1 := geo.Verts[geo.Faces[i+0]]
+		v2 := geo.Verts[geo.Faces[i+1]]
+		v3 := geo.Verts[geo.Faces[i+2]]
+
+		edge1 := v1.Position.Sub(v3.Position)
+		edge2 := v2.Position.Sub(v3.Position)
+		dTexCoord1 := v1.TexCoord.Sub(v3.TexCoord)
+		dTexCoord2 := v2.TexCoord.Sub(v3.TexCoord)
+		det := (dTexCoord1.X()*dTexCoord2.Y() - dTexCoord2.X()*dTexCoord1.Y())
+		if det != 0 {
+			det = 1 / det
+		}
+		tangent := math.NewVec3(
+			dTexCoord2.Y()*edge1.X()-dTexCoord1.Y()*edge2.X(),
+			dTexCoord2.Y()*edge1.Y()-dTexCoord1.Y()*edge2.Y(),
+			dTexCoord2.Y()*edge1.Z()-dTexCoord1.Y()*edge2.Z(),
+		).Scale(det)
+		if det != 0 {
+			// tangent is not zero vector
+			tangent = tangent.Norm()
+		}
+		v1.Tangent = v1.Tangent.Add(tangent)
+		v2.Tangent = v2.Tangent.Add(tangent)
+		v3.Tangent = v3.Tangent.Add(tangent)
+
+		geo.Verts[geo.Faces[i+0]] = v1
+		geo.Verts[geo.Faces[i+1]] = v2
+		geo.Verts[geo.Faces[i+2]] = v3
+	}
+
+	for i, v := range geo.Verts {
+		if v.Tangent.X() == 0 && v.Tangent.Y() == 0 && v.Tangent.Z() == 0 {
+			// no tangent - generate arbitrary tangent vector
+			// assume normal is not the zero vector
+			if v.Normal.X() == 0 && v.Normal.Y() == 0 && v.Normal.Z() == 0 {
+				panic("cannot find vector not parallell to zero vector")
+			}
+			if v.Normal.X() == 0 {
+				v.Tangent = math.NewVec3(1, 0, 0)
+			} else {
+				v.Tangent = math.NewVec3(0, 1, 0)
+			}
+		} else {
+			v.Tangent = v.Tangent.Norm()
+		}
+		v.Tangent = v.Tangent.Sub(v.Normal.Scale(v.Tangent.Dot(v.Normal))).Norm() // gram schmidt
+		geo.Verts[i] = v
+	}
+
+	geo.uploaded = false
+}
+
 func (geo *Geometry) upload() {
 	if geo.vbo == nil {
 		geo.vbo = graphics.NewBuffer()

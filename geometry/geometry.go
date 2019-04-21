@@ -74,22 +74,18 @@ func (b *Box) Geometry() *object.Geometry {
 		{6, 5, 1, 2},
 	}
 
-	tangent := math.NewVec3(1, 1, 1).Norm()
 	var v1, v2, v3, v4 object.Vertex
 	for i := 0; i < 6; i++ {
 		v1.Position = p[pi[i][0]-1]
 		v2.Position = p[pi[i][1]-1]
 		v3.Position = p[pi[i][2]-1]
 		v4.Position = p[pi[i][3]-1]
-		v1.Tangent = tangent
-		v2.Tangent = tangent
-		v3.Tangent = tangent
-		v4.Tangent = tangent
 		geo.AddTriangle(v1, v2, v3)
 		geo.AddTriangle(v1, v3, v4)
 	}
 
 	geo.CalculateNormals()
+	geo.CalculateTangents()
 
 	return &geo
 }
