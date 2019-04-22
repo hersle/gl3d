@@ -56,6 +56,12 @@ func main() {
 	m.Object.Reset()
 	s.AddMesh(&m)
 
+	var m3 object.Mesh
+	bbox := geometry.NewBoundingBox(m.SubMeshes[0].Geo)
+	m3.AddSubMesh(object.NewSubMesh(bbox.Geometry(), material.NewDefaultMaterial("")))
+	m3.Object.Reset()
+	s.AddMesh(&m3)
+
 	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0.1, 0.1, 0.1))
 
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
