@@ -56,7 +56,7 @@ func main() {
 	s.AddMesh(&m)
 
 	var m3 object.Mesh
-	bbox := object.NewBoundingBox(m.SubMeshes[0].Geo)
+	bbox := m.SubMeshes[0].Geo.BoundingBox()
 	m3.AddSubMesh(object.NewSubMesh(bbox.Geometry(), material.NewDefaultMaterial("")))
 	m3.Object.Reset()
 	s.AddMesh(&m3)

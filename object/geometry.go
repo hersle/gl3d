@@ -6,8 +6,10 @@ import (
 )
 
 type Box struct {
-	Min math.Vec3
-	Max math.Vec3
+	Object
+	Dx float32
+	Dy float32
+	Dz float32
 }
 
 type Sphere struct {
@@ -31,72 +33,46 @@ type Plane struct {
 	Normal math.Vec3
 }
 
-func NewBox(point1, point2 math.Vec3) *Box {
+func NewBox(pos, unitX, unitY math.Vec3, dx, dy, dz float32) *Box {
 	var b Box
-
-	minX := math.Min(point1.X(), point2.X())
-	minY := math.Min(point1.Y(), point2.Y())
-	minZ := math.Min(point1.Z(), point2.Z())
-	b.Min = math.NewVec3(minX, minY, minZ)
-
-	maxX := math.Max(point1.X(), point2.X())
-	maxY := math.Max(point1.Y(), point2.Y())
-	maxZ := math.Max(point1.Z(), point2.Z())
-	b.Max = math.NewVec3(maxX, maxY, maxZ)
-
+	b.Reset()
+	b.Place(pos)
+	b.Orient(unitX, unitY)
+	b.Dx = dx
+	b.Dy = dy
+	b.Dz = dz
 	return &b
 }
 
-func NewBoundingBox(geo *Geometry) *Box {
-	if geo == nil || geo.Inds == 0 {
-		return nil
-	}
+func NewBoxAxisAligned(point1, point2 math.Vec3) *Box {
+	minX := math.Min(point1.X(), point2.X())
+	minY := math.Min(point1.Y(), point2.Y())
+	minZ := math.Min(point1.Z(), point2.Z())
+	maxX := math.Max(point1.X(), point2.X())
+	maxY := math.Max(point1.Y(), point2.Y())
+	maxZ := math.Max(point1.Z(), point2.Z())
 
-	minX := geo.Verts[0].Position.X()
-	minY := geo.Verts[0].Position.Y()
-	minZ := geo.Verts[0].Position.Z()
-	maxX := minX
-	maxY := minY
-	maxZ := minZ
-	for _, v := range geo.Verts[1:] {
-		minX = math.Min(minX, v.Position.X())
-		minY = math.Min(minY, v.Position.Y())
-		minZ = math.Min(minZ, v.Position.Z())
-		maxX = math.Max(maxX, v.Position.X())
-		maxY = math.Max(maxY, v.Position.Y())
-		maxZ = math.Max(maxZ, v.Position.Z())
-	}
-
-	return NewBox(math.NewVec3(minX, minY, minZ), math.NewVec3(maxX, maxY, maxZ))
-}
-
-func (b *Box) Dx() float32 {
-	return b.Max.X() - b.Min.X()
-}
-
-func (b *Box) Dy() float32 {
-	return b.Max.Y() - b.Min.Y()
-}
-
-func (b *Box) Dz() float32 {
-	return b.Max.Z() - b.Min.Z()
+	pos := math.NewVec3(minX, minY, minZ)
+	unitX := math.NewVec3(1, 0, 0)
+	unitY := math.NewVec3(0, 1, 0)
+	return NewBox(pos, unitX, unitY, maxX - minX, maxY - minY, maxZ - minZ)
 }
 
 func (b *Box) Center() math.Vec3 {
-	return b.Min.Add(b.Max).Scale(0.5)
+	return b.Position.Add(b.UnitX.Scale(b.Dx)).Add(b.UnitY.Scale(b.Dy)).Add(b.UnitZ.Scale(b.Dz))
 }
 
 func (b *Box) Geometry() *Geometry {
 	var geo Geometry
 
-	p1 := math.NewVec3(b.Min.X(), b.Min.Y(), b.Min.Z())
-	p2 := math.NewVec3(b.Max.X(), b.Min.Y(), b.Min.Z())
-	p3 := math.NewVec3(b.Max.X(), b.Max.Y(), b.Min.Z())
-	p4 := math.NewVec3(b.Min.X(), b.Max.Y(), b.Min.Z())
-	p5 := math.NewVec3(b.Min.X(), b.Min.Y(), b.Max.Z())
-	p6 := math.NewVec3(b.Max.X(), b.Min.Y(), b.Max.Z())
-	p7 := math.NewVec3(b.Max.X(), b.Max.Y(), b.Max.Z())
-	p8 := math.NewVec3(b.Min.X(), b.Max.Y(), b.Max.Z())
+	p1 := b.Position
+	p2 := p1.Add(b.UnitX.Scale(+b.Dx))
+	p3 := p2.Add(b.UnitY.Scale(+b.Dy))
+	p4 := p3.Add(b.UnitX.Scale(-b.Dx))
+	p5 := p1.Add(b.UnitZ.Scale(b.Dz))
+	p6 := p2.Add(b.UnitZ.Scale(b.Dz))
+	p7 := p3.Add(b.UnitZ.Scale(b.Dz))
+	p8 := p4.Add(b.UnitZ.Scale(b.Dz))
 	p := []math.Vec3{p1, p2, p3, p4, p5, p6, p7, p8}
 
 	pi := [][]int{

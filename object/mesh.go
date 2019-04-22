@@ -107,6 +107,29 @@ func (geo *Geometry) AddTriangle(vert1, vert2, vert3 Vertex) {
 	geo.uploaded = false
 }
 
+func (geo *Geometry) BoundingBox() *Box {
+	if geo == nil || geo.Inds == 0 {
+		return nil
+	}
+
+	minX := geo.Verts[0].Position.X()
+	minY := geo.Verts[0].Position.Y()
+	minZ := geo.Verts[0].Position.Z()
+	maxX := minX
+	maxY := minY
+	maxZ := minZ
+	for _, v := range geo.Verts[1:] {
+		minX = math.Min(minX, v.Position.X())
+		minY = math.Min(minY, v.Position.Y())
+		minZ = math.Min(minZ, v.Position.Z())
+		maxX = math.Max(maxX, v.Position.X())
+		maxY = math.Max(maxY, v.Position.Y())
+		maxZ = math.Max(maxZ, v.Position.Z())
+	}
+
+	return NewBoxAxisAligned(math.NewVec3(minX, minY, minZ), math.NewVec3(maxX, maxY, maxZ))
+}
+
 func (geo *Geometry) CalculateNormals() {
 	for i, _ := range geo.Verts {
 		geo.Verts[i].Normal = math.NewVec3(0, 0, 0)
