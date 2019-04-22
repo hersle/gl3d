@@ -161,7 +161,7 @@ func (geo *Geometry) CalculateTangents() {
 		).Scale(det)
 		if det != 0 {
 			// tangent is not zero vector
-			tangent = tangent.Norm()
+			tangent = tangent.Norm() // TODO: ??
 		}
 		v1.Tangent = v1.Tangent.Add(tangent)
 		v2.Tangent = v2.Tangent.Add(tangent)

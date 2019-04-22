@@ -1,6 +1,7 @@
 package geometry
 
 import (
+	gomath "math"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 )
@@ -97,6 +98,78 @@ func NewSphere(center math.Vec3, radius float32) *Sphere {
 	s.Radius = radius
 
 	return &s
+}
+
+func (s *Sphere) Geometry(n int) *object.Geometry {
+	// TODO: fix tangent/bitangent artifacts on top and bottom
+
+	var geo object.Geometry
+
+	var v object.Vertex
+
+	// top
+	v.Position = s.Center.Add(math.NewVec3(0, 0, +s.Radius))
+	v.TexCoord = math.NewVec2(0, 1)
+	geo.Verts = append(geo.Verts, v)
+
+	// middle
+	for i := 1; i < n; i++ {
+		ang1 := float64(i) / float64(n) * (gomath.Pi)
+		z := s.Center.Z() + s.Radius * float32(gomath.Cos(ang1))
+		u := 1 - float32(i) / float32(n)
+		for j := 0; j < 2 * n; j++ {
+			ang2 := float64(j) / float64(2 * n) * (2 * gomath.Pi)
+			x := s.Center.X() + s.Radius * float32(gomath.Sin(ang1) * gomath.Cos(ang2))
+			y := s.Center.Y() + s.Radius * float32(gomath.Sin(ang1) * gomath.Sin(ang2))
+			vv := float32(j) / float32(2 * n)
+			v.Position = math.NewVec3(x, y, z)
+			v.TexCoord = math.NewVec2(u, vv)
+			geo.Verts = append(geo.Verts, v)
+		}
+	}
+
+	// bottom
+	v.Position = s.Center.Add(math.NewVec3(0, 0, -s.Radius))
+	v.TexCoord = math.NewVec2(0, 0)
+	geo.Verts = append(geo.Verts, v)
+
+	var i1, i2, i3, i4 int
+
+	// top
+	i1 = 0
+	for i := 0; i < 2 * n; i++ {
+		i2 = 1 + (i + 0) % (2 * n)
+		i3 = 1 + (i + 1) % (2 * n)
+		geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
+		geo.Inds += 3
+	}
+
+	// middle
+	for i := 2; i < n; i++ {
+		for j := 0; j < 2 * n; j++ {
+			i1 = 1 + (i - 1) * 2 * n + (j + 0) % (2 * n)
+			i2 = 1 + (i - 1) * 2 * n + (j + 1) % (2 * n)
+			i3 = 1 + (i - 2) * 2 * n + (j + 1) % (2 * n)
+			i4 = 1 + (i - 2) * 2 * n + (j + 0) % (2 * n)
+			geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
+			geo.Faces = append(geo.Faces, int32(i3), int32(i4), int32(i1))
+			geo.Inds += 6
+		}
+	}
+
+	// bottom
+	i1 = len(geo.Verts) - 1 // bottom
+	for i := 0; i < 2 * n; i++ {
+		i3 = 1 + (n - 2) * (2 * n) + (i + 0) % (2 * n)
+		i2 = 1 + (n - 2) * (2 * n) + (i + 1) % (2 * n)
+		geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
+		geo.Inds += 3
+	}
+
+	geo.CalculateNormals()
+	geo.CalculateTangents()
+
+	return &geo
 }
 
 func NewPlane(point, normal math.Vec3) *Plane {

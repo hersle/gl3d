@@ -49,9 +49,9 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	box := geometry.NewBox(math.NewVec3(-1, -1, -1), math.NewVec3(+1, +1, +1))
+	sphere := geometry.NewSphere(math.NewVec3(0, 0, 0), 1);
 	var m object.Mesh
-	m.AddSubMesh(object.NewSubMesh(box.Geometry(), material.NewDefaultMaterial("")))
+	m.AddSubMesh(object.NewSubMesh(sphere.Geometry(20), material.NewDefaultMaterial("")))
 	m.Object.Reset()
 	s.AddMesh(&m)
 
