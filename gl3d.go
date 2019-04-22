@@ -11,7 +11,6 @@ import (
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/input"
-	"github.com/hersle/gl3d/geometry"
 	"github.com/hersle/gl3d/material"
 	"os"
 	"time"
@@ -50,14 +49,14 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	sphere := geometry.NewSphere(math.NewVec3(0, 0, 0), 1);
+	sphere := object.NewSphere(math.NewVec3(0, 0, 0), 1);
 	var m object.Mesh
 	m.AddSubMesh(object.NewSubMesh(sphere.Geometry(20), material.NewDefaultMaterial("")))
 	m.Object.Reset()
 	s.AddMesh(&m)
 
 	var m3 object.Mesh
-	bbox := geometry.NewBoundingBox(m.SubMeshes[0].Geo)
+	bbox := object.NewBoundingBox(m.SubMeshes[0].Geo)
 	m3.AddSubMesh(object.NewSubMesh(bbox.Geometry(), material.NewDefaultMaterial("")))
 	m3.Object.Reset()
 	s.AddMesh(&m3)
@@ -141,7 +140,7 @@ func main() {
 		if input.KeyF.JustPressed() {
 			nearWidth := 2 * near * float32(gomath.Tan(float64(ang / 2) / 180 * gomath.Pi))
 			nearHeight := nearWidth / aspect
-			frustum := geometry.NewFrustum(c.Position, c.Forward(), c.Up(), near / 10, far / 10, nearWidth / 10, nearHeight / 10)
+			frustum := object.NewFrustum(c.Position, c.Forward(), c.Up(), near / 10, far / 10, nearWidth / 10, nearHeight / 10)
 			m2.SubMeshes = m2.SubMeshes[:0]
 			m2.AddSubMesh(object.NewSubMesh(frustum.Geometry(), material.NewDefaultMaterial("")))
 			m2.Object.Reset()

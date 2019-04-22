@@ -1,9 +1,8 @@
-package geometry
+package object
 
 import (
 	gomath "math"
 	"github.com/hersle/gl3d/math"
-	"github.com/hersle/gl3d/object"
 )
 
 type Box struct {
@@ -48,7 +47,7 @@ func NewBox(point1, point2 math.Vec3) *Box {
 	return &b
 }
 
-func NewBoundingBox(geo *object.Geometry) *Box {
+func NewBoundingBox(geo *Geometry) *Box {
 	if geo == nil || geo.Inds == 0 {
 		return nil
 	}
@@ -87,8 +86,8 @@ func (b *Box) Center() math.Vec3 {
 	return b.Min.Add(b.Max).Scale(0.5)
 }
 
-func (b *Box) Geometry() *object.Geometry {
-	var geo object.Geometry
+func (b *Box) Geometry() *Geometry {
+	var geo Geometry
 
 	p1 := math.NewVec3(b.Min.X(), b.Min.Y(), b.Min.Z())
 	p2 := math.NewVec3(b.Max.X(), b.Min.Y(), b.Min.Z())
@@ -109,7 +108,7 @@ func (b *Box) Geometry() *object.Geometry {
 		{6, 5, 1, 2},
 	}
 
-	var v1, v2, v3, v4 object.Vertex
+	var v1, v2, v3, v4 Vertex
 	for i := 0; i < 6; i++ {
 		v1.Position = p[pi[i][0]-1]
 		v2.Position = p[pi[i][1]-1]
@@ -134,12 +133,12 @@ func NewSphere(center math.Vec3, radius float32) *Sphere {
 	return &s
 }
 
-func (s *Sphere) Geometry(n int) *object.Geometry {
+func (s *Sphere) Geometry(n int) *Geometry {
 	// TODO: fix tangent/bitangent artifacts on top and bottom
 
-	var geo object.Geometry
+	var geo Geometry
 
-	var v object.Vertex
+	var v Vertex
 
 	// top
 	v.Position = s.Center.Add(math.NewVec3(0, 0, +s.Radius))
@@ -238,8 +237,8 @@ func NewFrustum(org, dir, up math.Vec3, nearDist, farDist, nearWidth, nearHeight
 	return &f
 }
 
-func (f *Frustum) Geometry() *object.Geometry {
-	var geo object.Geometry
+func (f *Frustum) Geometry() *Geometry {
+	var geo Geometry
 
 	nearCenter := f.Org.Add(f.Dir.Scale(f.NearDist))
 	nearBottomLeft := nearCenter.Add(f.Right.Scale(-f.NearWidth / 2)).Add(f.Up.Scale(-f.NearHeight / 2))
@@ -275,7 +274,7 @@ func (f *Frustum) Geometry() *object.Geometry {
 		{6, 5, 1, 2},
 	}
 
-	var v1, v2, v3, v4 object.Vertex
+	var v1, v2, v3, v4 Vertex
 	for i := 0; i < 6; i++ {
 		v1.Position = p[pi[i][0]-1]
 		v2.Position = p[pi[i][1]-1]
