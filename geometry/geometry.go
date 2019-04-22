@@ -16,6 +16,17 @@ type Sphere struct {
 	Radius float32
 }
 
+type Frustum struct {
+	Org math.Vec3
+	Dir math.Vec3
+	Up math.Vec3
+	Right math.Vec3
+	NearDist float32
+	FarDist float32
+	NearWidth float32
+	NearHeight float32
+}
+
 type Plane struct {
 	Point  math.Vec3
 	Normal math.Vec3
@@ -189,4 +200,72 @@ func NewPlaneFromPoints(point1, point2, point3 math.Vec3) *Plane {
 
 func (p *Plane) Distance(point math.Vec3) float32 {
 	return point.Sub(p.Point).Dot(p.Normal)
+}
+
+func NewFrustum(org, dir, up math.Vec3, nearDist, farDist, nearWidth, nearHeight float32) *Frustum {
+	var f Frustum
+	f.Org = org
+	f.Dir = dir.Norm()
+	f.Up = up.Norm()
+	f.Right = f.Dir.Cross(f.Up).Norm()
+	f.NearDist = nearDist
+	f.FarDist = farDist
+	f.NearWidth = nearWidth
+	f.NearHeight = nearHeight
+	return &f
+}
+
+func (f *Frustum) Geometry() *object.Geometry {
+	var geo object.Geometry
+
+	nearCenter := f.Org.Add(f.Dir.Scale(f.NearDist))
+	nearBottomLeft := nearCenter.Add(f.Right.Scale(-f.NearWidth / 2)).Add(f.Up.Scale(-f.NearHeight / 2))
+	nearBottomRight := nearCenter.Add(f.Right.Scale(+f.NearWidth / 2)).Add(f.Up.Scale(-f.NearHeight / 2))
+	nearTopRight := nearCenter.Add(f.Right.Scale(+f.NearWidth / 2)).Add(f.Up.Scale(+f.NearHeight / 2))
+	nearTopLeft := nearCenter.Add(f.Right.Scale(-f.NearWidth / 2)).Add(f.Up.Scale(+f.NearHeight / 2))
+
+	farWidth := (f.FarDist / f.NearDist) * f.NearWidth
+	farHeight := (f.FarDist / f.NearDist) * f.NearHeight
+
+	farCenter := f.Org.Add(f.Dir.Scale(f.FarDist))
+	farBottomLeft := farCenter.Add(f.Right.Scale(-farWidth / 2)).Add(f.Up.Scale(-farHeight / 2))
+	farBottomRight := farCenter.Add(f.Right.Scale(+farWidth / 2)).Add(f.Up.Scale(-farHeight / 2))
+	farTopRight := farCenter.Add(f.Right.Scale(+farWidth / 2)).Add(f.Up.Scale(+farHeight / 2))
+	farTopLeft := farCenter.Add(f.Right.Scale(-farWidth / 2)).Add(f.Up.Scale(+farHeight / 2))
+
+	p := []math.Vec3{}
+	p = append(p, farBottomLeft) // p1
+	p = append(p, farBottomRight) // p2
+	p = append(p, farTopRight) // p3
+	p = append(p, farTopLeft) // p4
+	p = append(p, nearBottomLeft) // p5
+	p = append(p, nearBottomRight) // p6
+	p = append(p, nearTopRight) // p7
+	p = append(p, nearTopLeft) // p8
+
+	pi := [][]int{
+		{5, 6, 7, 8},
+		{6, 2, 3, 7},
+		{2, 1, 4, 3},
+		{1, 5, 8, 4},
+		{8, 7, 3, 4},
+		{6, 5, 1, 2},
+	}
+
+	var v1, v2, v3, v4 object.Vertex
+	for i := 0; i < 6; i++ {
+		v1.Position = p[pi[i][0]-1]
+		v2.Position = p[pi[i][1]-1]
+		v3.Position = p[pi[i][2]-1]
+		v4.Position = p[pi[i][3]-1]
+		geo.AddTriangle(v1, v2, v3)
+		geo.AddTriangle(v1, v3, v4)
+	}
+
+	geo.CalculateNormals()
+	geo.CalculateTangents()
+
+	return &geo
+
+	return &geo
 }

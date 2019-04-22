@@ -15,6 +15,7 @@ import (
 	"github.com/hersle/gl3d/material"
 	"os"
 	"time"
+	gomath "math"
 )
 
 func main() {
@@ -72,7 +73,13 @@ func main() {
 	//s.AddSkybox(graphics.NewCubeMapUniform(math.NewVec4(0.3, 0.3, 0.3, 0)))
 	s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
 
-	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
+	ang := float32(60.0)
+	near := float32(0.1)
+	far := float32(50.0)
+	aspect := float32(1)
+	c := camera.NewPerspectiveCamera(60, aspect, near, far)
+	var m2 object.Mesh
+	s.AddMesh(&m2)
 
 	input.AddCameraFPSControls(c)
 
@@ -124,6 +131,14 @@ func main() {
 		}
 		if input.KeyV.JustPressed() {
 			renderer.SetWireframe(true)
+		}
+		if input.KeyF.JustPressed() {
+			nearWidth := 2 * near * float32(gomath.Tan(float64(ang / 2) / 180 * gomath.Pi))
+			nearHeight := nearWidth / aspect
+			frustum := geometry.NewFrustum(c.Position, c.Forward(), c.Up(), near / 10, far / 10, nearWidth / 10, nearHeight / 10)
+			m2.SubMeshes = m2.SubMeshes[:0]
+			m2.AddSubMesh(object.NewSubMesh(frustum.Geometry(), material.NewDefaultMaterial("")))
+			m2.Object.Reset()
 		}
 
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
