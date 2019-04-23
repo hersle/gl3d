@@ -6,32 +6,32 @@ import (
 	"github.com/hersle/gl3d/math"
 )
 
-func AddCameraFPSControls(c *camera.PerspectiveCamera) {
+func AddCameraFPSControls(c *camera.PerspectiveCamera, speed float32) {
 	KeyW.Listen(func(action Action) {
 	switch action {
 	case Hold:
-		c.Translate(c.Forward().Scale(+0.1))
+		c.Translate(c.Forward().Scale(+speed))
 	}
 	})
 
 	KeyS.Listen(func(action Action) {
 	switch action {
 	case Hold:
-		c.Translate(c.Forward().Scale(-0.1))
+		c.Translate(c.Forward().Scale(-speed))
 	}
 	})
 
 	KeyA.Listen(func(action Action) {
 	switch action {
 	case Hold:
-		c.Translate(c.Right().Scale(-0.1))
+		c.Translate(c.Right().Scale(-speed))
 	}
 	})
 
 	KeyD.Listen(func(action Action) {
 	switch action {
 	case Hold:
-		c.Translate(c.Right().Scale(+0.1))
+		c.Translate(c.Right().Scale(+speed))
 	}
 	})
 

@@ -86,7 +86,7 @@ func main() {
 	var m2 object.Mesh
 	s.AddMesh(&m2)
 
-	input.AddCameraFPSControls(c)
+	input.AddCameraFPSControls(c, 0.1)
 
 	// TODO: remove
 	renderer.RenderScene(s, c)
