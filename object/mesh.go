@@ -32,6 +32,7 @@ type Geometry struct {
 	ibo   *graphics.Buffer
 	Inds  int
 	uploaded bool
+	bbox *Box
 }
 
 type SubMesh struct {
@@ -112,22 +113,25 @@ func (geo *Geometry) BoundingBox() *Box {
 		return nil
 	}
 
-	minX := geo.Verts[0].Position.X()
-	minY := geo.Verts[0].Position.Y()
-	minZ := geo.Verts[0].Position.Z()
-	maxX := minX
-	maxY := minY
-	maxZ := minZ
-	for _, v := range geo.Verts[1:] {
-		minX = math.Min(minX, v.Position.X())
-		minY = math.Min(minY, v.Position.Y())
-		minZ = math.Min(minZ, v.Position.Z())
-		maxX = math.Max(maxX, v.Position.X())
-		maxY = math.Max(maxY, v.Position.Y())
-		maxZ = math.Max(maxZ, v.Position.Z())
+	if geo.bbox == nil {
+		minX := geo.Verts[0].Position.X()
+		minY := geo.Verts[0].Position.Y()
+		minZ := geo.Verts[0].Position.Z()
+		maxX := minX
+		maxY := minY
+		maxZ := minZ
+		for _, v := range geo.Verts[1:] {
+			minX = math.Min(minX, v.Position.X())
+			minY = math.Min(minY, v.Position.Y())
+			minZ = math.Min(minZ, v.Position.Z())
+			maxX = math.Max(maxX, v.Position.X())
+			maxY = math.Max(maxY, v.Position.Y())
+			maxZ = math.Max(maxZ, v.Position.Z())
+		}
+		geo.bbox = NewBoxAxisAligned(math.NewVec3(minX, minY, minZ), math.NewVec3(maxX, maxY, maxZ))
 	}
 
-	return NewBoxAxisAligned(math.NewVec3(minX, minY, minZ), math.NewVec3(maxX, maxY, maxZ))
+	return geo.bbox
 }
 
 func (geo *Geometry) CalculateNormals() {
