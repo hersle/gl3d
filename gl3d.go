@@ -84,6 +84,7 @@ func main() {
 	aspect := float32(1)
 	c := camera.NewPerspectiveCamera(60, aspect, near, far)
 	var m2 object.Mesh
+	m2.Object.Reset()
 	s.AddMesh(&m2)
 
 	input.AddCameraFPSControls(c, 0.1)
@@ -142,7 +143,6 @@ func main() {
 			frustum := object.NewFrustum(c.Position, c.Forward(), c.Up(), near / 10, far / 10, nearWidth / 10, nearHeight / 10)
 			m2.SubMeshes = m2.SubMeshes[:0]
 			m2.AddSubMesh(object.NewSubMesh(frustum.Geometry(), material.NewDefaultMaterial("")))
-			m2.Object.Reset()
 		}
 
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
