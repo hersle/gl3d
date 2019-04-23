@@ -62,9 +62,7 @@ func (b *Box) Center() math.Vec3 {
 	return b.Position.Add(b.UnitX.Scale(b.Dx)).Add(b.UnitY.Scale(b.Dy)).Add(b.UnitZ.Scale(b.Dz))
 }
 
-func (b *Box) Geometry() *Geometry {
-	var geo Geometry
-
+func (b *Box) Points() [8]math.Vec3 {
 	p1 := b.Position
 	p2 := p1.Add(b.UnitX.Scale(+b.Dx))
 	p3 := p2.Add(b.UnitY.Scale(+b.Dy))
@@ -73,7 +71,14 @@ func (b *Box) Geometry() *Geometry {
 	p6 := p2.Add(b.UnitZ.Scale(b.Dz))
 	p7 := p3.Add(b.UnitZ.Scale(b.Dz))
 	p8 := p4.Add(b.UnitZ.Scale(b.Dz))
-	p := []math.Vec3{p1, p2, p3, p4, p5, p6, p7, p8}
+	p := [8]math.Vec3{p1, p2, p3, p4, p5, p6, p7, p8}
+	return p
+}
+
+func (b *Box) Geometry() *Geometry {
+	var geo Geometry
+
+	p := b.Points()
 
 	pi := [][]int{
 		{5, 6, 7, 8},
