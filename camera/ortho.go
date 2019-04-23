@@ -2,6 +2,7 @@ package camera
 
 import (
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/object"
 )
 
 type OrthoCamera struct {
@@ -39,4 +40,8 @@ func (c *OrthoCamera) ProjectionMatrix() *math.Mat4 {
 		c.updateProjectionMatrix()
 	}
 	return &c.projMat
+}
+
+func (c *OrthoCamera) Cull(geo *object.Geometry) bool {
+	return false
 }

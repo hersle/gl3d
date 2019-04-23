@@ -201,7 +201,7 @@ func NewPlaneFromPoints(point1, point2, point3 math.Vec3) *Plane {
 	return NewPlaneFromTangents(point1, point2.Sub(point1), point3.Sub(point1))
 }
 
-func (p *Plane) Distance(point math.Vec3) float32 {
+func (p *Plane) SignedDistance(point math.Vec3) float32 {
 	return point.Sub(p.Point).Dot(p.Normal)
 }
 
