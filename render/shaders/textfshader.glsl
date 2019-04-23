@@ -7,5 +7,5 @@ out vec4 fragColor;
 uniform sampler2D fontAtlas;
 
 void main() {
-	fragColor = vec4(texture(fontAtlas, texCoordF).rrr, 1);
+	fragColor = texture(fontAtlas, texCoordF).rrrr;
 }

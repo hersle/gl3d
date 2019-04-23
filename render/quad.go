@@ -59,6 +59,8 @@ func NewQuadRenderer() *QuadRenderer {
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
+	r.renderState.BlendSourceFactor = graphics.SourceAlphaBlendFactor
+	r.renderState.BlendDestinationFactor = graphics.OneMinusSourceAlphaBlendFactor
 
 	return &r
 }

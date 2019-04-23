@@ -59,8 +59,6 @@ func NewTextRenderer() *TextRenderer {
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
-	r.renderState.BlendSourceFactor = graphics.OneMinusDestinationColorBlendFactor
-	r.renderState.BlendDestinationFactor = graphics.OneMinusSourceColorBlendFactor
 
 	return &r
 }

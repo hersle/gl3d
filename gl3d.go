@@ -105,8 +105,7 @@ func main() {
 		}
 
 		c.SetAspect(window.Aspect())
-		graphics.DefaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
-		graphics.DefaultFramebuffer.ClearDepth(1)
+		renderer.Clear()
 		if drawScene {
 			renderer.RenderScene(s, c)
 		}
