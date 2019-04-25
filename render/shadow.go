@@ -167,7 +167,7 @@ func (r *ShadowMapRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.P
 		for _, m := range s.Meshes {
 			r.SetMesh(m)
 			for _, subMesh := range m.SubMeshes {
-				if !c.Cull(subMesh.Geo) {
+				if !c.Cull(subMesh.Geo, m.WorldMatrix()) {
 					r.SetSubMesh(subMesh)
 
 					graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
@@ -193,7 +193,7 @@ func (r *ShadowMapRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.Sp
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
-			if !l.PerspectiveCamera.Cull(subMesh.Geo) {
+			if !l.PerspectiveCamera.Cull(subMesh.Geo, m.WorldMatrix()) {
 				r.SetSubMesh(subMesh)
 
 				graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
@@ -218,7 +218,7 @@ func (r *ShadowMapRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *l
 	for _, m := range s.Meshes {
 		r.SetMesh2(m)
 		for _, subMesh := range m.SubMeshes {
-			if !l.OrthoCamera.Cull(subMesh.Geo) {
+			if !l.OrthoCamera.Cull(subMesh.Geo, m.WorldMatrix()) {
 				r.SetSubMesh2(subMesh)
 
 				graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()

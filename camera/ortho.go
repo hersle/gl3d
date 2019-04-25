@@ -42,6 +42,6 @@ func (c *OrthoCamera) ProjectionMatrix() *math.Mat4 {
 	return &c.projMat
 }
 
-func (c *OrthoCamera) Cull(geo *object.Geometry) bool {
+func (c *OrthoCamera) Cull(geo *object.Geometry, worldMatrix *math.Mat4) bool {
 	return false
 }
