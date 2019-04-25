@@ -32,10 +32,11 @@ type Geometry struct {
 	ibo   *graphics.Buffer
 	Inds  int
 	uploaded bool
-	bbox *Box
 }
 
 type SubMesh struct {
+	mesh *Mesh
+	bbox *Box
 	Geo *Geometry
 	Mtl   *material.Material
 }
@@ -93,8 +94,30 @@ func (m *Mesh) AddSubMesh(sm *SubMesh) {
 	m.SubMeshes = append(m.SubMeshes, sm)
 }
 
-func NewSubMesh(geo *Geometry, mtl *material.Material) *SubMesh {
+func (m *Mesh) invalidate() {
+	for _, sm := range m.SubMeshes {
+		sm.bbox = nil
+	}
+}
+
+func (m *Mesh) Orient(unitX, unitY math.Vec3) {
+	m.Object.Orient(unitX, unitY)
+	m.invalidate()
+}
+
+func (m *Mesh) Place(position math.Vec3) {
+	m.Object.Place(position)
+	m.invalidate()
+}
+
+func (m *Mesh) SetScale(scaling math.Vec3) {
+	m.Object.SetScale(scaling)
+	m.invalidate()
+}
+
+func NewSubMesh(geo *Geometry, mtl *material.Material, mesh *Mesh) *SubMesh {
 	var sm SubMesh
+	sm.mesh = mesh
 	sm.Geo = geo
 	sm.Mtl = mtl
 	return &sm
@@ -108,30 +131,33 @@ func (geo *Geometry) AddTriangle(vert1, vert2, vert3 Vertex) {
 	geo.uploaded = false
 }
 
-func (geo *Geometry) BoundingBox() *Box {
-	if geo == nil || geo.Inds == 0 {
+func (sm *SubMesh) BoundingBox() *Box {
+	if sm.Geo == nil || sm.Geo.Inds == 0 {
 		return nil
 	}
 
-	if geo.bbox == nil {
-		minX := geo.Verts[0].Position.X()
-		minY := geo.Verts[0].Position.Y()
-		minZ := geo.Verts[0].Position.Z()
+	if sm.bbox == nil {
+		worldMatrix := sm.mesh.WorldMatrix()
+		pos := sm.Geo.Verts[0].Position.Vec4(1).Transform(worldMatrix).Vec3()
+		minX := pos.X()
+		minY := pos.Y()
+		minZ := pos.Z()
 		maxX := minX
 		maxY := minY
 		maxZ := minZ
-		for _, v := range geo.Verts[1:] {
-			minX = math.Min(minX, v.Position.X())
-			minY = math.Min(minY, v.Position.Y())
-			minZ = math.Min(minZ, v.Position.Z())
-			maxX = math.Max(maxX, v.Position.X())
-			maxY = math.Max(maxY, v.Position.Y())
-			maxZ = math.Max(maxZ, v.Position.Z())
+		for _, v := range sm.Geo.Verts[1:] {
+			pos := v.Position.Vec4(1).Transform(worldMatrix).Vec3()
+			minX = math.Min(minX, pos.X())
+			minY = math.Min(minY, pos.Y())
+			minZ = math.Min(minZ, pos.Z())
+			maxX = math.Max(maxX, pos.X())
+			maxY = math.Max(maxY, pos.Y())
+			maxZ = math.Max(maxZ, pos.Z())
 		}
-		geo.bbox = NewBoxAxisAligned(math.NewVec3(minX, minY, minZ), math.NewVec3(maxX, maxY, maxZ))
+		sm.bbox = NewBoxAxisAligned(math.NewVec3(minX, minY, minZ), math.NewVec3(maxX, maxY, maxZ))
 	}
 
-	return geo.bbox
+	return sm.bbox
 }
 
 func (geo *Geometry) CalculateNormals() {
@@ -475,7 +501,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			if mtls[i] == nil {
 				mtls[i] = material.NewDefaultMaterial("")
 			}
-			m.AddSubMesh(NewSubMesh(&geos[i], mtls[i]))
+			m.AddSubMesh(NewSubMesh(&geos[i], mtls[i], &m))
 		}
 	}
 

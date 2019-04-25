@@ -132,7 +132,7 @@ func (r *MeshRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
 	r.SetCamera(c)
 
 	for _, subMesh := range m.SubMeshes {
-		if !c.Cull(subMesh.Geo, m.WorldMatrix()) {
+		if !c.Cull(subMesh) {
 			r.SetSubMesh(subMesh)
 			graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
 		}

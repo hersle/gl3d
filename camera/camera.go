@@ -8,5 +8,5 @@ import (
 type Camera interface {
 	ViewMatrix() *math.Mat4
 	ProjectionMatrix() *math.Mat4
-	Cull(geo *object.Geometry, worldMatrix *math.Mat4) bool
+	Cull(sm *object.SubMesh) bool
 }

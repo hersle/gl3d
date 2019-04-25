@@ -36,7 +36,7 @@ func (c *PerspectiveCamera) ProjectionMatrix() *math.Mat4 {
 	return &c.projMat
 }
 
-func (c *PerspectiveCamera) Cull(geo *object.Geometry, worldMatrix *math.Mat4) bool {
+func (c *PerspectiveCamera) Cull(sm *object.SubMesh) bool {
 	nh := c.near * float32(gomath.Tan(float64(c.fovY / 2))) * 2
 	nw := nh * c.aspect
 
@@ -63,11 +63,8 @@ func (c *PerspectiveCamera) Cull(geo *object.Geometry, worldMatrix *math.Mat4) b
 	planes[4] = object.NewPlaneFromPoints(fbl, nbl, ntl) // left
 	planes[5] = object.NewPlaneFromPoints(nbl, fbr, ftr) // right
 
-	bbox := geo.BoundingBox()
+	bbox := sm.BoundingBox()
 	bboxpts := bbox.Points()
-	for i, pt := range bboxpts {
-		bboxpts[i] = pt.Vec4(1).Transform(worldMatrix).Vec3()
-	}
 
 	for _, plane := range planes {
 		nOutside := 0
