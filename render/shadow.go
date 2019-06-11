@@ -1,5 +1,6 @@
 package render
 
+/*
 import (
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
@@ -240,3 +241,4 @@ func (r *ShadowMapRenderer) RenderShadowMaps(s *scene.Scene) {
 		r.RenderDirectionalLightShadowMap(s, l)
 	}
 }
+*/
