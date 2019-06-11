@@ -57,6 +57,10 @@ type MeshRenderer struct {
 	renderState      *graphics.RenderState
 
 	emptyShadowCubeMap *graphics.CubeMap
+
+	cache map[*object.Vertex]int
+	vbos []*graphics.Buffer
+	ibos []*graphics.Buffer
 }
 
 func NewMeshShaderProgram() *MeshShaderProgram {
@@ -123,6 +127,8 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.renderState.Cull = graphics.CullBack
 
 	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.NewVec4(0, 0, 0, 0))
+
+	r.cache = make(map[*object.Vertex]int)
 
 	return &r, nil
 }
@@ -226,12 +232,30 @@ func (r *MeshRenderer) SetSubMesh(sm *object.SubMesh) {
 	r.sp.AlphaMap.Set2D(mtl.AlphaMap)
 	r.sp.BumpMap.Set2D(mtl.BumpMap)
 
+	// upload to GPU
+	var vbo *graphics.Buffer
+	var ibo *graphics.Buffer
+	i, found := r.cache[&sm.Geo.Verts[0]]
+	if found {
+		vbo = r.vbos[i]
+		ibo = r.ibos[i]
+	} else {
+		vbo = graphics.NewBuffer()
+		ibo = graphics.NewBuffer()
+		vbo.SetData(sm.Geo.Verts, 0)
+		ibo.SetData(sm.Geo.Faces, 0)
+
+		r.vbos = append(r.vbos, vbo)
+		r.ibos = append(r.ibos, ibo)
+		r.cache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+	}
+
 	var v object.Vertex
-	r.sp.Position.SetSource(sm.Geo.VertexBuffer(), v.PositionOffset(), v.Size())
-	r.sp.Normal.SetSource(sm.Geo.VertexBuffer(), v.NormalOffset(), v.Size())
-	r.sp.TexCoord.SetSource(sm.Geo.VertexBuffer(), v.TexCoordOffset(), v.Size())
-	r.sp.Tangent.SetSource(sm.Geo.VertexBuffer(), v.TangentOffset(), v.Size())
-	r.sp.SetAttribIndexBuffer(sm.Geo.IndexBuffer())
+	r.sp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
+	r.sp.Normal.SetSource(vbo, v.NormalOffset(), v.Size())
+	r.sp.TexCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
+	r.sp.Tangent.SetSource(vbo, v.TangentOffset(), v.Size())
+	r.sp.SetAttribIndexBuffer(ibo)
 }
 
 func (r *MeshRenderer) SetAmbientLight(l *light.AmbientLight) {

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
-	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/material"
 	"github.com/hersle/gl3d/math"
 	"os"
@@ -28,8 +27,6 @@ type Mesh struct {
 type Geometry struct {
 	Verts []Vertex
 	Faces []int32
-	vbo   *graphics.Buffer
-	ibo   *graphics.Buffer
 	Inds  int
 	uploaded bool
 }
@@ -245,32 +242,6 @@ func (geo *Geometry) CalculateTangents() {
 	}
 
 	geo.uploaded = false
-}
-
-func (geo *Geometry) upload() {
-	if geo.vbo == nil {
-		geo.vbo = graphics.NewBuffer()
-	}
-	if geo.ibo == nil {
-		geo.ibo = graphics.NewBuffer()
-	}
-	geo.vbo.SetData(geo.Verts, 0)
-	geo.ibo.SetData(geo.Faces, 0)
-	geo.uploaded = true
-}
-
-func (geo *Geometry) VertexBuffer() *graphics.Buffer {
-	if !geo.uploaded {
-		geo.upload()
-	}
-	return geo.vbo
-}
-
-func (geo *Geometry) IndexBuffer() *graphics.Buffer {
-	if !geo.uploaded {
-		geo.upload()
-	}
-	return geo.ibo
 }
 
 func newIndexedTriangle(iv1, iv2, iv3 indexedVertex, mtlInd int) indexedTriangle {
