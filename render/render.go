@@ -11,7 +11,6 @@ import (
 // TODO: redesign attr/uniform access system?
 type Renderer struct {
 	meshRenderer *MeshRenderer
-	//shadowMapRenderer *ShadowMapRenderer
 	skyboxRenderer    *SkyboxRenderer
 	textRenderer *TextRenderer
 	quadRenderer *QuadRenderer
@@ -29,7 +28,6 @@ func NewRenderer() (*Renderer, error) {
 	var r Renderer
 
 	r.meshRenderer, _ = NewMeshRenderer()
-	//r.shadowMapRenderer = NewShadowMapRenderer()
 	r.skyboxRenderer = NewSkyboxRenderer()
 	r.textRenderer = NewTextRenderer()
 	r.quadRenderer = NewQuadRenderer()
@@ -53,8 +51,6 @@ func NewRenderer() (*Renderer, error) {
 
 func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 	r.skyboxRenderer.Render(s.Skybox, c, r.sceneFramebuffer)
-
-	//r.shadowMapRenderer.RenderShadowMaps(s)
 
 	r.meshRenderer.Render(s, c, r.sceneFramebuffer)
 }

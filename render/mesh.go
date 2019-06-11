@@ -61,6 +61,71 @@ type MeshRenderer struct {
 	cache map[*object.Vertex]int
 	vbos []*graphics.Buffer
 	ibos []*graphics.Buffer
+
+	shadowSp          *ShadowMapShaderProgram
+	dirshadowSp         *DirectionalLightShadowMapShaderProgram
+	shadowMapFramebuffer *graphics.Framebuffer
+	shadowRenderState *graphics.RenderState
+}
+
+type ShadowMapShaderProgram struct {
+	*graphics.ShaderProgram
+	ModelMatrix      *graphics.UniformMatrix4
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+	LightPosition    *graphics.UniformVector3
+	Far              *graphics.UniformFloat
+	Position         *graphics.Attrib
+}
+
+type DirectionalLightShadowMapShaderProgram struct {
+	*graphics.ShaderProgram
+	ModelMatrix      *graphics.UniformMatrix4
+	ViewMatrix       *graphics.UniformMatrix4
+	ProjectionMatrix *graphics.UniformMatrix4
+	Position         *graphics.Attrib
+}
+
+func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
+	var sp ShadowMapShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/pointlightshadowmapvshader.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "render/shaders/pointlightshadowmapfshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.LightPosition = sp.UniformVector3("lightPosition")
+	sp.Far = sp.UniformFloat("far")
+	sp.Position = sp.Attrib("position")
+
+	sp.Position.SetFormat(gl.FLOAT, false) // TODO: remove dependency on GL constants
+
+	return &sp
+}
+
+func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShaderProgram {
+	var sp DirectionalLightShadowMapShaderProgram
+	var err error
+
+	vShaderFilename := "render/shaders/directionallightvshader.glsl"
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "", "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
+	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.Position = sp.Attrib("position")
+	sp.Position.SetFormat(gl.FLOAT, false)
+
+	return &sp
 }
 
 func NewMeshShaderProgram() *MeshShaderProgram {
@@ -130,6 +195,16 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.cache = make(map[*object.Vertex]int)
 
+	r.shadowSp = NewShadowMapShaderProgram()
+	r.dirshadowSp = NewDirectionalLightShadowMapShaderProgram()
+
+	r.shadowMapFramebuffer = graphics.NewFramebuffer()
+
+	r.shadowRenderState = graphics.NewRenderState()
+	r.shadowRenderState.Framebuffer = r.shadowMapFramebuffer
+	r.shadowRenderState.DepthTest = graphics.LessDepthTest
+	r.shadowRenderState.Cull = graphics.CullBack
+
 	return &r, nil
 }
 
@@ -195,6 +270,8 @@ func (r *MeshRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+	r.RenderShadowMaps(s)
+
 	r.renderState.Framebuffer = fb
 
 	r.AmbientPass(s, c) // also works as depth pass
@@ -296,4 +373,188 @@ func (r *MeshRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.LightAttQuad.Set(0)
+}
+
+// shadow stuff below
+
+func (r *MeshRenderer) SetShadowCamera(c *camera.PerspectiveCamera) {
+	r.shadowSp.Far.Set(c.Far)
+	r.shadowSp.LightPosition.Set(c.Position)
+	r.shadowSp.ViewMatrix.Set(c.ViewMatrix())
+	r.shadowSp.ProjectionMatrix.Set(c.ProjectionMatrix())
+}
+
+func (r *MeshRenderer) SetShadowMesh(m *object.Mesh) {
+	r.shadowSp.ModelMatrix.Set(m.WorldMatrix())
+}
+
+func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
+	var vbo *graphics.Buffer
+	var ibo *graphics.Buffer
+	i, found := r.cache[&sm.Geo.Verts[0]]
+	if found {
+		vbo = r.vbos[i]
+		ibo = r.ibos[i]
+	} else {
+		vbo = graphics.NewBuffer()
+		ibo = graphics.NewBuffer()
+		vbo.SetData(sm.Geo.Verts, 0)
+		ibo.SetData(sm.Geo.Faces, 0)
+
+		r.vbos = append(r.vbos, vbo)
+		r.ibos = append(r.ibos, ibo)
+		r.cache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+	}
+
+	var v object.Vertex
+	r.shadowSp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
+	r.shadowSp.SetAttribIndexBuffer(ibo)
+}
+
+func (r *MeshRenderer) SetDirShadowCamera(c *camera.OrthoCamera) {
+	r.dirshadowSp.ViewMatrix.Set(c.ViewMatrix())
+	r.dirshadowSp.ProjectionMatrix.Set(c.ProjectionMatrix())
+}
+
+func (r *MeshRenderer) SetDirShadowMesh(m *object.Mesh) {
+	r.dirshadowSp.ModelMatrix.Set(m.WorldMatrix())
+}
+
+func (r *MeshRenderer) SetDirShadowSubMesh(sm *object.SubMesh) {
+	var vbo *graphics.Buffer
+	var ibo *graphics.Buffer
+	i, found := r.cache[&sm.Geo.Verts[0]]
+	if found {
+		vbo = r.vbos[i]
+		ibo = r.ibos[i]
+	} else {
+		vbo = graphics.NewBuffer()
+		ibo = graphics.NewBuffer()
+		vbo.SetData(sm.Geo.Verts, 0)
+		ibo.SetData(sm.Geo.Faces, 0)
+
+		r.vbos = append(r.vbos, vbo)
+		r.ibos = append(r.ibos, ibo)
+		r.cache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+	}
+
+	var v object.Vertex
+	r.dirshadowSp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
+	r.dirshadowSp.SetAttribIndexBuffer(ibo)
+}
+
+// render shadow map to l's shadow map
+func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
+	// TODO: re-render also when objects have moved
+	if !l.DirtyShadowMap {
+		return
+	}
+
+	forwards := []math.Vec3{
+		math.NewVec3(+1, 0, 0),
+		math.NewVec3(-1, 0, 0),
+		math.NewVec3(0, +1, 0),
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, 0, +1),
+		math.NewVec3(0, 0, -1),
+	}
+	ups := []math.Vec3{
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, 0, +1),
+		math.NewVec3(0, 0, -1),
+		math.NewVec3(0, -1, 0),
+		math.NewVec3(0, -1, 0),
+	}
+
+	c := camera.NewPerspectiveCamera(90, 1, 0.1, l.ShadowFar)
+	c.Place(l.Position)
+
+	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
+
+	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
+	//shadowCubeMap = l.shadowMap
+
+	for face := 0; face < 6; face++ {
+		r.shadowMapFramebuffer.AttachCubeMapFace(graphics.DepthAttachment, l.ShadowMap.Face(graphics.CubeMapLayer(face)), 0)
+		r.shadowMapFramebuffer.ClearDepth(1)
+		c.SetForwardUp(forwards[face], ups[face])
+
+		r.SetShadowCamera(c)
+
+		for _, m := range s.Meshes {
+			r.SetShadowMesh(m)
+			for _, subMesh := range m.SubMeshes {
+				if !c.Cull(subMesh) {
+					r.SetShadowSubMesh(subMesh)
+
+					graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.shadowRenderState).Execute()
+				}
+			}
+		}
+	}
+
+	l.DirtyShadowMap = false
+}
+
+func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
+	// TODO: re-render also when objects have moved
+	if !l.DirtyShadowMap {
+		return
+	}
+
+	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, l.ShadowMap, 0)
+	r.shadowMapFramebuffer.ClearDepth(1)
+	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
+	r.SetShadowCamera(&l.PerspectiveCamera)
+
+	for _, m := range s.Meshes {
+		r.SetShadowMesh(m)
+		for _, subMesh := range m.SubMeshes {
+			if !l.PerspectiveCamera.Cull(subMesh) {
+				r.SetShadowSubMesh(subMesh)
+
+				graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.shadowRenderState).Execute()
+			}
+		}
+	}
+
+	l.DirtyShadowMap = false
+}
+
+func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
+	// TODO: re-render also when objects have moved
+	if !l.DirtyShadowMap {
+		return
+	}
+
+	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, l.ShadowMap, 0)
+	r.shadowMapFramebuffer.ClearDepth(1)
+	r.shadowRenderState.Program = r.dirshadowSp.ShaderProgram
+	r.SetDirShadowCamera(&l.OrthoCamera)
+
+	for _, m := range s.Meshes {
+		r.SetDirShadowMesh(m)
+		for _, subMesh := range m.SubMeshes {
+			if !l.OrthoCamera.Cull(subMesh) {
+				r.SetDirShadowSubMesh(subMesh)
+
+				graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.shadowRenderState).Execute()
+			}
+		}
+	}
+
+	l.DirtyShadowMap = false
+}
+
+func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
+	for _, l := range s.PointLights {
+		r.RenderPointLightShadowMap(s, l)
+	}
+	for _, l := range s.SpotLights {
+		r.RenderSpotLightShadowMap(s, l)
+	}
+	for _, l := range s.DirectionalLights {
+		r.RenderDirectionalLightShadowMap(s, l)
+	}
 }
