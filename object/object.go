@@ -5,6 +5,8 @@ import (
 )
 
 type Object struct {
+	ID int // unique
+
 	Position            math.Vec3 // translation
 	UnitX, UnitY, UnitZ math.Vec3 // orientation
 	Scaling             math.Vec3 // scale
@@ -13,9 +15,15 @@ type Object struct {
 	worldMatrix      math.Mat4
 }
 
+var nextID int = 0
+
 func NewObject() *Object {
 	var o Object
+	o.ID = nextID
 	o.Reset()
+
+	nextID++
+
 	return &o
 }
 
