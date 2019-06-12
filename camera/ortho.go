@@ -12,13 +12,8 @@ type OrthoCamera struct {
 
 func NewOrthoCamera(height, aspect, near, Far float32) *OrthoCamera {
 	var c OrthoCamera
-	c.Object.Reset()
+	c.BasicCamera = *NewBasicCamera(aspect, near, Far)
 	c.height = height
-	c.SetAspect(aspect)
-	c.near = near
-	c.Far = Far
-	c.DirtyViewMat = true
-	c.DirtyProjMat = true
 	return &c
 }
 

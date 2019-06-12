@@ -13,12 +13,8 @@ type PerspectiveCamera struct {
 
 func NewPerspectiveCamera(fovYDeg, aspect, near, Far float32) *PerspectiveCamera {
 	var c PerspectiveCamera
-	c.Object.Reset()
+	c.BasicCamera = *NewBasicCamera(aspect, near, Far)
 	c.fovY = math.Radians(fovYDeg)
-	c.SetAspect(aspect)
-	c.near = near
-	c.Far = Far
-	c.DirtyViewMat = true
 	c.updateViewMatrix()
 	c.updateProjectionMatrix()
 	return &c

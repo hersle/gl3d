@@ -303,7 +303,7 @@ func ReadMesh(filename string) (*Mesh, error) {
 	default:
 		return nil, errors.New(fmt.Sprintf("%s has unknown format", filename))
 	}
-	m.Object.Reset()
+	m.Object = *NewObject()
 	return m, err
 }
 

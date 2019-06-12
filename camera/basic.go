@@ -17,7 +17,7 @@ type BasicCamera struct {
 
 func NewBasicCamera(aspect, near, Far float32) *BasicCamera {
 	var c BasicCamera
-	c.Object.Reset()
+	c.Object = *object.NewObject()
 	c.SetAspect(aspect)
 	c.near = near
 	c.Far = Far

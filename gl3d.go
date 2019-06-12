@@ -52,13 +52,13 @@ func main() {
 	sphere := object.NewSphere(math.NewVec3(0, 0, 0), 1);
 	var m object.Mesh
 	m.AddSubMesh(object.NewSubMesh(sphere.Geometry(20), material.NewDefaultMaterial(""), &m))
-	m.Object.Reset()
+	m.Object = *object.NewObject()
 	s.AddMesh(&m)
 
 	var m3 object.Mesh
 	bbox := m.SubMeshes[0].BoundingBox()
 	m3.AddSubMesh(object.NewSubMesh(bbox.Geometry(), material.NewDefaultMaterial(""), &m3))
-	m3.Object.Reset()
+	m3.Object = *object.NewObject()
 	s.AddMesh(&m3)
 
 	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0.1, 0.1, 0.1))
@@ -84,7 +84,7 @@ func main() {
 	aspect := float32(1)
 	c := camera.NewPerspectiveCamera(60, aspect, near, far)
 	var m2 object.Mesh
-	m2.Object.Reset()
+	m2.Object = *object.NewObject()
 	s.AddMesh(&m2)
 
 	input.AddCameraFPSControls(c, 0.1)

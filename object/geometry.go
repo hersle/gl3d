@@ -35,7 +35,7 @@ type Plane struct {
 
 func NewBox(pos, unitX, unitY math.Vec3, dx, dy, dz float32) *Box {
 	var b Box
-	b.Reset()
+	b.Object = *NewObject()
 	b.Place(pos)
 	b.Orient(unitX, unitY)
 	b.Dx = dx

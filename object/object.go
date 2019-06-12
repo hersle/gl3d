@@ -13,6 +13,12 @@ type Object struct {
 	worldMatrix      math.Mat4
 }
 
+func NewObject() *Object {
+	var o Object
+	o.Reset()
+	return &o
+}
+
 func (o *Object) Reset() {
 	o.Place(math.NewVec3(0, 0, 0))
 	o.Orient(math.NewVec3(1, 0, 0), math.NewVec3(0, 1, 0))
