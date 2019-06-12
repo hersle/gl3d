@@ -58,9 +58,13 @@ type MeshRenderer struct {
 
 	emptyShadowCubeMap *graphics.CubeMap
 
-	cache map[*object.Vertex]int
+	vboCache map[*object.Vertex]int
 	vbos []*graphics.Buffer
 	ibos []*graphics.Buffer
+
+	pointLightShadowMaps map[int]*graphics.CubeMap
+	spotLightShadowMaps map[int]*graphics.Texture2D
+	dirLightShadowMaps map[int]*graphics.Texture2D
 
 	shadowSp          *ShadowMapShaderProgram
 	dirshadowSp         *DirectionalLightShadowMapShaderProgram
@@ -193,7 +197,10 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.NewVec4(0, 0, 0, 0))
 
-	r.cache = make(map[*object.Vertex]int)
+	r.vboCache = make(map[*object.Vertex]int)
+	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
+	r.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
+	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
 
 	r.shadowSp = NewShadowMapShaderProgram()
 	r.dirshadowSp = NewDirectionalLightShadowMapShaderProgram()
@@ -312,7 +319,7 @@ func (r *MeshRenderer) SetSubMesh(sm *object.SubMesh) {
 	// upload to GPU
 	var vbo *graphics.Buffer
 	var ibo *graphics.Buffer
-	i, found := r.cache[&sm.Geo.Verts[0]]
+	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
@@ -324,7 +331,7 @@ func (r *MeshRenderer) SetSubMesh(sm *object.SubMesh) {
 
 		r.vbos = append(r.vbos, vbo)
 		r.ibos = append(r.ibos, ibo)
-		r.cache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos)-1
 	}
 
 	var v object.Vertex
@@ -346,9 +353,14 @@ func (r *MeshRenderer) SetPointLight(l *light.PointLight) {
 	r.sp.LightPos.Set(l.Position)
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
-	r.sp.CubeShadowMap.SetCube(l.ShadowMap)
+	smap, found := r.pointLightShadowMaps[l.ID]
+	if !found {
+		panic("set point light with no shadow map")
+	}
+	r.sp.CubeShadowMap.SetCube(smap)
 	r.sp.ShadowFar.Set(l.ShadowFar)
 	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
+
 }
 
 func (r *MeshRenderer) SetSpotLight(l *light.SpotLight) {
@@ -357,11 +369,16 @@ func (r *MeshRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.LightDir.Set(l.Forward())
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
-	r.sp.SpotShadowMap.Set2D(l.ShadowMap)
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
 	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
+
+	smap, found := r.spotLightShadowMaps[l.ID]
+	if !found {
+		panic("set spot light with no shadow map")
+	}
+	r.sp.SpotShadowMap.Set2D(smap)
 }
 
 func (r *MeshRenderer) SetDirectionalLight(l *light.DirectionalLight) {
@@ -369,10 +386,15 @@ func (r *MeshRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.LightDir.Set(l.Forward())
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
-	r.sp.DirShadowMap.Set2D(l.ShadowMap)
 	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
 	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.LightAttQuad.Set(0)
+
+	smap, found := r.dirLightShadowMaps[l.ID]
+	if !found {
+		panic("set directional light with no shadow map")
+	}
+	r.sp.DirShadowMap.Set2D(smap)
 }
 
 // shadow stuff below
@@ -391,7 +413,7 @@ func (r *MeshRenderer) SetShadowMesh(m *object.Mesh) {
 func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
 	var vbo *graphics.Buffer
 	var ibo *graphics.Buffer
-	i, found := r.cache[&sm.Geo.Verts[0]]
+	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
@@ -403,7 +425,7 @@ func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
 
 		r.vbos = append(r.vbos, vbo)
 		r.ibos = append(r.ibos, ibo)
-		r.cache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos)-1
 	}
 
 	var v object.Vertex
@@ -423,7 +445,7 @@ func (r *MeshRenderer) SetDirShadowMesh(m *object.Mesh) {
 func (r *MeshRenderer) SetDirShadowSubMesh(sm *object.SubMesh) {
 	var vbo *graphics.Buffer
 	var ibo *graphics.Buffer
-	i, found := r.cache[&sm.Geo.Verts[0]]
+	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
@@ -435,7 +457,7 @@ func (r *MeshRenderer) SetDirShadowSubMesh(sm *object.SubMesh) {
 
 		r.vbos = append(r.vbos, vbo)
 		r.ibos = append(r.ibos, ibo)
-		r.cache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos)-1
 	}
 
 	var v object.Vertex
@@ -445,10 +467,18 @@ func (r *MeshRenderer) SetDirShadowSubMesh(sm *object.SubMesh) {
 
 // render shadow map to l's shadow map
 func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
+	smap, found := r.pointLightShadowMaps[l.ID]
+	if !found {
+		smap = graphics.NewCubeMap(graphics.NearestFilter, gl.DEPTH_COMPONENT16, 512, 512)
+		r.pointLightShadowMaps[l.ID] = smap
+	}
+
 	// TODO: re-render also when objects have moved
+	/*
 	if !l.DirtyShadowMap {
 		return
 	}
+	*/
 
 	forwards := []math.Vec3{
 		math.NewVec3(+1, 0, 0),
@@ -476,7 +506,7 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	//shadowCubeMap = l.shadowMap
 
 	for face := 0; face < 6; face++ {
-		r.shadowMapFramebuffer.AttachCubeMapFace(graphics.DepthAttachment, l.ShadowMap.Face(graphics.CubeMapLayer(face)), 0)
+		r.shadowMapFramebuffer.AttachCubeMapFace(graphics.DepthAttachment, smap.Face(graphics.CubeMapLayer(face)), 0)
 		r.shadowMapFramebuffer.ClearDepth(1)
 		c.SetForwardUp(forwards[face], ups[face])
 
@@ -494,16 +524,25 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 		}
 	}
 
-	l.DirtyShadowMap = false
+	//l.DirtyShadowMap = false
 }
 
 func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
+	smap, found := r.spotLightShadowMaps[l.ID]
+	if !found {
+		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
+		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
+		r.spotLightShadowMaps[l.ID] = smap
+	}
+
 	// TODO: re-render also when objects have moved
+	/*
 	if !l.DirtyShadowMap {
 		return
 	}
+	*/
 
-	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, l.ShadowMap, 0)
+	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, smap, 0)
 	r.shadowMapFramebuffer.ClearDepth(1)
 	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
 	r.SetShadowCamera(&l.PerspectiveCamera)
@@ -519,16 +558,25 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 		}
 	}
 
-	l.DirtyShadowMap = false
+	//l.DirtyShadowMap = false
 }
 
 func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
+	smap, found := r.dirLightShadowMaps[l.ID]
+	if !found {
+		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
+		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
+		r.dirLightShadowMaps[l.ID] = smap
+	}
+
 	// TODO: re-render also when objects have moved
+	/*
 	if !l.DirtyShadowMap {
 		return
 	}
+	*/
 
-	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, l.ShadowMap, 0)
+	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, smap, 0)
 	r.shadowMapFramebuffer.ClearDepth(1)
 	r.shadowRenderState.Program = r.dirshadowSp.ShaderProgram
 	r.SetDirShadowCamera(&l.OrthoCamera)
@@ -544,7 +592,7 @@ func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.
 		}
 	}
 
-	l.DirtyShadowMap = false
+	//l.DirtyShadowMap = false
 }
 
 func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
