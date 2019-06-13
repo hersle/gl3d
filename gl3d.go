@@ -64,7 +64,17 @@ func main() {
 	//s.AddDirectionalLight(light.NewDirectionalLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 
 	//s.AddSkybox(graphics.NewCubeMapUniform(math.NewVec4(0.3, 0.3, 0.3, 0)))
-	s.AddSkybox(scene.ReadCubeMapFromDir("assets/skyboxes/mountain/"))
+	filename1 := "assets/skyboxes/mountain/posx.jpg"
+	filename2 := "assets/skyboxes/mountain/negx.jpg"
+	filename3 := "assets/skyboxes/mountain/posy.jpg"
+	filename4 := "assets/skyboxes/mountain/negy.jpg"
+	filename5 := "assets/skyboxes/mountain/posz.jpg"
+	filename6 := "assets/skyboxes/mountain/negz.jpg"
+	skybox, err := scene.ReadCubeMap(filename1, filename2, filename3, filename4, filename5, filename6)
+	if err != nil {
+		panic(err)
+	}
+	s.AddSkybox(skybox)
 
 	ang := float32(60.0)
 	near := float32(0.1)

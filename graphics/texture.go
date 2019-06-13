@@ -10,8 +10,6 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	_ "github.com/ftrvxmtrx/tga"
-	"os"
-	"path"
 	"unsafe"
 )
 
@@ -58,19 +56,6 @@ const (
 	NegativeZ CubeMapLayer = CubeMapLayer(5)
 )
 
-func readImage(filename string) (image.Image, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil, err
-	}
-	return img, nil
-}
-
 func NewTexture2D(filter FilterMode, wrap WrapMode, format uint32, width, height int) *Texture2D {
 	var t Texture2D
 	t.Width = width
@@ -107,14 +92,6 @@ func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img 
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
 		return NewTexture2DFromImage(filter, wrap, format, imgRGBA)
 	}
-}
-
-func ReadTexture2D(filter FilterMode, wrap WrapMode, format uint32, filename string) (*Texture2D, error) {
-	img, err := readImage(filename)
-	if err != nil {
-		return nil, err
-	}
-	return NewTexture2DFromImage(filter, wrap, format, img), nil
 }
 
 func NewTexture2DUniform(rgba math.Vec4) *Texture2D {
@@ -178,33 +155,6 @@ func NewCubeMapUniform(rgba math.Vec4) *CubeMap {
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
 	return NewCubeMapFromImages(NearestFilter, img, img, img, img, img, img)
-}
-
-func ReadCubeMap(filter FilterMode, filename1, filename2, filename3, filename4, filename5, filename6 string) *CubeMap {
-	var imgs [6]image.Image
-	var errs [6]error
-	imgs[0], errs[0] = readImage(filename1)
-	imgs[1], errs[1] = readImage(filename2)
-	imgs[2], errs[2] = readImage(filename3)
-	imgs[3], errs[3] = readImage(filename4)
-	imgs[4], errs[4] = readImage(filename5)
-	imgs[5], errs[5] = readImage(filename6)
-	for _, err := range errs {
-		if err != nil {
-			panic(err)
-		}
-	}
-	return NewCubeMapFromImages(filter, imgs[0], imgs[1], imgs[2], imgs[3], imgs[4], imgs[5])
-}
-
-func ReadCubeMapFromDir(filter FilterMode, dir string) *CubeMap {
-	names := []string{"posx.jpg", "negx.jpg", "posy.jpg", "negy.jpg", "posz.jpg", "negz.jpg"}
-	var filenames [6]string
-	for i, name := range names {
-		filenames[i] = path.Join(dir, name)
-		println(filenames[i])
-	}
-	return ReadCubeMap(filter, filenames[0], filenames[1], filenames[2], filenames[3], filenames[4], filenames[5])
 }
 
 func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {

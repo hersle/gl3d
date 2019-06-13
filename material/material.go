@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/utils"
 	"os"
 	"path"
 	"strings"
@@ -132,7 +133,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(ambientMapFilename) {
 					ambientMapFilename = path.Join(path.Dir(filename), ambientMapFilename)
 				}
-				ambientMap, err := readImage(ambientMapFilename)
+				ambientMap, err := utils.ReadImage(ambientMapFilename)
 				if err == nil {
 					mtl.AmbientMap = ambientMap
 				}
@@ -144,7 +145,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(diffuseMapFilename) {
 					diffuseMapFilename = path.Join(path.Dir(filename), diffuseMapFilename)
 				}
-				diffuseMap, err := readImage(diffuseMapFilename)
+				diffuseMap, err := utils.ReadImage(diffuseMapFilename)
 				if err == nil {
 					mtl.DiffuseMap = diffuseMap
 				}
@@ -156,7 +157,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(specularMapFilename) {
 					specularMapFilename = path.Join(path.Dir(filename), specularMapFilename)
 				}
-				specularMap, err := readImage(specularMapFilename)
+				specularMap, err := utils.ReadImage(specularMapFilename)
 				if err == nil {
 					mtl.SpecularMap = specularMap
 				}
@@ -168,7 +169,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(bumpMapFilename) {
 					bumpMapFilename = path.Join(path.Dir(filename), bumpMapFilename)
 				}
-				bumpMap, err := readImage(bumpMapFilename)
+				bumpMap, err := utils.ReadImage(bumpMapFilename)
 				if err == nil {
 					mtl.BumpMap = bumpMap
 				}
@@ -180,7 +181,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(alphaMapFilename) {
 					alphaMapFilename = path.Join(path.Dir(filename), alphaMapFilename)
 				}
-				alphaMap, err := readImage(alphaMapFilename)
+				alphaMap, err := utils.ReadImage(alphaMapFilename)
 				if err == nil {
 					mtl.AlphaMap = alphaMap
 				}
@@ -203,19 +204,6 @@ func ReadMaterials(filenames []string) []*Material {
 	}
 
 	return mtls
-}
-
-func readImage(filename string) (image.Image, error) {
-	file, err := os.Open(filename)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-	img, _, err := image.Decode(file)
-	if err != nil {
-		return nil, err
-	}
-	return img, nil
 }
 
 func init() {
