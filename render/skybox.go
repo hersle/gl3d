@@ -5,6 +5,7 @@ import (
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/scene"
 	"unsafe"
 )
 
@@ -22,6 +23,7 @@ type SkyboxRenderer struct {
 	ibo         *graphics.Buffer
 	tex         *graphics.CubeMap
 	renderState *graphics.RenderState
+	cubemaps map[*scene.CubeMap]*graphics.CubeMap
 }
 
 func NewSkyboxShaderProgram() *SkyboxShaderProgram {
@@ -46,6 +48,8 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 
 func NewSkyboxRenderer() *SkyboxRenderer {
 	var r SkyboxRenderer
+
+	r.cubemaps = make(map[*scene.CubeMap]*graphics.CubeMap)
 
 	r.sp = NewSkyboxShaderProgram()
 
@@ -90,8 +94,20 @@ func (r *SkyboxRenderer) setCamera(c camera.Camera) {
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *SkyboxRenderer) setSkybox(skybox *graphics.CubeMap) {
-	r.sp.CubeMap.SetCube(skybox)
+func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
+	cm, found := r.cubemaps[skybox]
+	if !found {
+		img1 := skybox.Posx
+		img2 := skybox.Negx
+		img3 := skybox.Posy
+		img4 := skybox.Negy
+		img5 := skybox.Posz
+		img6 := skybox.Negz
+		cm = graphics.NewCubeMapFromImages(graphics.NearestFilter, img1, img2, img3, img4, img5, img6)
+		r.cubemaps[skybox] = cm
+	}
+
+	r.sp.CubeMap.SetCube(cm)
 }
 
 func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {
@@ -100,7 +116,7 @@ func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 
-func (r *SkyboxRenderer) Render(sb *graphics.CubeMap, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *SkyboxRenderer) Render(sb *scene.CubeMap, c camera.Camera, fb *graphics.Framebuffer) {
 	r.setSkybox(sb)
 	r.setCamera(c)
 	r.setFramebuffer(fb)

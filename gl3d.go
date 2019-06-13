@@ -64,7 +64,7 @@ func main() {
 	//s.AddDirectionalLight(light.NewDirectionalLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
 
 	//s.AddSkybox(graphics.NewCubeMapUniform(math.NewVec4(0.3, 0.3, 0.3, 0)))
-	s.AddSkybox(graphics.ReadCubeMapFromDir(graphics.NearestFilter, "assets/skyboxes/mountain/"))
+	s.AddSkybox(scene.ReadCubeMapFromDir("assets/skyboxes/mountain/"))
 
 	ang := float32(60.0)
 	near := float32(0.1)
