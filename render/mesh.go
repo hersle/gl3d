@@ -8,6 +8,7 @@ import (
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
+	"image"
 )
 
 var shadowCubeMap *graphics.CubeMap = nil
@@ -61,6 +62,8 @@ type MeshRenderer struct {
 	vboCache map[*object.Vertex]int
 	vbos []*graphics.Buffer
 	ibos []*graphics.Buffer
+
+	tex2ds map[image.Image]*graphics.Texture2D
 
 	pointLightShadowMaps map[int]*graphics.CubeMap
 	spotLightShadowMaps map[int]*graphics.Texture2D
@@ -201,6 +204,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
 	r.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
 	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
+	r.tex2ds = make(map[image.Image]*graphics.Texture2D)
 
 	r.shadowSp = NewShadowMapShaderProgram()
 	r.dirshadowSp = NewDirectionalLightShadowMapShaderProgram()
@@ -305,16 +309,46 @@ func (r *MeshRenderer) SetMesh(m *object.Mesh) {
 func (r *MeshRenderer) SetSubMesh(sm *object.SubMesh) {
 	mtl := sm.Mtl
 
+	tex, found := r.tex2ds[mtl.AmbientMap]
+	if !found {
+		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AmbientMap)
+		r.tex2ds[mtl.AmbientMap] = tex
+	}
 	r.sp.Ambient.Set(mtl.Ambient)
-	r.sp.AmbientMap.Set2D(mtl.AmbientMap)
+	r.sp.AmbientMap.Set2D(tex)
+
+	tex, found = r.tex2ds[mtl.DiffuseMap]
+	if !found {
+		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.DiffuseMap)
+		r.tex2ds[mtl.DiffuseMap] = tex
+	}
 	r.sp.Diffuse.Set(mtl.Diffuse)
-	r.sp.DiffuseMap.Set2D(mtl.DiffuseMap)
+	r.sp.DiffuseMap.Set2D(tex)
+
+	tex, found = r.tex2ds[mtl.SpecularMap]
+	if !found {
+		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.SpecularMap)
+		r.tex2ds[mtl.SpecularMap] = tex
+	}
 	r.sp.Specular.Set(mtl.Specular)
-	r.sp.SpecularMap.Set2D(mtl.SpecularMap)
+	r.sp.SpecularMap.Set2D(tex)
+
 	r.sp.Shine.Set(mtl.Shine)
+
+	tex, found = r.tex2ds[mtl.AlphaMap]
+	if !found {
+		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AlphaMap)
+		r.tex2ds[mtl.AlphaMap] = tex
+	}
 	r.sp.Alpha.Set(mtl.Alpha)
-	r.sp.AlphaMap.Set2D(mtl.AlphaMap)
-	r.sp.BumpMap.Set2D(mtl.BumpMap)
+	r.sp.AlphaMap.Set2D(tex)
+
+	tex, found = r.tex2ds[mtl.BumpMap]
+	if !found {
+		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.BumpMap)
+		r.tex2ds[mtl.BumpMap] = tex
+	}
+	r.sp.BumpMap.Set2D(tex)
 
 	// upload to GPU
 	var vbo *graphics.Buffer

@@ -3,12 +3,12 @@ package material
 import (
 	"bufio"
 	"fmt"
-	"github.com/go-gl/gl/v4.5-core/gl"
-	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"os"
 	"path"
 	"strings"
+	"image"
+	"image/color"
 )
 
 type Material struct {
@@ -18,17 +18,17 @@ type Material struct {
 	Specular    math.Vec3
 	Shine       float32
 	Alpha       float32
-	AmbientMap  *graphics.Texture2D
-	DiffuseMap  *graphics.Texture2D
-	SpecularMap *graphics.Texture2D
-	BumpMap     *graphics.Texture2D
-	AlphaMap    *graphics.Texture2D
+	AmbientMap  image.Image
+	DiffuseMap  image.Image
+	SpecularMap image.Image
+	BumpMap     image.Image
+	AlphaMap    image.Image
 }
 
 // spec: http://paulbourke.net/dataformats/mtl/
 
-var whiteTransparentTexture *graphics.Texture2D
-var defaultNormalTexture *graphics.Texture2D
+var whiteTransparentTexture image.Image
+var defaultNormalTexture image.Image
 
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
@@ -132,7 +132,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(ambientMapFilename) {
 					ambientMapFilename = path.Join(path.Dir(filename), ambientMapFilename)
 				}
-				ambientMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, ambientMapFilename)
+				ambientMap, err := readImage(ambientMapFilename)
 				if err == nil {
 					mtl.AmbientMap = ambientMap
 				}
@@ -144,7 +144,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(diffuseMapFilename) {
 					diffuseMapFilename = path.Join(path.Dir(filename), diffuseMapFilename)
 				}
-				diffuseMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, diffuseMapFilename)
+				diffuseMap, err := readImage(diffuseMapFilename)
 				if err == nil {
 					mtl.DiffuseMap = diffuseMap
 				}
@@ -156,7 +156,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(specularMapFilename) {
 					specularMapFilename = path.Join(path.Dir(filename), specularMapFilename)
 				}
-				specularMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, specularMapFilename)
+				specularMap, err := readImage(specularMapFilename)
 				if err == nil {
 					mtl.SpecularMap = specularMap
 				}
@@ -168,7 +168,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(bumpMapFilename) {
 					bumpMapFilename = path.Join(path.Dir(filename), bumpMapFilename)
 				}
-				bumpMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, bumpMapFilename)
+				bumpMap, err := readImage(bumpMapFilename)
 				if err == nil {
 					mtl.BumpMap = bumpMap
 				}
@@ -180,7 +180,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if !path.IsAbs(alphaMapFilename) {
 					alphaMapFilename = path.Join(path.Dir(filename), alphaMapFilename)
 				}
-				alphaMap, err := graphics.ReadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, alphaMapFilename)
+				alphaMap, err := readImage(alphaMapFilename)
 				if err == nil {
 					mtl.AlphaMap = alphaMap
 				}
@@ -205,7 +205,25 @@ func ReadMaterials(filenames []string) []*Material {
 	return mtls
 }
 
+func readImage(filename string) (image.Image, error) {
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+	img, _, err := image.Decode(file)
+	if err != nil {
+		return nil, err
+	}
+	return img, nil
+}
+
 func init() {
-	whiteTransparentTexture = graphics.NewTexture2DUniform(math.NewVec4(1, 1, 1, 0))
-	defaultNormalTexture = graphics.NewTexture2DUniform(math.NewVec4(0.5, 0.5, 1, 0))
+	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.SetRGBA(0, 0, color.RGBA{255, 255, 255, 0})
+	whiteTransparentTexture = img
+
+	img = image.NewRGBA(image.Rect(0, 0, 1, 1))
+	img.SetRGBA(0, 0, color.RGBA{0x80, 0x80, 0xff, 0})
+	defaultNormalTexture = img
 }
