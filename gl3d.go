@@ -49,18 +49,6 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	sphere := object.NewSphere(math.NewVec3(0, 0, 0), 1);
-	var m object.Mesh
-	m.AddSubMesh(object.NewSubMesh(sphere.Geometry(20), material.NewDefaultMaterial(""), &m))
-	m.Object = *object.NewObject()
-	s.AddMesh(&m)
-
-	var m3 object.Mesh
-	bbox := m.SubMeshes[0].BoundingBox()
-	m3.AddSubMesh(object.NewSubMesh(bbox.Geometry(), material.NewDefaultMaterial(""), &m3))
-	m3.Object = *object.NewObject()
-	s.AddMesh(&m3)
-
 	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0.1, 0.1, 0.1))
 
 	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
