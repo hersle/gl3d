@@ -35,6 +35,7 @@ uniform struct Light {
 	vec3 specular;
 	float far;
 	float attenuationQuadratic;
+	bool castshadow;
 } light;
 
 uniform mat4 viewMatrix;
@@ -130,21 +131,23 @@ void main() {
 				  * attenuation;
 
 	// TODO: AVOID BRANCHING!! CAUSES DRIVER BUGS!! USE SEPARATE SHADERS!!
-	float factor;
-	switch (light.type) {
-	case 1: // point light
-		factor = CalcShadowFactorPointLight();
-		break;
-	case 2: // spot light
-		if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
-			diffuse = vec3(0, 0, 0);
-			specular = vec3(0, 0, 0);
+	float factor = 1.0;
+	if (light.castshadow) {
+		switch (light.type) {
+		case 1: // point light
+			factor = CalcShadowFactorPointLight();
+			break;
+		case 2: // spot light
+			if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
+				diffuse = vec3(0, 0, 0);
+				specular = vec3(0, 0, 0);
+			}
+			factor = CalcShadowFactorSpotLight(lightSpacePosition);
+			break;
+		case 3: // directional light
+			factor = CalcShadowFactorDirLight(lightSpacePosition);
+			break;
 		}
-		factor = CalcShadowFactorSpotLight(lightSpacePosition);
-		break;
-	case 3: // directional light
-		factor = CalcShadowFactorDirLight(lightSpacePosition);
-		break;
 	}
 
 	fragColor = vec4(factor * (diffuse + specular), 1);

@@ -49,6 +49,7 @@ type MeshShaderProgram struct {
 	DirShadowMap           *graphics.UniformSampler
 	ShadowFar              *graphics.UniformFloat
 	LightAttQuad           *graphics.UniformFloat
+	CastShadow             *graphics.UniformBool
 }
 
 // TODO: redesign attr/uniform access system?
@@ -180,6 +181,7 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	sp.DirShadowMap = sp.UniformSampler("dirShadowMap")
 	sp.ShadowFar = sp.UniformFloat("light.far")
 	sp.LightAttQuad = sp.UniformFloat("light.attenuationQuadratic")
+	sp.CastShadow = sp.UniformBool("light.castshadow")
 
 	sp.Position.SetFormat(gl.FLOAT, false)
 	sp.Normal.SetFormat(gl.FLOAT, false)
@@ -387,14 +389,16 @@ func (r *MeshRenderer) SetPointLight(l *light.PointLight) {
 	r.sp.LightPos.Set(l.Position)
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
-	smap, found := r.pointLightShadowMaps[l.ID]
-	if !found {
-		panic("set point light with no shadow map")
+	r.sp.CastShadow.Set(l.CastShadows)
+	if l.CastShadows {
+		r.sp.ShadowFar.Set(l.ShadowFar)
+		smap, found := r.pointLightShadowMaps[l.ID]
+		if !found {
+			panic("set point light with no shadow map")
+		}
+		r.sp.CubeShadowMap.SetCube(smap)
 	}
-	r.sp.CubeShadowMap.SetCube(smap)
-	r.sp.ShadowFar.Set(l.ShadowFar)
 	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
-
 }
 
 func (r *MeshRenderer) SetSpotLight(l *light.SpotLight) {
@@ -403,16 +407,19 @@ func (r *MeshRenderer) SetSpotLight(l *light.SpotLight) {
 	r.sp.LightDir.Set(l.Forward())
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
-	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
-	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
-	r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
 	r.sp.LightAttQuad.Set(l.AttenuationQuadratic)
+	r.sp.CastShadow.Set(l.CastShadows)
 
-	smap, found := r.spotLightShadowMaps[l.ID]
-	if !found {
-		panic("set spot light with no shadow map")
+	if l.CastShadows {
+		r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
+		r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
+		r.sp.ShadowFar.Set(l.PerspectiveCamera.Far)
+		smap, found := r.spotLightShadowMaps[l.ID]
+		if !found {
+			panic("set spot light with no shadow map")
+		}
+		r.sp.SpotShadowMap.Set2D(smap)
 	}
-	r.sp.SpotShadowMap.Set2D(smap)
 }
 
 func (r *MeshRenderer) SetDirectionalLight(l *light.DirectionalLight) {
@@ -420,15 +427,18 @@ func (r *MeshRenderer) SetDirectionalLight(l *light.DirectionalLight) {
 	r.sp.LightDir.Set(l.Forward())
 	r.sp.DiffuseLight.Set(l.Diffuse)
 	r.sp.SpecularLight.Set(l.Specular)
-	r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
-	r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
 	r.sp.LightAttQuad.Set(0)
+	r.sp.CastShadow.Set(l.CastShadows)
 
-	smap, found := r.dirLightShadowMaps[l.ID]
-	if !found {
-		panic("set directional light with no shadow map")
+	if l.CastShadows {
+		r.sp.ShadowViewMatrix.Set(l.ViewMatrix())
+		r.sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
+		smap, found := r.dirLightShadowMaps[l.ID]
+		if !found {
+			panic("set directional light with no shadow map")
+		}
+		r.sp.DirShadowMap.Set2D(smap)
 	}
-	r.sp.DirShadowMap.Set2D(smap)
 }
 
 // shadow stuff below
@@ -631,12 +641,18 @@ func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.
 
 func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
 	for _, l := range s.PointLights {
-		r.RenderPointLightShadowMap(s, l)
+		if l.CastShadows {
+			r.RenderPointLightShadowMap(s, l)
+		}
 	}
 	for _, l := range s.SpotLights {
-		r.RenderSpotLightShadowMap(s, l)
+		if l.CastShadows {
+			r.RenderSpotLightShadowMap(s, l)
+		}
 	}
 	for _, l := range s.DirectionalLights {
-		r.RenderDirectionalLightShadowMap(s, l)
+		if l.CastShadows {
+			r.RenderDirectionalLightShadowMap(s, l)
+		}
 	}
 }

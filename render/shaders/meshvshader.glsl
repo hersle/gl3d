@@ -30,6 +30,7 @@ uniform struct Light {
 	vec3 specular;
 	float far;
 	float attenuationQuadratic;
+	bool castshadow;
 } light;
 
 out vec4 lightSpacePosition;
@@ -62,10 +63,12 @@ void main() {
 	vec3 viewLightDirection = vec3(viewMatrix * vec4(light.direction, 0));
 	tanLightDirection = viewToTan * viewLightDirection;
 
-	switch (light.type) {
-	case 2: // spotlight
-	case 3:
-		mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
-		lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
+	if (light.castshadow) {
+		switch (light.type) {
+		case 2: // spotlight
+		case 3:
+			mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
+			lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
+		}
 	}
 }
