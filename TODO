@@ -51,3 +51,7 @@ uniform buffer objects per program!
 normal map not working properly?
 
 equal depth test?
+
+front to back render
+occlusion culling
+texture atlas/array?
