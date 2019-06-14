@@ -59,7 +59,11 @@ func NewBoxAxisAligned(point1, point2 math.Vec3) *Box {
 }
 
 func (b *Box) Center() math.Vec3 {
-	return b.Position.Add(b.UnitX.Scale(b.Dx)).Add(b.UnitY.Scale(b.Dy)).Add(b.UnitZ.Scale(b.Dz))
+	return b.Position.Add(b.UnitX.Scale(b.Dx/2)).Add(b.UnitY.Scale(b.Dy/2)).Add(b.UnitZ.Scale(b.Dz/2))
+}
+
+func (b *Box) DiagonalLength() float32 {
+	return float32(gomath.Sqrt(float64(b.Dx*b.Dx + b.Dy*b.Dy + b.Dz*b.Dz)))
 }
 
 func (b *Box) Points() [8]math.Vec3 {

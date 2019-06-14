@@ -259,7 +259,15 @@ func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.PointLights {
 		r.SetPointLight(l)
 		for _, m := range s.Meshes {
-			r.renderMesh(m, c)
+			r.SetMesh(m)
+			r.SetCamera(c)
+
+			for _, subMesh := range m.SubMeshes {
+				if !c.Cull(subMesh) && PointLightInteracts(l, subMesh) {
+					r.SetSubMesh(subMesh)
+					graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
+				}
+			}
 		}
 	}
 }
@@ -655,4 +663,14 @@ func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
 			r.RenderDirectionalLightShadowMap(s, l)
 		}
 	}
+}
+
+func PointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
+	sphere := sm.BoundingSphere()
+	dist := l.Position.Sub(sphere.Center).Length()
+	if dist < sphere.Radius {
+		return true
+	}
+	dist = dist - sphere.Radius
+	return dist*dist < (1 / 0.05 - 1) / l.AttenuationQuadratic
 }

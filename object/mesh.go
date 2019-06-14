@@ -157,6 +157,11 @@ func (sm *SubMesh) BoundingBox() *Box {
 	return sm.bbox
 }
 
+func (sm *SubMesh) BoundingSphere() *Sphere {
+	bbox := sm.BoundingBox()
+	return NewSphere(bbox.Center(), bbox.DiagonalLength())
+}
+
 func (geo *Geometry) CalculateNormals() {
 	for i, _ := range geo.Verts {
 		geo.Verts[i].Normal = math.NewVec3(0, 0, 0)
