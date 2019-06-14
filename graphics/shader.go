@@ -6,6 +6,7 @@ import (
 	"github.com/hersle/gl3d/math"
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"io/ioutil"
+	"strings"
 )
 
 type ShaderProgram struct {
@@ -114,6 +115,28 @@ func ReadShader(typ uint32, filename string) (*Shader, error) {
 	return NewShader(typ, string(src))
 }
 
+func NewShaderFromTemplate(typ uint32, src string, defines []string) (*Shader, error) {
+	lines := strings.Split(src, "\n")
+	src = lines[0] + "\n" // #version
+	for _, define := range defines {
+		src = src + "#define " + define + "\n"
+	}
+	for _, line := range lines[1:] {
+		src = src + line + "\n"
+	}
+	println("shader template source:\n", src)
+
+	return NewShader(typ, src)
+}
+
+func ReadShaderFromTemplate(typ uint32, filename string, defines []string) (*Shader, error) {
+	src, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return NewShaderFromTemplate(typ, string(src), defines)
+}
+
 func (s *Shader) SetSource(src string) {
 	cSrc, free := gl.Strs(src)
 	defer free()
@@ -197,6 +220,40 @@ func ReadShaderProgram(vShaderFilename, fShaderFilename, gShaderFilename string)
 		gShader = nil
 	} else {
 		gShader, err = ReadShader(gl.GEOMETRY_SHADER, gShaderFilename)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return NewShaderProgram(vShader, fShader, gShader)
+}
+
+func ReadShaderProgramFromTemplates(vShaderFilename, fShaderFilename, gShaderFilename string, defines []string) (*ShaderProgram, error) {
+	var vShader, fShader, gShader *Shader
+	var err error
+
+	if vShaderFilename == "" {
+		vShader = nil
+	} else {
+		vShader, err = ReadShaderFromTemplate(gl.VERTEX_SHADER, vShaderFilename, defines)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if fShaderFilename == "" {
+		fShader = nil
+	} else {
+		fShader, err = ReadShaderFromTemplate(gl.FRAGMENT_SHADER, fShaderFilename, defines)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if gShaderFilename == "" {
+		gShader = nil
+	} else {
+		gShader, err = ReadShaderFromTemplate(gl.GEOMETRY_SHADER, gShaderFilename, defines)
 		if err != nil {
 			return nil, err
 		}

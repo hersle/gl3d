@@ -144,10 +144,12 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
 
-	vShaderFilename := "render/shaders/meshvshader.glsl" // TODO: make independent from executable directory
-	fShaderFilename := "render/shaders/meshfshader.glsl" // TODO: make independent from executable directory
+	defines := []string{"AMBIENT"}
 
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	vShaderFilename := "render/shaders/meshvshadertemplate.glsl" // TODO: make independent from executable directory
+	fShaderFilename := "render/shaders/meshfshadertemplate.glsl" // TODO: make independent from executable directory
+
+	sp.ShaderProgram, err = graphics.ReadShaderProgramFromTemplates(vShaderFilename, fShaderFilename, "", defines)
 	if err != nil {
 		panic(err)
 	}
