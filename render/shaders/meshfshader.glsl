@@ -1,8 +1,6 @@
 #version 450
 
 in vec3 worldPosition;
-in vec3 viewPosition;
-in vec4 colorF;
 in vec2 texCoordF;
 in vec3 tanLightToVertex;
 in vec3 tanCameraToVertex;

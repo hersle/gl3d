@@ -39,7 +39,7 @@ out vec4 lightSpacePosition;
 
 void main() {
 	worldPosition = vec3(modelMatrix * vec4(position, 1));
-	viewPosition = vec3(viewMatrix * vec4(worldPosition, 1));
+	vec3 viewPosition = vec3(viewMatrix * vec4(worldPosition, 1));
 	gl_Position = projectionMatrix * vec4(viewPosition, 1);
 
 	texCoordF = texCoordV;
