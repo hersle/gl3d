@@ -419,6 +419,7 @@ func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 	var u UniformBasic
 	loc := gl.GetUniformLocation(p.id, gl.Str(name+"\x00"))
 	if loc == -1 {
+		println("error getting uniform " + name)
 		return nil
 	}
 	u.location = uint32(loc)
