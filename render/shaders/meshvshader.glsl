@@ -18,6 +18,8 @@ uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 projectionMatrix;
 
+uniform mat4 normalMatrix;
+
 uniform mat4 shadowViewMatrix;
 uniform mat4 shadowProjectionMatrix;
 
@@ -42,7 +44,6 @@ void main() {
 
 	texCoordF = texCoordV;
 
-	mat4 normalMatrix = transpose(inverse(viewMatrix * modelMatrix));
 	vec3 viewNormal = normalize(vec3(normalMatrix * vec4(normalV, 0)));
 	vec3 viewTangent = normalize(vec3(normalMatrix * vec4(tangentV, 0)));
 	vec3 viewBitangent = normalize(cross(viewNormal, viewTangent));

@@ -25,6 +25,8 @@ type MeshShaderProgram struct {
 	ViewMatrix       *graphics.UniformMatrix4
 	ProjectionMatrix *graphics.UniformMatrix4
 
+	NormalMatrix *graphics.UniformMatrix4
+
 	Ambient     *graphics.UniformVector3
 	AmbientMap  *graphics.UniformSampler
 	Diffuse     *graphics.UniformVector3
@@ -59,6 +61,8 @@ type MeshRenderer struct {
 	renderState      *graphics.RenderState
 
 	emptyShadowCubeMap *graphics.CubeMap
+
+	normalMatrix math.Mat4
 
 	vboCache map[*object.Vertex]int
 	vbos []*graphics.Buffer
@@ -157,6 +161,8 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
 	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
 
+	sp.NormalMatrix = sp.UniformMatrix4("normalMatrix")
+
 	sp.Ambient = sp.UniformVector3("material.ambient")
 	sp.AmbientMap = sp.UniformSampler("material.ambientMap")
 	sp.Diffuse = sp.UniformVector3("material.diffuse")
@@ -224,6 +230,14 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 func (r *MeshRenderer) renderMesh(m *object.Mesh, c camera.Camera) {
 	r.SetMesh(m)
 	r.SetCamera(c)
+
+	// TODO: cache per mesh/camera?
+	r.normalMatrix.Identity()
+	r.normalMatrix.Mult(c.ViewMatrix())
+	r.normalMatrix.Mult(m.WorldMatrix())
+	r.normalMatrix.Invert()
+	r.normalMatrix.Transpose()
+	r.sp.NormalMatrix.Set(&r.normalMatrix)
 
 	for _, subMesh := range m.SubMeshes {
 		if !c.Cull(subMesh) {
