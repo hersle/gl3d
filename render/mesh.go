@@ -140,11 +140,9 @@ func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShade
 	return &sp
 }
 
-func NewMeshShaderProgram() *MeshShaderProgram {
+func NewMeshShaderProgram(defines []string) *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
-
-	defines := []string{"AMBIENT"}
 
 	vShaderFilename := "render/shaders/meshvshadertemplate.glsl" // TODO: make independent from executable directory
 	fShaderFilename := "render/shaders/meshfshadertemplate.glsl" // TODO: make independent from executable directory
@@ -202,7 +200,7 @@ func NewMeshShaderProgram() *MeshShaderProgram {
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
-	r.sp = NewMeshShaderProgram()
+	r.sp = NewMeshShaderProgram([]string{"AMBIENT"})
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
