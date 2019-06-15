@@ -6,6 +6,7 @@ import (
 	"github.com/hersle/gl3d/math"
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"io/ioutil"
+	"strings"
 )
 
 type ShaderProgram struct {
@@ -77,10 +78,16 @@ func NewVertexArray() *VertexArray {
 
 // TODO: normalize should not be set for some types
 func (va *VertexArray) SetAttribFormat(a *Attrib, dim, typ int, normalize bool) {
+	if a == nil {
+		return
+	}
 	gl.VertexArrayAttribFormat(va.id, a.id, int32(dim), uint32(typ), normalize, 0)
 }
 
 func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int) {
+	if a == nil {
+		return
+	}
 	gl.VertexArrayAttribBinding(va.id, a.id, a.id)
 	gl.VertexArrayVertexBuffer(va.id, a.id, b.id, offset, int32(stride))
 	gl.EnableVertexArrayAttrib(va.id, a.id)
@@ -112,6 +119,28 @@ func ReadShader(typ uint32, filename string) (*Shader, error) {
 		return nil, err
 	}
 	return NewShader(typ, string(src))
+}
+
+func NewShaderFromTemplate(typ uint32, src string, defines []string) (*Shader, error) {
+	lines := strings.Split(src, "\n")
+	src = lines[0] + "\n" // #version
+	for _, define := range defines {
+		src = src + "#define " + define + "\n"
+	}
+	for _, line := range lines[1:] {
+		src = src + line + "\n"
+	}
+	println("shader template source:\n", src)
+
+	return NewShader(typ, src)
+}
+
+func ReadShaderFromTemplate(typ uint32, filename string, defines []string) (*Shader, error) {
+	src, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, err
+	}
+	return NewShaderFromTemplate(typ, string(src), defines)
 }
 
 func (s *Shader) SetSource(src string) {
@@ -205,6 +234,40 @@ func ReadShaderProgram(vShaderFilename, fShaderFilename, gShaderFilename string)
 	return NewShaderProgram(vShader, fShader, gShader)
 }
 
+func ReadShaderProgramFromTemplates(vShaderFilename, fShaderFilename, gShaderFilename string, defines []string) (*ShaderProgram, error) {
+	var vShader, fShader, gShader *Shader
+	var err error
+
+	if vShaderFilename == "" {
+		vShader = nil
+	} else {
+		vShader, err = ReadShaderFromTemplate(gl.VERTEX_SHADER, vShaderFilename, defines)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if fShaderFilename == "" {
+		fShader = nil
+	} else {
+		fShader, err = ReadShaderFromTemplate(gl.FRAGMENT_SHADER, fShaderFilename, defines)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if gShaderFilename == "" {
+		gShader = nil
+	} else {
+		gShader, err = ReadShaderFromTemplate(gl.GEOMETRY_SHADER, gShaderFilename, defines)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return NewShaderProgram(vShader, fShader, gShader)
+}
+
 func (p *ShaderProgram) Linked() bool {
 	var status int32
 	gl.GetProgramiv(p.id, gl.LINK_STATUS, &status)
@@ -229,42 +292,69 @@ func (p *ShaderProgram) Link() error {
 }
 
 func (u *UniformInteger) Set(i int) {
+	if u == nil {
+		return
+	}
 	gl.ProgramUniform1i(u.progID, int32(u.location), int32(i))
 }
 
 func (u *UniformFloat) Set(f float32) {
+	if u == nil {
+		return
+	}
 	gl.ProgramUniform1f(u.progID, int32(u.location), f)
 }
 
 func (u *UniformVector2) Set(v math.Vec2) {
+	if u == nil {
+		return
+	}
 	gl.ProgramUniform2fv(u.progID, int32(u.location), 1, &v[0])
 }
 
 func (u *UniformVector3) Set(v math.Vec3) {
+	if u == nil {
+		return
+	}
 	gl.ProgramUniform3fv(u.progID, int32(u.location), 1, &v[0])
 }
 
 func (u *UniformVector4) Set(v math.Vec4) {
+	if u == nil {
+		return
+	}
 	gl.ProgramUniform4fv(u.progID, int32(u.location), 1, &v[0])
 }
 
 func (u *UniformMatrix4) Set(m *math.Mat4) {
+	if u == nil {
+		return
+	}
 	gl.ProgramUniformMatrix4fv(u.progID, int32(u.location), 1, true, &m[0])
 }
 
 func (u *UniformSampler) Set2D(t *Texture2D) {
+	if u == nil {
+		return
+	}
 	// TODO: other shaders can mess with this texture index
 	gl.BindTextureUnit(u.textureUnitIndex, t.id)
 	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
 }
 
 func (u *UniformSampler) SetCube(t *CubeMap) {
+	if u == nil {
+		return
+	}
 	// TODO: other shaders can mess with this texture index
 	gl.BindTextureUnit(u.textureUnitIndex, t.id)
 	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
 }
 
 func (u *UniformBool) Set(b bool) {
+	if u == nil {
+		return
+	}
 	var i int32
 	if b {
 		i = 1
@@ -275,10 +365,16 @@ func (u *UniformBool) Set(b bool) {
 }
 
 func (a *Attrib) SetFormat(typ int, normalize bool) {
+	if a == nil {
+		return
+	}
 	a.prog.va.SetAttribFormat(a, a.nComponents, typ, normalize)
 }
 
 func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
+	if a == nil {
+		return
+	}
 	a.prog.va.SetAttribSource(a, b, offset, stride)
 }
 
@@ -323,6 +419,7 @@ func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 	var u UniformBasic
 	loc := gl.GetUniformLocation(p.id, gl.Str(name+"\x00"))
 	if loc == -1 {
+		println("error getting uniform " + name)
 		return nil
 	}
 	u.location = uint32(loc)
@@ -334,7 +431,11 @@ func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 
 func (p *ShaderProgram) UniformInteger(name string) *UniformInteger {
 	var u UniformInteger
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	if u.glType != gl.INT {
 		return nil
 	}
@@ -343,7 +444,11 @@ func (p *ShaderProgram) UniformInteger(name string) *UniformInteger {
 
 func (p *ShaderProgram) UniformFloat(name string) *UniformFloat {
 	var u UniformFloat
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	if u.glType != gl.FLOAT {
 		return nil
 	}
@@ -352,7 +457,11 @@ func (p *ShaderProgram) UniformFloat(name string) *UniformFloat {
 
 func (p *ShaderProgram) UniformVector2(name string) *UniformVector2 {
 	var u UniformVector2
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	if u.glType != gl.FLOAT_VEC2 {
 		return nil
 	}
@@ -361,7 +470,11 @@ func (p *ShaderProgram) UniformVector2(name string) *UniformVector2 {
 
 func (p *ShaderProgram) UniformVector3(name string) *UniformVector3 {
 	var u UniformVector3
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	if u.glType != gl.FLOAT_VEC3 {
 		return nil
 	}
@@ -370,7 +483,11 @@ func (p *ShaderProgram) UniformVector3(name string) *UniformVector3 {
 
 func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
 	var u UniformVector4
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	if u.glType != gl.FLOAT_VEC4 {
 		return nil
 	}
@@ -379,7 +496,11 @@ func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
 
 func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
 	var u UniformMatrix4
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	// TODO: what if things not found?
 	if u.glType != gl.FLOAT_MAT4 {
 		return nil
@@ -391,7 +512,11 @@ var textureUnitsUsed uint32 = 0
 
 func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 	var u UniformSampler
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	if u.glType != gl.SAMPLER_2D && u.glType != gl.SAMPLER_CUBE { // TODO: allow more sampler types
 		return nil
 	}
@@ -402,7 +527,11 @@ func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 
 func (p *ShaderProgram) UniformBool(name string) *UniformBool {
 	var u UniformBool
-	u.UniformBasic = *p.UniformBasic(name)
+	ptr := p.UniformBasic(name)
+	if ptr == nil {
+		return nil
+	}
+	u.UniformBasic = *ptr
 	// TODO: what if things not found?
 	if u.glType != gl.BOOL {
 		return nil
