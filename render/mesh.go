@@ -58,6 +58,7 @@ type MeshShaderProgram struct {
 type MeshRenderer struct {
 	sp1        *MeshShaderProgram
 	sp2        *MeshShaderProgram
+	sp3        *MeshShaderProgram
 
 	renderState      *graphics.RenderState
 
@@ -203,6 +204,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.sp1 = NewMeshShaderProgram([]string{"DEPTH", "AMBIENT"})
 	r.sp2 = NewMeshShaderProgram([]string{"POINT"})
+	r.sp3 = NewMeshShaderProgram([]string{"SPOT"})
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Cull = graphics.CullBack
@@ -266,7 +268,7 @@ func (r *MeshRenderer) LightPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
 	r.renderState.Program = r.sp2.ShaderProgram
 	r.PointLightPass(s, c)
-	//r.SpotLightPass(s, c)
+	r.SpotLightPass(s, c)
 	//r.DirectionalLightPass(s, c)
 }
 
@@ -298,16 +300,18 @@ func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-/*
 func (r *MeshRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
+	r.renderState.Program = r.sp3.ShaderProgram
+
 	for _, l := range s.SpotLights {
-		r.SetSpotLight(l)
+		r.SetSpotLight(r.sp3, l)
 		for _, m := range s.Meshes {
-			r.renderMesh(m, c)
+			r.renderMesh(r.sp3, m, c)
 		}
 	}
 }
 
+/*
 func (r *MeshRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.DirectionalLights {
 		r.SetDirectionalLight(l)

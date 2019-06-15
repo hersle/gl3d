@@ -127,6 +127,13 @@ void main() {
 				  * (facing ? 1 : 0)
 				  * attenuation;
 
+	#if defined(SPOT)
+	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
+		diffuse = vec3(0, 0, 0);
+		specular = vec3(0, 0, 0);
+	}
+	#endif
+
 	fragColor = vec4(diffuse + specular, 1);
 	#endif
 
@@ -139,10 +146,6 @@ void main() {
 	#endif
 
 	#if defined(SPOT)
-	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
-		diffuse = vec3(0, 0, 0);
-		specular = vec3(0, 0, 0);
-	}
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = length(worldPosition - light.position);
