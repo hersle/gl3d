@@ -201,7 +201,7 @@ func NewMeshShaderProgram(defines []string) *MeshShaderProgram {
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
-	r.sp1 = NewMeshShaderProgram([]string{"AMBIENT"})
+	r.sp1 = NewMeshShaderProgram([]string{"DEPTH", "AMBIENT"})
 	r.sp2 = NewMeshShaderProgram([]string{"POINT"})
 
 	r.renderState = graphics.NewRenderState()

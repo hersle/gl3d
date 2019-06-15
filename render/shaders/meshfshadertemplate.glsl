@@ -25,8 +25,10 @@ in vec4 lightSpacePosition;
 #endif
 
 uniform struct Material {
+	#if defined(DEPTH)
 	float alpha; // TODO: let textures modify alpha
 	sampler2D alphaMap;
+	#endif
 
 	#if defined(AMBIENT)
 	vec3 ambient;
@@ -86,11 +88,13 @@ uniform sampler2D dirShadowMap;
 #endif
 
 void main() {
+	#if defined(DEPTH)
 	float alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
 	// TODO: add proper transparency?
 	if (alpha < 1) {
 		discard;
 	}
+	#endif
 
 	#if defined(AMBIENT)
 	vec4 tex;
