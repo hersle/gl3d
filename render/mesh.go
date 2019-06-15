@@ -38,7 +38,6 @@ type MeshShaderProgram struct {
 	AlphaMap    *graphics.UniformSampler
 	BumpMap     *graphics.UniformSampler
 
-	LightType              *graphics.UniformInteger
 	LightPos               *graphics.UniformVector3
 	LightDir               *graphics.UniformVector3
 	AmbientLight           *graphics.UniformVector3
@@ -51,7 +50,6 @@ type MeshShaderProgram struct {
 	DirShadowMap           *graphics.UniformSampler
 	ShadowFar              *graphics.UniformFloat
 	LightAttQuad           *graphics.UniformFloat
-	CastShadow             *graphics.UniformBool
 }
 
 // TODO: redesign attr/uniform access system?
@@ -177,7 +175,6 @@ func NewMeshShaderProgram(defines []string) *MeshShaderProgram {
 	sp.AlphaMap = sp.UniformSampler("material.alphaMap")
 	sp.BumpMap = sp.UniformSampler("material.bumpMap")
 
-	sp.LightType = sp.UniformInteger("light.type")
 	sp.LightPos = sp.UniformVector3("light.position")
 	sp.LightDir = sp.UniformVector3("light.direction")
 	sp.AmbientLight = sp.UniformVector3("light.ambient")
@@ -190,7 +187,6 @@ func NewMeshShaderProgram(defines []string) *MeshShaderProgram {
 	sp.DirShadowMap = sp.UniformSampler("dirShadowMap")
 	sp.ShadowFar = sp.UniformFloat("light.far")
 	sp.LightAttQuad = sp.UniformFloat("light.attenuationQuadratic")
-	sp.CastShadow = sp.UniformBool("light.castshadow")
 
 	sp.Position.SetFormat(gl.FLOAT, false)
 	sp.Normal.SetFormat(gl.FLOAT, false)
@@ -237,12 +233,14 @@ func (r *MeshRenderer) renderMesh(sp *MeshShaderProgram, m *object.Mesh, c camer
 	r.SetCamera(sp, c)
 
 	// TODO: cache per mesh/camera?
-	r.normalMatrix.Identity()
-	r.normalMatrix.Mult(c.ViewMatrix())
-	r.normalMatrix.Mult(m.WorldMatrix())
-	r.normalMatrix.Invert()
-	r.normalMatrix.Transpose()
-	sp.NormalMatrix.Set(&r.normalMatrix)
+	if sp.NormalMatrix != nil {
+		r.normalMatrix.Identity()
+		r.normalMatrix.Mult(c.ViewMatrix())
+		r.normalMatrix.Mult(m.WorldMatrix())
+		r.normalMatrix.Invert()
+		r.normalMatrix.Transpose()
+		sp.NormalMatrix.Set(&r.normalMatrix)
+	}
 
 	for _, subMesh := range m.SubMeshes {
 		if !c.Cull(subMesh) {
@@ -257,8 +255,6 @@ func (r *MeshRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.DepthTest = graphics.LessDepthTest
 	r.renderState.Program = r.sp1.ShaderProgram
 
-	// TODO: WHY MUST THIS BE SET FOR AMBIENT LIGHT?!?! GRAPHICS DRIVER BUG?
-	// TODO: FIX: AVOID BRANCHING IN SHADERS!!!!!!!!!!!!!
 	for _, m := range s.Meshes {
 		r.renderMesh(r.sp1, m, c)
 	}
@@ -268,7 +264,7 @@ func (r *MeshRenderer) LightPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.DepthTest = graphics.EqualDepthTest
 	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
 	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
-	r.renderState.Program = r.sp2.ShaderProgram
+
 	r.PointLightPass(s, c)
 	r.SpotLightPass(s, c)
 	r.DirectionalLightPass(s, c)
@@ -280,24 +276,7 @@ func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	for _, l := range s.PointLights {
 		r.SetPointLight(r.sp2, l)
 		for _, m := range s.Meshes {
-			sp := r.sp2
-			r.SetMesh(sp, m)
-			r.SetCamera(sp, c)
-
-			// TODO: cache per mesh/camera?
-			r.normalMatrix.Identity()
-			r.normalMatrix.Mult(c.ViewMatrix())
-			r.normalMatrix.Mult(m.WorldMatrix())
-			r.normalMatrix.Invert()
-			r.normalMatrix.Transpose()
-			sp.NormalMatrix.Set(&r.normalMatrix)
-
-			for _, subMesh := range m.SubMeshes {
-				if !c.Cull(subMesh) {
-					r.SetSubMesh(sp, subMesh)
-					graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
-				}
-			}
+			r.renderMesh(r.sp2, m, c)
 		}
 	}
 }
@@ -421,17 +400,14 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 }
 
 func (r *MeshRenderer) SetAmbientLight(sp *MeshShaderProgram, l *light.AmbientLight) {
-	sp.LightType.Set(0)
 	sp.AmbientLight.Set(l.Color)
 	sp.LightAttQuad.Set(0)
 }
 
 func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight) {
-	sp.LightType.Set(1)
 	sp.LightPos.Set(l.Position)
 	sp.DiffuseLight.Set(l.Diffuse)
 	sp.SpecularLight.Set(l.Specular)
-	sp.CastShadow.Set(l.CastShadows)
 	if l.CastShadows {
 		sp.ShadowFar.Set(l.ShadowFar)
 		smap, found := r.pointLightShadowMaps[l.ID]
@@ -444,13 +420,11 @@ func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight)
 }
 
 func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
-	sp.LightType.Set(2)
 	sp.LightPos.Set(l.Position)
 	sp.LightDir.Set(l.Forward())
 	sp.DiffuseLight.Set(l.Diffuse)
 	sp.SpecularLight.Set(l.Specular)
 	sp.LightAttQuad.Set(l.AttenuationQuadratic)
-	sp.CastShadow.Set(l.CastShadows)
 
 	if l.CastShadows {
 		sp.ShadowViewMatrix.Set(l.ViewMatrix())
@@ -465,12 +439,10 @@ func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 }
 
 func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.DirectionalLight) {
-	sp.LightType.Set(3)
 	sp.LightDir.Set(l.Forward())
 	sp.DiffuseLight.Set(l.Diffuse)
 	sp.SpecularLight.Set(l.Specular)
 	sp.LightAttQuad.Set(0)
-	sp.CastShadow.Set(l.CastShadows)
 
 	if l.CastShadows {
 		sp.ShadowViewMatrix.Set(l.ViewMatrix())

@@ -56,3 +56,4 @@ front to back render
 occlusion culling
 texture atlas/array?
 PURE depth pass, do ambient colors on first light pass?
+reenable light significance test
