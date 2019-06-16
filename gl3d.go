@@ -23,15 +23,6 @@ var cpuprofile = flag.String("cpuprofile", "", "write CPU profile to file")
 
 func main() {
 	flag.Parse()
-	if *cpuprofile != "" {
-		println("profiling")
-		f, err := os.Create(*cpuprofile)
-		if err != nil {
-			panic(err)
-		}
-		pprof.StartCPUProfile(f)
-		defer pprof.StopCPUProfile()
-	}
 
 	renderer, err := render.NewRenderer()
 	if err != nil {
@@ -101,6 +92,16 @@ func main() {
 	s.AddMesh(&m2)
 
 	input.AddCameraFPSControls(c, 0.1)
+
+	if *cpuprofile != "" {
+		println("profiling")
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			panic(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
 
 	// TODO: remove
 	renderer.RenderScene(s, c)
