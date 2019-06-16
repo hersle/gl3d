@@ -39,7 +39,7 @@ func main() {
 	}
 
 	s := scene.NewScene()
-	for _, filename := range os.Args[1:] {
+	for _, filename := range flag.Args() {
 		model, err := object.ReadMesh(filename)
 		if err != nil {
 			panic(err)
