@@ -13,10 +13,8 @@ import (
 	"testing"
 )
 
-func TestMain(t *testing.M) {
-	renderer, err := render.NewSceneRenderer()
-	textRenderer := render.NewTextRenderer()
-	quadRenderer := render.NewQuadRenderer()
+func TestMain(m *testing.M) {
+	renderer, err := render.NewRenderer()
 	if err != nil {
 		panic(err)
 	}
@@ -30,29 +28,30 @@ func TestMain(t *testing.M) {
 
 	ambient := light.NewAmbientLight(math.NewVec3(0.5, 0.5, 0.5))
 	point := light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1))
-	point.AttenuationQuadratic = 0.1
+	point.AttenuationQuadratic = 0.00001
 	point.Place(math.NewVec3(0, 2, 2))
 	s.AddAmbientLight(ambient)
 	s.AddPointLight(point)
 
-	skybox := graphics.NewCubeMapUniform(math.NewVec4(0.2, 0.2, 0.2, 0))
-	s.AddSkybox(skybox)
+	//skybox := graphics.NewCubeMapUniform(math.NewVec4(0.2, 0.2, 0.2, 0))
+	//s.AddSkybox(skybox)
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 	c.Place(point.Position)
 
-	input.AddCameraFPSControls(c)
+	input.AddCameraFPSControls(c, 0.1)
 	input.KeySpace.Listen(func(action input.Action) {
 		s.PointLights[0].Place(c.Position)
 	})
 
-	for !window.ShouldClose() {
+	for i := 0; i < 100; i++ {
 		car.RotateY(+0.01)
 
 		c.SetAspect(window.Aspect())
-		renderer.Render(s, c)
-		quadRenderer.Render(renderer.RenderTarget)
-		textRenderer.Render(math.NewVec2(-1, +1), graphics.RenderStats.String(), 0.05)
+		renderer.Clear()
+		renderer.RenderScene(s, c)
+		renderer.RenderText(math.NewVec2(-1, +1), graphics.RenderStats.String(), 0.05)
+		renderer.Render()
 		graphics.RenderStats.Reset()
 
 		window.Update()

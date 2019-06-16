@@ -50,7 +50,9 @@ func NewRenderer() (*Renderer, error) {
 }
 
 func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
-	r.skyboxRenderer.Render(s.Skybox, c, r.sceneFramebuffer)
+	if s.Skybox != nil {
+		r.skyboxRenderer.Render(s.Skybox, c, r.sceneFramebuffer)
+	}
 
 	r.meshRenderer.Render(s, c, r.sceneFramebuffer)
 }
