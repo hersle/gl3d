@@ -15,9 +15,24 @@ import (
 	"os"
 	"time"
 	gomath "math"
+	"runtime/pprof"
+	"flag"
 )
 
+var cpuprofile = flag.String("cpuprofile", "", "write CPU profile to file")
+
 func main() {
+	flag.Parse()
+	if *cpuprofile != "" {
+		println("profiling")
+		f, err := os.Create(*cpuprofile)
+		if err != nil {
+			panic(err)
+		}
+		pprof.StartCPUProfile(f)
+		defer pprof.StopCPUProfile()
+	}
+
 	renderer, err := render.NewRenderer()
 	if err != nil {
 		panic(err)
