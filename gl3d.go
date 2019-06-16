@@ -20,6 +20,7 @@ import (
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write CPU profile to file")
+var frames = flag.Int("frames", -1, "number of frames to render")
 
 func main() {
 	flag.Parse()
@@ -112,6 +113,12 @@ func main() {
 	fps := int(0)
 	frameCount := int(0)
 	for !window.ShouldClose() {
+		if *frames == 0 {
+			break
+		} else if *frames > 0 {
+			*frames--
+		}
+
 		if time.Now().Sub(time1).Seconds() > 0.5 {
 			time2 := time.Now()
 			fps = int(float64(frameCount) / (time2.Sub(time1).Seconds()))
