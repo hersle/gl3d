@@ -122,5 +122,5 @@ func (r *SkyboxRenderer) Render(sb *scene.CubeMap, c camera.Camera, fb *graphics
 	r.setCamera(c)
 	r.setFramebuffer(fb)
 
-	graphics.NewRenderCommand(36, 0, r.renderState).Execute()
+	graphics.NewRenderCommand(36, r.renderState).Execute()
 }

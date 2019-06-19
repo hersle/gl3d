@@ -97,7 +97,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 	}
 	r.vbo.SetData(r.points, 0)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(len(r.points), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
@@ -116,7 +116,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 	}
 	r.vbo.SetData(r.points, 0)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(len(r.points), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
 
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
@@ -135,5 +135,5 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graph
 	}
 	r.vbo.SetData(r.points, 0)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(len(r.points), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }

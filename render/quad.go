@@ -69,5 +69,5 @@ func NewQuadRenderer() *QuadRenderer {
 func (r *QuadRenderer) Render(tex *graphics.Texture2D, fb *graphics.Framebuffer) {
 	r.sp.Texture.Set2D(tex)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(6, 0, r.renderState).Execute()
+	graphics.NewRenderCommand(6, r.renderState).Execute()
 }
