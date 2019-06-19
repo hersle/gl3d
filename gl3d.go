@@ -11,8 +11,8 @@ import (
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/input"
+	"github.com/hersle/gl3d/utils"
 	"os"
-	"time"
 	"runtime/pprof"
 	"flag"
 )
@@ -89,21 +89,13 @@ func main() {
 		defer pprof.StopCPUProfile()
 	}
 
-	time1 := time.Now()
-	fps := int(0)
-	frameCount := int(0)
+	fpsCounter := utils.NewFrequencyCounter()
+	fpsCounter.Interval = 10
 	for !window.ShouldClose() {
 		if *frames == 0 {
 			break
 		} else if *frames > 0 {
 			*frames--
-		}
-
-		if time.Now().Sub(time1).Seconds() > 0.5 {
-			time2 := time.Now()
-			fps = int(float64(frameCount) / (time2.Sub(time1).Seconds()))
-			time1 = time2
-			frameCount = 0
 		}
 
 		c.SetAspect(window.Aspect())
@@ -122,7 +114,7 @@ func main() {
 			s.PointLights[0].Place(c.Position)
 		}
 
-		text := "FPS:        " + fmt.Sprint(fps) + "\n"
+		text := "FPS:        " + fpsCounter.String() + "\n"
 		text += "position:   " + c.Position.String() + "\n"
 		text += "forward:    " + c.Forward().String() + "\n"
 		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
@@ -134,6 +126,6 @@ func main() {
 		window.Update() // TODO: make line order not matter
 		graphics.RenderStats.Reset()
 
-		frameCount++
+		fpsCounter.Count()
 	}
 }
