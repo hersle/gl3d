@@ -206,6 +206,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Cull = graphics.CullBack
+	r.renderState.PrimitiveType = graphics.Triangle
 
 	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.NewVec4(0, 0, 0, 0))
 
@@ -245,7 +246,7 @@ func (r *MeshRenderer) renderMesh(sp *MeshShaderProgram, m *object.Mesh, c camer
 	for _, subMesh := range m.SubMeshes {
 		if !c.Cull(subMesh) {
 			r.SetSubMesh(sp, subMesh)
-			graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.renderState).Execute()
+			graphics.NewRenderCommand(subMesh.Geo.Inds, 0, r.renderState).Execute()
 		}
 	}
 }
@@ -576,7 +577,7 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 				if !c.Cull(subMesh) {
 					r.SetShadowSubMesh(subMesh)
 
-					graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, 0, r.shadowRenderState).Execute()
+					graphics.NewRenderCommand(subMesh.Geo.Inds, 0, r.shadowRenderState).Execute()
 				}
 			}
 		}

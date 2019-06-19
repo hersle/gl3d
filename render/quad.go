@@ -61,6 +61,7 @@ func NewQuadRenderer() *QuadRenderer {
 	r.renderState.Program = r.sp.ShaderProgram
 	r.renderState.BlendSourceFactor = graphics.SourceAlphaBlendFactor
 	r.renderState.BlendDestinationFactor = graphics.OneMinusSourceAlphaBlendFactor
+	r.renderState.PrimitiveType = graphics.Triangle
 
 	return &r
 }
@@ -68,5 +69,5 @@ func NewQuadRenderer() *QuadRenderer {
 func (r *QuadRenderer) Render(tex *graphics.Texture2D, fb *graphics.Framebuffer) {
 	r.sp.Texture.Set2D(tex)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(graphics.Triangle, 6, 0, r.renderState).Execute()
+	graphics.NewRenderCommand(6, 0, r.renderState).Execute()
 }

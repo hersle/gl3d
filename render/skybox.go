@@ -81,6 +81,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
+	r.renderState.PrimitiveType = graphics.Triangle
 
 	return &r
 }
@@ -121,5 +122,5 @@ func (r *SkyboxRenderer) Render(sb *scene.CubeMap, c camera.Camera, fb *graphics
 	r.setCamera(c)
 	r.setFramebuffer(fb)
 
-	graphics.NewRenderCommand(graphics.Triangle, 36, 0, r.renderState).Execute()
+	graphics.NewRenderCommand(36, 0, r.renderState).Execute()
 }

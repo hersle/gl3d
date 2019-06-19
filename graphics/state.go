@@ -49,6 +49,14 @@ const (
 	LineTriangleMode
 )
 
+type Primitive int
+
+const (
+	Point    Primitive = Primitive(gl.POINTS)
+	Line     Primitive = Primitive(gl.LINES)
+	Triangle Primitive = Primitive(gl.TRIANGLES)
+)
+
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
 	Program                *ShaderProgram
@@ -58,6 +66,7 @@ type RenderState struct {
 	BlendDestinationFactor BlendFactor
 	Cull                   CullMode
 	TriangleMode           TriangleMode
+	PrimitiveType          Primitive
 }
 
 var currentState RenderState

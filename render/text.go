@@ -59,6 +59,7 @@ func NewTextRenderer() *TextRenderer {
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
+	r.renderState.PrimitiveType = graphics.Triangle
 
 	return &r
 }
@@ -129,5 +130,5 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *gra
 	r.vbo.SetData(verts, 0)
 	r.ibo.SetData(inds, 0)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(graphics.Triangle, len(inds), 0, r.renderState).Execute()
+	graphics.NewRenderCommand(len(inds), 0, r.renderState).Execute()
 }
