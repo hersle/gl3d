@@ -11,10 +11,8 @@ import (
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/input"
-	"github.com/hersle/gl3d/material"
 	"os"
 	"time"
-	gomath "math"
 	"runtime/pprof"
 	"flag"
 )
@@ -65,12 +63,6 @@ func main() {
 	s.PointLights[1].AttenuationQuadratic = 0.1
 	s.PointLights[1].Place(math.NewVec3(5, 5, 0))
 
-	//s.AddSpotLight(light.NewSpotLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
-	//s.SpotLights[0].AttenuationQuadratic = 0.1
-
-	//s.AddDirectionalLight(light.NewDirectionalLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
-
-	//s.AddSkybox(graphics.NewCubeMapUniform(math.NewVec4(0.3, 0.3, 0.3, 0)))
 	filename1 := "assets/skyboxes/mountain/posx.jpg"
 	filename2 := "assets/skyboxes/mountain/negx.jpg"
 	filename3 := "assets/skyboxes/mountain/posy.jpg"
@@ -83,14 +75,7 @@ func main() {
 	}
 	s.AddSkybox(skybox)
 
-	ang := float32(60.0)
-	near := float32(0.1)
-	far := float32(50.0)
-	aspect := float32(1)
-	c := camera.NewPerspectiveCamera(60, aspect, near, far)
-	var m2 object.Mesh
-	m2.Object = *object.NewObject()
-	s.AddMesh(&m2)
+	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
 	input.AddCameraFPSControls(c, 0.1)
 
@@ -103,11 +88,6 @@ func main() {
 		pprof.StartCPUProfile(f)
 		defer pprof.StopCPUProfile()
 	}
-
-	// TODO: remove
-	renderer.RenderScene(s, c)
-
-	drawScene := true
 
 	time1 := time.Now()
 	fps := int(0)
@@ -128,9 +108,7 @@ func main() {
 
 		c.SetAspect(window.Aspect())
 		renderer.Clear()
-		if drawScene {
-			renderer.RenderScene(s, c)
-		}
+		renderer.RenderScene(s, c)
 		if input.Key1.Held() {
 			renderer.RenderTangents(s, c)
 		}
@@ -142,28 +120,6 @@ func main() {
 		}
 		if input.KeySpace.JustPressed() {
 			s.PointLights[0].Place(c.Position)
-			//s.SpotLights[0].Place(c.Position)
-			//s.SpotLights[0].Orient(c.UnitX, c.UnitY)
-			//s.DirectionalLights[0].Orient(c.UnitX, c.UnitY)
-		}
-		if input.KeyZ.JustPressed() {
-			drawScene = true
-		}
-		if input.KeyX.JustPressed() {
-			drawScene = false
-		}
-		if input.KeyC.JustPressed() {
-			renderer.SetWireframe(false)
-		}
-		if input.KeyV.JustPressed() {
-			renderer.SetWireframe(true)
-		}
-		if input.KeyF.JustPressed() {
-			nearWidth := 2 * near * float32(gomath.Tan(float64(ang / 2) / 180 * gomath.Pi))
-			nearHeight := nearWidth / aspect
-			frustum := object.NewFrustum(c.Position, c.Forward(), c.Up(), near / 10, far / 10, nearWidth / 10, nearHeight / 10)
-			m2.SubMeshes = m2.SubMeshes[:0]
-			m2.AddSubMesh(object.NewSubMesh(frustum.Geometry(), material.NewDefaultMaterial(""), &m2))
 		}
 
 		text := "FPS:        " + fmt.Sprint(fps) + "\n"
