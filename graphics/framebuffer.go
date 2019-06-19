@@ -7,7 +7,7 @@ import (
 )
 
 type Framebuffer struct {
-	id uint32
+	id int
 	width, height int
 }
 
@@ -23,7 +23,9 @@ var DefaultFramebuffer *Framebuffer = &Framebuffer{0, 800, 800}
 
 func NewFramebuffer() *Framebuffer {
 	var f Framebuffer
-	gl.CreateFramebuffers(1, &f.id)
+	var id uint32
+	gl.CreateFramebuffers(1, &id)
+	f.id = int(id)
 	f.width = 0
 	f.height = 0
 	return &f
@@ -46,7 +48,7 @@ func (f *Framebuffer) AttachTexture2D(attachment FramebufferAttachment, t *Textu
 	} else if f.width != t.Width || f.height != t.Height {
 		panic("incompatible framebuffer attachment size")
 	}
-	gl.NamedFramebufferTexture(f.id, uint32(attachment), t.id, level)
+	gl.NamedFramebufferTexture(uint32(f.id), uint32(attachment), uint32(t.id), level)
 }
 
 func (f *Framebuffer) AttachCubeMapFace(attachment FramebufferAttachment, cf *CubeMapFace, level int32) {
@@ -56,26 +58,26 @@ func (f *Framebuffer) AttachCubeMapFace(attachment FramebufferAttachment, cf *Cu
 	} else if f.width != cf.CubeMap.Width || f.height != cf.CubeMap.Height {
 		panic("incompatible framebuffer attachment size")
 	}
-	gl.NamedFramebufferTextureLayer(f.id, uint32(attachment), cf.CubeMap.id, level, int32(cf.layer))
+	gl.NamedFramebufferTextureLayer(uint32(f.id), uint32(attachment), uint32(cf.CubeMap.id), level, int32(cf.layer))
 }
 
 func (f *Framebuffer) ClearColor(rgba math.Vec4) {
-	gl.ClearNamedFramebufferfv(f.id, gl.COLOR, 0, &rgba[0])
+	gl.ClearNamedFramebufferfv(uint32(f.id), gl.COLOR, 0, &rgba[0])
 }
 
 func (f *Framebuffer) ClearDepth(clearDepth float32) {
-	gl.ClearNamedFramebufferfv(f.id, gl.DEPTH, 0, &clearDepth)
+	gl.ClearNamedFramebufferfv(uint32(f.id), gl.DEPTH, 0, &clearDepth)
 }
 
 func (f *Framebuffer) Complete() bool {
-	status := gl.CheckNamedFramebufferStatus(f.id, gl.FRAMEBUFFER)
+	status := gl.CheckNamedFramebufferStatus(uint32(f.id), gl.FRAMEBUFFER)
 	return status == gl.FRAMEBUFFER_COMPLETE
 }
 
 func (f *Framebuffer) BindDraw() {
-	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, f.id)
+	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, uint32(f.id))
 }
 
 func (f *Framebuffer) BindRead() {
-	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, f.id)
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, uint32(f.id))
 }

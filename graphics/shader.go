@@ -18,25 +18,25 @@ const (
 )
 
 type ShaderProgram struct {
-	id uint32
+	id int
 	va *VertexArray
 }
 
 type Shader struct {
-	id uint32
+	id int
 }
 
 type Attrib struct {
 	prog        *ShaderProgram
-	id          uint32
+	id          int
 	nComponents int
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
 type UniformBasic struct {
-	progID   uint32
-	location uint32
-	glType   uint32
+	progID   int
+	location int
+	glType   int
 }
 
 type UniformInteger struct {
@@ -65,7 +65,7 @@ type UniformMatrix4 struct {
 
 type UniformSampler struct {
 	UniformBasic
-	textureUnitIndex uint32
+	textureUnitIndex int
 }
 
 type UniformBool struct {
@@ -73,13 +73,15 @@ type UniformBool struct {
 }
 
 type VertexArray struct {
-	id             uint32
+	id             int
 	hasIndexBuffer bool
 }
 
 func NewVertexArray() *VertexArray {
 	var va VertexArray
-	gl.CreateVertexArrays(1, &va.id)
+	var id uint32
+	gl.CreateVertexArrays(1, &id)
+	va.id = int(id)
 	va.hasIndexBuffer = false
 	return &va
 }
@@ -89,25 +91,25 @@ func (va *VertexArray) SetAttribFormat(a *Attrib, dim, typ int, normalize bool) 
 	if a == nil {
 		return
 	}
-	gl.VertexArrayAttribFormat(va.id, a.id, int32(dim), uint32(typ), normalize, 0)
+	gl.VertexArrayAttribFormat(uint32(va.id), uint32(a.id), int32(dim), uint32(typ), normalize, 0)
 }
 
 func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int) {
 	if a == nil {
 		return
 	}
-	gl.VertexArrayAttribBinding(va.id, a.id, a.id)
-	gl.VertexArrayVertexBuffer(va.id, a.id, b.id, offset, int32(stride))
-	gl.EnableVertexArrayAttrib(va.id, a.id)
+	gl.VertexArrayAttribBinding(uint32(va.id), uint32(a.id), uint32(a.id))
+	gl.VertexArrayVertexBuffer(uint32(va.id), uint32(a.id), uint32(b.id), offset, int32(stride))
+	gl.EnableVertexArrayAttrib(uint32(va.id), uint32(a.id))
 }
 
 func (va *VertexArray) SetIndexBuffer(b *Buffer) {
-	gl.VertexArrayElementBuffer(va.id, b.id)
+	gl.VertexArrayElementBuffer(uint32(va.id), uint32(b.id))
 	va.hasIndexBuffer = true
 }
 
 func (va *VertexArray) Bind() {
-	gl.BindVertexArray(va.id)
+	gl.BindVertexArray(uint32(va.id))
 }
 
 func NewShader(_type ShaderType, src string) (*Shader, error) {
@@ -125,7 +127,7 @@ func NewShader(_type ShaderType, src string) (*Shader, error) {
 		panic("unknown shader type")
 	}
 
-	s.id = gl.CreateShader(gltype)
+	s.id = int(gl.CreateShader(gltype))
 	s.SetSource(src)
 	err := s.Compile()
 	if err != nil {
@@ -168,26 +170,26 @@ func (s *Shader) SetSource(src string) {
 	cSrc, free := gl.Strs(src)
 	defer free()
 	length := int32(len(src))
-	gl.ShaderSource(s.id, 1, cSrc, &length)
+	gl.ShaderSource(uint32(s.id), 1, cSrc, &length)
 }
 
 func (s *Shader) Compiled() bool {
 	var status int32
-	gl.GetShaderiv(s.id, gl.COMPILE_STATUS, &status)
+	gl.GetShaderiv(uint32(s.id), gl.COMPILE_STATUS, &status)
 	return status == gl.TRUE
 }
 
 func (s *Shader) Log() string {
 	var length int32
-	gl.GetShaderiv(s.id, gl.INFO_LOG_LENGTH, &length)
+	gl.GetShaderiv(uint32(s.id), gl.INFO_LOG_LENGTH, &length)
 	log := string(make([]byte, length+1))
-	gl.GetShaderInfoLog(s.id, length+1, nil, gl.Str(log))
+	gl.GetShaderInfoLog(uint32(s.id), length+1, nil, gl.Str(log))
 	log = log[:len(log)-1] // remove null terminator
 	return log
 }
 
 func (s *Shader) Compile() error {
-	gl.CompileShader(s.id)
+	gl.CompileShader(uint32(s.id))
 	if s.Compiled() {
 		return nil
 	} else {
@@ -197,19 +199,19 @@ func (s *Shader) Compile() error {
 
 func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error) {
 	var p ShaderProgram
-	p.id = gl.CreateProgram()
+	p.id = int(gl.CreateProgram())
 
 	if vShader != nil {
-		gl.AttachShader(p.id, vShader.id)
-		defer gl.DetachShader(p.id, vShader.id)
+		gl.AttachShader(uint32(p.id), uint32(vShader.id))
+		defer gl.DetachShader(uint32(p.id), uint32(vShader.id))
 	}
 	if fShader != nil {
-		gl.AttachShader(p.id, fShader.id)
-		defer gl.DetachShader(p.id, fShader.id)
+		gl.AttachShader(uint32(p.id), uint32(fShader.id))
+		defer gl.DetachShader(uint32(p.id), uint32(fShader.id))
 	}
 	if gShader != nil {
-		gl.AttachShader(p.id, gShader.id)
-		defer gl.DetachShader(p.id, gShader.id)
+		gl.AttachShader(uint32(p.id), uint32(gShader.id))
+		defer gl.DetachShader(uint32(p.id), uint32(gShader.id))
 	}
 
 	err := p.Link()
@@ -291,21 +293,21 @@ func ReadShaderProgramFromTemplates(vShaderFilename, fShaderFilename, gShaderFil
 
 func (p *ShaderProgram) Linked() bool {
 	var status int32
-	gl.GetProgramiv(p.id, gl.LINK_STATUS, &status)
+	gl.GetProgramiv(uint32(p.id), gl.LINK_STATUS, &status)
 	return status == gl.TRUE
 }
 
 func (p *ShaderProgram) Log() string {
 	var length int32
-	gl.GetProgramiv(p.id, gl.INFO_LOG_LENGTH, &length)
+	gl.GetProgramiv(uint32(p.id), gl.INFO_LOG_LENGTH, &length)
 	log := string(make([]byte, length+1))
-	gl.GetProgramInfoLog(p.id, length+1, nil, gl.Str(log))
+	gl.GetProgramInfoLog(uint32(p.id), length+1, nil, gl.Str(log))
 	log = log[:len(log)-1] // remove null terminator
 	return log
 }
 
 func (p *ShaderProgram) Link() error {
-	gl.LinkProgram(p.id)
+	gl.LinkProgram(uint32(p.id))
 	if p.Linked() {
 		return nil
 	}
@@ -316,42 +318,42 @@ func (u *UniformInteger) Set(i int) {
 	if u == nil {
 		return
 	}
-	gl.ProgramUniform1i(u.progID, int32(u.location), int32(i))
+	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(i))
 }
 
 func (u *UniformFloat) Set(f float32) {
 	if u == nil {
 		return
 	}
-	gl.ProgramUniform1f(u.progID, int32(u.location), f)
+	gl.ProgramUniform1f(uint32(u.progID), int32(u.location), f)
 }
 
 func (u *UniformVector2) Set(v math.Vec2) {
 	if u == nil {
 		return
 	}
-	gl.ProgramUniform2fv(u.progID, int32(u.location), 1, &v[0])
+	gl.ProgramUniform2fv(uint32(u.progID), int32(u.location), 1, &v[0])
 }
 
 func (u *UniformVector3) Set(v math.Vec3) {
 	if u == nil {
 		return
 	}
-	gl.ProgramUniform3fv(u.progID, int32(u.location), 1, &v[0])
+	gl.ProgramUniform3fv(uint32(u.progID), int32(u.location), 1, &v[0])
 }
 
 func (u *UniformVector4) Set(v math.Vec4) {
 	if u == nil {
 		return
 	}
-	gl.ProgramUniform4fv(u.progID, int32(u.location), 1, &v[0])
+	gl.ProgramUniform4fv(uint32(u.progID), int32(u.location), 1, &v[0])
 }
 
 func (u *UniformMatrix4) Set(m *math.Mat4) {
 	if u == nil {
 		return
 	}
-	gl.ProgramUniformMatrix4fv(u.progID, int32(u.location), 1, true, &m[0])
+	gl.ProgramUniformMatrix4fv(uint32(u.progID), int32(u.location), 1, true, &m[0])
 }
 
 func (u *UniformSampler) Set2D(t *Texture2D) {
@@ -359,8 +361,8 @@ func (u *UniformSampler) Set2D(t *Texture2D) {
 		return
 	}
 	// TODO: other shaders can mess with this texture index
-	gl.BindTextureUnit(u.textureUnitIndex, t.id)
-	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
+	gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(t.id))
+	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
 }
 
 func (u *UniformSampler) SetCube(t *CubeMap) {
@@ -368,8 +370,8 @@ func (u *UniformSampler) SetCube(t *CubeMap) {
 		return
 	}
 	// TODO: other shaders can mess with this texture index
-	gl.BindTextureUnit(u.textureUnitIndex, t.id)
-	gl.ProgramUniform1i(u.progID, int32(u.location), int32(u.textureUnitIndex))
+	gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(t.id))
+	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
 }
 
 func (u *UniformBool) Set(b bool) {
@@ -382,7 +384,7 @@ func (u *UniformBool) Set(b bool) {
 	} else {
 		i = 0
 	}
-	gl.ProgramUniform1i(u.progID, int32(u.location), i)
+	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), i)
 }
 
 func (a *Attrib) SetFormat(_type int, normalize bool) {
@@ -404,21 +406,21 @@ func (p *ShaderProgram) SetAttribIndexBuffer(b *Buffer) {
 }
 
 func (p *ShaderProgram) Bind() {
-	gl.UseProgram(p.id)
+	gl.UseProgram(uint32(p.id))
 }
 
 func (p *ShaderProgram) Attrib(name string) *Attrib {
 	var a Attrib
-	loc := gl.GetAttribLocation(p.id, gl.Str(name+"\x00"))
+	loc := gl.GetAttribLocation(uint32(p.id), gl.Str(name+"\x00"))
 	if loc == -1 {
 		return nil
 	}
-	a.id = uint32(loc)
+	a.id = int(loc)
 	a.prog = p
 
 	var size int32
 	var typ uint32
-	gl.GetActiveAttrib(a.prog.id, a.id, 0, nil, &size, &typ, nil)
+	gl.GetActiveAttrib(uint32(a.prog.id), uint32(a.id), 0, nil, &size, &typ, nil)
 
 	switch typ {
 	case gl.FLOAT:
@@ -438,15 +440,17 @@ func (p *ShaderProgram) Attrib(name string) *Attrib {
 
 func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 	var u UniformBasic
-	loc := gl.GetUniformLocation(p.id, gl.Str(name+"\x00"))
+	loc := gl.GetUniformLocation(uint32(p.id), gl.Str(name+"\x00"))
 	if loc == -1 {
 		println("error getting uniform " + name)
 		return nil
 	}
-	u.location = uint32(loc)
+	u.location = int(loc)
 	u.progID = p.id
-	index := gl.GetProgramResourceIndex(p.id, gl.UNIFORM, gl.Str(name+"\x00"))
-	gl.GetActiveUniform(p.id, index, 0, nil, nil, &u.glType, nil)
+	index := gl.GetProgramResourceIndex(uint32(p.id), gl.UNIFORM, gl.Str(name+"\x00"))
+	var gltype uint32
+	gl.GetActiveUniform(uint32(p.id), index, 0, nil, nil, &gltype, nil)
+	u.glType = int(gltype)
 	return &u
 }
 
@@ -529,7 +533,7 @@ func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
 	return &u
 }
 
-var textureUnitsUsed uint32 = 0
+var textureUnitsUsed int = 0
 
 func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 	var u UniformSampler

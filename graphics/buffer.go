@@ -8,20 +8,22 @@ import (
 )
 
 type Buffer struct {
-	id   uint32
+	id   int
 	size int
 }
 
 func NewBuffer() *Buffer {
 	var b Buffer
-	gl.CreateBuffers(1, &b.id)
+	var id uint32
+	gl.CreateBuffers(1, &id)
+	b.id = int(id)
 	b.size = 0
 	return &b
 }
 
 func (b *Buffer) Allocate(size int) {
 	b.size = size
-	gl.NamedBufferData(b.id, int32(b.size), nil, gl.STREAM_DRAW)
+	gl.NamedBufferData(uint32(b.id), int32(b.size), nil, gl.STREAM_DRAW)
 }
 
 func byteSlice(data interface{}) []byte {
@@ -46,5 +48,5 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 	if size > b.size {
 		b.Allocate(size)
 	}
-	gl.NamedBufferSubData(b.id, byteOffset, int32(size), p)
+	gl.NamedBufferSubData(uint32(b.id), byteOffset, int32(size), p)
 }
