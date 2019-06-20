@@ -6,7 +6,7 @@ import (
 	_ "github.com/hersle/gl3d/window" // initialize
 )
 
-func AddCameraFPSControls(c *camera.PerspectiveCamera, speed float32) {
+func AddCameraFPSControls(c camera.Camera, speed float32) {
 	KeyW.Listen(func(action Action) {
 		switch action {
 		case Hold:
