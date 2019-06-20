@@ -9,7 +9,7 @@ import (
 	"image/draw"
 	_ "image/jpeg"
 	_ "image/png"
-	_ "github.com/ftrvxmtrx/tga"
+	_ "github.com/ftrvxmtrx/tga" // must be imported after jpeg?
 	"unsafe"
 )
 

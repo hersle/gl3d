@@ -25,17 +25,17 @@ type Mesh struct {
 }
 
 type Geometry struct {
-	Verts []Vertex
-	Faces []int32
-	Inds  int
+	Verts    []Vertex
+	Faces    []int32
+	Inds     int
 	uploaded bool
 }
 
 type SubMesh struct {
 	mesh *Mesh
 	bbox *Box
-	Geo *Geometry
-	Mtl   *material.Material
+	Geo  *Geometry
+	Mtl  *material.Material
 }
 
 type indexedVertex struct {
@@ -151,7 +151,7 @@ func (sm *SubMesh) BoundingBox() *Box {
 			maxY = math.Max(maxY, pos.Y())
 			maxZ = math.Max(maxZ, pos.Z())
 		}
-		sm.bbox = NewBoxAxisAligned(math.NewVec3(minX, minY, minZ), math.NewVec3(maxX, maxY, maxZ))
+		sm.bbox = NewBoxAxisAligned(math.Vec3{minX, minY, minZ}, math.Vec3{maxX, maxY, maxZ})
 	}
 
 	return sm.bbox
@@ -164,7 +164,7 @@ func (sm *SubMesh) BoundingSphere() *Sphere {
 
 func (geo *Geometry) CalculateNormals() {
 	for i, _ := range geo.Verts {
-		geo.Verts[i].Normal = math.NewVec3(0, 0, 0)
+		geo.Verts[i].Normal = math.Vec3{0, 0, 0}
 	}
 
 	for i := 0; i < geo.Inds; i += 3 {
@@ -193,7 +193,7 @@ func (geo *Geometry) CalculateNormals() {
 
 func (geo *Geometry) CalculateTangents() {
 	for i, _ := range geo.Verts {
-		geo.Verts[i].Tangent = math.NewVec3(0, 0, 0)
+		geo.Verts[i].Tangent = math.Vec3{0, 0, 0}
 	}
 
 	for i := 0; i < geo.Inds; i += 3 {
@@ -209,11 +209,11 @@ func (geo *Geometry) CalculateTangents() {
 		if det != 0 {
 			det = 1 / det
 		}
-		tangent := math.NewVec3(
-			dTexCoord2.Y()*edge1.X()-dTexCoord1.Y()*edge2.X(),
-			dTexCoord2.Y()*edge1.Y()-dTexCoord1.Y()*edge2.Y(),
-			dTexCoord2.Y()*edge1.Z()-dTexCoord1.Y()*edge2.Z(),
-		).Scale(det)
+		tangent := math.Vec3{
+			dTexCoord2.Y()*edge1.X() - dTexCoord1.Y()*edge2.X(),
+			dTexCoord2.Y()*edge1.Y() - dTexCoord1.Y()*edge2.Y(),
+			dTexCoord2.Y()*edge1.Z() - dTexCoord1.Y()*edge2.Z()}.
+			Scale(det)
 		if det != 0 {
 			// tangent is not zero vector
 			tangent = tangent.Norm() // TODO: ??
@@ -235,9 +235,9 @@ func (geo *Geometry) CalculateTangents() {
 				panic("cannot find vector not parallell to zero vector")
 			}
 			if v.Normal.X() == 0 {
-				v.Tangent = math.NewVec3(1, 0, 0)
+				v.Tangent = math.Vec3{1, 0, 0}
 			} else {
-				v.Tangent = math.NewVec3(0, 1, 0)
+				v.Tangent = math.Vec3{0, 1, 0}
 			}
 		} else {
 			v.Tangent = v.Tangent.Norm()
@@ -266,7 +266,7 @@ func readVec2(fields []string) math.Vec2 {
 	var x, y float32
 	fmt.Sscan(fields[0], &x)
 	fmt.Sscan(fields[1], &y)
-	return math.NewVec2(x, y)
+	return math.Vec2{x, y}
 }
 
 func readVec3(fields []string) math.Vec3 {
@@ -274,7 +274,7 @@ func readVec3(fields []string) math.Vec3 {
 	fmt.Sscan(fields[0], &x)
 	fmt.Sscan(fields[1], &y)
 	fmt.Sscan(fields[2], &z)
-	return math.NewVec3(x, y, z)
+	return math.Vec3{x, y, z}
 }
 
 func readIndexedVertex(desc string, nv, nvt, nvn int) indexedVertex {
@@ -319,9 +319,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	}
 	defer file.Close()
 
-	var positions []math.Vec3 = []math.Vec3{math.NewVec3(0, 0, 0)}
-	var texCoords []math.Vec2 = []math.Vec2{math.NewVec2(0, 0)}
-	var normals []math.Vec3 = []math.Vec3{math.NewVec3(0, 0, 0)}
+	var positions []math.Vec3 = []math.Vec3{math.Vec3{0, 0, 0}}
+	var texCoords []math.Vec2 = []math.Vec2{math.Vec2{0, 0}}
+	var normals []math.Vec3 = []math.Vec3{math.Vec3{0, 0, 0}}
 
 	var sGroupInd int = 0
 	var sGroups []smoothingGroup = []smoothingGroup{newSmoothingGroup(0)}
@@ -428,11 +428,11 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 			if det != 0 {
 				det = 1 / det
 			}
-			tangent := math.NewVec3(
-				dTexCoord2.Y()*edge1.X()-dTexCoord1.Y()*edge2.X(),
-				dTexCoord2.Y()*edge1.Y()-dTexCoord1.Y()*edge2.Y(),
-				dTexCoord2.Y()*edge1.Z()-dTexCoord1.Y()*edge2.Z(),
-			).Scale(det)
+			tangent := math.Vec3{
+				dTexCoord2.Y()*edge1.X() - dTexCoord1.Y()*edge2.X(),
+				dTexCoord2.Y()*edge1.Y() - dTexCoord1.Y()*edge2.Y(),
+				dTexCoord2.Y()*edge1.Z() - dTexCoord1.Y()*edge2.Z()}.
+				Scale(det)
 			if det != 0 {
 				// tangent is not zero vector
 				tangent = tangent.Norm()
@@ -456,9 +456,9 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 						panic("cannot find vector not parallell to zero vector")
 					}
 					if normal.X() == 0 {
-						tangent = math.NewVec3(1, 0, 0)
+						tangent = math.Vec3{1, 0, 0}
 					} else {
-						tangent = math.NewVec3(0, 1, 0)
+						tangent = math.Vec3{0, 1, 0}
 					}
 				} else {
 					tangent = weightedTangents[iTri.iVerts[i].v].Norm()

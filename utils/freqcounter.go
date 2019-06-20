@@ -1,16 +1,16 @@
 package utils
 
 import (
-	"time"
 	"fmt"
+	"time"
 )
 
 type FrequencyCounter struct {
-	Interval int
+	Interval        int
 	ExtremeInterval int
-	count int
-	frequency int
-	startTime time.Time
+	count           int
+	frequency       int
+	startTime       time.Time
 }
 
 func NewFrequencyCounter() *FrequencyCounter {

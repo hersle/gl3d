@@ -33,7 +33,7 @@ func (c *PerspectiveCamera) ProjectionMatrix() *math.Mat4 {
 }
 
 func (c *PerspectiveCamera) Cull(sm *object.SubMesh) bool {
-	nh := c.near * float32(gomath.Tan(float64(c.fovY / 2))) * 2
+	nh := c.near * float32(gomath.Tan(float64(c.fovY/2))) * 2
 	nw := nh * c.aspect
 
 	nc := c.Position.Add(c.Forward().Scale(c.near))

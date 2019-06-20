@@ -1,15 +1,15 @@
 package graphics
 
 import (
+	"fmt"
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"time"
-	"fmt"
 )
 
 type RenderStatistics struct {
-	DrawCallCount int
-	VertexCount   int
-	frameStartTime time.Time
+	DrawCallCount   int
+	VertexCount     int
+	frameStartTime  time.Time
 	FramesPerSecond int
 }
 

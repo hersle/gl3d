@@ -28,9 +28,9 @@ func NewObject() *Object {
 }
 
 func (o *Object) Reset() {
-	o.Place(math.NewVec3(0, 0, 0))
-	o.Orient(math.NewVec3(1, 0, 0), math.NewVec3(0, 1, 0))
-	o.SetScale(math.NewVec3(1, 1, 1))
+	o.Place(math.Vec3{0, 0, 0})
+	o.Orient(math.Vec3{1, 0, 0}, math.Vec3{0, 1, 0})
+	o.SetScale(math.Vec3{1, 1, 1})
 }
 
 func (o *Object) updateUnitZVector() {
@@ -76,15 +76,15 @@ func (o *Object) Rotate(axis math.Vec3, ang float32) {
 }
 
 func (o *Object) RotateX(ang float32) {
-	o.Rotate(math.NewVec3(1, 0, 0), ang)
+	o.Rotate(math.Vec3{1, 0, 0}, ang)
 }
 
 func (o *Object) RotateY(ang float32) {
-	o.Rotate(math.NewVec3(0, 1, 0), ang)
+	o.Rotate(math.Vec3{0, 1, 0}, ang)
 }
 
 func (o *Object) RotateZ(ang float32) {
-	o.Rotate(math.NewVec3(0, 0, 1), ang)
+	o.Rotate(math.Vec3{0, 0, 1}, ang)
 }
 
 func (o *Object) SetScale(scaling math.Vec3) {

@@ -1,15 +1,15 @@
 package main
 
 import (
-	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
+	"github.com/hersle/gl3d/input"
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/render"
 	"github.com/hersle/gl3d/scene"
-	"github.com/hersle/gl3d/input"
+	"github.com/hersle/gl3d/window"
 	"testing"
 )
 
@@ -26,10 +26,10 @@ func TestMain(m *testing.M) {
 	}
 	s.AddMesh(car)
 
-	ambient := light.NewAmbientLight(math.NewVec3(0.5, 0.5, 0.5))
-	point := light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1))
+	ambient := light.NewAmbientLight(math.Vec3{0.5, 0.5, 0.5})
+	point := light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
 	point.AttenuationQuadratic = 0.00001
-	point.Place(math.NewVec3(0, 2, 2))
+	point.Place(math.Vec3{0, 2, 2})
 	s.AddAmbientLight(ambient)
 	s.AddPointLight(point)
 
@@ -50,7 +50,7 @@ func TestMain(m *testing.M) {
 		c.SetAspect(window.Aspect())
 		renderer.Clear()
 		renderer.RenderScene(s, c)
-		renderer.RenderText(math.NewVec2(-1, +1), graphics.RenderStats.String(), 0.05)
+		renderer.RenderText(math.Vec2{-1, +1}, graphics.RenderStats.String(), 0.05)
 		renderer.Render()
 		graphics.RenderStats.Reset()
 

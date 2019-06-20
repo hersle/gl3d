@@ -54,31 +54,31 @@ type MeshShaderProgram struct {
 
 // TODO: redesign attr/uniform access system?
 type MeshRenderer struct {
-	sp1        *MeshShaderProgram
-	sp2        *MeshShaderProgram
-	sp3        *MeshShaderProgram
-	sp4        *MeshShaderProgram
+	sp1 *MeshShaderProgram
+	sp2 *MeshShaderProgram
+	sp3 *MeshShaderProgram
+	sp4 *MeshShaderProgram
 
-	renderState      *graphics.RenderState
+	renderState *graphics.RenderState
 
 	emptyShadowCubeMap *graphics.CubeMap
 
 	normalMatrix math.Mat4
 
 	vboCache map[*object.Vertex]int
-	vbos []*graphics.Buffer
-	ibos []*graphics.Buffer
+	vbos     []*graphics.Buffer
+	ibos     []*graphics.Buffer
 
 	tex2ds map[image.Image]*graphics.Texture2D
 
 	pointLightShadowMaps map[int]*graphics.CubeMap
-	spotLightShadowMaps map[int]*graphics.Texture2D
-	dirLightShadowMaps map[int]*graphics.Texture2D
+	spotLightShadowMaps  map[int]*graphics.Texture2D
+	dirLightShadowMaps   map[int]*graphics.Texture2D
 
-	shadowSp          *ShadowMapShaderProgram
-	dirshadowSp         *DirectionalLightShadowMapShaderProgram
+	shadowSp             *ShadowMapShaderProgram
+	dirshadowSp          *DirectionalLightShadowMapShaderProgram
 	shadowMapFramebuffer *graphics.Framebuffer
-	shadowRenderState *graphics.RenderState
+	shadowRenderState    *graphics.RenderState
 }
 
 type ShadowMapShaderProgram struct {
@@ -208,7 +208,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.renderState.Cull = graphics.CullBack
 	r.renderState.PrimitiveType = graphics.Triangle
 
-	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.NewVec4(0, 0, 0, 0))
+	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.Vec4{0, 0, 0, 0})
 
 	r.vboCache = make(map[*object.Vertex]int)
 	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
@@ -389,7 +389,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 		r.vbos = append(r.vbos, vbo)
 		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
 	}
 
 	var v object.Vertex
@@ -484,7 +484,7 @@ func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
 
 		r.vbos = append(r.vbos, vbo)
 		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
 	}
 
 	var v object.Vertex
@@ -516,7 +516,7 @@ func (r *MeshRenderer) SetDirShadowSubMesh(sp *MeshShaderProgram, sm *object.Sub
 
 		r.vbos = append(r.vbos, vbo)
 		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos)-1
+		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
 	}
 
 	var v object.Vertex
@@ -534,26 +534,26 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 
 	// TODO: re-render also when objects have moved
 	/*
-	if !l.DirtyShadowMap {
-		return
-	}
+		if !l.DirtyShadowMap {
+			return
+		}
 	*/
 
 	forwards := []math.Vec3{
-		math.NewVec3(+1, 0, 0),
-		math.NewVec3(-1, 0, 0),
-		math.NewVec3(0, +1, 0),
-		math.NewVec3(0, -1, 0),
-		math.NewVec3(0, 0, +1),
-		math.NewVec3(0, 0, -1),
+		math.Vec3{+1, 0, 0},
+		math.Vec3{-1, 0, 0},
+		math.Vec3{0, +1, 0},
+		math.Vec3{0, -1, 0},
+		math.Vec3{0, 0, +1},
+		math.Vec3{0, 0, -1},
 	}
 	ups := []math.Vec3{
-		math.NewVec3(0, -1, 0),
-		math.NewVec3(0, -1, 0),
-		math.NewVec3(0, 0, +1),
-		math.NewVec3(0, 0, -1),
-		math.NewVec3(0, -1, 0),
-		math.NewVec3(0, -1, 0),
+		math.Vec3{0, -1, 0},
+		math.Vec3{0, -1, 0},
+		math.Vec3{0, 0, +1},
+		math.Vec3{0, 0, -1},
+		math.Vec3{0, -1, 0},
+		math.Vec3{0, -1, 0},
 	}
 
 	c := camera.NewPerspectiveCamera(90, 1, 0.1, l.ShadowFar)
@@ -659,16 +659,16 @@ func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
 		}
 	}
 	/*
-	for _, l := range s.SpotLights {
-		if l.CastShadows {
-			r.RenderSpotLightShadowMap(s, l)
+		for _, l := range s.SpotLights {
+			if l.CastShadows {
+				r.RenderSpotLightShadowMap(s, l)
+			}
 		}
-	}
-	for _, l := range s.DirectionalLights {
-		if l.CastShadows {
-			r.RenderDirectionalLightShadowMap(s, l)
+		for _, l := range s.DirectionalLights {
+			if l.CastShadows {
+				r.RenderDirectionalLightShadowMap(s, l)
+			}
 		}
-	}
 	*/
 }
 
@@ -679,5 +679,5 @@ func PointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
 		return true
 	}
 	dist = dist - sphere.Radius
-	return dist*dist < (1 / 0.05 - 1) / l.AttenuationQuadratic
+	return dist*dist < (1/0.05-1)/l.AttenuationQuadratic
 }

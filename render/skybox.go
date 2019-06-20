@@ -23,7 +23,7 @@ type SkyboxRenderer struct {
 	ibo         *graphics.Buffer
 	tex         *graphics.CubeMap
 	renderState *graphics.RenderState
-	cubemaps map[*scene.CubeMap]*graphics.CubeMap
+	cubemaps    map[*scene.CubeMap]*graphics.CubeMap
 }
 
 func NewSkyboxShaderProgram() *SkyboxShaderProgram {
@@ -55,14 +55,14 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 
 	r.vbo = graphics.NewBuffer()
 	verts := []math.Vec3{
-		math.NewVec3(-1.0, -1.0, -1.0),
-		math.NewVec3(+1.0, -1.0, -1.0),
-		math.NewVec3(+1.0, +1.0, -1.0),
-		math.NewVec3(-1.0, +1.0, -1.0),
-		math.NewVec3(-1.0, -1.0, +1.0),
-		math.NewVec3(+1.0, -1.0, +1.0),
-		math.NewVec3(+1.0, +1.0, +1.0),
-		math.NewVec3(-1.0, +1.0, +1.0),
+		math.Vec3{-1.0, -1.0, -1.0},
+		math.Vec3{+1.0, -1.0, -1.0},
+		math.Vec3{+1.0, +1.0, -1.0},
+		math.Vec3{-1.0, +1.0, -1.0},
+		math.Vec3{-1.0, -1.0, +1.0},
+		math.Vec3{+1.0, -1.0, +1.0},
+		math.Vec3{+1.0, +1.0, +1.0},
+		math.Vec3{-1.0, +1.0, +1.0},
 	}
 	r.vbo.SetData(verts, 0)
 
@@ -113,7 +113,7 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 
 func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {
 	r.sp.Position.SetFormat(gl.FLOAT, false)
-	r.sp.Position.SetSource(vbo, 0, int(unsafe.Sizeof(math.NewVec3(0, 0, 0))))
+	r.sp.Position.SetSource(vbo, 0, int(unsafe.Sizeof(math.Vec3{0, 0, 0})))
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 

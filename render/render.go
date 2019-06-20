@@ -10,18 +10,18 @@ import (
 
 // TODO: redesign attr/uniform access system?
 type Renderer struct {
-	meshRenderer *MeshRenderer
-	skyboxRenderer    *SkyboxRenderer
-	textRenderer *TextRenderer
-	quadRenderer *QuadRenderer
-	arrowRenderer *ArrowRenderer
+	meshRenderer   *MeshRenderer
+	skyboxRenderer *SkyboxRenderer
+	textRenderer   *TextRenderer
+	quadRenderer   *QuadRenderer
+	arrowRenderer  *ArrowRenderer
 
 	sceneFramebuffer       *graphics.Framebuffer
 	sceneRenderTarget      *graphics.Texture2D
 	sceneDepthRenderTarget *graphics.Texture2D
 
-	overlayFramebuffer       *graphics.Framebuffer
-	overlayRenderTarget      *graphics.Texture2D
+	overlayFramebuffer  *graphics.Framebuffer
+	overlayRenderTarget *graphics.Texture2D
 }
 
 func NewRenderer() (*Renderer, error) {
@@ -78,10 +78,10 @@ func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *Renderer) Clear() {
-	graphics.DefaultFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
-	r.sceneFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
+	graphics.DefaultFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
+	r.sceneFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
 	r.sceneFramebuffer.ClearDepth(1)
-	r.overlayFramebuffer.ClearColor(math.NewVec4(0, 0, 0, 0))
+	r.overlayFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
 }
 
 func (r *Renderer) Render() {

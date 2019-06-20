@@ -116,7 +116,7 @@ func NewShader(_type ShaderType, src string) (*Shader, error) {
 	var s Shader
 
 	var gltype uint32
-	switch (_type) {
+	switch _type {
 	case VertexShader:
 		gltype = gl.VERTEX_SHADER
 	case FragmentShader:

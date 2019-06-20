@@ -29,9 +29,9 @@ type SpotLight struct {
 
 type DirectionalLight struct {
 	camera.OrthoCamera
-	Diffuse        math.Vec3
-	Specular       math.Vec3
-	CastShadows          bool
+	Diffuse     math.Vec3
+	Specular    math.Vec3
+	CastShadows bool
 }
 
 func NewAmbientLight(color math.Vec3) *AmbientLight {

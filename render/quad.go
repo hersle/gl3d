@@ -43,12 +43,12 @@ func NewQuadRenderer() *QuadRenderer {
 	r.sp = NewQuadShaderProgram()
 
 	verts := []math.Vec2{
-		math.NewVec2(-1.0, -1.0),
-		math.NewVec2(+1.0, -1.0),
-		math.NewVec2(+1.0, +1.0),
-		math.NewVec2(-1.0, -1.0),
-		math.NewVec2(+1.0, +1.0),
-		math.NewVec2(-1.0, +1.0),
+		math.Vec2{-1.0, -1.0},
+		math.Vec2{+1.0, -1.0},
+		math.Vec2{+1.0, +1.0},
+		math.Vec2{-1.0, -1.0},
+		math.Vec2{+1.0, +1.0},
+		math.Vec2{-1.0, +1.0},
 	}
 	r.vbo = graphics.NewBuffer()
 	r.vbo.SetData(verts, 0)

@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/utils"
+	"image"
+	"image/color"
 	"os"
 	"path"
 	"strings"
-	"image"
-	"image/color"
 )
 
 type Material struct {
@@ -34,9 +34,9 @@ var defaultNormalTexture image.Image
 func NewDefaultMaterial(name string) *Material {
 	var mtl Material
 	mtl.Name = name
-	mtl.Ambient = math.NewVec3(0.2, 0.2, 0.2)
-	mtl.Diffuse = math.NewVec3(0.8, 0.8, 0.8)
-	mtl.Specular = math.NewVec3(0, 0, 0)
+	mtl.Ambient = math.Vec3{0.2, 0.2, 0.2}
+	mtl.Diffuse = math.Vec3{0.8, 0.8, 0.8}
+	mtl.Specular = math.Vec3{0, 0, 0}
 	mtl.Shine = 1
 	mtl.Alpha = 1
 	mtl.AmbientMap = whiteTransparentTexture
@@ -94,7 +94,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Ka error")
 					}
 				}
-				mtl.Ambient = math.NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.Ambient = math.Vec3{tmp[0], tmp[1], tmp[2]}
 			case "Kd":
 				if len(fields[1:]) < 3 {
 					panic("Kd error")
@@ -105,7 +105,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Kd error")
 					}
 				}
-				mtl.Diffuse = math.NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.Diffuse = math.Vec3{tmp[0], tmp[1], tmp[2]}
 			case "Ks":
 				if len(fields[1:]) < 3 {
 					panic("Ks error")
@@ -116,7 +116,7 @@ func ReadMaterials(filenames []string) []*Material {
 						panic("Ks error")
 					}
 				}
-				mtl.Specular = math.NewVec3(tmp[0], tmp[1], tmp[2])
+				mtl.Specular = math.Vec3{tmp[0], tmp[1], tmp[2]}
 			case "Ns":
 				if len(fields[1:]) != 1 {
 					panic("shine error")

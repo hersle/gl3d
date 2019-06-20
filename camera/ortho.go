@@ -25,8 +25,8 @@ func (c *OrthoCamera) updateProjectionMatrix() {
 	mat := math.Mat4Stack.New()
 	defer math.Mat4Stack.Pop()
 
-	c.projMat.OrthoCentered(math.NewVec3(c.width(), c.height, c.Far-c.near))
-	c.projMat.Mult(mat.Translation(math.NewVec3(0, 0, +((c.Far-c.near)/2)+c.near)))
+	c.projMat.OrthoCentered(math.Vec3{c.width(), c.height, c.Far - c.near})
+	c.projMat.Mult(mat.Translation(math.Vec3{0, 0, +((c.Far - c.near) / 2) + c.near}))
 	c.DirtyProjMat = false
 }
 

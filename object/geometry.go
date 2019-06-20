@@ -1,8 +1,8 @@
 package object
 
 import (
-	gomath "math"
 	"github.com/hersle/gl3d/math"
+	gomath "math"
 )
 
 type Box struct {
@@ -18,13 +18,13 @@ type Sphere struct {
 }
 
 type Frustum struct {
-	Org math.Vec3
-	Dir math.Vec3
-	Up math.Vec3
-	Right math.Vec3
-	NearDist float32
-	FarDist float32
-	NearWidth float32
+	Org        math.Vec3
+	Dir        math.Vec3
+	Up         math.Vec3
+	Right      math.Vec3
+	NearDist   float32
+	FarDist    float32
+	NearWidth  float32
 	NearHeight float32
 }
 
@@ -52,14 +52,14 @@ func NewBoxAxisAligned(point1, point2 math.Vec3) *Box {
 	maxY := math.Max(point1.Y(), point2.Y())
 	maxZ := math.Max(point1.Z(), point2.Z())
 
-	pos := math.NewVec3(minX, minY, minZ)
-	unitX := math.NewVec3(1, 0, 0)
-	unitY := math.NewVec3(0, 1, 0)
-	return NewBox(pos, unitX, unitY, maxX - minX, maxY - minY, maxZ - minZ)
+	pos := math.Vec3{minX, minY, minZ}
+	unitX := math.Vec3{1, 0, 0}
+	unitY := math.Vec3{0, 1, 0}
+	return NewBox(pos, unitX, unitY, maxX-minX, maxY-minY, maxZ-minZ)
 }
 
 func (b *Box) Center() math.Vec3 {
-	return b.Position.Add(b.UnitX.Scale(b.Dx/2)).Add(b.UnitY.Scale(b.Dy/2)).Add(b.UnitZ.Scale(b.Dz/2))
+	return b.Position.Add(b.UnitX.Scale(b.Dx / 2)).Add(b.UnitY.Scale(b.Dy / 2)).Add(b.UnitZ.Scale(b.Dz / 2))
 }
 
 func (b *Box) DiagonalLength() float32 {
@@ -126,49 +126,49 @@ func (s *Sphere) Geometry(n int) *Geometry {
 	var v Vertex
 
 	// top
-	v.Position = s.Center.Add(math.NewVec3(0, 0, +s.Radius))
-	v.TexCoord = math.NewVec2(0, 1)
+	v.Position = s.Center.Add(math.Vec3{0, 0, +s.Radius})
+	v.TexCoord = math.Vec2{0, 1}
 	geo.Verts = append(geo.Verts, v)
 
 	// middle
 	for i := 1; i < n; i++ {
 		ang1 := float64(i) / float64(n) * (gomath.Pi)
-		z := s.Center.Z() + s.Radius * float32(gomath.Cos(ang1))
-		u := 1 - float32(i) / float32(n)
-		for j := 0; j < 2 * n; j++ {
-			ang2 := float64(j) / float64(2 * n) * (2 * gomath.Pi)
-			x := s.Center.X() + s.Radius * float32(gomath.Sin(ang1) * gomath.Cos(ang2))
-			y := s.Center.Y() + s.Radius * float32(gomath.Sin(ang1) * gomath.Sin(ang2))
-			vv := float32(j) / float32(2 * n)
-			v.Position = math.NewVec3(x, y, z)
-			v.TexCoord = math.NewVec2(u, vv)
+		z := s.Center.Z() + s.Radius*float32(gomath.Cos(ang1))
+		u := 1 - float32(i)/float32(n)
+		for j := 0; j < 2*n; j++ {
+			ang2 := float64(j) / float64(2*n) * (2 * gomath.Pi)
+			x := s.Center.X() + s.Radius*float32(gomath.Sin(ang1)*gomath.Cos(ang2))
+			y := s.Center.Y() + s.Radius*float32(gomath.Sin(ang1)*gomath.Sin(ang2))
+			vv := float32(j) / float32(2*n)
+			v.Position = math.Vec3{x, y, z}
+			v.TexCoord = math.Vec2{u, vv}
 			geo.Verts = append(geo.Verts, v)
 		}
 	}
 
 	// bottom
-	v.Position = s.Center.Add(math.NewVec3(0, 0, -s.Radius))
-	v.TexCoord = math.NewVec2(0, 0)
+	v.Position = s.Center.Add(math.Vec3{0, 0, -s.Radius})
+	v.TexCoord = math.Vec2{0, 0}
 	geo.Verts = append(geo.Verts, v)
 
 	var i1, i2, i3, i4 int
 
 	// top
 	i1 = 0
-	for i := 0; i < 2 * n; i++ {
-		i2 = 1 + (i + 0) % (2 * n)
-		i3 = 1 + (i + 1) % (2 * n)
+	for i := 0; i < 2*n; i++ {
+		i2 = 1 + (i+0)%(2*n)
+		i3 = 1 + (i+1)%(2*n)
 		geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
 		geo.Inds += 3
 	}
 
 	// middle
 	for i := 2; i < n; i++ {
-		for j := 0; j < 2 * n; j++ {
-			i1 = 1 + (i - 1) * 2 * n + (j + 0) % (2 * n)
-			i2 = 1 + (i - 1) * 2 * n + (j + 1) % (2 * n)
-			i3 = 1 + (i - 2) * 2 * n + (j + 1) % (2 * n)
-			i4 = 1 + (i - 2) * 2 * n + (j + 0) % (2 * n)
+		for j := 0; j < 2*n; j++ {
+			i1 = 1 + (i-1)*2*n + (j+0)%(2*n)
+			i2 = 1 + (i-1)*2*n + (j+1)%(2*n)
+			i3 = 1 + (i-2)*2*n + (j+1)%(2*n)
+			i4 = 1 + (i-2)*2*n + (j+0)%(2*n)
 			geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
 			geo.Faces = append(geo.Faces, int32(i3), int32(i4), int32(i1))
 			geo.Inds += 6
@@ -177,9 +177,9 @@ func (s *Sphere) Geometry(n int) *Geometry {
 
 	// bottom
 	i1 = len(geo.Verts) - 1 // bottom
-	for i := 0; i < 2 * n; i++ {
-		i3 = 1 + (n - 2) * (2 * n) + (i + 0) % (2 * n)
-		i2 = 1 + (n - 2) * (2 * n) + (i + 1) % (2 * n)
+	for i := 0; i < 2*n; i++ {
+		i3 = 1 + (n-2)*(2*n) + (i+0)%(2*n)
+		i2 = 1 + (n-2)*(2*n) + (i+1)%(2*n)
 		geo.Faces = append(geo.Faces, int32(i1), int32(i2), int32(i3))
 		geo.Inds += 3
 	}
@@ -241,14 +241,14 @@ func (f *Frustum) Geometry() *Geometry {
 	farTopLeft := farCenter.Add(f.Right.Scale(-farWidth / 2)).Add(f.Up.Scale(+farHeight / 2))
 
 	p := []math.Vec3{}
-	p = append(p, farBottomLeft) // p1
-	p = append(p, farBottomRight) // p2
-	p = append(p, farTopRight) // p3
-	p = append(p, farTopLeft) // p4
-	p = append(p, nearBottomLeft) // p5
+	p = append(p, farBottomLeft)   // p1
+	p = append(p, farBottomRight)  // p2
+	p = append(p, farTopRight)     // p3
+	p = append(p, farTopLeft)      // p4
+	p = append(p, nearBottomLeft)  // p5
 	p = append(p, nearBottomRight) // p6
-	p = append(p, nearTopRight) // p7
-	p = append(p, nearTopLeft) // p8
+	p = append(p, nearTopRight)    // p7
+	p = append(p, nearTopLeft)     // p8
 
 	pi := [][]int{
 		{5, 6, 7, 8},

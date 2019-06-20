@@ -97,15 +97,15 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *gra
 				texY1 := float32(imgY1) / float32(imgH) // top
 				texX2 := float32(imgX2) / float32(imgW) // right
 				texY2 := float32(imgY2) / float32(imgH) // bottom
-				br := math.NewVec2(tl.X()+w, tl.Y()-h)
-				tr := math.NewVec2(br.X(), tl.Y())
-				bl := math.NewVec2(tl.X(), br.Y())
+				br := math.Vec2{tl.X() + w, tl.Y() - h}
+				tr := math.Vec2{br.X(), tl.Y()}
+				bl := math.Vec2{tl.X(), br.Y()}
 
-				normal := math.NewVec3(0, 0, 0)
-				vert1 := object.NewVertex(bl.Vec3(0), math.NewVec2(texX1, texY2), normal, math.Vec3{})
-				vert2 := object.NewVertex(br.Vec3(0), math.NewVec2(texX2, texY2), normal, math.Vec3{})
-				vert3 := object.NewVertex(tr.Vec3(0), math.NewVec2(texX2, texY1), normal, math.Vec3{})
-				vert4 := object.NewVertex(tl.Vec3(0), math.NewVec2(texX1, texY1), normal, math.Vec3{})
+				normal := math.Vec3{0, 0, 0}
+				vert1 := object.NewVertex(bl.Vec3(0), math.Vec2{texX1, texY2}, normal, math.Vec3{})
+				vert2 := object.NewVertex(br.Vec3(0), math.Vec2{texX2, texY2}, normal, math.Vec3{})
+				vert3 := object.NewVertex(tr.Vec3(0), math.Vec2{texX2, texY1}, normal, math.Vec3{})
+				vert4 := object.NewVertex(tl.Vec3(0), math.Vec2{texX1, texY1}, normal, math.Vec3{})
 				inds = append(inds, int32(len(verts)+0))
 				inds = append(inds, int32(len(verts)+1))
 				inds = append(inds, int32(len(verts)+2))
@@ -118,11 +118,11 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *gra
 		}
 
 		if char == '\n' {
-			tl = math.NewVec2(x0, tl.Y()-h)
+			tl = math.Vec2{x0, tl.Y() - h}
 		} else if char == '\t' {
-			tl = tl.Add(math.NewVec2(4*float32(face.Advance)*h/float32(subImgH), 0))
+			tl = tl.Add(math.Vec2{4 * float32(face.Advance) * h / float32(subImgH), 0})
 		} else {
-			tl = tl.Add(math.NewVec2(float32(face.Advance)*h/float32(subImgH), 0))
+			tl = tl.Add(math.Vec2{float32(face.Advance) * h / float32(subImgH), 0})
 		}
 	}
 

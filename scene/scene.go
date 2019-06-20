@@ -2,8 +2,8 @@ package scene
 
 import (
 	"github.com/hersle/gl3d/light"
-	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/utils"
 	"image"
 )
@@ -60,7 +60,7 @@ func NewScene() *Scene {
 	if err != nil {
 		panic(err)
 	}
-	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0, 0, 0))
+	s.AmbientLight = light.NewAmbientLight(math.Vec3{0, 0, 0})
 	return &s
 }
 

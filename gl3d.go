@@ -1,20 +1,20 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
+	"github.com/hersle/gl3d/input"
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/render"
 	"github.com/hersle/gl3d/scene"
-	"github.com/hersle/gl3d/window"
-	"github.com/hersle/gl3d/input"
 	"github.com/hersle/gl3d/utils"
+	"github.com/hersle/gl3d/window"
 	"os"
 	"runtime/pprof"
-	"flag"
 )
 
 var cpuprofile = flag.String("cpuprofile", "", "write CPU profile to file")
@@ -35,33 +35,33 @@ func main() {
 			panic(err)
 		}
 		if filename == "assets/objects/car/car.obj" {
-			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
+			model.Scale(math.Vec3{0.02, 0.02, 0.02})
 			model.RotateX(-3.1415 / 2)
 			model.RotateY(3.1415 - 3.1415/5)
 		}
 		if filename == "assets/objects/sponza/sponza.obj" || filename == "assets/objects/sponza2/sponza.obj" {
-			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
+			model.Scale(math.Vec3{0.02, 0.02, 0.02})
 		}
 		if filename == "assets/objects/conference/conference.obj" {
-			model.Scale(math.NewVec3(0.02, 0.02, 0.02))
+			model.Scale(math.Vec3{0.02, 0.02, 0.02})
 		}
 		if filename == "assets/objects/racecar/racecar.obj" {
-			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
+			model.Scale(math.Vec3{0.04, 0.04, 0.04})
 		}
 		if filename == "assets/objects/holodeck/holodeck.obj" {
-			model.Scale(math.NewVec3(0.04, 0.04, 0.04))
+			model.Scale(math.Vec3{0.04, 0.04, 0.04})
 		}
 		s.AddMesh(model)
 	}
 
-	s.AmbientLight = light.NewAmbientLight(math.NewVec3(0.1, 0.1, 0.1))
+	s.AmbientLight = light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1})
 
-	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.AddPointLight(light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1}))
 	s.PointLights[0].AttenuationQuadratic = 0.1
 
-	s.AddPointLight(light.NewPointLight(math.NewVec3(1, 1, 1), math.NewVec3(1, 1, 1)))
+	s.AddPointLight(light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1}))
 	s.PointLights[1].AttenuationQuadratic = 0.1
-	s.PointLights[1].Place(math.NewVec3(5, 5, 0))
+	s.PointLights[1].Place(math.Vec3{5, 5, 0})
 
 	filename1 := "assets/skyboxes/mountain/posx.jpg"
 	filename2 := "assets/skyboxes/mountain/negx.jpg"
@@ -119,10 +119,10 @@ func main() {
 		text += "forward:    " + c.Forward().String() + "\n"
 		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
 		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
-		renderer.RenderText(math.NewVec2(-1, +1), text, 0.05)
+		renderer.RenderText(math.Vec2{-1, +1}, text, 0.05)
 
 		renderer.Render()
-		input.Update() // TODO: make line order not matter
+		input.Update()  // TODO: make line order not matter
 		window.Update() // TODO: make line order not matter
 		graphics.RenderStats.Reset()
 

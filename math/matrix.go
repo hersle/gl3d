@@ -47,7 +47,7 @@ func (a *Mat4) Set(i, j int, aij float32) {
 }
 
 func (a *Mat4) Col(j int) Vec4 {
-	return NewVec4(a.At(0, j), a.At(1, j), a.At(2, j), a.At(3, j))
+	return Vec4{a.At(0, j), a.At(1, j), a.At(2, j), a.At(3, j)}
 }
 
 func (a *Mat4) SetCol(j int, col Vec4) {
@@ -58,7 +58,7 @@ func (a *Mat4) SetCol(j int, col Vec4) {
 }
 
 func (a *Mat4) Row(i int) Vec4 {
-	return NewVec4(a.At(i, 0), a.At(i, 1), a.At(i, 2), a.At(i, 3))
+	return Vec4{a.At(i, 0), a.At(i, 1), a.At(i, 2), a.At(i, 3)}
 }
 
 func (a *Mat4) SetRow(i int, row Vec4) {
@@ -192,28 +192,28 @@ func (a *Mat4) Invert() *Mat4 {
 	b44 := (a11 * a22 * a33) + (a12 * a23 * a31) + (a13 * a21 * a32)
 	b44 -= (a11 * a23 * a32) + (a12 * a21 * a33) + (a13 * a22 * a31)
 
-	a.SetRow(0, NewVec4(b11, b12, b13, b14))
-	a.SetRow(1, NewVec4(b21, b22, b23, b24))
-	a.SetRow(2, NewVec4(b31, b32, b33, b34))
-	a.SetRow(3, NewVec4(b41, b42, b43, b44))
+	a.SetRow(0, Vec4{b11, b12, b13, b14})
+	a.SetRow(1, Vec4{b21, b22, b23, b24})
+	a.SetRow(2, Vec4{b31, b32, b33, b34})
+	a.SetRow(3, Vec4{b41, b42, b43, b44})
 	a.Scale(1 / det)
 
 	return a
 }
 
 func (a *Mat4) Zero() *Mat4 {
-	a.SetRow(0, NewVec4(0, 0, 0, 0))
-	a.SetRow(1, NewVec4(0, 0, 0, 0))
-	a.SetRow(2, NewVec4(0, 0, 0, 0))
-	a.SetRow(3, NewVec4(0, 0, 0, 0))
+	a.SetRow(0, Vec4{0, 0, 0, 0})
+	a.SetRow(1, Vec4{0, 0, 0, 0})
+	a.SetRow(2, Vec4{0, 0, 0, 0})
+	a.SetRow(3, Vec4{0, 0, 0, 0})
 	return a
 }
 
 func (a *Mat4) Identity() *Mat4 {
-	a.SetRow(0, NewVec4(1, 0, 0, 0))
-	a.SetRow(1, NewVec4(0, 1, 0, 0))
-	a.SetRow(2, NewVec4(0, 0, 1, 0))
-	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	a.SetRow(0, Vec4{1, 0, 0, 0})
+	a.SetRow(1, Vec4{0, 1, 0, 0})
+	a.SetRow(2, Vec4{0, 0, 1, 0})
+	a.SetRow(3, Vec4{0, 0, 0, 1})
 	return a
 }
 
@@ -224,53 +224,53 @@ func (a *Mat4) Translation(d Vec3) *Mat4 {
 }
 
 func (a *Mat4) Scaling(factor Vec3) *Mat4 {
-	a.SetRow(0, NewVec4(factor.X(), 0, 0, 0))
-	a.SetRow(1, NewVec4(0, factor.Y(), 0, 0))
-	a.SetRow(2, NewVec4(0, 0, factor.Z(), 0))
-	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	a.SetRow(0, Vec4{factor.X(), 0, 0, 0})
+	a.SetRow(1, Vec4{0, factor.Y(), 0, 0})
+	a.SetRow(2, Vec4{0, 0, factor.Z(), 0})
+	a.SetRow(3, Vec4{0, 0, 0, 1})
 	return a
 }
 
 func (a *Mat4) RotationX(ang float32) *Mat4 {
 	cos := float32(math.Cos(float64(ang)))
 	sin := float32(math.Sin(float64(ang)))
-	a.SetCol(0, NewVec4(1, 0, 0, 0))
-	a.SetCol(1, NewVec4(0, cos, sin, 0))
-	a.SetCol(2, NewVec4(0, -sin, cos, 0))
-	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	a.SetCol(0, Vec4{1, 0, 0, 0})
+	a.SetCol(1, Vec4{0, cos, sin, 0})
+	a.SetCol(2, Vec4{0, -sin, cos, 0})
+	a.SetCol(3, Vec4{0, 0, 0, 1})
 	return a
 }
 
 func (a *Mat4) RotationY(ang float32) *Mat4 {
 	cos := float32(math.Cos(float64(ang)))
 	sin := float32(math.Sin(float64(ang)))
-	a.SetCol(0, NewVec4(cos, 0, -sin, 0))
-	a.SetCol(1, NewVec4(0, 1, 0, 0))
-	a.SetCol(2, NewVec4(sin, 0, cos, 0))
-	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	a.SetCol(0, Vec4{cos, 0, -sin, 0})
+	a.SetCol(1, Vec4{0, 1, 0, 0})
+	a.SetCol(2, Vec4{sin, 0, cos, 0})
+	a.SetCol(3, Vec4{0, 0, 0, 1})
 	return a
 }
 
 func (a *Mat4) RotationZ(ang float32) *Mat4 {
 	cos := float32(math.Cos(float64(ang)))
 	sin := float32(math.Sin(float64(ang)))
-	a.SetCol(0, NewVec4(cos, sin, 0, 0))
-	a.SetCol(1, NewVec4(-sin, cos, 0, 0))
-	a.SetCol(2, NewVec4(0, 0, 1, 0))
-	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	a.SetCol(0, Vec4{cos, sin, 0, 0})
+	a.SetCol(1, Vec4{-sin, cos, 0, 0})
+	a.SetCol(2, Vec4{0, 0, 1, 0})
+	a.SetCol(3, Vec4{0, 0, 0, 1})
 	return a
 }
 
 func (a *Mat4) OrthoCentered(size Vec3) *Mat4 {
-	a.Scaling(NewVec3(2/size.X(), 2/size.Y(), -2/size.Z()))
+	a.Scaling(Vec3{2 / size.X(), 2 / size.Y(), -2 / size.Z()})
 	return a
 }
 
 func (a *Mat4) Frustum(l, b, r, t, n, f float32) *Mat4 {
-	a.SetRow(0, NewVec4(2*n/(r-l), 0, (r+l)/(r-l), 0))
-	a.SetRow(1, NewVec4(0, 2*n/(t-b), (t+b)/(t-b), 0))
-	a.SetRow(2, NewVec4(0, 0, -(f+n)/(f-n), -2*f*n/(f-n)))
-	a.SetRow(3, NewVec4(0, 0, -1, 0))
+	a.SetRow(0, Vec4{2 * n / (r - l), 0, (r + l) / (r - l), 0})
+	a.SetRow(1, Vec4{0, 2 * n / (t - b), (t + b) / (t - b), 0})
+	a.SetRow(2, Vec4{0, 0, -(f + n) / (f - n), -2 * f * n / (f - n)})
+	a.SetRow(3, Vec4{0, 0, -1, 0})
 	return a
 }
 
@@ -290,7 +290,7 @@ func (a *Mat4) Orientation(right, up, forward Vec3) *Mat4 {
 	a.SetCol(0, right.Vec4(0))
 	a.SetCol(1, up.Vec4(0))
 	a.SetCol(2, forward.Vec4(0))
-	a.SetCol(3, NewVec4(0, 0, 0, 1))
+	a.SetCol(3, Vec4{0, 0, 0, 1})
 	return a
 }
 
@@ -301,7 +301,7 @@ func (a *Mat4) LookAt(eye, target, up Vec3) *Mat4 {
 	a.SetRow(0, right.Vec4(-right.Dot(eye)))
 	a.SetRow(1, up.Vec4(-up.Dot(eye)))
 	a.SetRow(2, fwd.Scale(-1).Vec4(+fwd.Dot(eye)))
-	a.SetRow(3, NewVec4(0, 0, 0, 1))
+	a.SetRow(3, Vec4{0, 0, 0, 1})
 	return a
 }
 

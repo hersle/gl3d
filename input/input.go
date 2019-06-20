@@ -2,8 +2,8 @@ package input
 
 import (
 	"github.com/go-gl/glfw/v3.2/glfw"
-	"github.com/hersle/gl3d/window"
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/window"
 )
 
 type Key glfw.Key
@@ -136,15 +136,15 @@ const (
 type MouseButton glfw.MouseButton
 
 const (
-	MouseButton1      MouseButton = MouseButton(glfw.MouseButton1)
-	MouseButton2      MouseButton = MouseButton(glfw.MouseButton2)
-	MouseButton3      MouseButton = MouseButton(glfw.MouseButton3)
-	MouseButton4      MouseButton = MouseButton(glfw.MouseButton4)
-	MouseButton5      MouseButton = MouseButton(glfw.MouseButton5)
-	MouseButton6      MouseButton = MouseButton(glfw.MouseButton6)
-	MouseButton7      MouseButton = MouseButton(glfw.MouseButton7)
-	MouseButton8      MouseButton = MouseButton(glfw.MouseButton8)
-	MouseButtonLast   MouseButton = MouseButton(glfw.MouseButtonLast)
+	MouseButton1    MouseButton = MouseButton(glfw.MouseButton1)
+	MouseButton2    MouseButton = MouseButton(glfw.MouseButton2)
+	MouseButton3    MouseButton = MouseButton(glfw.MouseButton3)
+	MouseButton4    MouseButton = MouseButton(glfw.MouseButton4)
+	MouseButton5    MouseButton = MouseButton(glfw.MouseButton5)
+	MouseButton6    MouseButton = MouseButton(glfw.MouseButton6)
+	MouseButton7    MouseButton = MouseButton(glfw.MouseButton7)
+	MouseButton8    MouseButton = MouseButton(glfw.MouseButton8)
+	MouseButtonLast MouseButton = MouseButton(glfw.MouseButtonLast)
 
 	MouseButtonLeft   MouseButton = MouseButton(glfw.MouseButtonLeft)
 	MouseButtonRight  MouseButton = MouseButton(glfw.MouseButtonRight)
@@ -216,7 +216,7 @@ func Update() {
 				listener(Release)
 			}
 		}
-		keyPressed[key] = false // not pressed after this frame
+		keyPressed[key] = false  // not pressed after this frame
 		keyReleased[key] = false // not released after this frame
 	}
 }
@@ -225,7 +225,7 @@ func init() {
 	window.Win.SetCharCallback(func(w *glfw.Window, char rune) {
 	})
 	window.Win.SetCursorPosCallback(func(w *glfw.Window, x, y float64) {
-		MousePosition = math.NewVec2(float32(x), float32(y))
+		MousePosition = math.Vec2{float32(x), float32(y)}
 	})
 	window.Win.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scan int, action glfw.Action, mods glfw.ModifierKey) {
 		switch action {

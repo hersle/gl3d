@@ -70,43 +70,43 @@ func (a Vec4) W() float32 {
 }
 
 func (a Vec2) Vec3(z float32) Vec3 {
-	return NewVec3(a.X(), a.Y(), z)
+	return Vec3{a.X(), a.Y(), z}
 }
 
 func (a Vec3) Vec4(w float32) Vec4 {
-	return NewVec4(a.X(), a.Y(), a.Z(), w)
+	return Vec4{a.X(), a.Y(), a.Z(), w}
 }
 
 func (a Vec3) Vec2() Vec2 {
-	return NewVec2(a.X(), a.Y())
+	return Vec2{a.X(), a.Y()}
 }
 
 func (a Vec4) Vec3() Vec3 {
-	return NewVec3(a.X(), a.Y(), a.Z())
+	return Vec3{a.X(), a.Y(), a.Z()}
 }
 
 func (a Vec2) Add(b Vec2) Vec2 {
-	return NewVec2(a.X()+b.X(), a.Y()+b.Y())
+	return Vec2{a.X() + b.X(), a.Y() + b.Y()}
 }
 
 func (a Vec3) Add(b Vec3) Vec3 {
-	return NewVec3(a.X()+b.X(), a.Y()+b.Y(), a.Z()+b.Z())
+	return Vec3{a.X() + b.X(), a.Y() + b.Y(), a.Z() + b.Z()}
 }
 
 func (a Vec4) Add(b Vec4) Vec4 {
-	return NewVec4(a.X()+b.X(), a.Y()+b.Y(), a.Z()+b.Z(), a.W()+b.W())
+	return Vec4{a.X() + b.X(), a.Y() + b.Y(), a.Z() + b.Z(), a.W() + b.W()}
 }
 
 func (a Vec2) Scale(factor float32) Vec2 {
-	return NewVec2(factor*a.X(), factor*a.Y())
+	return Vec2{factor * a.X(), factor * a.Y()}
 }
 
 func (a Vec3) Scale(factor float32) Vec3 {
-	return NewVec3(factor*a.X(), factor*a.Y(), factor*a.Z())
+	return Vec3{factor * a.X(), factor * a.Y(), factor * a.Z()}
 }
 
 func (a Vec4) Scale(factor float32) Vec4 {
-	return NewVec4(factor*a.X(), factor*a.Y(), factor*a.Z(), factor*a.W())
+	return Vec4{factor * a.X(), factor * a.Y(), factor * a.Z(), factor * a.W()}
 }
 
 func (a Vec2) Sub(b Vec2) Vec2 {
@@ -122,15 +122,15 @@ func (a Vec4) Sub(b Vec4) Vec4 {
 }
 
 func (a Vec2) Mult(b Vec2) Vec2 {
-	return NewVec2(a.X()*b.X(), a.Y()*b.Y())
+	return Vec2{a.X() * b.X(), a.Y() * b.Y()}
 }
 
 func (a Vec3) Mult(b Vec3) Vec3 {
-	return NewVec3(a.X()*b.X(), a.Y()*b.Y(), a.Z()*b.Z())
+	return Vec3{a.X() * b.X(), a.Y() * b.Y(), a.Z() * b.Z()}
 }
 
 func (a Vec4) Mult(b Vec4) Vec4 {
-	return NewVec4(a.X()*b.X(), a.Y()*b.Y(), a.Z()*b.Z(), a.W()*b.W())
+	return Vec4{a.X() * b.X(), a.Y() * b.Y(), a.Z() * b.Z(), a.W() * b.W()}
 }
 
 func (a Vec2) Dot(b Vec2) float32 {
@@ -173,7 +173,7 @@ func (a Vec3) Cross(b Vec3) Vec3 {
 	x := a.Y()*b.Z() - a.Z()*b.Y()
 	y := a.Z()*b.X() - a.X()*b.Z()
 	z := a.X()*b.Y() - a.Y()*b.X()
-	return NewVec3(x, y, z)
+	return Vec3{x, y, z}
 }
 
 func (a Vec3) Rotate(axis Vec3, ang float32) Vec3 {
@@ -191,7 +191,7 @@ func (a Vec4) Transform(m *Mat4) Vec4 {
 	y := m.Row(1).Dot(a)
 	z := m.Row(2).Dot(a)
 	w := m.Row(3).Dot(a)
-	return NewVec4(x, y, z, w)
+	return Vec4{x, y, z, w}
 }
 
 func (a Vec2) String() string {

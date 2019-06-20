@@ -1,13 +1,13 @@
 package render
 
 import (
+	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
 	"unsafe"
-	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
 type ArrowRenderer struct {
@@ -77,14 +77,14 @@ func (r *ArrowRenderer) SetColor(color math.Vec3) {
 }
 
 func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
-	stride := int(unsafe.Sizeof(math.NewVec3(0, 0, 0)))
+	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
 	r.sp.Position.SetSource(vbo, 0, stride)
 }
 
 func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
-	r.SetColor(math.NewVec3(1, 0, 0))
+	r.SetColor(math.Vec3{1, 0, 0})
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
@@ -103,7 +103,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
-	r.SetColor(math.NewVec3(0, 1, 0))
+	r.SetColor(math.Vec3{0, 1, 0})
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
@@ -122,7 +122,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
-	r.SetColor(math.NewVec3(0, 0, 1))
+	r.SetColor(math.Vec3{0, 0, 1})
 	for _, m := range s.Meshes {
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {

@@ -7,7 +7,7 @@ import (
 )
 
 type Framebuffer struct {
-	id int
+	id            int
 	width, height int
 }
 
