@@ -18,7 +18,7 @@ func NewRenderCommand(vertexCount int, state *RenderState) *RenderCommand {
 }
 
 func (cmd *RenderCommand) Execute() {
-	cmd.state.Apply()
+	cmd.state.apply()
 	if cmd.state.Program.va.hasIndexBuffer {
 		gl.DrawElements(uint32(cmd.state.PrimitiveType), int32(cmd.vertexCount), gl.UNSIGNED_INT, nil)
 	} else {

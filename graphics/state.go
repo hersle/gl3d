@@ -83,7 +83,7 @@ func (rs *RenderState) DisableBlending() {
 	rs.BlendDestinationFactor = ZeroBlendFactor
 }
 
-func (rs *RenderState) Apply() {
+func (rs *RenderState) apply() {
 	if currentState.Program != rs.Program {
 		switch rs.Program {
 		case nil:
@@ -100,7 +100,7 @@ func (rs *RenderState) Apply() {
 		case nil:
 			panic("tried to apply a render state with no framebuffer")
 		default:
-			rs.Framebuffer.BindDraw()
+			rs.Framebuffer.bindDraw()
 			gl.Viewport(0, 0, int32(rs.Framebuffer.Width()), int32(rs.Framebuffer.Height()))
 		}
 		currentState.Framebuffer = rs.Framebuffer

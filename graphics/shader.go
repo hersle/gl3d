@@ -33,43 +33,43 @@ type Attrib struct {
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
-type UniformBasic struct {
+type uniformBasic struct {
 	progID   int
 	location int
 	glType   int
 }
 
 type UniformInteger struct {
-	UniformBasic
+	uniformBasic
 }
 
 type UniformFloat struct {
-	UniformBasic
+	uniformBasic
 }
 
 type UniformVector2 struct {
-	UniformBasic
+	uniformBasic
 }
 
 type UniformVector3 struct {
-	UniformBasic
+	uniformBasic
 }
 
 type UniformVector4 struct {
-	UniformBasic
+	uniformBasic
 }
 
 type UniformMatrix4 struct {
-	UniformBasic
+	uniformBasic
 }
 
 type UniformSampler struct {
-	UniformBasic
+	uniformBasic
 	textureUnitIndex int
 }
 
 type UniformBool struct {
-	UniformBasic
+	uniformBasic
 }
 
 type VertexArray struct {
@@ -438,8 +438,8 @@ func (p *ShaderProgram) Attrib(name string) *Attrib {
 	return &a
 }
 
-func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
-	var u UniformBasic
+func (p *ShaderProgram) uniformBasic(name string) *uniformBasic {
+	var u uniformBasic
 	loc := gl.GetUniformLocation(uint32(p.id), gl.Str(name+"\x00"))
 	if loc == -1 {
 		println("error getting uniform " + name)
@@ -456,11 +456,11 @@ func (p *ShaderProgram) UniformBasic(name string) *UniformBasic {
 
 func (p *ShaderProgram) UniformInteger(name string) *UniformInteger {
 	var u UniformInteger
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	if u.glType != gl.INT {
 		return nil
 	}
@@ -469,11 +469,11 @@ func (p *ShaderProgram) UniformInteger(name string) *UniformInteger {
 
 func (p *ShaderProgram) UniformFloat(name string) *UniformFloat {
 	var u UniformFloat
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	if u.glType != gl.FLOAT {
 		return nil
 	}
@@ -482,11 +482,11 @@ func (p *ShaderProgram) UniformFloat(name string) *UniformFloat {
 
 func (p *ShaderProgram) UniformVector2(name string) *UniformVector2 {
 	var u UniformVector2
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	if u.glType != gl.FLOAT_VEC2 {
 		return nil
 	}
@@ -495,11 +495,11 @@ func (p *ShaderProgram) UniformVector2(name string) *UniformVector2 {
 
 func (p *ShaderProgram) UniformVector3(name string) *UniformVector3 {
 	var u UniformVector3
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	if u.glType != gl.FLOAT_VEC3 {
 		return nil
 	}
@@ -508,11 +508,11 @@ func (p *ShaderProgram) UniformVector3(name string) *UniformVector3 {
 
 func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
 	var u UniformVector4
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	if u.glType != gl.FLOAT_VEC4 {
 		return nil
 	}
@@ -521,11 +521,11 @@ func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
 
 func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
 	var u UniformMatrix4
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	// TODO: what if things not found?
 	if u.glType != gl.FLOAT_MAT4 {
 		return nil
@@ -537,11 +537,11 @@ var textureUnitsUsed int = 0
 
 func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 	var u UniformSampler
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	if u.glType != gl.SAMPLER_2D && u.glType != gl.SAMPLER_CUBE { // TODO: allow more sampler types
 		return nil
 	}
@@ -552,11 +552,11 @@ func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
 
 func (p *ShaderProgram) UniformBool(name string) *UniformBool {
 	var u UniformBool
-	ptr := p.UniformBasic(name)
+	ptr := p.uniformBasic(name)
 	if ptr == nil {
 		return nil
 	}
-	u.UniformBasic = *ptr
+	u.uniformBasic = *ptr
 	// TODO: what if things not found?
 	if u.glType != gl.BOOL {
 		return nil

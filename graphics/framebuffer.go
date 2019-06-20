@@ -74,10 +74,10 @@ func (f *Framebuffer) Complete() bool {
 	return status == gl.FRAMEBUFFER_COMPLETE
 }
 
-func (f *Framebuffer) BindDraw() {
+func (f *Framebuffer) bindDraw() {
 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, uint32(f.id))
 }
 
-func (f *Framebuffer) BindRead() {
+func (f *Framebuffer) bindRead() {
 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, uint32(f.id))
 }
