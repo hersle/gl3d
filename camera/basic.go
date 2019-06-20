@@ -59,6 +59,5 @@ func (c *BasicCamera) ViewMatrix() *math.Mat4 {
 	if c.DirtyWorldMatrix {
 		c.updateViewMatrix()
 	}
-	c.updateViewMatrix()
 	return &c.viewMat
 }

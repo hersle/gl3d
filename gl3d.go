@@ -98,12 +98,12 @@ func main() {
 		}
 		if input.KeyMinus.JustPressed() {
 			for _, mesh := range s.Meshes {
-				mesh.Scale(math.Vec3{1.1, 1.1, 1.1})
+				mesh.Scale(math.Vec3{2.0, 2.0, 2.0})
 			}
 		}
 		if input.KeySlash.JustPressed() {
 			for _, mesh := range s.Meshes {
-				mesh.Scale(math.Vec3{0.9, 0.9, 0.9})
+				mesh.Scale(math.Vec3{0.5, 0.5, 0.5})
 			}
 		}
 
