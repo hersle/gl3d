@@ -49,10 +49,9 @@ func (c *BasicCamera) SetAspect(aspect float32) {
 }
 
 func (c *BasicCamera) updateViewMatrix() {
-	// TODO: elegantly make the inverse of the underlying object world matrix
-	//c.viewMat.Copy(c.WorldMatrix()).MultScaling(NewVec3(1, 1, -1)).Invert()
-	c.viewMat.LookAt(c.Position, c.Position.Add(c.Forward()), c.Up())
-	c.DirtyViewMat = false
+	c.viewMat.Identity()
+	c.viewMat.Mult(c.WorldMatrix())
+	c.viewMat.Invert()
 }
 
 func (c *BasicCamera) ViewMatrix() *math.Mat4 {
