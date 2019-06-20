@@ -107,6 +107,31 @@ func (m *Mesh) Place(position math.Vec3) {
 	m.invalidate()
 }
 
+func (m *Mesh) Rotate(axis math.Vec3, ang float32) {
+	m.Object.Rotate(axis, ang)
+	m.invalidate()
+}
+
+func (m *Mesh) RotateX(ang float32) {
+	m.Object.RotateX(ang)
+	m.invalidate()
+}
+
+func (m *Mesh) RotateY(ang float32) {
+	m.Object.RotateY(ang)
+	m.invalidate()
+}
+
+func (m *Mesh) RotateZ(ang float32) {
+	m.Object.RotateZ(ang)
+	m.invalidate()
+}
+
+func (m *Mesh) Scale(factor math.Vec3) {
+	m.Object.Scale(factor)
+	m.invalidate()
+}
+
 func (m *Mesh) SetScale(scaling math.Vec3) {
 	m.Object.SetScale(scaling)
 	m.invalidate()
