@@ -79,6 +79,15 @@ type MeshRenderer struct {
 	dirshadowSp          *DirectionalLightShadowMapShaderProgram
 	shadowMapFramebuffer *graphics.Framebuffer
 	shadowRenderState    *graphics.RenderState
+
+	normalMatrices []math.Mat4
+	renderInfos []renderInfo
+}
+
+type renderInfo struct {
+	subMesh *object.SubMesh
+	normalMatrix *math.Mat4
+	camera camera.Camera
 }
 
 type ShadowMapShaderProgram struct {
@@ -229,35 +238,21 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	return &r, nil
 }
 
-func (r *MeshRenderer) renderMesh(sp *MeshShaderProgram, m *object.Mesh, c camera.Camera) {
-	r.SetMesh(sp, m)
-	r.SetCamera(sp, c)
-
-	// TODO: cache per mesh/camera?
-	if sp.NormalMatrix != nil {
-		r.normalMatrix.Identity()
-		r.normalMatrix.Mult(c.ViewMatrix())
-		r.normalMatrix.Mult(m.WorldMatrix())
-		r.normalMatrix.Invert()
-		r.normalMatrix.Transpose()
-		sp.NormalMatrix.Set(&r.normalMatrix)
-	}
-
-	for _, subMesh := range m.SubMeshes {
-		if !c.Cull(subMesh) {
-			r.SetSubMesh(sp, subMesh)
-			graphics.NewRenderCommand(subMesh.Geo.Inds, r.renderState).Execute()
-		}
-	}
+func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
+	r.SetMesh(sp, ri.subMesh.Mesh)
+	r.SetCamera(sp, ri.camera)
+	sp.NormalMatrix.Set(ri.normalMatrix)
+	r.SetSubMesh(sp, ri.subMesh)
+	graphics.NewRenderCommand(ri.subMesh.Geo.Inds, r.renderState).Execute()
 }
 
-func (r *MeshRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) AmbientPass(c camera.Camera) {
 	r.renderState.DisableBlending()
 	r.renderState.DepthTest = graphics.LessDepthTest
 	r.renderState.Program = r.sp1.ShaderProgram
 
-	for _, m := range s.Meshes {
-		r.renderMesh(r.sp1, m, c)
+	for _, ri := range r.renderInfos {
+		r.ExecRenderInfo(&ri, r.sp1)
 	}
 }
 
@@ -276,8 +271,8 @@ func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 
 	for _, l := range s.PointLights {
 		r.SetPointLight(r.sp2, l)
-		for _, m := range s.Meshes {
-			r.renderMesh(r.sp2, m, c)
+		for _, ri := range r.renderInfos {
+			r.ExecRenderInfo(&ri, r.sp2)
 		}
 	}
 }
@@ -287,8 +282,8 @@ func (r *MeshRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 
 	for _, l := range s.SpotLights {
 		r.SetSpotLight(r.sp3, l)
-		for _, m := range s.Meshes {
-			r.renderMesh(r.sp3, m, c)
+		for _, ri := range r.renderInfos {
+			r.ExecRenderInfo(&ri, r.sp3)
 		}
 	}
 }
@@ -298,18 +293,46 @@ func (r *MeshRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 
 	for _, l := range s.DirectionalLights {
 		r.SetDirectionalLight(r.sp4, l)
-		for _, m := range s.Meshes {
-			r.renderMesh(r.sp4, m, c)
+		for _, ri := range r.renderInfos {
+			r.ExecRenderInfo(&ri, r.sp4)
 		}
 	}
 }
 
 func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+	r.renderInfos = r.renderInfos[:0]
+	if len(r.normalMatrices) < len(s.Meshes) {
+		r.normalMatrices = make([]math.Mat4, len(s.Meshes))
+	}
+	for i, m := range s.Meshes {
+		calcNormalMatrix := false
+
+		for _, sm := range m.SubMeshes {
+			if !c.Cull(sm) {
+				if !calcNormalMatrix {
+					normalMatrix := &r.normalMatrices[i]
+					normalMatrix.Identity()
+					normalMatrix.Mult(c.ViewMatrix())
+					normalMatrix.Mult(m.WorldMatrix())
+					normalMatrix.Invert()
+					normalMatrix.Transpose()
+					calcNormalMatrix = true
+				}
+
+				var ri renderInfo
+				ri.subMesh = sm
+				ri.normalMatrix = &r.normalMatrices[i]
+				ri.camera = c
+				r.renderInfos = append(r.renderInfos, ri)
+			}
+		}
+	}
+
 	r.RenderShadowMaps(s)
 
 	r.renderState.Framebuffer = fb
 
-	r.AmbientPass(s, c) // also works as depth pass
+	r.AmbientPass(c) // also works as depth pass
 	r.LightPass(s, c)
 }
 

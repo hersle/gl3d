@@ -32,7 +32,7 @@ type Geometry struct {
 }
 
 type SubMesh struct {
-	mesh *Mesh
+	Mesh *Mesh
 	bbox *Box
 	Geo  *Geometry
 	Mtl  *material.Material
@@ -139,7 +139,7 @@ func (m *Mesh) SetScale(scaling math.Vec3) {
 
 func NewSubMesh(geo *Geometry, mtl *material.Material, mesh *Mesh) *SubMesh {
 	var sm SubMesh
-	sm.mesh = mesh
+	sm.Mesh = mesh
 	sm.Geo = geo
 	sm.Mtl = mtl
 	return &sm
@@ -159,7 +159,7 @@ func (sm *SubMesh) BoundingBox() *Box {
 	}
 
 	if sm.bbox == nil {
-		worldMatrix := sm.mesh.WorldMatrix()
+		worldMatrix := sm.Mesh.WorldMatrix()
 		pos := sm.Geo.Verts[0].Position.Vec4(1).Transform(worldMatrix).Vec3()
 		minX := pos.X()
 		minY := pos.Y()
