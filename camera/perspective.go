@@ -9,6 +9,8 @@ import (
 type PerspectiveCamera struct {
 	BasicCamera
 	fovY float32
+	dirtyFrustumPlanes bool
+	frustumPlanes [6]*object.Plane
 }
 
 func NewPerspectiveCamera(fovYDeg, aspect, near, Far float32) *PerspectiveCamera {
@@ -17,7 +19,53 @@ func NewPerspectiveCamera(fovYDeg, aspect, near, Far float32) *PerspectiveCamera
 	c.fovY = math.Radians(fovYDeg)
 	c.updateViewMatrix()
 	c.updateProjectionMatrix()
+	c.dirtyFrustumPlanes = true
 	return &c
+}
+
+func (c *PerspectiveCamera) Orient(unitX, unitY math.Vec3) {
+	c.BasicCamera.Orient(unitX, unitY)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) Place(position math.Vec3) {
+	c.BasicCamera.Place(position)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) Rotate(axis math.Vec3, ang float32) {
+	c.BasicCamera.Rotate(axis, ang)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) RotateX(ang float32) {
+	c.BasicCamera.RotateX(ang)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) RotateY(ang float32) {
+	c.BasicCamera.RotateY(ang)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) RotateZ(ang float32) {
+	c.BasicCamera.RotateZ(ang)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) Scale(factor math.Vec3) {
+	c.BasicCamera.Scale(factor)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) SetScale(scaling math.Vec3) {
+	c.BasicCamera.SetScale(scaling)
+	c.dirtyFrustumPlanes = true
+}
+
+func (c *PerspectiveCamera) Translate(displacement math.Vec3) {
+	c.BasicCamera.Translate(displacement)
+	c.dirtyFrustumPlanes = true
 }
 
 func (c *PerspectiveCamera) updateProjectionMatrix() {
@@ -32,7 +80,7 @@ func (c *PerspectiveCamera) ProjectionMatrix() *math.Mat4 {
 	return &c.projMat
 }
 
-func (c *PerspectiveCamera) Cull(sm *object.SubMesh) bool {
+func (c *PerspectiveCamera) updateFrustumPlanes() {
 	nh := c.near * float32(gomath.Tan(float64(c.fovY/2))) * 2
 	nw := nh * c.aspect
 
@@ -51,18 +99,25 @@ func (c *PerspectiveCamera) Cull(sm *object.SubMesh) bool {
 	ftr := fc.Add(c.Right().Scale(+fw / 2)).Add(c.Up().Scale(+fh / 2))
 	ftl := fc.Add(c.Right().Scale(-fw / 2)).Add(c.Up().Scale(+fh / 2))
 
-	planes := [6]*object.Plane{}
-	planes[0] = object.NewPlaneFromPoints(nbl, nbr, ntr) // near
-	planes[1] = object.NewPlaneFromPoints(fbr, fbl, ftl) // far
-	planes[2] = object.NewPlaneFromPoints(nbl, fbl, fbr) // bottom
-	planes[3] = object.NewPlaneFromPoints(ntl, ntr, ftr) // top
-	planes[4] = object.NewPlaneFromPoints(fbl, nbl, ntl) // left
-	planes[5] = object.NewPlaneFromPoints(nbl, fbr, ftr) // right
+	c.frustumPlanes[0] = object.NewPlaneFromPoints(nbl, nbr, ntr) // near
+	c.frustumPlanes[1] = object.NewPlaneFromPoints(fbr, fbl, ftl) // far
+	c.frustumPlanes[2] = object.NewPlaneFromPoints(nbl, fbl, fbr) // bottom
+	c.frustumPlanes[3] = object.NewPlaneFromPoints(ntl, ntr, ftr) // top
+	c.frustumPlanes[4] = object.NewPlaneFromPoints(fbl, nbl, ntl) // left
+	c.frustumPlanes[5] = object.NewPlaneFromPoints(nbl, fbr, ftr) // right
+
+	c.dirtyFrustumPlanes = false
+}
+
+func (c *PerspectiveCamera) Cull(sm *object.SubMesh) bool {
+	if c.dirtyFrustumPlanes {
+		c.updateFrustumPlanes()
+	}
 
 	bbox := sm.BoundingBox()
 	bboxpts := bbox.Points()
 
-	for _, plane := range planes {
+	for _, plane := range c.frustumPlanes {
 		nOutside := 0
 		for _, pt := range bboxpts {
 			if plane.SignedDistance(pt) > 0 {
