@@ -32,12 +32,16 @@ func NewFramebuffer() *Framebuffer {
 }
 
 func (f *Framebuffer) Width() int {
-	DefaultFramebuffer.width, _ = window.Size()
+	if f == DefaultFramebuffer {
+		DefaultFramebuffer.width, _ = window.Size()
+	}
 	return f.width
 }
 
 func (f *Framebuffer) Height() int {
-	_, DefaultFramebuffer.height = window.Size()
+	if f == DefaultFramebuffer {
+		_, DefaultFramebuffer.height = window.Size()
+	}
 	return f.height
 }
 
