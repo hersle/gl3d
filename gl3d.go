@@ -13,6 +13,7 @@ import (
 	"github.com/hersle/gl3d/scene"
 	"github.com/hersle/gl3d/utils"
 	"github.com/hersle/gl3d/window"
+	"github.com/hersle/gl3d/material"
 	"os"
 	"runtime/pprof"
 )
@@ -36,6 +37,14 @@ func main() {
 		}
 		s.AddMesh(model)
 	}
+
+	geo := object.NewPlane(math.Vec3{0, 0, 0}, math.Vec3{1, 1, 1}.Norm()).Geometry(10)
+	mtl := material.NewDefaultMaterial("")
+	var mesh object.Mesh
+	mesh.Object = *object.NewObject()
+	submesh := object.NewSubMesh(geo, mtl, &mesh)
+	mesh.AddSubMesh(submesh)
+	s.AddMesh(&mesh)
 
 	s.AmbientLight = light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1})
 

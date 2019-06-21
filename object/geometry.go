@@ -209,6 +209,37 @@ func (p *Plane) SignedDistance(point math.Vec3) float32 {
 	return point.Sub(p.Point).Dot(p.Normal)
 }
 
+
+func (p *Plane) Geometry(size float32) *Geometry {
+	var t math.Vec3
+	t1 := math.Vec3{1, 0, 0}
+	t2 := math.Vec3{0, 1, 0}
+	dot1 := t.Dot(t1)
+	dot2 := t.Dot(t2)
+	if dot1*dot1 < dot2*dot2 {
+		t = t1 // t1 is most normal to t
+	} else {
+		t = t2 // t2 is most normal to t
+	}
+	t1 = t.Sub(p.Normal.Scale(t.Dot(p.Normal))).Norm()
+	t2 = p.Normal.Cross(t1).Norm()
+
+	var v1, v2, v3, v4 Vertex
+	v1.Position = p.Point.Add(t1.Scale(-size/2)).Add(t2.Scale(-size/2))
+	v2.Position = p.Point.Add(t1.Scale(+size/2)).Add(t2.Scale(-size/2))
+	v3.Position = p.Point.Add(t1.Scale(+size/2)).Add(t2.Scale(+size/2))
+	v4.Position = p.Point.Add(t1.Scale(-size/2)).Add(t2.Scale(+size/2))
+
+	var geo Geometry
+	geo.AddTriangle(v1, v2, v3) // front face
+	geo.AddTriangle(v3, v4, v1) // front face
+	geo.AddTriangle(v3, v2, v1) // back face
+	geo.AddTriangle(v1, v4, v3) // back face
+	geo.CalculateNormals()
+	geo.CalculateTangents()
+	return &geo
+}
+
 func NewFrustum(org, dir, up math.Vec3, nearDist, farDist, nearWidth, nearHeight float32) *Frustum {
 	var f Frustum
 	f.Org = org
