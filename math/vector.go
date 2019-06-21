@@ -110,15 +110,15 @@ func (a Vec4) Scale(factor float32) Vec4 {
 }
 
 func (a Vec2) Sub(b Vec2) Vec2 {
-	return a.Add(b.Scale(-1))
+	return Vec2{a.X() - b.X(), a.Y() - b.Y()}
 }
 
 func (a Vec3) Sub(b Vec3) Vec3 {
-	return a.Add(b.Scale(-1))
+	return Vec3{a.X() - b.X(), a.Y() - b.Y(), a.Z() - b.Z()}
 }
 
 func (a Vec4) Sub(b Vec4) Vec4 {
-	return a.Add(b.Scale(-1))
+	return Vec4{a.X() - b.X(), a.Y() - b.Y(), a.Z() - b.Z(), a.W() - b.W()}
 }
 
 func (a Vec2) Mult(b Vec2) Vec2 {
