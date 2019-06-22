@@ -49,10 +49,12 @@ func NewRenderer() (*Renderer, error) {
 	return &r, nil
 }
 
-func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
+func (r *Renderer) RenderScene(s *scene.Node, c camera.Camera) {
+	/*
 	if s.Skybox != nil {
 		r.skyboxRenderer.Render(s.Skybox, c, r.sceneFramebuffer)
 	}
+	*/
 
 	r.meshRenderer.Render(s, c, r.sceneFramebuffer)
 }
@@ -65,15 +67,15 @@ func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
 	r.quadRenderer.Render(tex, graphics.DefaultFramebuffer)
 }
 
-func (r *Renderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
+func (r *Renderer) RenderBitangents(s *scene.Node, c camera.Camera) {
 	r.arrowRenderer.RenderBitangents(s, c, r.sceneFramebuffer)
 }
 
-func (r *Renderer) RenderNormals(s *scene.Scene, c camera.Camera) {
+func (r *Renderer) RenderNormals(s *scene.Node, c camera.Camera) {
 	r.arrowRenderer.RenderNormals(s, c, r.sceneFramebuffer)
 }
 
-func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
+func (r *Renderer) RenderTangents(s *scene.Node, c camera.Camera) {
 	r.arrowRenderer.RenderTangents(s, c, r.sceneFramebuffer)
 }
 

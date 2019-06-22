@@ -29,26 +29,27 @@ func main() {
 		panic(err)
 	}
 
-	s := scene.NewScene()
+	s0 := scene.NewScene()
+	s := s0.AddAmbientLight(light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1}))
+
+	l := light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
+	l.Attenuation = 0.1
+	s = s.AddPointLight(l)
+
 	for _, filename := range flag.Args() {
 		model, err := object.ReadMesh(filename)
 		if err != nil {
 			panic(err)
 		}
-		s.AddMesh(model)
+		s = s.AddMesh(model)
 	}
 
 	geo := object.NewCircle(10, math.Vec3{0, 0, 0}, math.Vec3{1, 1, 1}.Norm()).Geometry(10)
 	mtl := material.NewDefaultMaterial("")
 	mesh := object.NewMesh(geo, mtl)
-	s.AddMesh(mesh)
+	s = s.AddMesh(mesh)
 
-	s.AmbientLight = light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1})
-
-	l := light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
-	l.Attenuation = 0.1
-	s.AddPointLight(l)
-
+	/*
 	f1 := "assets/skyboxes/mountain/posx.jpg"
 	f2 := "assets/skyboxes/mountain/negx.jpg"
 	f3 := "assets/skyboxes/mountain/posy.jpg"
@@ -60,6 +61,7 @@ func main() {
 		panic(err)
 	}
 	s.AddSkybox(skybox)
+	*/
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
@@ -86,28 +88,32 @@ func main() {
 
 		c.SetAspect(window.Aspect())
 		renderer.Clear()
-		renderer.RenderScene(s, c)
+		renderer.RenderScene(s0, c)
 		if input.Key1.Held() {
-			renderer.RenderTangents(s, c)
+			renderer.RenderTangents(s0, c)
 		}
 		if input.Key2.Held() {
-			renderer.RenderBitangents(s, c)
+			renderer.RenderBitangents(s0, c)
 		}
 		if input.Key3.Held() {
-			renderer.RenderNormals(s, c)
+			renderer.RenderNormals(s0, c)
 		}
 		if input.KeySpace.JustPressed() {
 			l.Place(c.Position)
 		}
 		if input.KeyMinus.JustPressed() {
-			for _, mesh := range s.Meshes {
-				mesh.Scale(math.Vec3{2.0, 2.0, 2.0})
-			}
+			s.Traverse(func(n *scene.Node, _ int) {
+				if n.Mesh != nil {
+					n.Mesh.Scale(math.Vec3{2.0, 2.0, 2.0})
+				}
+			})
 		}
 		if input.KeySlash.JustPressed() {
-			for _, mesh := range s.Meshes {
-				mesh.Scale(math.Vec3{0.5, 0.5, 0.5})
-			}
+			s.Traverse(func(n *scene.Node, _ int) {
+				if n.Mesh != nil {
+					n.Mesh.Scale(math.Vec3{0.5, 0.5, 0.5})
+				}
+			})
 		}
 
 		text := "FPS:        " + fpsCounter.String() + "\n"

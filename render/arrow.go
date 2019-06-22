@@ -81,11 +81,18 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
 	r.sp.Position.SetSource(vbo, 0, stride)
 }
 
-func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *ArrowRenderer) RenderTangents(s *scene.Node, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{1, 0, 0})
-	for _, m := range s.Meshes {
+
+	f := func(n *scene.Node, _ int) {
+		if n.Mesh == nil {
+			return
+		}
+
+		m := n.Mesh
+
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Geo.Faces {
@@ -95,16 +102,26 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 			}
 		}
 	}
+
+	s.Traverse(f)
+
 	r.vbo.SetData(r.points, 0)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *ArrowRenderer) RenderBitangents(s *scene.Node, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 1, 0})
-	for _, m := range s.Meshes {
+
+	f := func(n *scene.Node, _ int) {
+		if n.Mesh == nil {
+			return
+		}
+
+		m := n.Mesh
+
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Geo.Faces {
@@ -114,16 +131,26 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 			}
 		}
 	}
+
+	s.Traverse(f)
+
 	r.vbo.SetData(r.points, 0)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *ArrowRenderer) RenderNormals(s *scene.Node, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 0, 1})
-	for _, m := range s.Meshes {
+
+	f := func(n *scene.Node, _ int) {
+		if n.Mesh == nil {
+			return
+		}
+
+		m := n.Mesh
+
 		r.SetMesh(m)
 		for _, subMesh := range m.SubMeshes {
 			for _, i := range subMesh.Geo.Faces {
@@ -133,6 +160,8 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graph
 			}
 		}
 	}
+
+	s.Traverse(f)
 	r.vbo.SetData(r.points, 0)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()

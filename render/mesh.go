@@ -256,7 +256,7 @@ func (r *MeshRenderer) AmbientPass(c camera.Camera) {
 	}
 }
 
-func (r *MeshRenderer) LightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) LightPass(s *scene.Node, c camera.Camera) {
 	r.renderState.DepthTest = graphics.EqualDepthTest
 	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
 	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
@@ -266,57 +266,82 @@ func (r *MeshRenderer) LightPass(s *scene.Scene, c camera.Camera) {
 	r.DirectionalLightPass(s, c)
 }
 
-func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) PointLightPass(s *scene.Node, c camera.Camera) {
 	r.renderState.Program = r.sp2.ShaderProgram
 
 	r.SetCamera(r.sp2, c)
 
-	for _, l := range s.PointLights {
+	f := func(n *scene.Node, _ int) {
+		if n.PointLight == nil {
+			return
+		}
+
+		l := n.PointLight
 		r.SetPointLight(r.sp2, l)
 		for _, ri := range r.renderInfos {
 			r.ExecRenderInfo(&ri, r.sp2)
 		}
 	}
+
+	s.Traverse(f)
 }
 
-func (r *MeshRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) SpotLightPass(s *scene.Node, c camera.Camera) {
 	r.renderState.Program = r.sp3.ShaderProgram
 
 	r.SetCamera(r.sp3, c)
 
-	for _, l := range s.SpotLights {
+	f := func(n *scene.Node, _ int) {
+		if n.SpotLight == nil {
+			return
+		}
+
+		l := n.SpotLight
 		r.SetSpotLight(r.sp3, l)
 		for _, ri := range r.renderInfos {
 			r.ExecRenderInfo(&ri, r.sp3)
 		}
 	}
+
+	s.Traverse(f)
 }
 
-func (r *MeshRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) DirectionalLightPass(s *scene.Node, c camera.Camera) {
 	r.renderState.Program = r.sp4.ShaderProgram
 
 	r.SetCamera(r.sp4, c)
 
-	for _, l := range s.DirectionalLights {
+	f := func(n *scene.Node, _ int) {
+		if n.DirLight == nil {
+			return
+		}
+
+		l := n.DirLight
 		r.SetDirectionalLight(r.sp4, l)
 		for _, ri := range r.renderInfos {
 			r.ExecRenderInfo(&ri, r.sp4)
 		}
 	}
+
+	s.Traverse(f)
 }
 
-func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *MeshRenderer) Render(s *scene.Node, c camera.Camera, fb *graphics.Framebuffer) {
 	r.renderInfos = r.renderInfos[:0]
-	if len(r.normalMatrices) < len(s.Meshes) {
-		r.normalMatrices = make([]math.Mat4, len(s.Meshes))
-	}
-	for i, m := range s.Meshes {
-		calcNormalMatrix := false
+	r.normalMatrices = r.normalMatrices[:0]
 
+	f := func(n *scene.Node, _ int) {
+		if n.Mesh == nil {
+			return
+		}
+
+		m := n.Mesh
+		calcNormalMatrix := false
 		for _, sm := range m.SubMeshes {
 			if !c.Cull(sm) {
 				if !calcNormalMatrix {
-					normalMatrix := &r.normalMatrices[i]
+					r.normalMatrices = append(r.normalMatrices, math.Mat4{})
+					normalMatrix := &r.normalMatrices[len(r.normalMatrices)-1]
 					normalMatrix.Identity()
 					normalMatrix.Mult(c.ViewMatrix())
 					normalMatrix.Mult(m.WorldMatrix())
@@ -327,13 +352,15 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Fram
 
 				var ri renderInfo
 				ri.subMesh = sm
-				ri.normalMatrix = &r.normalMatrices[i]
+				ri.normalMatrix = &r.normalMatrices[len(r.normalMatrices)-1]
 				r.renderInfos = append(r.renderInfos, ri)
 			}
 		}
 	}
 
-	r.RenderShadowMaps(s)
+	s.Traverse(f)
+
+	//r.RenderShadowMaps(s)
 
 	r.renderState.Framebuffer = fb
 
@@ -486,6 +513,7 @@ func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 
 // shadow stuff below
 
+/*
 func (r *MeshRenderer) SetShadowCamera(c *camera.PerspectiveCamera) {
 	r.shadowSp.Far.Set(c.Far)
 	r.shadowSp.LightPosition.Set(c.Position)
@@ -553,7 +581,7 @@ func (r *MeshRenderer) SetDirShadowSubMesh(sp *MeshShaderProgram, sm *object.Sub
 }
 
 // render shadow map to l's shadow map
-func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
+func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Node, l *light.PointLight) {
 	smap, found := r.pointLightShadowMaps[l.ID]
 	if !found {
 		smap = graphics.NewCubeMap(graphics.NearestFilter, gl.DEPTH_COMPONENT16, 512, 512)
@@ -561,11 +589,9 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	}
 
 	// TODO: re-render also when objects have moved
-	/*
-		if !l.DirtyShadowMap {
-			return
-		}
-	*/
+		//if !l.DirtyShadowMap {
+			//return
+		//}
 
 	forwards := []math.Vec3{
 		math.Vec3{+1, 0, 0},
@@ -614,7 +640,6 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	//l.DirtyShadowMap = false
 }
 
-/*
 func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
 	smap, found := r.spotLightShadowMaps[l.ID]
 	if !found {
@@ -678,15 +703,13 @@ func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.
 
 	//l.DirtyShadowMap = false
 }
-*/
 
-func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
+func (r *MeshRenderer) RenderShadowMaps(s *scene.Node) {
 	for _, l := range s.PointLights {
 		if l.CastShadows {
 			r.RenderPointLightShadowMap(s, l)
 		}
 	}
-	/*
 		for _, l := range s.SpotLights {
 			if l.CastShadows {
 				r.RenderSpotLightShadowMap(s, l)
@@ -697,7 +720,6 @@ func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
 				r.RenderDirectionalLightShadowMap(s, l)
 			}
 		}
-	*/
 }
 
 func PointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
@@ -709,3 +731,4 @@ func PointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
 	dist = dist - sphere.Radius
 	return dist*dist < (1/0.05-1)/l.Attenuation
 }
+*/

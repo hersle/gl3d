@@ -27,12 +27,12 @@ type Scene struct {
 }
 
 type Node struct {
-	mesh *object.Mesh
-	ambientLight *light.AmbientLight
-	pointLight *light.PointLight
-	spotLight *light.SpotLight
-	dirLight *light.DirectionalLight
-	children []*Node
+	Mesh         *object.Mesh
+	AmbientLight *light.AmbientLight
+	PointLight   *light.PointLight
+	SpotLight    *light.SpotLight
+	DirLight     *light.DirectionalLight
+	Children     []*Node
 }
 
 func ReadCubeMap(filename1, filename2, filename3, filename4, filename5, filename6 string) (*CubeMap, error) {
@@ -71,7 +71,7 @@ func NewScene() *Node {
 func (n *Node) Traverse(f func(n *Node, depth int)) {
 	// depth first search
 	var nodeStack []*Node = []*Node{n}
-	var depthStack []int = []int{0};
+	var depthStack []int = []int{0}
 
 	for len(nodeStack) > 0 {
 		// pop
@@ -82,45 +82,50 @@ func (n *Node) Traverse(f func(n *Node, depth int)) {
 
 		f(n1, depth)
 
-		for _, n2 := range n1.children {
+		for _, n2 := range n1.Children {
 			nodeStack = append(nodeStack, n2)
-			depthStack = append(depthStack, depth + 1)
+			depthStack = append(depthStack, depth+1)
 		}
 	}
 }
 
 func (n *Node) addNode(n2 *Node) {
-	n.children = append(n.children, n2)
+	n.Children = append(n.Children, n2)
 }
 
-func (n *Node) AddMesh(mesh *object.Mesh) {
+func (n *Node) AddMesh(mesh *object.Mesh) *Node {
 	var n2 Node
-	n2.mesh = mesh
+	n2.Mesh = mesh
 	n.addNode(&n2)
+	return &n2
 }
 
-func (n *Node) AddAmbientLight(l *light.AmbientLight) {
+func (n *Node) AddAmbientLight(l *light.AmbientLight) *Node {
 	var n2 Node
-	n2.ambientLight = l
+	n2.AmbientLight = l
 	n.addNode(&n2)
+	return &n2
 }
 
-func (n *Node) AddPointLight(l *light.PointLight) {
+func (n *Node) AddPointLight(l *light.PointLight) *Node {
 	var n2 Node
-	n2.pointLight = l
+	n2.PointLight = l
 	n.addNode(&n2)
+	return &n2
 }
 
-func (n *Node) AddSpotLight(l *light.SpotLight) {
+func (n *Node) AddSpotLight(l *light.SpotLight) *Node {
 	var n2 Node
-	n2.spotLight = l
+	n2.SpotLight = l
 	n.addNode(&n2)
+	return &n2
 }
 
-func (n *Node) AddDirectionalLight(l *light.DirectionalLight) {
+func (n *Node) AddDirectionalLight(l *light.DirectionalLight) *Node {
 	var n2 Node
-	n2.dirLight = l
+	n2.DirLight = l
 	n.addNode(&n2)
+	return &n2
 }
 
 func (n *Node) String() string {
@@ -128,15 +133,15 @@ func (n *Node) String() string {
 
 	f := func(n *Node, depth int) {
 		str += strings.Repeat("  ", depth) + "+ "
-		if n.mesh != nil {
+		if n.Mesh != nil {
 			str += "mesh"
-		} else if n.ambientLight != nil {
+		} else if n.AmbientLight != nil {
 			str += "ambient"
-		} else if n.pointLight != nil {
+		} else if n.PointLight != nil {
 			str += "point"
-		} else if n.spotLight != nil {
+		} else if n.SpotLight != nil {
 			str += "spot"
-		} else if n.dirLight != nil {
+		} else if n.DirLight != nil {
 			str += "dir"
 		} else {
 			str += "node"
