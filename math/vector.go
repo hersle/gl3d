@@ -176,6 +176,32 @@ func (a Vec3) Cross(b Vec3) Vec3 {
 	return Vec3{x, y, z}
 }
 
+func (a Vec3) Normal() Vec3 {
+	if a.Dot(a) == 0 {
+		return Vec3{0, 0, 0} // zero vector has no normal
+	}
+
+	// one of these must be partly normal to a
+	n1 := Vec3{1, 0, 0}
+	n2 := Vec3{0, 1, 0}
+
+	dot1 := a.Dot(n1)
+	dot2 := a.Dot(n2)
+
+	var n Vec3
+	if dot1*dot1 < dot2*dot2 {
+		n = n1 // n1 most normal to a
+	} else {
+		n = n2 // n2 most normal to a
+	}
+
+	// subtract part of n that is parallell to a
+	a = a.Norm()
+	n = n.Sub(a.Scale(n.Dot(a))).Norm()
+
+	return n
+}
+
 func (a Vec3) Rotate(axis Vec3, ang float32) Vec3 {
 	axis = axis.Norm()
 	cos := float32(math.Cos(float64(ang)))

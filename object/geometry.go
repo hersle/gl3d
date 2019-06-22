@@ -65,7 +65,10 @@ func NewBoxAxisAligned(point1, point2 math.Vec3) *Box {
 }
 
 func (b *Box) Center() math.Vec3 {
-	return b.Position.Add(b.UnitX.Scale(b.Dx / 2)).Add(b.UnitY.Scale(b.Dy / 2)).Add(b.UnitZ.Scale(b.Dz / 2))
+	dx := b.UnitX.Scale(b.Dx / 2)
+	dy := b.UnitY.Scale(b.Dy / 2)
+	dz := b.UnitZ.Scale(b.Dz / 2)
+	return b.Position.Add(dx).Add(dy).Add(dz)
 }
 
 func (b *Box) DiagonalLength() float32 {
@@ -139,12 +142,16 @@ func (s *Sphere) Geometry(n int) *Geometry {
 	// middle
 	for i := 1; i < n; i++ {
 		ang1 := float64(i) / float64(n) * (gomath.Pi)
-		z := s.Center.Z() + s.Radius*float32(gomath.Cos(ang1))
+		cos1 := float32(gomath.Cos(ang1))
+		sin1 := float32(gomath.Sin(ang1))
+		z := s.Center.Z() + s.Radius*cos1
 		u := 1 - float32(i)/float32(n)
 		for j := 0; j < 2*n; j++ {
 			ang2 := float64(j) / float64(2*n) * (2 * gomath.Pi)
-			x := s.Center.X() + s.Radius*float32(gomath.Sin(ang1)*gomath.Cos(ang2))
-			y := s.Center.Y() + s.Radius*float32(gomath.Sin(ang1)*gomath.Sin(ang2))
+			cos2 := float32(gomath.Cos(ang2))
+			sin2 := float32(gomath.Sin(ang2))
+			x := s.Center.X() + s.Radius*sin1*cos2
+			y := s.Center.Y() + s.Radius*sin1*sin2
 			vv := float32(j) / float32(2*n)
 			v.Position = math.Vec3{x, y, z}
 			v.TexCoord = math.Vec2{u, vv}
@@ -204,11 +211,14 @@ func NewPlane(point, normal math.Vec3) *Plane {
 }
 
 func NewPlaneFromTangents(point, tangent1, tangent2 math.Vec3) *Plane {
-	return NewPlane(point, tangent1.Cross(tangent2))
+	normal := tangent1.Cross(tangent2)
+	return NewPlane(point, normal)
 }
 
 func NewPlaneFromPoints(point1, point2, point3 math.Vec3) *Plane {
-	return NewPlaneFromTangents(point1, point2.Sub(point1), point3.Sub(point1))
+	tangent1 := point2.Sub(point1)
+	tangent2 := point3.Sub(point1)
+	return NewPlaneFromTangents(point1, tangent1, tangent2)
 }
 
 func (p *Plane) SignedDistance(point math.Vec3) float32 {
@@ -216,18 +226,8 @@ func (p *Plane) SignedDistance(point math.Vec3) float32 {
 }
 
 func (p *Plane) Geometry(size float32) *Geometry {
-	var t math.Vec3
-	t1 := math.Vec3{1, 0, 0}
-	t2 := math.Vec3{0, 1, 0}
-	dot1 := t.Dot(t1)
-	dot2 := t.Dot(t2)
-	if dot1*dot1 < dot2*dot2 {
-		t = t1 // t1 is most normal to t
-	} else {
-		t = t2 // t2 is most normal to t
-	}
-	t1 = t.Sub(p.Normal.Scale(t.Dot(p.Normal))).Norm()
-	t2 = p.Normal.Cross(t1).Norm()
+	t1 := p.Normal.Normal()
+	t2 := p.Normal.Cross(t1).Norm()
 
 	var v1, v2, v3, v4 Vertex
 	v1.Position = p.Point.Add(t1.Scale(-size/2)).Add(t2.Scale(-size/2))
@@ -261,30 +261,33 @@ func NewFrustum(org, dir, up math.Vec3, nearDist, farDist, nearWidth, nearHeight
 func (f *Frustum) Geometry() *Geometry {
 	var geo Geometry
 
-	nearCenter := f.Org.Add(f.Dir.Scale(f.NearDist))
-	nearBottomLeft := nearCenter.Add(f.Right.Scale(-f.NearWidth / 2)).Add(f.Up.Scale(-f.NearHeight / 2))
-	nearBottomRight := nearCenter.Add(f.Right.Scale(+f.NearWidth / 2)).Add(f.Up.Scale(-f.NearHeight / 2))
-	nearTopRight := nearCenter.Add(f.Right.Scale(+f.NearWidth / 2)).Add(f.Up.Scale(+f.NearHeight / 2))
-	nearTopLeft := nearCenter.Add(f.Right.Scale(-f.NearWidth / 2)).Add(f.Up.Scale(+f.NearHeight / 2))
+	nw := f.NearWidth
+	nh := f.NearHeight
 
-	farWidth := (f.FarDist / f.NearDist) * f.NearWidth
-	farHeight := (f.FarDist / f.NearDist) * f.NearHeight
+	nc := f.Org.Add(f.Dir.Scale(f.NearDist))
+	nbl := nc.Add(f.Right.Scale(-nw / 2)).Add(f.Up.Scale(-nh / 2))
+	nbr := nc.Add(f.Right.Scale(+nw / 2)).Add(f.Up.Scale(-nh / 2))
+	ntr := nc.Add(f.Right.Scale(+nw / 2)).Add(f.Up.Scale(+nh / 2))
+	ntl := nc.Add(f.Right.Scale(-nw / 2)).Add(f.Up.Scale(+nh / 2))
 
-	farCenter := f.Org.Add(f.Dir.Scale(f.FarDist))
-	farBottomLeft := farCenter.Add(f.Right.Scale(-farWidth / 2)).Add(f.Up.Scale(-farHeight / 2))
-	farBottomRight := farCenter.Add(f.Right.Scale(+farWidth / 2)).Add(f.Up.Scale(-farHeight / 2))
-	farTopRight := farCenter.Add(f.Right.Scale(+farWidth / 2)).Add(f.Up.Scale(+farHeight / 2))
-	farTopLeft := farCenter.Add(f.Right.Scale(-farWidth / 2)).Add(f.Up.Scale(+farHeight / 2))
+	fw := (f.FarDist / f.NearDist) * f.NearWidth
+	fh := (f.FarDist / f.NearDist) * f.NearHeight
+
+	fc := f.Org.Add(f.Dir.Scale(f.FarDist))
+	fbl := fc.Add(f.Right.Scale(-fw / 2)).Add(f.Up.Scale(-fh / 2))
+	fbr := fc.Add(f.Right.Scale(+fw / 2)).Add(f.Up.Scale(-fh / 2))
+	ftr := fc.Add(f.Right.Scale(+fw / 2)).Add(f.Up.Scale(+fh / 2))
+	ftl := fc.Add(f.Right.Scale(-fw / 2)).Add(f.Up.Scale(+fh / 2))
 
 	p := []math.Vec3{}
-	p = append(p, farBottomLeft)   // p1
-	p = append(p, farBottomRight)  // p2
-	p = append(p, farTopRight)     // p3
-	p = append(p, farTopLeft)      // p4
-	p = append(p, nearBottomLeft)  // p5
-	p = append(p, nearBottomRight) // p6
-	p = append(p, nearTopRight)    // p7
-	p = append(p, nearTopLeft)     // p8
+	p = append(p, fbl)  // p1
+	p = append(p, fbr) // p2
+	p = append(p, ftr) // p3
+	p = append(p, ftl) // p4
+	p = append(p, nbl) // p5
+	p = append(p, nbr) // p6
+	p = append(p, ntr) // p7
+	p = append(p, ntl) // p8
 
 	pi := [][]int{
 		{5, 6, 7, 8},
@@ -320,21 +323,8 @@ func NewCircle(radius float32, center, normal math.Vec3) *Circle {
 }
 
 func (c *Circle) Geometry(n int) *Geometry {
-	var t math.Vec3
-	t1 := math.Vec3{1, 0, 0}
-	t2 := math.Vec3{0, 1, 0}
-	dot1 := t.Dot(t1)
-	dot2 := t.Dot(t2)
-	if dot1*dot1 < dot2*dot2 {
-		t = t1 // t1 is most normal to t
-	} else {
-		t = t2 // t2 is most normal to t
-	}
-	t1 = t.Sub(c.Normal.Scale(t.Dot(c.Normal))).Norm()
-	t2 = c.Normal.Cross(t1).Norm()
-
-	println(t1.String())
-	println(t2.String())
+	t1 := c.Normal.Normal()
+	t2 := c.Normal.Cross(t1).Norm()
 
 	var geo Geometry
 

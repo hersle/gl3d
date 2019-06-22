@@ -15,7 +15,7 @@ type PointLight struct {
 	Diffuse              math.Vec3
 	Specular             math.Vec3
 	ShadowFar            float32
-	AttenuationQuadratic float32
+	Attenuation          float32
 	CastShadows          bool
 }
 
@@ -23,7 +23,7 @@ type SpotLight struct {
 	camera.PerspectiveCamera
 	Diffuse              math.Vec3
 	Specular             math.Vec3
-	AttenuationQuadratic float32
+	Attenuation          float32
 	CastShadows          bool
 }
 
@@ -46,7 +46,7 @@ func NewPointLight(diffuse, specular math.Vec3) *PointLight {
 	l.Diffuse = diffuse
 	l.Specular = specular
 	l.ShadowFar = 50
-	l.AttenuationQuadratic = 0
+	l.Attenuation = 0
 	l.CastShadows = false
 	return &l
 }
@@ -60,7 +60,7 @@ func NewSpotLight(diffuse, specular math.Vec3) *SpotLight {
 	l.Diffuse = diffuse
 	l.Specular = specular
 	l.PerspectiveCamera.Object = *object.NewObject()
-	l.AttenuationQuadratic = 0
+	l.Attenuation = 0
 	l.CastShadows = false
 	return &l
 }

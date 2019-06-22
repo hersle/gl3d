@@ -40,28 +40,22 @@ func main() {
 
 	geo := object.NewCircle(10, math.Vec3{0, 0, 0}, math.Vec3{1, 1, 1}.Norm()).Geometry(10)
 	mtl := material.NewDefaultMaterial("")
-	var mesh object.Mesh
-	mesh.Object = *object.NewObject()
-	submesh := object.NewSubMesh(geo, mtl, &mesh)
-	mesh.AddSubMesh(submesh)
-	s.AddMesh(&mesh)
+	mesh := object.NewMesh(geo, mtl)
+	s.AddMesh(mesh)
 
 	s.AmbientLight = light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1})
 
-	s.AddPointLight(light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1}))
-	s.PointLights[0].AttenuationQuadratic = 0.1
+	l := light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
+	l.Attenuation = 0.1
+	s.AddPointLight(l)
 
-	s.AddPointLight(light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1}))
-	s.PointLights[1].AttenuationQuadratic = 0.1
-	s.PointLights[1].Place(math.Vec3{5, 5, 0})
-
-	filename1 := "assets/skyboxes/mountain/posx.jpg"
-	filename2 := "assets/skyboxes/mountain/negx.jpg"
-	filename3 := "assets/skyboxes/mountain/posy.jpg"
-	filename4 := "assets/skyboxes/mountain/negy.jpg"
-	filename5 := "assets/skyboxes/mountain/posz.jpg"
-	filename6 := "assets/skyboxes/mountain/negz.jpg"
-	skybox, err := scene.ReadCubeMap(filename1, filename2, filename3, filename4, filename5, filename6)
+	f1 := "assets/skyboxes/mountain/posx.jpg"
+	f2 := "assets/skyboxes/mountain/negx.jpg"
+	f3 := "assets/skyboxes/mountain/posy.jpg"
+	f4 := "assets/skyboxes/mountain/negy.jpg"
+	f5 := "assets/skyboxes/mountain/posz.jpg"
+	f6 := "assets/skyboxes/mountain/negz.jpg"
+	skybox, err := scene.ReadCubeMap(f1, f2, f3, f4, f5, f6)
 	if err != nil {
 		panic(err)
 	}
@@ -103,7 +97,7 @@ func main() {
 			renderer.RenderNormals(s, c)
 		}
 		if input.KeySpace.JustPressed() {
-			s.PointLights[0].Place(c.Position)
+			l.Place(c.Position)
 		}
 		if input.KeyMinus.JustPressed() {
 			for _, mesh := range s.Meshes {
