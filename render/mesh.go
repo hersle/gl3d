@@ -11,8 +11,6 @@ import (
 	"image"
 )
 
-var shadowCubeMap *graphics.CubeMap = nil
-
 type MeshShaderProgram struct {
 	*graphics.ShaderProgram
 
@@ -61,10 +59,6 @@ type MeshRenderer struct {
 
 	renderState *graphics.RenderState
 
-	emptyShadowCubeMap *graphics.CubeMap
-
-	normalMatrix math.Mat4
-
 	vboCache map[*object.Vertex]int
 	vbos     []*graphics.Buffer
 	ibos     []*graphics.Buffer
@@ -87,7 +81,6 @@ type MeshRenderer struct {
 type renderInfo struct {
 	subMesh *object.SubMesh
 	normalMatrix *math.Mat4
-	camera camera.Camera
 }
 
 type ShadowMapShaderProgram struct {
@@ -217,8 +210,6 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.renderState.Cull = graphics.CullBack
 	r.renderState.PrimitiveType = graphics.Triangle
 
-	r.emptyShadowCubeMap = graphics.NewCubeMapUniform(math.Vec4{0, 0, 0, 0})
-
 	r.vboCache = make(map[*object.Vertex]int)
 	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
 	r.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
@@ -240,7 +231,6 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
 	r.SetMesh(sp, ri.subMesh.Mesh)
-	r.SetCamera(sp, ri.camera)
 	sp.NormalMatrix.Set(ri.normalMatrix)
 	r.SetSubMesh(sp, ri.subMesh)
 	graphics.NewRenderCommand(ri.subMesh.Geo.Inds, r.renderState).Execute()
@@ -250,6 +240,8 @@ func (r *MeshRenderer) AmbientPass(c camera.Camera) {
 	r.renderState.DisableBlending()
 	r.renderState.DepthTest = graphics.LessDepthTest
 	r.renderState.Program = r.sp1.ShaderProgram
+
+	r.SetCamera(r.sp1, c)
 
 	for _, ri := range r.renderInfos {
 		r.ExecRenderInfo(&ri, r.sp1)
@@ -269,6 +261,8 @@ func (r *MeshRenderer) LightPass(s *scene.Scene, c camera.Camera) {
 func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.Program = r.sp2.ShaderProgram
 
+	r.SetCamera(r.sp2, c)
+
 	for _, l := range s.PointLights {
 		r.SetPointLight(r.sp2, l)
 		for _, ri := range r.renderInfos {
@@ -280,6 +274,8 @@ func (r *MeshRenderer) PointLightPass(s *scene.Scene, c camera.Camera) {
 func (r *MeshRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.Program = r.sp3.ShaderProgram
 
+	r.SetCamera(r.sp3, c)
+
 	for _, l := range s.SpotLights {
 		r.SetSpotLight(r.sp3, l)
 		for _, ri := range r.renderInfos {
@@ -290,6 +286,8 @@ func (r *MeshRenderer) SpotLightPass(s *scene.Scene, c camera.Camera) {
 
 func (r *MeshRenderer) DirectionalLightPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.Program = r.sp4.ShaderProgram
+
+	r.SetCamera(r.sp4, c)
 
 	for _, l := range s.DirectionalLights {
 		r.SetDirectionalLight(r.sp4, l)
@@ -322,7 +320,6 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Fram
 				var ri renderInfo
 				ri.subMesh = sm
 				ri.normalMatrix = &r.normalMatrices[i]
-				ri.camera = c
 				r.renderInfos = append(r.renderInfos, ri)
 			}
 		}
@@ -440,7 +437,7 @@ func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight)
 		}
 		sp.CubeShadowMap.SetCube(smap)
 	}
-	sp.LightAttQuad.Set(l.AttenuationQuadratic)
+	sp.LightAttQuad.Set(l.Attenuation)
 }
 
 func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
@@ -448,7 +445,7 @@ func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 	sp.LightDir.Set(l.Forward())
 	sp.DiffuseLight.Set(l.Diffuse)
 	sp.SpecularLight.Set(l.Specular)
-	sp.LightAttQuad.Set(l.AttenuationQuadratic)
+	sp.LightAttQuad.Set(l.Attenuation)
 
 	if l.CastShadows {
 		sp.ShadowViewMatrix.Set(l.ViewMatrix())
@@ -584,9 +581,6 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 
 	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
 
-	// UNCOMMENT THIS LINE AND ANOTHER ONE TO DRAW SHADOW CUBE MAP AS SKYBOX
-	//shadowCubeMap = l.shadowMap
-
 	for face := 0; face < 6; face++ {
 		r.shadowMapFramebuffer.AttachCubeMapFace(graphics.DepthAttachment, smap.Face(graphics.CubeMapLayer(face)), 0)
 		r.shadowMapFramebuffer.ClearDepth(1)
@@ -702,5 +696,5 @@ func PointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
 		return true
 	}
 	dist = dist - sphere.Radius
-	return dist*dist < (1/0.05-1)/l.AttenuationQuadratic
+	return dist*dist < (1/0.05-1)/l.Attenuation
 }

@@ -230,7 +230,7 @@ func (geo *Geometry) CalculateTangents() {
 		edge2 := v2.Position.Sub(v3.Position)
 		dTexCoord1 := v1.TexCoord.Sub(v3.TexCoord)
 		dTexCoord2 := v2.TexCoord.Sub(v3.TexCoord)
-		det := (dTexCoord1.X()*dTexCoord2.Y() - dTexCoord2.X()*dTexCoord1.Y())
+		det := dTexCoord1.X()*dTexCoord2.Y() - dTexCoord2.X()*dTexCoord1.Y()
 		if det != 0 {
 			det = 1 / det
 		}
@@ -241,7 +241,7 @@ func (geo *Geometry) CalculateTangents() {
 			Scale(det)
 		if det != 0 {
 			// tangent is not zero vector
-			tangent = tangent.Norm() // TODO: ??
+			tangent = tangent.Norm()
 		}
 		v1.Tangent = v1.Tangent.Add(tangent)
 		v2.Tangent = v2.Tangent.Add(tangent)
@@ -253,10 +253,10 @@ func (geo *Geometry) CalculateTangents() {
 	}
 
 	for i, v := range geo.Verts {
-		if v.Tangent.X() == 0 && v.Tangent.Y() == 0 && v.Tangent.Z() == 0 {
+		if v.Tangent.Dot(v.Tangent) == 0 {
 			// no tangent - generate arbitrary tangent vector
 			// assume normal is not the zero vector
-			if v.Normal.X() == 0 && v.Normal.Y() == 0 && v.Normal.Z() == 0 {
+			if v.Normal.Dot(v.Normal) == 0 {
 				panic("cannot find vector not parallell to zero vector")
 			}
 			if v.Normal.X() == 0 {
@@ -324,6 +324,22 @@ func readIndexedVertex(desc string, nv, nvt, nvn int) indexedVertex {
 	return vert
 }
 
+func NewMesh(geo *Geometry, mtl *material.Material) *Mesh {
+	if geo == nil && mtl != nil {
+		panic("created mesh with material and without geometry")
+	}
+
+	var mesh Mesh
+	mesh.Object = *NewObject()
+	if geo != nil {
+		if mtl != nil {
+			mtl = material.NewDefaultMaterial("")
+		}
+		mesh.AddSubMesh(NewSubMesh(geo, mtl, &mesh))
+	}
+	return &mesh
+}
+
 func ReadMesh(filename string) (*Mesh, error) {
 	var m *Mesh
 	var err error
@@ -333,7 +349,6 @@ func ReadMesh(filename string) (*Mesh, error) {
 	default:
 		return nil, errors.New(fmt.Sprintf("%s has unknown format", filename))
 	}
-	m.Object = *NewObject()
 	return m, err
 }
 
@@ -474,10 +489,10 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 				texCoord := texCoords[iTri.iVerts[i].vt]
 				normal := weightedNormals[iTri.iVerts[i].v].Norm()
 				var tangent math.Vec3
-				if tangent.X() == 0 && tangent.Y() == 0 && tangent.Z() == 0 {
+				if tangent.Dot(tangent) == 0 {
 					// no tangent - generate arbitrary tangent vector
 					// assume normal is not the zero vector
-					if normal.X() == 0 && normal.Y() == 0 && normal.Z() == 0 {
+					if normal.Dot(normal) == 0 {
 						panic("cannot find vector not parallell to zero vector")
 					}
 					if normal.X() == 0 {
@@ -495,16 +510,16 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		}
 	}
 
-	var m Mesh
+	m := NewMesh(nil, nil)
 	for i, _ := range geos {
 		if len(geos[i].Verts) > 0 {
 			println("submesh", i, "with", len(geos[i].Verts), "verts")
 			if mtls[i] == nil {
 				mtls[i] = material.NewDefaultMaterial("")
 			}
-			m.AddSubMesh(NewSubMesh(&geos[i], mtls[i], &m))
+			m.AddSubMesh(NewSubMesh(&geos[i], mtls[i], m))
 		}
 	}
 
-	return &m, nil
+	return m, nil
 }
