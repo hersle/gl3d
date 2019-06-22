@@ -33,6 +33,12 @@ type Plane struct {
 	Normal math.Vec3
 }
 
+type Circle struct {
+	Radius float32
+	Center math.Vec3
+	Normal math.Vec3
+}
+
 func NewBox(pos, unitX, unitY math.Vec3, dx, dy, dz float32) *Box {
 	var b Box
 	b.Object = *NewObject()
@@ -209,7 +215,6 @@ func (p *Plane) SignedDistance(point math.Vec3) float32 {
 	return point.Sub(p.Point).Dot(p.Normal)
 }
 
-
 func (p *Plane) Geometry(size float32) *Geometry {
 	var t math.Vec3
 	t1 := math.Vec3{1, 0, 0}
@@ -304,6 +309,53 @@ func (f *Frustum) Geometry() *Geometry {
 	geo.CalculateTangents()
 
 	return &geo
+}
 
+func NewCircle(radius float32, center, normal math.Vec3) *Circle {
+	var c Circle
+	c.Radius = radius
+	c.Center = center
+	c.Normal = normal.Norm()
+	return &c
+}
+
+func (c *Circle) Geometry(n int) *Geometry {
+	var t math.Vec3
+	t1 := math.Vec3{1, 0, 0}
+	t2 := math.Vec3{0, 1, 0}
+	dot1 := t.Dot(t1)
+	dot2 := t.Dot(t2)
+	if dot1*dot1 < dot2*dot2 {
+		t = t1 // t1 is most normal to t
+	} else {
+		t = t2 // t2 is most normal to t
+	}
+	t1 = t.Sub(c.Normal.Scale(t.Dot(c.Normal))).Norm()
+	t2 = c.Normal.Cross(t1).Norm()
+
+	println(t1.String())
+	println(t2.String())
+
+	var geo Geometry
+
+	var v1, v2, v3 Vertex
+	v1.Position = c.Center
+	v2.Position = c.Center.Add(t1.Scale(c.Radius))
+	for i := 1; i <= n; i++ {
+		ang := 2 * gomath.Pi / float64(n) * float64(i)
+		cos := float32(gomath.Cos(ang))
+		sin := float32(gomath.Sin(ang))
+		d1 := t1.Scale(c.Radius*cos)
+		d2 := t2.Scale(c.Radius*sin)
+		v3.Position = c.Center.Add(d1).Add(d2)
+
+		geo.AddTriangle(v1, v2, v3) // front face
+		geo.AddTriangle(v1, v3, v2) // back face
+
+		v2 = v3
+	}
+
+	geo.CalculateNormals()
+	geo.CalculateTangents()
 	return &geo
 }

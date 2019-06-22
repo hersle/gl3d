@@ -38,7 +38,7 @@ func main() {
 		s.AddMesh(model)
 	}
 
-	geo := object.NewPlane(math.Vec3{0, 0, 0}, math.Vec3{1, 1, 1}.Norm()).Geometry(10)
+	geo := object.NewCircle(10, math.Vec3{0, 0, 0}, math.Vec3{1, 1, 1}.Norm()).Geometry(10)
 	mtl := material.NewDefaultMaterial("")
 	var mesh object.Mesh
 	mesh.Object = *object.NewObject()
