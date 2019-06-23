@@ -57,7 +57,7 @@ func NewDebugRenderer() *DebugRenderer {
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
 	r.renderState.PrimitiveType = graphics.Line
-	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.DepthTest = graphics.LessEqualTest
 
 	r.vbo = graphics.NewBuffer()
 	r.ibo = graphics.NewBuffer()
@@ -85,7 +85,7 @@ func (r *DebugRenderer) SetPosition(vbo *graphics.Buffer) {
 }
 
 func (r *DebugRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
-	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.DepthTest = graphics.LessEqualTest
 	r.renderState.Framebuffer = fb
 	r.renderState.PrimitiveType = graphics.Line
 	r.sp.SetAttribIndexBuffer(nil)
@@ -111,7 +111,7 @@ func (r *DebugRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 }
 
 func (r *DebugRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
-	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.DepthTest = graphics.LessEqualTest
 	r.renderState.Framebuffer = fb
 	r.renderState.PrimitiveType = graphics.Line
 	r.sp.SetAttribIndexBuffer(nil)
@@ -137,7 +137,7 @@ func (r *DebugRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 }
 
 func (r *DebugRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
-	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.DepthTest = graphics.LessEqualTest
 	r.renderState.Framebuffer = fb
 	r.renderState.PrimitiveType = graphics.Line
 	r.sp.SetAttribIndexBuffer(nil)
@@ -176,7 +176,7 @@ func (r *DebugRenderer) RenderCameraFrustum(c camera.Camera, vc camera.Camera, f
 	m.Identity()
 	r.sp.ModelMatrix.Set(&m)
 
-	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.DepthTest = graphics.LessEqualTest
 	r.renderState.Framebuffer = fb
 	r.renderState.PrimitiveType = graphics.Line
 	r.sp.SetAttribIndexBuffer(nil)
@@ -236,7 +236,7 @@ func (r *DebugRenderer) RenderMeshWireframe(mesh *object.Mesh, c camera.Camera, 
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{1, 0, 0})
 
-	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.DepthTest = graphics.LessEqualTest
 	r.renderState.Framebuffer = fb
 	r.renderState.PrimitiveType = graphics.Triangle
 	r.renderState.TriangleMode = graphics.LineTriangleMode

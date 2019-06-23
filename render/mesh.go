@@ -223,7 +223,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.shadowRenderState = graphics.NewRenderState()
 	r.shadowRenderState.Framebuffer = r.shadowMapFramebuffer
-	r.shadowRenderState.DepthTest = graphics.LessDepthTest
+	r.shadowRenderState.DepthTest = graphics.LessTest
 	r.shadowRenderState.Cull = graphics.CullBack
 
 	return &r, nil
@@ -238,7 +238,7 @@ func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
 
 func (r *MeshRenderer) AmbientPass(c camera.Camera) {
 	r.renderState.DisableBlending()
-	r.renderState.DepthTest = graphics.LessDepthTest
+	r.renderState.DepthTest = graphics.LessTest
 	r.renderState.Program = r.sp1.ShaderProgram
 
 	r.SetCamera(r.sp1, c)
@@ -249,7 +249,7 @@ func (r *MeshRenderer) AmbientPass(c camera.Camera) {
 }
 
 func (r *MeshRenderer) LightPass(s *scene.Scene, c camera.Camera) {
-	r.renderState.DepthTest = graphics.EqualDepthTest
+	r.renderState.DepthTest = graphics.EqualTest
 	r.renderState.BlendSourceFactor = graphics.OneBlendFactor
 	r.renderState.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
 

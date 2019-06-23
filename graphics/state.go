@@ -4,18 +4,18 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 )
 
-type DepthTest int
+type BufferTest int
 
 const (
-	AlwaysDepthTest DepthTest = iota
-	UnknownDepthTest
-	NeverDepthTest
-	LessDepthTest
-	LessEqualDepthTest
-	EqualDepthTest
-	NotEqualDepthTest
-	GreaterDepthTest
-	GreaterEqualDepthTest
+	AlwaysTest BufferTest = iota
+	UnknownTest
+	NeverTest
+	LessTest
+	LessEqualTest
+	EqualTest
+	NotEqualTest
+	GreaterTest
+	GreaterEqualTest
 )
 
 type BlendFactor int
@@ -61,7 +61,7 @@ const (
 type RenderState struct {
 	Program                *ShaderProgram
 	Framebuffer            *Framebuffer
-	DepthTest              DepthTest
+	DepthTest              BufferTest
 	BlendSourceFactor      BlendFactor
 	BlendDestinationFactor BlendFactor
 	Cull                   CullMode
@@ -108,28 +108,28 @@ func (rs *RenderState) apply() {
 
 	if currentState.DepthTest != rs.DepthTest {
 		switch rs.DepthTest {
-		case NeverDepthTest:
+		case NeverTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.NEVER)
-		case LessDepthTest:
+		case LessTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.LESS)
-		case LessEqualDepthTest:
+		case LessEqualTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.LEQUAL)
-		case EqualDepthTest:
+		case EqualTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.EQUAL)
-		case NotEqualDepthTest:
+		case NotEqualTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.NOTEQUAL)
-		case GreaterDepthTest:
+		case GreaterTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.GREATER)
-		case GreaterEqualDepthTest:
+		case GreaterEqualTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.GEQUAL)
-		case AlwaysDepthTest:
+		case AlwaysTest:
 			gl.Disable(gl.DEPTH_TEST)
 		default:
 			panic("tried to apply a render state with unknown depth test")
@@ -210,7 +210,7 @@ func init() {
 	// initialize cached state to default OpenGL values TODO: run apply with it?
 	currentState.Program = nil
 	currentState.Framebuffer = nil
-	currentState.DepthTest = AlwaysDepthTest
+	currentState.DepthTest = AlwaysTest
 	currentState.DisableBlending()
 	currentState.Cull = CullNothing
 	currentState.TriangleMode = TriangleTriangleMode
