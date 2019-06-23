@@ -113,6 +113,9 @@ func main() {
 		if input.KeyC.Held() {
 			renderer.RenderCameraFrustum(&c0, c)
 		}
+		if input.KeyV.Held() {
+			renderer.RenderSceneWireframe(s, c)
+		}
 
 		text := "FPS:        " + fpsCounter.String() + "\n"
 		text += "position:   " + c.Position.String() + "\n"

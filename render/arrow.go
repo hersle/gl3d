@@ -14,6 +14,7 @@ type DebugRenderer struct {
 	sp          *DebugShaderProgram
 	points      []math.Vec3
 	vbo         *graphics.Buffer
+	ibo         *graphics.Buffer
 	renderState *graphics.RenderState
 }
 
@@ -59,6 +60,7 @@ func NewDebugRenderer() *DebugRenderer {
 	r.renderState.DepthTest = graphics.LessEqualDepthTest
 
 	r.vbo = graphics.NewBuffer()
+	r.ibo = graphics.NewBuffer()
 	r.SetPosition(r.vbo)
 
 	return &r
@@ -83,6 +85,13 @@ func (r *DebugRenderer) SetPosition(vbo *graphics.Buffer) {
 }
 
 func (r *DebugRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.Framebuffer = fb
+	r.renderState.PrimitiveType = graphics.Line
+	r.sp.SetAttribIndexBuffer(nil)
+	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
+	r.sp.Position.SetSource(r.vbo, 0, stride)
+
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{1, 0, 0})
@@ -102,6 +111,13 @@ func (r *DebugRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 }
 
 func (r *DebugRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.Framebuffer = fb
+	r.renderState.PrimitiveType = graphics.Line
+	r.sp.SetAttribIndexBuffer(nil)
+	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
+	r.sp.Position.SetSource(r.vbo, 0, stride)
+
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 1, 0})
@@ -121,6 +137,13 @@ func (r *DebugRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 }
 
 func (r *DebugRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.Framebuffer = fb
+	r.renderState.PrimitiveType = graphics.Line
+	r.sp.SetAttribIndexBuffer(nil)
+	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
+	r.sp.Position.SetSource(r.vbo, 0, stride)
+
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 0, 1})
@@ -152,6 +175,13 @@ func (r *DebugRenderer) RenderCameraFrustum(c camera.Camera, vc camera.Camera, f
 	var m math.Mat4
 	m.Identity()
 	r.sp.ModelMatrix.Set(&m)
+
+	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.Framebuffer = fb
+	r.renderState.PrimitiveType = graphics.Line
+	r.sp.SetAttribIndexBuffer(nil)
+	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
+	r.sp.Position.SetSource(r.vbo, 0, stride)
 
 	switch c.(type) {
 	case *camera.PerspectiveCamera:
@@ -195,9 +225,29 @@ func (r *DebugRenderer) RenderCameraFrustum(c camera.Camera, vc camera.Camera, f
 		r.AddLine(ftl, fbl)
 
 		r.vbo.SetData(r.points, 0)
-		r.renderState.Framebuffer = fb
 		graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 	default:
 		panic("can only render perspective camera frustum")
+	}
+}
+
+func (r *DebugRenderer) RenderMeshWireframe(mesh *object.Mesh, c camera.Camera, fb *graphics.Framebuffer) {
+	r.SetCamera(c)
+	r.points = r.points[:0]
+	r.SetColor(math.Vec3{1, 0, 0})
+
+	r.renderState.DepthTest = graphics.LessEqualDepthTest
+	r.renderState.Framebuffer = fb
+	r.renderState.PrimitiveType = graphics.Triangle
+	r.renderState.TriangleMode = graphics.LineTriangleMode
+
+	var v object.Vertex
+	r.SetMesh(mesh)
+	for _, subMesh := range mesh.SubMeshes {
+		r.vbo.SetData(subMesh.Geo.Verts, 0)
+		r.ibo.SetData(subMesh.Geo.Faces, 0)
+		r.sp.Position.SetSource(r.vbo, v.PositionOffset(), v.Size())
+		r.sp.SetAttribIndexBuffer(r.ibo)
+		graphics.NewRenderCommand(subMesh.Geo.Inds, r.renderState).Execute()
 	}
 }

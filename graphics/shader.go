@@ -104,8 +104,13 @@ func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int)
 }
 
 func (va *VertexArray) SetIndexBuffer(b *Buffer) {
-	gl.VertexArrayElementBuffer(uint32(va.id), uint32(b.id))
-	va.hasIndexBuffer = true
+	if b == nil {
+		gl.VertexArrayElementBuffer(uint32(va.id), 0)
+		va.hasIndexBuffer = false
+	} else {
+		gl.VertexArrayElementBuffer(uint32(va.id), uint32(b.id))
+		va.hasIndexBuffer = true
+	}
 }
 
 func (va *VertexArray) Bind() {

@@ -81,6 +81,12 @@ func (r *Renderer) RenderCameraFrustum(c camera.Camera, vc camera.Camera) {
 	r.debugRenderer.RenderCameraFrustum(c, vc, r.sceneFramebuffer)
 }
 
+func (r *Renderer) RenderSceneWireframe(s *scene.Scene, c camera.Camera) {
+	for _, mesh := range s.Meshes {
+		r.debugRenderer.RenderMeshWireframe(mesh, c, r.sceneFramebuffer)
+	}
+}
+
 func (r *Renderer) Clear() {
 	graphics.DefaultFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
 	r.sceneFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
