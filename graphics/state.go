@@ -57,11 +57,26 @@ const (
 	Triangle Primitive = Primitive(gl.TRIANGLES)
 )
 
+type StencilOperation int
+
+const (
+	KeepStencilOperation StencilOperation = iota
+	ZeroStencilOperation
+	ReplaceStencilOperation
+	IncrementStencilOperation
+	DecrementStencilOperation
+)
+
 // TODO: enable sorting of these states to reduce state changes?
 type RenderState struct {
 	Program                *ShaderProgram
 	Framebuffer            *Framebuffer
 	DepthTest              BufferTest
+	StencilTest            BufferTest
+	StencilTestRef         int
+	StencilStencilFailOperation StencilOperation
+	StencilDepthFailOperation StencilOperation
+	StencilDepthPassOperation StencilOperation
 	BlendSourceFactor      BlendFactor
 	BlendDestinationFactor BlendFactor
 	Cull                   CullMode
@@ -137,6 +152,43 @@ func (rs *RenderState) apply() {
 		currentState.DepthTest = rs.DepthTest
 	}
 
+	if currentState.StencilTest != rs.StencilTest || currentState.StencilTestRef != rs.StencilTestRef {
+		switch rs.StencilTest {
+		case NeverTest:
+			gl.Enable(gl.STENCIL_TEST)
+			gl.StencilFunc(gl.NEVER, int32(rs.StencilTestRef), 0xFF)
+		case LessTest:
+			gl.Enable(gl.STENCIL_TEST)
+			gl.StencilFunc(gl.LESS, int32(rs.StencilTestRef), 0xFF)
+		case LessEqualTest:
+			gl.Enable(gl.STENCIL_TEST)
+			gl.StencilFunc(gl.LEQUAL, int32(rs.StencilTestRef), 0xFF)
+		case EqualTest:
+			gl.Enable(gl.STENCIL_TEST)
+			gl.StencilFunc(gl.EQUAL, int32(rs.StencilTestRef), 0xFF)
+		case NotEqualTest:
+			gl.Enable(gl.STENCIL_TEST)
+			gl.StencilFunc(gl.NOTEQUAL, int32(rs.StencilTestRef), 0xFF)
+		case GreaterTest:
+			gl.Enable(gl.STENCIL_TEST)
+			gl.StencilFunc(gl.GREATER, int32(rs.StencilTestRef), 0xFF)
+		case GreaterEqualTest:
+			gl.Enable(gl.STENCIL_TEST)
+			gl.StencilFunc(gl.GEQUAL, int32(rs.StencilTestRef), 0xFF)
+		case AlwaysTest:
+			gl.Disable(gl.STENCIL_TEST)
+		default:
+			panic("tried to apply a render state with unknown stencil test")
+		}
+		currentState.StencilTest = rs.StencilTest
+		currentState.StencilTestRef = rs.StencilTestRef
+	}
+
+	gl.StencilOp(uint32(rs.StencilStencilFailOperation), uint32(rs.StencilDepthFailOperation), uint32(rs.StencilDepthPassOperation))
+	currentState.StencilStencilFailOperation = rs.StencilStencilFailOperation
+	currentState.StencilDepthFailOperation = rs.StencilDepthFailOperation
+	currentState.StencilDepthPassOperation = rs.StencilDepthPassOperation
+
 	if currentState.BlendSourceFactor != rs.BlendSourceFactor || currentState.BlendDestinationFactor != rs.BlendDestinationFactor {
 		var factors [2]BlendFactor
 		var funcs [2]uint32
@@ -211,6 +263,11 @@ func init() {
 	currentState.Program = nil
 	currentState.Framebuffer = nil
 	currentState.DepthTest = AlwaysTest
+	currentState.StencilTest = AlwaysTest
+	currentState.StencilTestRef = 0
+	currentState.StencilStencilFailOperation = KeepStencilOperation
+	currentState.StencilDepthFailOperation = KeepStencilOperation
+	currentState.StencilDepthPassOperation = KeepStencilOperation
 	currentState.DisableBlending()
 	currentState.Cull = CullNothing
 	currentState.TriangleMode = TriangleTriangleMode
