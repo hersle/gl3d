@@ -14,7 +14,7 @@ type Renderer struct {
 	skyboxRenderer *SkyboxRenderer
 	textRenderer   *TextRenderer
 	quadRenderer   *QuadRenderer
-	arrowRenderer  *ArrowRenderer
+	debugRenderer  *DebugRenderer
 
 	sceneFramebuffer       *graphics.Framebuffer
 	sceneRenderTarget      *graphics.Texture2D
@@ -31,7 +31,7 @@ func NewRenderer() (*Renderer, error) {
 	r.skyboxRenderer = NewSkyboxRenderer()
 	r.textRenderer = NewTextRenderer()
 	r.quadRenderer = NewQuadRenderer()
-	r.arrowRenderer = NewArrowRenderer()
+	r.debugRenderer = NewDebugRenderer()
 
 	w, h := 1920, 1080
 	w, h = w/1, h/1
@@ -66,15 +66,19 @@ func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
 }
 
 func (r *Renderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
-	r.arrowRenderer.RenderBitangents(s, c, r.sceneFramebuffer)
+	r.debugRenderer.RenderBitangents(s, c, r.sceneFramebuffer)
 }
 
 func (r *Renderer) RenderNormals(s *scene.Scene, c camera.Camera) {
-	r.arrowRenderer.RenderNormals(s, c, r.sceneFramebuffer)
+	r.debugRenderer.RenderNormals(s, c, r.sceneFramebuffer)
 }
 
 func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
-	r.arrowRenderer.RenderTangents(s, c, r.sceneFramebuffer)
+	r.debugRenderer.RenderTangents(s, c, r.sceneFramebuffer)
+}
+
+func (r *Renderer) RenderCameraFrustum(c camera.Camera, vc camera.Camera) {
+	r.debugRenderer.RenderCameraFrustum(c, vc, r.sceneFramebuffer)
 }
 
 func (r *Renderer) Clear() {

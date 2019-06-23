@@ -62,6 +62,7 @@ func main() {
 	s.AddSkybox(skybox)
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
+	c0 := *c
 
 	input.AddCameraFPSControls(c, 0.1)
 
@@ -108,6 +109,9 @@ func main() {
 			for _, mesh := range s.Meshes {
 				mesh.Scale(math.Vec3{0.5, 0.5, 0.5})
 			}
+		}
+		if input.KeyC.Held() {
+			renderer.RenderCameraFrustum(&c0, c)
 		}
 
 		text := "FPS:        " + fpsCounter.String() + "\n"

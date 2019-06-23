@@ -131,3 +131,9 @@ func (c *PerspectiveCamera) Cull(sm *object.SubMesh) bool {
 
 	return false
 }
+
+func (c *PerspectiveCamera) Frustum() *object.Frustum {
+	nh := c.near * float32(gomath.Tan(float64(c.fovY/2))) * 2
+	nw := nh * c.aspect
+	return object.NewFrustum(c.Position, c.Forward(), c.Up(), c.near, c.Far, nw, nh)
+}

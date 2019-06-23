@@ -10,14 +10,14 @@ import (
 	"unsafe"
 )
 
-type ArrowRenderer struct {
-	sp          *ArrowShaderProgram
+type DebugRenderer struct {
+	sp          *DebugShaderProgram
 	points      []math.Vec3
 	vbo         *graphics.Buffer
 	renderState *graphics.RenderState
 }
 
-type ArrowShaderProgram struct {
+type DebugShaderProgram struct {
 	*graphics.ShaderProgram
 	ModelMatrix      *graphics.UniformMatrix4
 	ViewMatrix       *graphics.UniformMatrix4
@@ -26,8 +26,8 @@ type ArrowShaderProgram struct {
 	Position         *graphics.Attrib
 }
 
-func NewArrowShaderProgram() *ArrowShaderProgram {
-	var sp ArrowShaderProgram
+func NewDebugShaderProgram() *DebugShaderProgram {
+	var sp DebugShaderProgram
 	var err error
 
 	vShaderFilename := "render/shaders/arrowvshader.glsl" // TODO: make independent from executable directory
@@ -48,14 +48,15 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	return &sp
 }
 
-func NewArrowRenderer() *ArrowRenderer {
-	var r ArrowRenderer
+func NewDebugRenderer() *DebugRenderer {
+	var r DebugRenderer
 
-	r.sp = NewArrowShaderProgram()
+	r.sp = NewDebugShaderProgram()
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
 	r.renderState.PrimitiveType = graphics.Line
+	r.renderState.DepthTest = graphics.LessEqualDepthTest
 
 	r.vbo = graphics.NewBuffer()
 	r.SetPosition(r.vbo)
@@ -63,25 +64,25 @@ func NewArrowRenderer() *ArrowRenderer {
 	return &r
 }
 
-func (r *ArrowRenderer) SetCamera(c camera.Camera) {
+func (r *DebugRenderer) SetCamera(c camera.Camera) {
 	r.sp.ViewMatrix.Set(c.ViewMatrix())
 	r.sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *ArrowRenderer) SetMesh(m *object.Mesh) {
+func (r *DebugRenderer) SetMesh(m *object.Mesh) {
 	r.sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *ArrowRenderer) SetColor(color math.Vec3) {
+func (r *DebugRenderer) SetColor(color math.Vec3) {
 	r.sp.Color.Set(color)
 }
 
-func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
+func (r *DebugRenderer) SetPosition(vbo *graphics.Buffer) {
 	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
 	r.sp.Position.SetSource(vbo, 0, stride)
 }
 
-func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *DebugRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{1, 0, 0})
@@ -100,7 +101,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *DebugRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 1, 0})
@@ -119,7 +120,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
 
-func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *DebugRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 0, 1})
@@ -136,4 +137,67 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graph
 	r.vbo.SetData(r.points, 0)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
+}
+
+func (r *DebugRenderer) AddLine(p1, p2 math.Vec3) {
+	println(p1.String())
+	println(p2.String())
+	r.points = append(r.points, p1, p2)
+}
+
+func (r *DebugRenderer) RenderCameraFrustum(c camera.Camera, vc camera.Camera, fb *graphics.Framebuffer) {
+	r.SetCamera(vc)
+	r.points = r.points[:0]
+	r.SetColor(math.Vec3{1, 1, 0})
+	var m math.Mat4
+	m.Identity()
+	r.sp.ModelMatrix.Set(&m)
+
+	switch c.(type) {
+	case *camera.PerspectiveCamera:
+		c := c.(*camera.PerspectiveCamera)
+		f := c.Frustum()
+
+		nw := f.NearWidth
+		nh := f.NearHeight
+
+		nc := f.Org.Add(f.Dir.Scale(f.NearDist))
+		nbl := nc.Add(f.Right.Scale(-nw / 2)).Add(f.Up.Scale(-nh / 2))
+		nbr := nc.Add(f.Right.Scale(+nw / 2)).Add(f.Up.Scale(-nh / 2))
+		ntr := nc.Add(f.Right.Scale(+nw / 2)).Add(f.Up.Scale(+nh / 2))
+		ntl := nc.Add(f.Right.Scale(-nw / 2)).Add(f.Up.Scale(+nh / 2))
+
+		fw := (f.FarDist / f.NearDist) * f.NearWidth
+		fh := (f.FarDist / f.NearDist) * f.NearHeight
+
+		fc := f.Org.Add(f.Dir.Scale(f.FarDist))
+		fbl := fc.Add(f.Right.Scale(-fw / 2)).Add(f.Up.Scale(-fh / 2))
+		fbr := fc.Add(f.Right.Scale(+fw / 2)).Add(f.Up.Scale(-fh / 2))
+		ftr := fc.Add(f.Right.Scale(+fw / 2)).Add(f.Up.Scale(+fh / 2))
+		ftl := fc.Add(f.Right.Scale(-fw / 2)).Add(f.Up.Scale(+fh / 2))
+
+		// near rectangle
+		r.AddLine(nbl, nbr)
+		r.AddLine(nbr, ntr)
+		r.AddLine(ntr, ntl)
+		r.AddLine(ntl, nbl)
+
+		// near-far joining lines
+		r.AddLine(nbl, fbl)
+		r.AddLine(nbr, fbr)
+		r.AddLine(ntr, ftr)
+		r.AddLine(ntl, ftl)
+
+		// far rectangle
+		r.AddLine(fbl, fbr)
+		r.AddLine(fbr, ftr)
+		r.AddLine(ftr, ftl)
+		r.AddLine(ftl, fbl)
+
+		r.vbo.SetData(r.points, 0)
+		r.renderState.Framebuffer = fb
+		graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
+	default:
+		panic("can only render perspective camera frustum")
+	}
 }
