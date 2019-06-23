@@ -73,6 +73,11 @@ func (f *Framebuffer) ClearDepth(clearDepth float32) {
 	gl.ClearNamedFramebufferfv(uint32(f.id), gl.DEPTH, 0, &clearDepth)
 }
 
+func (f *Framebuffer) ClearStencil(clearStencil int) {
+	clearStencil32 := int32(clearStencil)
+	gl.ClearNamedFramebufferiv(uint32(f.id), gl.STENCIL, 0, &clearStencil32)
+}
+
 func (f *Framebuffer) Complete() bool {
 	status := gl.CheckNamedFramebufferStatus(uint32(f.id), gl.FRAMEBUFFER)
 	return status == gl.FRAMEBUFFER_COMPLETE
