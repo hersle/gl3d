@@ -19,6 +19,7 @@ type Renderer struct {
 	sceneFramebuffer       *graphics.Framebuffer
 	sceneRenderTarget      *graphics.Texture2D
 	sceneDepthRenderTarget *graphics.Texture2D
+	sceneStencilRenderTarget *graphics.Texture2D
 
 	overlayFramebuffer  *graphics.Framebuffer
 	overlayRenderTarget *graphics.Texture2D
@@ -38,9 +39,11 @@ func NewRenderer() (*Renderer, error) {
 
 	r.sceneRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
 	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
+	r.sceneStencilRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.STENCIL_INDEX8, w, h)
 	r.sceneFramebuffer = graphics.NewFramebuffer()
 	r.sceneFramebuffer.AttachTexture2D(graphics.ColorAttachment, r.sceneRenderTarget, 0)
 	r.sceneFramebuffer.AttachTexture2D(graphics.DepthAttachment, r.sceneDepthRenderTarget, 0)
+	r.sceneFramebuffer.AttachTexture2D(graphics.StencilAttachment, r.sceneStencilRenderTarget, 0)
 
 	r.overlayRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
 	r.overlayFramebuffer = graphics.NewFramebuffer()
@@ -91,6 +94,7 @@ func (r *Renderer) Clear() {
 	graphics.DefaultFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
 	r.sceneFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
 	r.sceneFramebuffer.ClearDepth(1)
+	r.sceneFramebuffer.ClearStencil(1)
 	r.overlayFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
 }
 
@@ -101,4 +105,8 @@ func (r *Renderer) Render() {
 
 func (r *Renderer) SetWireframe(wireframe bool) {
 	r.meshRenderer.SetWireframe(wireframe)
+}
+
+func (r *Renderer) PrintStencil() {
+	r.sceneFramebuffer.PrintStencil()
 }

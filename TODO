@@ -57,3 +57,5 @@ occlusion culling
 texture atlas/array?
 PURE depth pass, do ambient colors on first light pass?
 reenable light significance test
+
+DO NOT USE DISCARD IN FRAGMENT SHADER. BREAKS STENCIL AND DEPTH FUNCTIONALITY.

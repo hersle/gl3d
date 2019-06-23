@@ -330,6 +330,7 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Fram
 	r.renderState.Framebuffer = fb
 
 	r.AmbientPass(c) // also works as depth pass
+
 	r.LightPass(s, c)
 }
 

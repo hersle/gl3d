@@ -91,9 +91,9 @@ void main() {
 	#if defined(DEPTH)
 	float alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
 	// TODO: add proper transparency?
-	if (alpha < 1) {
-		discard;
-	}
+	//if (alpha < 1) {
+		//discard; // must disable to prevent depth and stencil errors
+	//}
 	#endif
 
 	#if defined(AMBIENT)

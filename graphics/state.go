@@ -86,6 +86,23 @@ type RenderState struct {
 
 var currentState RenderState
 
+func (op StencilOperation) glenum() int {
+	switch op {
+	case KeepStencilOperation:
+		return gl.KEEP
+	case ZeroStencilOperation:
+		return gl.ZERO
+	case ReplaceStencilOperation:
+		return gl.REPLACE
+	case IncrementStencilOperation:
+		return gl.INCR
+	case DecrementStencilOperation:
+		return gl.DECR
+	default:
+		panic("unknown stencil operation")
+	}
+}
+
 func NewRenderState() *RenderState {
 	var rs RenderState
 	rs.DisableBlending()
@@ -184,7 +201,7 @@ func (rs *RenderState) apply() {
 		currentState.StencilTestRef = rs.StencilTestRef
 	}
 
-	gl.StencilOp(uint32(rs.StencilStencilFailOperation), uint32(rs.StencilDepthFailOperation), uint32(rs.StencilDepthPassOperation))
+	gl.StencilOp(uint32(rs.StencilStencilFailOperation.glenum()), uint32(rs.StencilDepthFailOperation.glenum()), uint32(rs.StencilDepthPassOperation.glenum()))
 	currentState.StencilStencilFailOperation = rs.StencilStencilFailOperation
 	currentState.StencilDepthFailOperation = rs.StencilDepthFailOperation
 	currentState.StencilDepthPassOperation = rs.StencilDepthPassOperation

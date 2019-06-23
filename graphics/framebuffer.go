@@ -4,6 +4,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/window" // initialize graphics
+	"unsafe"
 )
 
 type Framebuffer struct {
@@ -89,4 +90,21 @@ func (f *Framebuffer) bindDraw() {
 
 func (f *Framebuffer) bindRead() {
 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, uint32(f.id))
+}
+
+func (f *Framebuffer) PrintStencil() {
+	f.bindRead()
+
+	w := f.Width()
+	h := f.Height()
+	data := make([]byte, w*h)
+	gl.ReadPixels(0, 0, int32(w), int32(h), gl.STENCIL_INDEX, gl.UNSIGNED_BYTE, unsafe.Pointer(&data[0]))
+
+	for i := 0; i < h; i++ {
+		for j := 0; j < w; j++ {
+			print(data[i*w+j])
+			print(" ")
+		}
+		println()
+	}
 }
