@@ -582,7 +582,7 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
 
 	for face := 0; face < 6; face++ {
-		r.shadowMapFramebuffer.AttachCubeMapFace(graphics.DepthAttachment, smap.Face(graphics.CubeMapLayer(face)), 0)
+		r.shadowMapFramebuffer.Attach(smap.Face(graphics.CubeMapLayer(face)))
 		r.shadowMapFramebuffer.ClearDepth(1)
 		c.SetForwardUp(forwards[face], ups[face])
 

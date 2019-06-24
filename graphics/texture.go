@@ -15,14 +15,16 @@ import (
 
 type Texture2D struct {
 	id     int
-	Width  int
-	Height int
+	width  int
+	height int
+	format uint32
 }
 
 type CubeMap struct {
 	id     int
-	Width  int
-	Height int
+	width  int
+	height int
+	format uint32
 }
 
 type CubeMapFace struct {
@@ -58,8 +60,9 @@ const (
 
 func NewTexture2D(filter FilterMode, wrap WrapMode, format uint32, width, height int) *Texture2D {
 	var t Texture2D
-	t.Width = width
-	t.Height = height
+	t.width = width
+	t.height = height
+	t.format = format
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &id)
 	t.id = int(id)
@@ -107,14 +110,53 @@ func NewTexture2DUniform(rgba math.Vec4) *Texture2D {
 	return NewTexture2DFromImage(NearestFilter, EdgeClampWrap, gl.RGBA8, img)
 }
 
+func (t *Texture2D) Width() int {
+	return t.width
+}
+
+func (t *Texture2D) Height() int {
+	return t.height
+}
+
 func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
 	gl.TextureParameterfv(uint32(t.id), gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
+func (t *Texture2D) attachToFramebuffer(f *Framebuffer) {
+	var glatt uint32
+	switch t.format {
+	case gl.RGBA8:
+		glatt = gl.COLOR_ATTACHMENT0
+	case gl.DEPTH_COMPONENT16:
+		glatt = gl.DEPTH_ATTACHMENT
+	case gl.STENCIL_INDEX8:
+		glatt = gl.STENCIL_ATTACHMENT
+	default:
+		panic("invalid texture format")
+	}
+	gl.NamedFramebufferTexture(uint32(f.id), glatt, uint32(t.id), 0)
+}
+
+func (cf *CubeMapFace) attachToFramebuffer(f *Framebuffer) {
+	var glatt uint32
+	switch cf.CubeMap.format {
+	case gl.RGBA8:
+		glatt = gl.COLOR_ATTACHMENT0
+	case gl.DEPTH_COMPONENT16:
+		glatt = gl.DEPTH_ATTACHMENT
+	case gl.STENCIL_INDEX8:
+		glatt = gl.STENCIL_ATTACHMENT
+	default:
+		panic("invalid texture format")
+	}
+	gl.NamedFramebufferTextureLayer(uint32(f.id), glatt, uint32(cf.CubeMap.id), 0, int32(cf.layer))
+}
+
 func NewCubeMap(filter FilterMode, format uint32, width, height int) *CubeMap {
 	var t CubeMap
-	t.Width = width
-	t.Height = height
+	t.width = width
+	t.height = height
+	t.format = format
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_CUBE_MAP, 1, &id)
 	t.id = int(id)
@@ -166,4 +208,12 @@ func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {
 	f.CubeMap = c
 	f.layer = layer
 	return &f
+}
+
+func (f *CubeMapFace) Width() int {
+	return f.CubeMap.width
+}
+
+func (f *CubeMapFace) Height() int {
+	return f.CubeMap.height
 }

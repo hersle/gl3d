@@ -39,12 +39,12 @@ func NewRenderer() (*Renderer, error) {
 	r.sceneRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
 	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.DEPTH_COMPONENT16, w, h)
 	r.sceneFramebuffer = graphics.NewFramebuffer()
-	r.sceneFramebuffer.AttachTexture2D(graphics.ColorAttachment, r.sceneRenderTarget, 0)
-	r.sceneFramebuffer.AttachTexture2D(graphics.DepthAttachment, r.sceneDepthRenderTarget, 0)
+	r.sceneFramebuffer.Attach(r.sceneRenderTarget)
+	r.sceneFramebuffer.Attach(r.sceneDepthRenderTarget)
 
 	r.overlayRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, w, h)
 	r.overlayFramebuffer = graphics.NewFramebuffer()
-	r.overlayFramebuffer.AttachTexture2D(graphics.ColorAttachment, r.overlayRenderTarget, 0)
+	r.overlayFramebuffer.Attach(r.overlayRenderTarget)
 
 	return &r, nil
 }

@@ -11,13 +11,11 @@ type Framebuffer struct {
 	width, height int
 }
 
-type FramebufferAttachment int
-
-const (
-	ColorAttachment   FramebufferAttachment = FramebufferAttachment(gl.COLOR_ATTACHMENT0)
-	DepthAttachment   FramebufferAttachment = FramebufferAttachment(gl.DEPTH_ATTACHMENT)
-	StencilAttachment FramebufferAttachment = FramebufferAttachment(gl.STENCIL_ATTACHMENT)
-)
+type FramebufferAttachment interface {
+	attachToFramebuffer(f *Framebuffer)
+	Width() int
+	Height() int
+}
 
 var DefaultFramebuffer *Framebuffer = &Framebuffer{0, 800, 800}
 
@@ -45,35 +43,25 @@ func (f *Framebuffer) Height() int {
 	return f.height
 }
 
-func (f *Framebuffer) AttachTexture2D(attachment FramebufferAttachment, t *Texture2D, level int32) {
+func (f *Framebuffer) Attach(att FramebufferAttachment) {
 	if f.width == 0 && f.height == 0 {
-		f.width = t.Width
-		f.height = t.Height
-	} else if f.width != t.Width || f.height != t.Height {
+		f.width = att.Width()
+		f.height = att.Height()
+	} else if f.width != att.Width() || f.height != att.Height() {
 		panic("incompatible framebuffer attachment size")
 	}
-	gl.NamedFramebufferTexture(uint32(f.id), uint32(attachment), uint32(t.id), level)
-}
-
-func (f *Framebuffer) AttachCubeMapFace(attachment FramebufferAttachment, cf *CubeMapFace, level int32) {
-	if f.width == 0 && f.height == 0 {
-		f.width = cf.CubeMap.Width
-		f.height = cf.CubeMap.Height
-	} else if f.width != cf.CubeMap.Width || f.height != cf.CubeMap.Height {
-		panic("incompatible framebuffer attachment size")
-	}
-	gl.NamedFramebufferTextureLayer(uint32(f.id), uint32(attachment), uint32(cf.CubeMap.id), level, int32(cf.layer))
+	att.attachToFramebuffer(f)
 }
 
 func (f *Framebuffer) ClearColor(rgba math.Vec4) {
 	gl.ClearNamedFramebufferfv(uint32(f.id), gl.COLOR, 0, &rgba[0])
 }
 
-func (f *Framebuffer) ClearDepth(clearDepth float32) {
-	gl.ClearNamedFramebufferfv(uint32(f.id), gl.DEPTH, 0, &clearDepth)
+func (f *Framebuffer) ClearDepth(depth float32) {
+	gl.ClearNamedFramebufferfv(uint32(f.id), gl.DEPTH, 0, &depth)
 }
 
-func (f *Framebuffer) Complete() bool {
+func (f *Framebuffer) complete() bool {
 	status := gl.CheckNamedFramebufferStatus(uint32(f.id), gl.FRAMEBUFFER)
 	return status == gl.FRAMEBUFFER_COMPLETE
 }
