@@ -13,40 +13,62 @@ import (
 	"unsafe"
 )
 
-type Texture2D struct {
+type baseTexture struct {
 	id     int
 	width  int
 	height int
-	format uint32
 }
 
-type CubeMap struct {
+type ColorTexture struct {
+	baseTexture
+}
+
+type DepthTexture struct {
+	baseTexture
+}
+
+//type Texture interface {
+//}
+
+type baseCubeMap struct {
 	id     int
 	width  int
 	height int
-	format uint32
 }
 
-type CubeMapFace struct {
-	*CubeMap
+type ColorCubeMap struct {
+	baseCubeMap
+}
+
+type DepthCubeMap struct {
+	baseCubeMap
+}
+
+type ColorCubeMapFace struct {
+	*ColorCubeMap
 	layer CubeMapLayer
 }
 
-type FilterMode int
-
-type WrapMode int
+type DepthCubeMapFace struct {
+	*DepthCubeMap
+	layer CubeMapLayer
+}
 
 type CubeMapLayer int // TODO: rename?
 
+type TextureFilter int
+
+type TextureWrap int
+
 const (
-	NearestFilter FilterMode = FilterMode(gl.NEAREST)
-	LinearFilter  FilterMode = FilterMode(gl.LINEAR)
+	NearestFilter TextureFilter = TextureFilter(gl.NEAREST)
+	LinearFilter  TextureFilter = TextureFilter(gl.LINEAR)
 )
 
 const (
-	EdgeClampWrap   WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
-	BorderClampWrap WrapMode = WrapMode(gl.CLAMP_TO_BORDER)
-	RepeatWrap      WrapMode = WrapMode(gl.REPEAT)
+	EdgeClampWrap   TextureWrap = TextureWrap(gl.CLAMP_TO_EDGE)
+	BorderClampWrap TextureWrap = TextureWrap(gl.CLAMP_TO_BORDER)
+	RepeatWrap      TextureWrap = TextureWrap(gl.REPEAT)
 )
 
 const (
@@ -58,11 +80,10 @@ const (
 	NegativeZ CubeMapLayer = CubeMapLayer(5)
 )
 
-func NewTexture2D(filter FilterMode, wrap WrapMode, format uint32, width, height int) *Texture2D {
-	var t Texture2D
-	t.width = width
-	t.height = height
-	t.format = format
+func newBaseTexture(filter TextureFilter, wrap TextureWrap, format uint32, w, h int) baseTexture {
+	var t baseTexture
+	t.width = w
+	t.height = h
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &id)
 	t.id = int(id)
@@ -70,11 +91,23 @@ func NewTexture2D(filter FilterMode, wrap WrapMode, format uint32, width, height
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MAG_FILTER, int32(filter))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_S, int32(wrap))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_T, int32(wrap))
-	gl.TextureStorage2D(uint32(t.id), 1, format, int32(width), int32(height))
+	gl.TextureStorage2D(uint32(t.id), 1, format, int32(w), int32(h))
+	return t
+}
+
+func NewColorTexture(filter TextureFilter, wrap TextureWrap, w, h int) *ColorTexture {
+	var t ColorTexture
+	t.baseTexture = newBaseTexture(filter, wrap, gl.RGBA8, w, h)
 	return &t
 }
 
-func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img image.Image) *Texture2D {
+func NewDepthTexture(filter TextureFilter, wrap TextureWrap, w, h int) *DepthTexture {
+	var t DepthTexture
+	t.baseTexture = newBaseTexture(filter, wrap, gl.DEPTH_COMPONENT16, w, h)
+	return &t
+}
+
+func LoadColorTexture(filter TextureFilter, wrap TextureWrap, img image.Image) *ColorTexture {
 	switch img.(type) {
 	case *image.RGBA:
 		img := img.(*image.RGBA)
@@ -87,7 +120,7 @@ func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img 
 			}
 		}
 
-		t := NewTexture2D(filter, wrap, format, w, h)
+		t := NewColorTexture(filter, wrap, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		p := unsafe.Pointer(&byteSlice(img2.Pix)[0])
 		gl.TextureSubImage2D(uint32(t.id), 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
@@ -95,11 +128,11 @@ func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img 
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
-		return NewTexture2DFromImage(filter, wrap, format, imgRGBA)
+		return LoadColorTexture(filter, wrap, imgRGBA)
 	}
 }
 
-func NewTexture2DUniform(rgba math.Vec4) *Texture2D {
+func NewUniformColorTexture(rgba math.Vec4) *ColorTexture {
 	// TODO: floating point errors?
 	r := uint8(float32(0xff) * rgba.X())
 	g := uint8(float32(0xff) * rgba.Y())
@@ -107,56 +140,51 @@ func NewTexture2DUniform(rgba math.Vec4) *Texture2D {
 	a := uint8(float32(0xff) * rgba.W())
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
-	return NewTexture2DFromImage(NearestFilter, EdgeClampWrap, gl.RGBA8, img)
+	return LoadColorTexture(NearestFilter, EdgeClampWrap, img)
 }
 
-func (t *Texture2D) Width() int {
+func (t *baseTexture) Width() int {
 	return t.width
 }
 
-func (t *Texture2D) Height() int {
+func (t *baseTexture) Height() int {
 	return t.height
 }
 
-func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
+func (t *ColorTexture) SetBorder(rgba math.Vec4) {
 	gl.TextureParameterfv(uint32(t.id), gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
-func (t *Texture2D) attachToFramebuffer(f *Framebuffer) {
-	var glatt uint32
-	switch t.format {
-	case gl.RGBA8:
-		glatt = gl.COLOR_ATTACHMENT0
-	case gl.DEPTH_COMPONENT16:
-		glatt = gl.DEPTH_ATTACHMENT
-	case gl.STENCIL_INDEX8:
-		glatt = gl.STENCIL_ATTACHMENT
-	default:
-		panic("invalid texture format")
-	}
-	gl.NamedFramebufferTexture(uint32(f.id), glatt, uint32(t.id), 0)
+func (t *DepthTexture) SetBorder(depth float32) {
+	// TODO: use single parameter GL function?
+	rgba := math.Vec4{depth, depth, depth, depth}
+	gl.TextureParameterfv(uint32(t.id), gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
-func (cf *CubeMapFace) attachToFramebuffer(f *Framebuffer) {
-	var glatt uint32
-	switch cf.CubeMap.format {
-	case gl.RGBA8:
-		glatt = gl.COLOR_ATTACHMENT0
-	case gl.DEPTH_COMPONENT16:
-		glatt = gl.DEPTH_ATTACHMENT
-	case gl.STENCIL_INDEX8:
-		glatt = gl.STENCIL_ATTACHMENT
-	default:
-		panic("invalid texture format")
-	}
-	gl.NamedFramebufferTextureLayer(uint32(f.id), glatt, uint32(cf.CubeMap.id), 0, int32(cf.layer))
+func (t *baseTexture) attachToFramebuffer(f *Framebuffer, att uint32) {
+	gl.NamedFramebufferTexture(uint32(f.id), att, uint32(t.id), 0)
 }
 
-func NewCubeMap(filter FilterMode, format uint32, width, height int) *CubeMap {
-	var t CubeMap
+func (t *ColorTexture) attachToFramebuffer(f *Framebuffer) {
+	t.baseTexture.attachToFramebuffer(f, gl.COLOR_ATTACHMENT0)
+}
+
+func (t *DepthTexture) attachToFramebuffer(f *Framebuffer) {
+	t.baseTexture.attachToFramebuffer(f, gl.DEPTH_ATTACHMENT)
+}
+
+func (cf *ColorCubeMapFace) attachToFramebuffer(f *Framebuffer) {
+	gl.NamedFramebufferTextureLayer(uint32(f.id), gl.COLOR_ATTACHMENT0, uint32(cf.ColorCubeMap.id), 0, int32(cf.layer))
+}
+
+func (cf *DepthCubeMapFace) attachToFramebuffer(f *Framebuffer) {
+	gl.NamedFramebufferTextureLayer(uint32(f.id), gl.DEPTH_ATTACHMENT, uint32(cf.DepthCubeMap.id), 0, int32(cf.layer))
+}
+
+func newBaseCubeMap(filter TextureFilter, format uint32, width, height int) baseCubeMap {
+	var t baseCubeMap
 	t.width = width
 	t.height = height
-	t.format = format
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_CUBE_MAP, 1, &id)
 	t.id = int(id)
@@ -168,12 +196,24 @@ func NewCubeMap(filter FilterMode, format uint32, width, height int) *CubeMap {
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
 	gl.TextureStorage2D(uint32(t.id), 1, format, int32(width), int32(height))
 
-	return &t
+	return t
 }
 
-func NewCubeMapFromImages(filter FilterMode, img1, img2, img3, img4, img5, img6 image.Image) *CubeMap {
+func NewColorCubeMap(filter TextureFilter, width, height int) *ColorCubeMap {
+	var c ColorCubeMap
+	c.baseCubeMap = newBaseCubeMap(filter, gl.RGBA8, width, height)
+	return &c
+}
+
+func NewDepthCubeMap(filter TextureFilter, width, height int) *DepthCubeMap {
+	var c DepthCubeMap
+	c.baseCubeMap = newBaseCubeMap(filter, gl.DEPTH_COMPONENT16, width, height)
+	return &c
+}
+
+func LoadColorCubeMap(filter TextureFilter, img1, img2, img3, img4, img5, img6 image.Image) *ColorCubeMap {
 	w, h := img1.Bounds().Size().X, img1.Bounds().Size().Y
-	t := NewCubeMap(filter, gl.RGBA8, w, h)
+	t := NewColorCubeMap(filter, w, h)
 
 	imgs := []image.Image{img1, img2, img3, img4, img5, img6}
 	for i, img := range imgs {
@@ -192,7 +232,7 @@ func NewCubeMapFromImages(filter FilterMode, img1, img2, img3, img4, img5, img6 
 	return t
 }
 
-func NewCubeMapUniform(rgba math.Vec4) *CubeMap {
+func NewUniformColorCubeMap(rgba math.Vec4) *ColorCubeMap {
 	// TODO: floating point errors?
 	r := uint8(float32(0xff) * rgba.X())
 	g := uint8(float32(0xff) * rgba.Y())
@@ -200,20 +240,35 @@ func NewCubeMapUniform(rgba math.Vec4) *CubeMap {
 	a := uint8(float32(0xff) * rgba.W())
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
-	return NewCubeMapFromImages(NearestFilter, img, img, img, img, img, img)
+	return LoadColorCubeMap(NearestFilter, img, img, img, img, img, img)
 }
 
-func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {
-	var f CubeMapFace
-	f.CubeMap = c
+func (c *ColorCubeMap) Face(layer CubeMapLayer) *ColorCubeMapFace {
+	var f ColorCubeMapFace
+	f.ColorCubeMap = c
 	f.layer = layer
 	return &f
 }
 
-func (f *CubeMapFace) Width() int {
-	return f.CubeMap.width
+func (c *DepthCubeMap) Face(layer CubeMapLayer) *DepthCubeMapFace {
+	var f DepthCubeMapFace
+	f.DepthCubeMap = c
+	f.layer = layer
+	return &f
 }
 
-func (f *CubeMapFace) Height() int {
-	return f.CubeMap.height
+func (f *ColorCubeMapFace) Width() int {
+	return f.ColorCubeMap.width
+}
+
+func (f *ColorCubeMapFace) Height() int {
+	return f.ColorCubeMap.height
+}
+
+func (f *DepthCubeMapFace) Width() int {
+	return f.DepthCubeMap.width
+}
+
+func (f *DepthCubeMapFace) Height() int {
+	return f.DepthCubeMap.height
 }

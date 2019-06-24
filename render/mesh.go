@@ -63,11 +63,11 @@ type MeshRenderer struct {
 	vbos     []*graphics.Buffer
 	ibos     []*graphics.Buffer
 
-	tex2ds map[image.Image]*graphics.Texture2D
+	tex2ds map[image.Image]*graphics.ColorTexture
 
-	pointLightShadowMaps map[int]*graphics.CubeMap
-	spotLightShadowMaps  map[int]*graphics.Texture2D
-	dirLightShadowMaps   map[int]*graphics.Texture2D
+	pointLightShadowMaps map[int]*graphics.DepthCubeMap
+	spotLightShadowMaps  map[int]*graphics.DepthTexture
+	dirLightShadowMaps   map[int]*graphics.DepthTexture
 
 	shadowSp             *ShadowMapShaderProgram
 	dirshadowSp          *DirectionalLightShadowMapShaderProgram
@@ -211,10 +211,10 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.renderState.PrimitiveType = graphics.Triangle
 
 	r.vboCache = make(map[*object.Vertex]int)
-	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
-	r.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
-	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
-	r.tex2ds = make(map[image.Image]*graphics.Texture2D)
+	r.pointLightShadowMaps = make(map[int]*graphics.DepthCubeMap)
+	r.spotLightShadowMaps = make(map[int]*graphics.DepthTexture)
+	r.dirLightShadowMaps = make(map[int]*graphics.DepthTexture)
+	r.tex2ds = make(map[image.Image]*graphics.ColorTexture)
 
 	r.shadowSp = NewShadowMapShaderProgram()
 	r.dirshadowSp = NewDirectionalLightShadowMapShaderProgram()
@@ -355,44 +355,44 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found := r.tex2ds[mtl.AmbientMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AmbientMap)
+		tex = graphics.LoadColorTexture(graphics.LinearFilter, graphics.RepeatWrap, mtl.AmbientMap)
 		r.tex2ds[mtl.AmbientMap] = tex
 	}
 	sp.Ambient.Set(mtl.Ambient)
-	sp.AmbientMap.Set2D(tex)
+	sp.AmbientMap.SetColor2D(tex)
 
 	tex, found = r.tex2ds[mtl.DiffuseMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.DiffuseMap)
+		tex = graphics.LoadColorTexture(graphics.LinearFilter, graphics.RepeatWrap, mtl.DiffuseMap)
 		r.tex2ds[mtl.DiffuseMap] = tex
 	}
 	sp.Diffuse.Set(mtl.Diffuse)
-	sp.DiffuseMap.Set2D(tex)
+	sp.DiffuseMap.SetColor2D(tex)
 
 	tex, found = r.tex2ds[mtl.SpecularMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.SpecularMap)
+		tex = graphics.LoadColorTexture(graphics.LinearFilter, graphics.RepeatWrap, mtl.SpecularMap)
 		r.tex2ds[mtl.SpecularMap] = tex
 	}
 	sp.Specular.Set(mtl.Specular)
-	sp.SpecularMap.Set2D(tex)
+	sp.SpecularMap.SetColor2D(tex)
 
 	sp.Shine.Set(mtl.Shine)
 
 	tex, found = r.tex2ds[mtl.AlphaMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AlphaMap)
+		tex = graphics.LoadColorTexture(graphics.LinearFilter, graphics.RepeatWrap, mtl.AlphaMap)
 		r.tex2ds[mtl.AlphaMap] = tex
 	}
 	sp.Alpha.Set(mtl.Alpha)
-	sp.AlphaMap.Set2D(tex)
+	sp.AlphaMap.SetColor2D(tex)
 
 	tex, found = r.tex2ds[mtl.BumpMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.BumpMap)
+		tex = graphics.LoadColorTexture(graphics.LinearFilter, graphics.RepeatWrap, mtl.BumpMap)
 		r.tex2ds[mtl.BumpMap] = tex
 	}
-	sp.BumpMap.Set2D(tex)
+	sp.BumpMap.SetColor2D(tex)
 
 	// upload to GPU
 	var vbo *graphics.Buffer
@@ -435,7 +435,7 @@ func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight)
 		if !found {
 			panic("set point light with no shadow map")
 		}
-		sp.CubeShadowMap.SetCube(smap)
+		sp.CubeShadowMap.SetDepthCube(smap)
 	}
 	sp.LightAttQuad.Set(l.Attenuation)
 }
@@ -455,7 +455,7 @@ func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 		if !found {
 			panic("set spot light with no shadow map")
 		}
-		sp.SpotShadowMap.Set2D(smap)
+		sp.SpotShadowMap.SetDepth2D(smap)
 	}
 }
 
@@ -472,7 +472,7 @@ func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 		if !found {
 			panic("set directional light with no shadow map")
 		}
-		sp.DirShadowMap.Set2D(smap)
+		sp.DirShadowMap.SetDepth2D(smap)
 	}
 }
 
@@ -548,7 +548,7 @@ func (r *MeshRenderer) SetDirShadowSubMesh(sp *MeshShaderProgram, sm *object.Sub
 func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
 	smap, found := r.pointLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewCubeMap(graphics.NearestFilter, gl.DEPTH_COMPONENT16, 512, 512)
+		smap = graphics.NewDepthCubeMap(graphics.NearestFilter, 512, 512)
 		r.pointLightShadowMaps[l.ID] = smap
 	}
 

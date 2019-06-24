@@ -16,7 +16,7 @@ type QuadShaderProgram struct {
 type QuadRenderer struct {
 	sp          *QuadShaderProgram
 	vbo         *graphics.Buffer
-	tex         *graphics.Texture2D
+	tex         *graphics.ColorTexture
 	renderState *graphics.RenderState
 }
 
@@ -66,8 +66,8 @@ func NewQuadRenderer() *QuadRenderer {
 	return &r
 }
 
-func (r *QuadRenderer) Render(tex *graphics.Texture2D, fb *graphics.Framebuffer) {
-	r.sp.Texture.Set2D(tex)
+func (r *QuadRenderer) Render(tex *graphics.ColorTexture, fb *graphics.Framebuffer) {
+	r.sp.Texture.SetColor2D(tex)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(6, r.renderState).Execute()
 }

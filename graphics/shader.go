@@ -356,7 +356,7 @@ func (u *UniformMatrix4) Set(m *math.Mat4) {
 	gl.ProgramUniformMatrix4fv(uint32(u.progID), int32(u.location), 1, true, &m[0])
 }
 
-func (u *UniformSampler) Set2D(t *Texture2D) {
+func (u *UniformSampler) SetColor2D(t *ColorTexture) {
 	if u == nil {
 		return
 	}
@@ -365,7 +365,25 @@ func (u *UniformSampler) Set2D(t *Texture2D) {
 	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
 }
 
-func (u *UniformSampler) SetCube(t *CubeMap) {
+func (u *UniformSampler) SetDepth2D(t *DepthTexture) {
+	if u == nil {
+		return
+	}
+	// TODO: other shaders can mess with this texture index
+	gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(t.id))
+	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
+}
+
+func (u *UniformSampler) SetColorCube(t *ColorCubeMap) {
+	if u == nil {
+		return
+	}
+	// TODO: other shaders can mess with this texture index
+	gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(t.id))
+	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
+}
+
+func (u *UniformSampler) SetDepthCube(t *DepthCubeMap) {
 	if u == nil {
 		return
 	}

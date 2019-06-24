@@ -21,9 +21,9 @@ type SkyboxRenderer struct {
 	sp          *SkyboxShaderProgram
 	vbo         *graphics.Buffer
 	ibo         *graphics.Buffer
-	tex         *graphics.CubeMap
+	tex         *graphics.ColorCubeMap
 	renderState *graphics.RenderState
-	cubemaps    map[*scene.CubeMap]*graphics.CubeMap
+	cubemaps    map[*scene.CubeMap]*graphics.ColorCubeMap
 }
 
 func NewSkyboxShaderProgram() *SkyboxShaderProgram {
@@ -49,7 +49,7 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 func NewSkyboxRenderer() *SkyboxRenderer {
 	var r SkyboxRenderer
 
-	r.cubemaps = make(map[*scene.CubeMap]*graphics.CubeMap)
+	r.cubemaps = make(map[*scene.CubeMap]*graphics.ColorCubeMap)
 
 	r.sp = NewSkyboxShaderProgram()
 
@@ -104,11 +104,11 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 		img4 := skybox.Negy
 		img5 := skybox.Posz
 		img6 := skybox.Negz
-		cm = graphics.NewCubeMapFromImages(graphics.NearestFilter, img1, img2, img3, img4, img5, img6)
+		cm = graphics.LoadColorCubeMap(graphics.NearestFilter, img1, img2, img3, img4, img5, img6)
 		r.cubemaps[skybox] = cm
 	}
 
-	r.sp.CubeMap.SetCube(cm)
+	r.sp.CubeMap.SetColorCube(cm)
 }
 
 func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {

@@ -17,7 +17,7 @@ type TextShaderProgram struct {
 
 type TextRenderer struct {
 	sp          *TextShaderProgram
-	tex         *graphics.Texture2D
+	tex         *graphics.ColorTexture
 	vbo         *graphics.Buffer
 	ibo         *graphics.Buffer
 	renderState *graphics.RenderState
@@ -55,7 +55,7 @@ func NewTextRenderer() *TextRenderer {
 	r.SetAttribs(r.vbo, r.ibo)
 
 	img := basicfont.Face7x13.Mask
-	r.tex = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
+	r.tex = graphics.LoadColorTexture(graphics.NearestFilter, graphics.EdgeClampWrap, img)
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
@@ -64,8 +64,8 @@ func NewTextRenderer() *TextRenderer {
 	return &r
 }
 
-func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
-	r.sp.Atlas.Set2D(tex)
+func (r *TextRenderer) SetAtlas(tex *graphics.ColorTexture) {
+	r.sp.Atlas.SetColor2D(tex)
 }
 
 func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
