@@ -104,7 +104,7 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 		img4 := skybox.Negy
 		img5 := skybox.Posz
 		img6 := skybox.Negz
-		cm = graphics.NewCubeMapFromImages(graphics.NearestFilter, img1, img2, img3, img4, img5, img6)
+		cm = graphics.LoadCubeMap(graphics.NearestFilter, img1, img2, img3, img4, img5, img6)
 		r.cubemaps[skybox] = cm
 	}
 

@@ -32,21 +32,21 @@ type CubeMapFace struct {
 	layer CubeMapLayer
 }
 
-type FilterMode int
-
-type WrapMode int
-
 type CubeMapLayer int // TODO: rename?
 
-const (
-	NearestFilter FilterMode = FilterMode(gl.NEAREST)
-	LinearFilter  FilterMode = FilterMode(gl.LINEAR)
-)
+type TextureFilter int
 
 const (
-	EdgeClampWrap   WrapMode = WrapMode(gl.CLAMP_TO_EDGE)
-	BorderClampWrap WrapMode = WrapMode(gl.CLAMP_TO_BORDER)
-	RepeatWrap      WrapMode = WrapMode(gl.REPEAT)
+	NearestFilter TextureFilter = TextureFilter(gl.NEAREST)
+	LinearFilter  TextureFilter = TextureFilter(gl.LINEAR)
+)
+
+type TextureWrap int
+
+const (
+	EdgeClampWrap   TextureWrap = TextureWrap(gl.CLAMP_TO_EDGE)
+	BorderClampWrap TextureWrap = TextureWrap(gl.CLAMP_TO_BORDER)
+	RepeatWrap      TextureWrap = TextureWrap(gl.REPEAT)
 )
 
 const (
@@ -58,7 +58,7 @@ const (
 	NegativeZ CubeMapLayer = CubeMapLayer(5)
 )
 
-func NewTexture2D(filter FilterMode, wrap WrapMode, format uint32, width, height int) *Texture2D {
+func NewTexture2D(filter TextureFilter, wrap TextureWrap, width, height int, format uint32) *Texture2D {
 	var t Texture2D
 	t.width = width
 	t.height = height
@@ -74,7 +74,7 @@ func NewTexture2D(filter FilterMode, wrap WrapMode, format uint32, width, height
 	return &t
 }
 
-func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img image.Image) *Texture2D {
+func LoadTexture2D(filter TextureFilter, wrap TextureWrap, format uint32, img image.Image) *Texture2D {
 	switch img.(type) {
 	case *image.RGBA:
 		img := img.(*image.RGBA)
@@ -87,7 +87,7 @@ func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img 
 			}
 		}
 
-		t := NewTexture2D(filter, wrap, format, w, h)
+		t := NewTexture2D(filter, wrap, w, h, format)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		p := unsafe.Pointer(&byteSlice(img2.Pix)[0])
 		gl.TextureSubImage2D(uint32(t.id), 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
@@ -95,11 +95,11 @@ func NewTexture2DFromImage(filter FilterMode, wrap WrapMode, format uint32, img 
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
-		return NewTexture2DFromImage(filter, wrap, format, imgRGBA)
+		return LoadTexture2D(filter, wrap, format, imgRGBA)
 	}
 }
 
-func NewTexture2DUniform(rgba math.Vec4) *Texture2D {
+func NewUniformTexture2D(rgba math.Vec4) *Texture2D {
 	// TODO: floating point errors?
 	r := uint8(float32(0xff) * rgba.X())
 	g := uint8(float32(0xff) * rgba.Y())
@@ -107,7 +107,7 @@ func NewTexture2DUniform(rgba math.Vec4) *Texture2D {
 	a := uint8(float32(0xff) * rgba.W())
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
-	return NewTexture2DFromImage(NearestFilter, EdgeClampWrap, gl.RGBA8, img)
+	return LoadTexture2D(NearestFilter, EdgeClampWrap, gl.RGBA8, img)
 }
 
 func (t *Texture2D) Width() int {
@@ -122,7 +122,7 @@ func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
 	gl.TextureParameterfv(uint32(t.id), gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
-func (t *Texture2D) attachToFramebuffer(f *Framebuffer) {
+func (t *Texture2D) attachTo(f *Framebuffer) {
 	var glatt uint32
 	switch t.format {
 	case gl.RGBA8:
@@ -137,7 +137,7 @@ func (t *Texture2D) attachToFramebuffer(f *Framebuffer) {
 	gl.NamedFramebufferTexture(uint32(f.id), glatt, uint32(t.id), 0)
 }
 
-func (cf *CubeMapFace) attachToFramebuffer(f *Framebuffer) {
+func (cf *CubeMapFace) attachTo(f *Framebuffer) {
 	var glatt uint32
 	switch cf.CubeMap.format {
 	case gl.RGBA8:
@@ -152,7 +152,7 @@ func (cf *CubeMapFace) attachToFramebuffer(f *Framebuffer) {
 	gl.NamedFramebufferTextureLayer(uint32(f.id), glatt, uint32(cf.CubeMap.id), 0, int32(cf.layer))
 }
 
-func NewCubeMap(filter FilterMode, format uint32, width, height int) *CubeMap {
+func NewCubeMap(filter TextureFilter, format uint32, width, height int) *CubeMap {
 	var t CubeMap
 	t.width = width
 	t.height = height
@@ -171,7 +171,7 @@ func NewCubeMap(filter FilterMode, format uint32, width, height int) *CubeMap {
 	return &t
 }
 
-func NewCubeMapFromImages(filter FilterMode, img1, img2, img3, img4, img5, img6 image.Image) *CubeMap {
+func LoadCubeMap(filter TextureFilter, img1, img2, img3, img4, img5, img6 image.Image) *CubeMap {
 	w, h := img1.Bounds().Size().X, img1.Bounds().Size().Y
 	t := NewCubeMap(filter, gl.RGBA8, w, h)
 
@@ -192,7 +192,7 @@ func NewCubeMapFromImages(filter FilterMode, img1, img2, img3, img4, img5, img6 
 	return t
 }
 
-func NewCubeMapUniform(rgba math.Vec4) *CubeMap {
+func NewUniformCubeMap(rgba math.Vec4) *CubeMap {
 	// TODO: floating point errors?
 	r := uint8(float32(0xff) * rgba.X())
 	g := uint8(float32(0xff) * rgba.Y())
@@ -200,7 +200,7 @@ func NewCubeMapUniform(rgba math.Vec4) *CubeMap {
 	a := uint8(float32(0xff) * rgba.W())
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
-	return NewCubeMapFromImages(NearestFilter, img, img, img, img, img, img)
+	return LoadCubeMap(NearestFilter, img, img, img, img, img, img)
 }
 
 func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {

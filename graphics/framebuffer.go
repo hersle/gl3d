@@ -12,7 +12,7 @@ type Framebuffer struct {
 }
 
 type FramebufferAttachment interface {
-	attachToFramebuffer(f *Framebuffer)
+	attachTo(f *Framebuffer)
 	Width() int
 	Height() int
 }
@@ -50,7 +50,7 @@ func (f *Framebuffer) Attach(att FramebufferAttachment) {
 	} else if f.width != att.Width() || f.height != att.Height() {
 		panic("incompatible framebuffer attachment size")
 	}
-	att.attachToFramebuffer(f)
+	att.attachTo(f)
 }
 
 func (f *Framebuffer) ClearColor(rgba math.Vec4) {

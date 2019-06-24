@@ -355,7 +355,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found := r.tex2ds[mtl.AmbientMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AmbientMap)
+		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AmbientMap)
 		r.tex2ds[mtl.AmbientMap] = tex
 	}
 	sp.Ambient.Set(mtl.Ambient)
@@ -363,7 +363,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.DiffuseMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.DiffuseMap)
+		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.DiffuseMap)
 		r.tex2ds[mtl.DiffuseMap] = tex
 	}
 	sp.Diffuse.Set(mtl.Diffuse)
@@ -371,7 +371,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.SpecularMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.SpecularMap)
+		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.SpecularMap)
 		r.tex2ds[mtl.SpecularMap] = tex
 	}
 	sp.Specular.Set(mtl.Specular)
@@ -381,7 +381,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.AlphaMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AlphaMap)
+		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AlphaMap)
 		r.tex2ds[mtl.AlphaMap] = tex
 	}
 	sp.Alpha.Set(mtl.Alpha)
@@ -389,7 +389,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.BumpMap]
 	if !found {
-		tex = graphics.NewTexture2DFromImage(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.BumpMap)
+		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.BumpMap)
 		r.tex2ds[mtl.BumpMap] = tex
 	}
 	sp.BumpMap.Set2D(tex)

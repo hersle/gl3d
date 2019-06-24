@@ -55,7 +55,7 @@ func NewTextRenderer() *TextRenderer {
 	r.SetAttribs(r.vbo, r.ibo)
 
 	img := basicfont.Face7x13.Mask
-	r.tex = graphics.NewTexture2DFromImage(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
+	r.tex = graphics.LoadTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
