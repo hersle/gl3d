@@ -1,13 +1,11 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
-	"unsafe"
 )
 
 type ArrowRenderer struct {
@@ -43,8 +41,6 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
 	sp.Color = sp.UniformVector3("color")
 
-	sp.Position.SetFormat(gl.FLOAT, false) // TODO: remove dependency on GL constants
-
 	return &sp
 }
 
@@ -77,8 +73,7 @@ func (r *ArrowRenderer) SetColor(color math.Vec3) {
 }
 
 func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
-	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
-	r.sp.Position.SetSource(vbo, 0, stride)
+	r.sp.Position.SetSource(vbo, math.Vec3{}, 0)
 }
 
 func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {

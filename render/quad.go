@@ -1,10 +1,9 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
+	//_ "github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
-	"unsafe"
 )
 
 type QuadShaderProgram struct {
@@ -53,9 +52,7 @@ func NewQuadRenderer() *QuadRenderer {
 	r.vbo = graphics.NewBuffer()
 	r.vbo.SetData(verts, 0)
 
-	r.sp.Position.SetFormat(gl.FLOAT, false)
-	stride := int(unsafe.Sizeof(verts[0]))
-	r.sp.Position.SetSource(r.vbo, 0, stride)
+	r.sp.Position.SetSource(r.vbo, math.Vec2{}, 0)
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Program = r.sp.ShaderProgram
