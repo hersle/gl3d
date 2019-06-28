@@ -25,7 +25,7 @@ func NewQuadShaderProgram() *QuadShaderProgram {
 
 	vShaderFilename := "render/shaders/quadvshader.glsl" // TODO: make independent...
 	fShaderFilename := "render/shaders/quadfshader.glsl" // TODO: make independent...
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename)
 	if err != nil {
 		panic(err)
 	}

@@ -28,9 +28,9 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	var sp ArrowShaderProgram
 	var err error
 
-	vShaderFilename := "render/shaders/arrowvshader.glsl" // TODO: make independent from executable directory
-	fShaderFilename := "render/shaders/arrowfshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	vFile := "render/shaders/arrowvshader.glsl" // TODO: make independent from executable directory
+	fFile := "render/shaders/arrowfshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile)
 	if err != nil {
 		panic(err)
 	}

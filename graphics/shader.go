@@ -15,7 +15,6 @@ type ShaderType int
 const (
 	VertexShader ShaderType = iota
 	FragmentShader
-	GeometryShader
 )
 
 type ShaderProgram struct {
@@ -81,39 +80,19 @@ func (va *vertexArray) bind() {
 	gl.BindVertexArray(uint32(va.id))
 }
 
-func NewShader(_type ShaderType, src string) (*Shader, error) {
+func NewShader(type_ ShaderType, src string, defines ...string) (*Shader, error) {
 	var s Shader
 
 	var gltype uint32
-	switch _type {
+	switch type_ {
 	case VertexShader:
 		gltype = gl.VERTEX_SHADER
 	case FragmentShader:
 		gltype = gl.FRAGMENT_SHADER
-	case GeometryShader:
-		gltype = gl.GEOMETRY_SHADER
 	default:
 		panic("unknown shader type")
 	}
 
-	s.id = int(gl.CreateShader(gltype))
-	s.SetSource(src)
-	err := s.Compile()
-	if err != nil {
-		return nil, err
-	}
-	return &s, nil
-}
-
-func ReadShader(_type ShaderType, filename string) (*Shader, error) {
-	src, err := ioutil.ReadFile(filename)
-	if err != nil {
-		return nil, err
-	}
-	return NewShader(_type, string(src))
-}
-
-func NewShaderFromTemplate(_type ShaderType, src string, defines []string) (*Shader, error) {
 	lines := strings.Split(src, "\n")
 	src = lines[0] + "\n" // #version
 	for _, define := range defines {
@@ -122,33 +101,38 @@ func NewShaderFromTemplate(_type ShaderType, src string, defines []string) (*Sha
 	for _, line := range lines[1:] {
 		src = src + line + "\n"
 	}
-	println("shader template source:\n", src)
 
-	return NewShader(_type, src)
-}
-
-func ReadShaderFromTemplate(_type ShaderType, filename string, defines []string) (*Shader, error) {
-	src, err := ioutil.ReadFile(filename)
+	s.id = int(gl.CreateShader(gltype))
+	s.setSource(src)
+	err := s.compile()
 	if err != nil {
 		return nil, err
 	}
-	return NewShaderFromTemplate(_type, string(src), defines)
+	return &s, nil
 }
 
-func (s *Shader) SetSource(src string) {
+func ReadShader(type_ ShaderType, file string, defines ...string) (*Shader, error) {
+	src, err := ioutil.ReadFile(file)
+	if err != nil {
+		return nil, err
+	}
+	return NewShader(type_, string(src), defines...)
+}
+
+func (s *Shader) setSource(src string) {
 	cSrc, free := gl.Strs(src)
 	defer free()
 	length := int32(len(src))
 	gl.ShaderSource(uint32(s.id), 1, cSrc, &length)
 }
 
-func (s *Shader) Compiled() bool {
+func (s *Shader) compiled() bool {
 	var status int32
 	gl.GetShaderiv(uint32(s.id), gl.COMPILE_STATUS, &status)
 	return status == gl.TRUE
 }
 
-func (s *Shader) Log() string {
+func (s *Shader) log() string {
 	var length int32
 	gl.GetShaderiv(uint32(s.id), gl.INFO_LOG_LENGTH, &length)
 	log := string(make([]byte, length+1))
@@ -157,16 +141,16 @@ func (s *Shader) Log() string {
 	return log
 }
 
-func (s *Shader) Compile() error {
+func (s *Shader) compile() error {
 	gl.CompileShader(uint32(s.id))
-	if s.Compiled() {
+	if s.compiled() {
 		return nil
 	} else {
-		return errors.New(s.Log())
+		return errors.New(s.log())
 	}
 }
 
-func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error) {
+func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
 	var p ShaderProgram
 	p.id = int(gl.CreateProgram())
 
@@ -178,10 +162,6 @@ func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error)
 		gl.AttachShader(uint32(p.id), uint32(fShader.id))
 		defer gl.DetachShader(uint32(p.id), uint32(fShader.id))
 	}
-	if gShader != nil {
-		gl.AttachShader(uint32(p.id), uint32(gShader.id))
-		defer gl.DetachShader(uint32(p.id), uint32(gShader.id))
-	}
 
 	err := p.link()
 	if err != nil {
@@ -192,72 +172,29 @@ func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error)
 	return &p, err
 }
 
-func ReadShaderProgram(vShaderFilename, fShaderFilename, gShaderFilename string) (*ShaderProgram, error) {
-	var vShader, fShader, gShader *Shader
+func ReadShaderProgram(vFile, fFile string, defines ...string) (*ShaderProgram, error) {
+	var vShader, fShader *Shader
 	var err error
 
-	if vShaderFilename == "" {
+	if vFile == "" {
 		vShader = nil
 	} else {
-		vShader, err = ReadShader(VertexShader, vShaderFilename)
+		vShader, err = ReadShader(VertexShader, vFile, defines...)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if fShaderFilename == "" {
+	if fFile == "" {
 		fShader = nil
 	} else {
-		fShader, err = ReadShader(FragmentShader, fShaderFilename)
+		fShader, err = ReadShader(FragmentShader, fFile, defines...)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	if gShaderFilename == "" {
-		gShader = nil
-	} else {
-		gShader, err = ReadShader(GeometryShader, gShaderFilename)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return NewShaderProgram(vShader, fShader, gShader)
-}
-
-func ReadShaderProgramFromTemplates(vShaderFilename, fShaderFilename, gShaderFilename string, defines []string) (*ShaderProgram, error) {
-	var vShader, fShader, gShader *Shader
-	var err error
-
-	if vShaderFilename == "" {
-		vShader = nil
-	} else {
-		vShader, err = ReadShaderFromTemplate(VertexShader, vShaderFilename, defines)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if fShaderFilename == "" {
-		fShader = nil
-	} else {
-		fShader, err = ReadShaderFromTemplate(FragmentShader, fShaderFilename, defines)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	if gShaderFilename == "" {
-		gShader = nil
-	} else {
-		gShader, err = ReadShaderFromTemplate(GeometryShader, gShaderFilename, defines)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	return NewShaderProgram(vShader, fShader, gShader)
+	return NewShaderProgram(vShader, fShader)
 }
 
 func (p *ShaderProgram) linked() bool {

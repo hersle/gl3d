@@ -105,9 +105,9 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 	var sp ShadowMapShaderProgram
 	var err error
 
-	vShaderFilename := "render/shaders/pointlightshadowmapvshader.glsl" // TODO: make independent from executable directory
-	fShaderFilename := "render/shaders/pointlightshadowmapfshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
+	vFile := "render/shaders/pointlightshadowmapvshader.glsl" // TODO: make independent from executable directory
+	fFile := "render/shaders/pointlightshadowmapfshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile)
 	if err != nil {
 		panic(err)
 	}
@@ -127,7 +127,7 @@ func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShade
 	var err error
 
 	vShaderFilename := "render/shaders/directionallightvshader.glsl"
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "", "")
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "")
 	if err != nil {
 		panic(err)
 	}
@@ -140,14 +140,14 @@ func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShade
 	return &sp
 }
 
-func NewMeshShaderProgram(defines []string) *MeshShaderProgram {
+func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	var sp MeshShaderProgram
 	var err error
 
-	vShaderFilename := "render/shaders/meshvshadertemplate.glsl" // TODO: make independent from executable directory
-	fShaderFilename := "render/shaders/meshfshadertemplate.glsl" // TODO: make independent from executable directory
+	vFile := "render/shaders/meshvshadertemplate.glsl" // TODO: make independent from executable directory
+	fFile := "render/shaders/meshfshadertemplate.glsl" // TODO: make independent from executable directory
 
-	sp.ShaderProgram, err = graphics.ReadShaderProgramFromTemplates(vShaderFilename, fShaderFilename, "", defines)
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, defines...)
 	if err != nil {
 		panic(err)
 	}
@@ -193,10 +193,10 @@ func NewMeshShaderProgram(defines []string) *MeshShaderProgram {
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
-	r.sp1 = NewMeshShaderProgram([]string{"DEPTH", "AMBIENT"})
-	r.sp2 = NewMeshShaderProgram([]string{"POINT"})
-	r.sp3 = NewMeshShaderProgram([]string{"SPOT"})
-	r.sp4 = NewMeshShaderProgram([]string{"DIR"})
+	r.sp1 = NewMeshShaderProgram("DEPTH", "AMBIENT")
+	r.sp2 = NewMeshShaderProgram("POINT")
+	r.sp3 = NewMeshShaderProgram("SPOT")
+	r.sp4 = NewMeshShaderProgram("DIR")
 
 	r.renderState = graphics.NewRenderState()
 	r.renderState.Cull = graphics.CullBack
