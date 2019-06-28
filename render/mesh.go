@@ -19,35 +19,35 @@ type MeshShaderProgram struct {
 	Normal   *graphics.Attrib
 	Tangent  *graphics.Attrib
 
-	ModelMatrix      *graphics.UniformMatrix4
-	ViewMatrix       *graphics.UniformMatrix4
-	ProjectionMatrix *graphics.UniformMatrix4
+	ModelMatrix      *graphics.Uniform
+	ViewMatrix       *graphics.Uniform
+	ProjectionMatrix *graphics.Uniform
 
-	NormalMatrix *graphics.UniformMatrix4
+	NormalMatrix *graphics.Uniform
 
-	Ambient     *graphics.UniformVector3
-	AmbientMap  *graphics.UniformSampler
-	Diffuse     *graphics.UniformVector3
-	DiffuseMap  *graphics.UniformSampler
-	Specular    *graphics.UniformVector3
-	SpecularMap *graphics.UniformSampler
-	Shine       *graphics.UniformFloat
-	Alpha       *graphics.UniformFloat
-	AlphaMap    *graphics.UniformSampler
-	BumpMap     *graphics.UniformSampler
+	Ambient     *graphics.Uniform
+	AmbientMap  *graphics.Uniform
+	Diffuse     *graphics.Uniform
+	DiffuseMap  *graphics.Uniform
+	Specular    *graphics.Uniform
+	SpecularMap *graphics.Uniform
+	Shine       *graphics.Uniform
+	Alpha       *graphics.Uniform
+	AlphaMap    *graphics.Uniform
+	BumpMap     *graphics.Uniform
 
-	LightPos               *graphics.UniformVector3
-	LightDir               *graphics.UniformVector3
-	AmbientLight           *graphics.UniformVector3
-	DiffuseLight           *graphics.UniformVector3
-	SpecularLight          *graphics.UniformVector3
-	ShadowViewMatrix       *graphics.UniformMatrix4
-	ShadowProjectionMatrix *graphics.UniformMatrix4
-	SpotShadowMap          *graphics.UniformSampler
-	CubeShadowMap          *graphics.UniformSampler
-	DirShadowMap           *graphics.UniformSampler
-	ShadowFar              *graphics.UniformFloat
-	LightAttQuad           *graphics.UniformFloat
+	LightPos               *graphics.Uniform
+	LightDir               *graphics.Uniform
+	AmbientLight           *graphics.Uniform
+	DiffuseLight           *graphics.Uniform
+	SpecularLight          *graphics.Uniform
+	ShadowViewMatrix       *graphics.Uniform
+	ShadowProjectionMatrix *graphics.Uniform
+	SpotShadowMap          *graphics.Uniform
+	CubeShadowMap          *graphics.Uniform
+	DirShadowMap           *graphics.Uniform
+	ShadowFar              *graphics.Uniform
+	LightAttQuad           *graphics.Uniform
 }
 
 // TODO: redesign attr/uniform access system?
@@ -85,19 +85,19 @@ type renderInfo struct {
 
 type ShadowMapShaderProgram struct {
 	*graphics.ShaderProgram
-	ModelMatrix      *graphics.UniformMatrix4
-	ViewMatrix       *graphics.UniformMatrix4
-	ProjectionMatrix *graphics.UniformMatrix4
-	LightPosition    *graphics.UniformVector3
-	Far              *graphics.UniformFloat
+	ModelMatrix      *graphics.Uniform
+	ViewMatrix       *graphics.Uniform
+	ProjectionMatrix *graphics.Uniform
+	LightPosition    *graphics.Uniform
+	Far              *graphics.Uniform
 	Position         *graphics.Attrib
 }
 
 type DirectionalLightShadowMapShaderProgram struct {
 	*graphics.ShaderProgram
-	ModelMatrix      *graphics.UniformMatrix4
-	ViewMatrix       *graphics.UniformMatrix4
-	ProjectionMatrix *graphics.UniformMatrix4
+	ModelMatrix      *graphics.Uniform
+	ViewMatrix       *graphics.Uniform
+	ProjectionMatrix *graphics.Uniform
 	Position         *graphics.Attrib
 }
 
@@ -112,11 +112,11 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 		panic(err)
 	}
 
-	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
-	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
-	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
-	sp.LightPosition = sp.UniformVector3("lightPosition")
-	sp.Far = sp.UniformFloat("far")
+	sp.ModelMatrix = sp.Uniform("modelMatrix")
+	sp.ViewMatrix = sp.Uniform("viewMatrix")
+	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
+	sp.LightPosition = sp.Uniform("lightPosition")
+	sp.Far = sp.Uniform("far")
 	sp.Position = sp.Attrib("position")
 
 	return &sp
@@ -132,9 +132,9 @@ func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShade
 		panic(err)
 	}
 
-	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
-	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
-	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.ModelMatrix = sp.Uniform("modelMatrix")
+	sp.ViewMatrix = sp.Uniform("viewMatrix")
+	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.Position = sp.Attrib("position")
 
 	return &sp
@@ -157,35 +157,35 @@ func NewMeshShaderProgram(defines []string) *MeshShaderProgram {
 	sp.Normal = sp.Attrib("normalV")
 	sp.Tangent = sp.Attrib("tangentV")
 
-	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
-	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
-	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
+	sp.ModelMatrix = sp.Uniform("modelMatrix")
+	sp.ViewMatrix = sp.Uniform("viewMatrix")
+	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 
-	sp.NormalMatrix = sp.UniformMatrix4("normalMatrix")
+	sp.NormalMatrix = sp.Uniform("normalMatrix")
 
-	sp.Ambient = sp.UniformVector3("material.ambient")
-	sp.AmbientMap = sp.UniformSampler("material.ambientMap")
-	sp.Diffuse = sp.UniformVector3("material.diffuse")
-	sp.DiffuseMap = sp.UniformSampler("material.diffuseMap")
-	sp.Specular = sp.UniformVector3("material.specular")
-	sp.SpecularMap = sp.UniformSampler("material.specularMap")
-	sp.Shine = sp.UniformFloat("material.shine")
-	sp.Alpha = sp.UniformFloat("material.alpha")
-	sp.AlphaMap = sp.UniformSampler("material.alphaMap")
-	sp.BumpMap = sp.UniformSampler("material.bumpMap")
+	sp.Ambient = sp.Uniform("material.ambient")
+	sp.AmbientMap = sp.Uniform("material.ambientMap")
+	sp.Diffuse = sp.Uniform("material.diffuse")
+	sp.DiffuseMap = sp.Uniform("material.diffuseMap")
+	sp.Specular = sp.Uniform("material.specular")
+	sp.SpecularMap = sp.Uniform("material.specularMap")
+	sp.Shine = sp.Uniform("material.shine")
+	sp.Alpha = sp.Uniform("material.alpha")
+	sp.AlphaMap = sp.Uniform("material.alphaMap")
+	sp.BumpMap = sp.Uniform("material.bumpMap")
 
-	sp.LightPos = sp.UniformVector3("light.position")
-	sp.LightDir = sp.UniformVector3("light.direction")
-	sp.AmbientLight = sp.UniformVector3("light.ambient")
-	sp.DiffuseLight = sp.UniformVector3("light.diffuse")
-	sp.SpecularLight = sp.UniformVector3("light.specular")
-	sp.ShadowViewMatrix = sp.UniformMatrix4("shadowViewMatrix")
-	sp.ShadowProjectionMatrix = sp.UniformMatrix4("shadowProjectionMatrix")
-	sp.CubeShadowMap = sp.UniformSampler("cubeShadowMap")
-	sp.SpotShadowMap = sp.UniformSampler("spotShadowMap")
-	sp.DirShadowMap = sp.UniformSampler("dirShadowMap")
-	sp.ShadowFar = sp.UniformFloat("light.far")
-	sp.LightAttQuad = sp.UniformFloat("light.attenuationQuadratic")
+	sp.LightPos = sp.Uniform("light.position")
+	sp.LightDir = sp.Uniform("light.direction")
+	sp.AmbientLight = sp.Uniform("light.ambient")
+	sp.DiffuseLight = sp.Uniform("light.diffuse")
+	sp.SpecularLight = sp.Uniform("light.specular")
+	sp.ShadowViewMatrix = sp.Uniform("shadowViewMatrix")
+	sp.ShadowProjectionMatrix = sp.Uniform("shadowProjectionMatrix")
+	sp.CubeShadowMap = sp.Uniform("cubeShadowMap")
+	sp.SpotShadowMap = sp.Uniform("spotShadowMap")
+	sp.DirShadowMap = sp.Uniform("dirShadowMap")
+	sp.ShadowFar = sp.Uniform("light.far")
+	sp.LightAttQuad = sp.Uniform("light.attenuationQuadratic")
 
 	return &sp
 }
@@ -351,7 +351,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 		r.tex2ds[mtl.AmbientMap] = tex
 	}
 	sp.Ambient.Set(mtl.Ambient)
-	sp.AmbientMap.Set2D(tex)
+	sp.AmbientMap.Set(tex)
 
 	tex, found = r.tex2ds[mtl.DiffuseMap]
 	if !found {
@@ -359,7 +359,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 		r.tex2ds[mtl.DiffuseMap] = tex
 	}
 	sp.Diffuse.Set(mtl.Diffuse)
-	sp.DiffuseMap.Set2D(tex)
+	sp.DiffuseMap.Set(tex)
 
 	tex, found = r.tex2ds[mtl.SpecularMap]
 	if !found {
@@ -367,7 +367,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 		r.tex2ds[mtl.SpecularMap] = tex
 	}
 	sp.Specular.Set(mtl.Specular)
-	sp.SpecularMap.Set2D(tex)
+	sp.SpecularMap.Set(tex)
 
 	sp.Shine.Set(mtl.Shine)
 
@@ -377,14 +377,14 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 		r.tex2ds[mtl.AlphaMap] = tex
 	}
 	sp.Alpha.Set(mtl.Alpha)
-	sp.AlphaMap.Set2D(tex)
+	sp.AlphaMap.Set(tex)
 
 	tex, found = r.tex2ds[mtl.BumpMap]
 	if !found {
 		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.BumpMap)
 		r.tex2ds[mtl.BumpMap] = tex
 	}
-	sp.BumpMap.Set2D(tex)
+	sp.BumpMap.Set(tex)
 
 	// upload to GPU
 	var vbo *graphics.Buffer
@@ -427,7 +427,7 @@ func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight)
 		if !found {
 			panic("set point light with no shadow map")
 		}
-		sp.CubeShadowMap.SetCube(smap)
+		sp.CubeShadowMap.Set(smap)
 	}
 	sp.LightAttQuad.Set(l.Attenuation)
 }
@@ -447,7 +447,7 @@ func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 		if !found {
 			panic("set spot light with no shadow map")
 		}
-		sp.SpotShadowMap.Set2D(smap)
+		sp.SpotShadowMap.Set(smap)
 	}
 }
 
@@ -464,7 +464,7 @@ func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 		if !found {
 			panic("set directional light with no shadow map")
 		}
-		sp.DirShadowMap.Set2D(smap)
+		sp.DirShadowMap.Set(smap)
 	}
 }
 

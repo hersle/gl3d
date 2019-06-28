@@ -17,10 +17,10 @@ type ArrowRenderer struct {
 
 type ArrowShaderProgram struct {
 	*graphics.ShaderProgram
-	ModelMatrix      *graphics.UniformMatrix4
-	ViewMatrix       *graphics.UniformMatrix4
-	ProjectionMatrix *graphics.UniformMatrix4
-	Color            *graphics.UniformVector3
+	ModelMatrix      *graphics.Uniform
+	ViewMatrix       *graphics.Uniform
+	ProjectionMatrix *graphics.Uniform
+	Color            *graphics.Uniform
 	Position         *graphics.Attrib
 }
 
@@ -36,10 +36,10 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	}
 
 	sp.Position = sp.Attrib("position")
-	sp.ModelMatrix = sp.UniformMatrix4("modelMatrix")
-	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
-	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
-	sp.Color = sp.UniformVector3("color")
+	sp.ModelMatrix = sp.Uniform("modelMatrix")
+	sp.ViewMatrix = sp.Uniform("viewMatrix")
+	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
+	sp.Color = sp.Uniform("color")
 
 	return &sp
 }

@@ -9,9 +9,9 @@ import (
 
 type SkyboxShaderProgram struct {
 	*graphics.ShaderProgram
-	ViewMatrix       *graphics.UniformMatrix4
-	ProjectionMatrix *graphics.UniformMatrix4
-	CubeMap          *graphics.UniformSampler
+	ViewMatrix       *graphics.Uniform
+	ProjectionMatrix *graphics.Uniform
+	CubeMap          *graphics.Uniform
 	Position         *graphics.Attrib
 }
 
@@ -36,9 +36,9 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 		panic(err)
 	}
 
-	sp.ViewMatrix = sp.UniformMatrix4("viewMatrix")
-	sp.ProjectionMatrix = sp.UniformMatrix4("projectionMatrix")
-	sp.CubeMap = sp.UniformSampler("cubeMap")
+	sp.ViewMatrix = sp.Uniform("viewMatrix")
+	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
+	sp.CubeMap = sp.Uniform("cubeMap")
 	sp.Position = sp.Attrib("positionV")
 
 	return &sp
@@ -106,7 +106,7 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 		r.cubemaps[skybox] = cm
 	}
 
-	r.sp.CubeMap.SetCube(cm)
+	r.sp.CubeMap.Set(cm)
 }
 
 func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {

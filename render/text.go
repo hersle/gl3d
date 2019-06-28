@@ -10,7 +10,7 @@ import (
 
 type TextShaderProgram struct {
 	*graphics.ShaderProgram
-	Atlas    *graphics.UniformSampler
+	Atlas    *graphics.Uniform
 	Position *graphics.Attrib
 	TexCoord *graphics.Attrib
 }
@@ -34,7 +34,7 @@ func NewTextShaderProgram() *TextShaderProgram {
 		panic(err)
 	}
 
-	sp.Atlas = sp.UniformSampler("fontAtlas")
+	sp.Atlas = sp.Uniform("fontAtlas")
 	sp.Position = sp.Attrib("position")
 	sp.TexCoord = sp.Attrib("texCoordV")
 
@@ -62,7 +62,7 @@ func NewTextRenderer() *TextRenderer {
 }
 
 func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
-	r.sp.Atlas.Set2D(tex)
+	r.sp.Atlas.Set(tex)
 }
 
 func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {

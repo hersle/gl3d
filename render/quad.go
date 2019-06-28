@@ -9,7 +9,7 @@ import (
 type QuadShaderProgram struct {
 	*graphics.ShaderProgram
 	Position *graphics.Attrib
-	Texture  *graphics.UniformSampler
+	Texture  *graphics.Uniform
 }
 
 type QuadRenderer struct {
@@ -31,7 +31,7 @@ func NewQuadShaderProgram() *QuadShaderProgram {
 	}
 
 	sp.Position = sp.Attrib("position")
-	sp.Texture = sp.UniformSampler("tex")
+	sp.Texture = sp.Uniform("tex")
 
 	return &sp
 }
@@ -64,7 +64,7 @@ func NewQuadRenderer() *QuadRenderer {
 }
 
 func (r *QuadRenderer) Render(tex *graphics.Texture2D, fb *graphics.Framebuffer) {
-	r.sp.Texture.Set2D(tex)
+	r.sp.Texture.Set(tex)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(6, r.renderState).Execute()
 }

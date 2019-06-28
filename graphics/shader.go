@@ -34,43 +34,11 @@ type Attrib struct {
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
-type uniformBasic struct {
+type Uniform struct {
 	progID   int
 	location int
 	glType   int
-}
-
-type UniformInteger struct {
-	uniformBasic
-}
-
-type UniformFloat struct {
-	uniformBasic
-}
-
-type UniformVector2 struct {
-	uniformBasic
-}
-
-type UniformVector3 struct {
-	uniformBasic
-}
-
-type UniformVector4 struct {
-	uniformBasic
-}
-
-type UniformMatrix4 struct {
-	uniformBasic
-}
-
-type UniformSampler struct {
-	uniformBasic
 	textureUnitIndex int
-}
-
-type UniformBool struct {
-	uniformBasic
 }
 
 type VertexArray struct {
@@ -315,77 +283,50 @@ func (p *ShaderProgram) Link() error {
 	return errors.New(p.Log())
 }
 
-func (u *UniformInteger) Set(i int) {
+func (u *Uniform) Set(value interface{}) {
 	if u == nil {
 		return
 	}
-	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(i))
-}
 
-func (u *UniformFloat) Set(f float32) {
-	if u == nil {
-		return
+	switch u.glType {
+	case gl.BOOL:
+		value := value.(int32)
+		// TODO: unnecessary?
+		if value != 0{
+			value = 1
+		} else {
+			value = 0
+		}
+		gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(value))
+	case gl.INT:
+		value := value.(int)
+		gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(value))
+	case gl.FLOAT:
+		value := value.(float32)
+		gl.ProgramUniform1f(uint32(u.progID), int32(u.location), value)
+	case gl.FLOAT_VEC2:
+		value := value.(math.Vec2)
+		gl.ProgramUniform2fv(uint32(u.progID), int32(u.location), 1, &value[0])
+	case gl.FLOAT_VEC3:
+		value := value.(math.Vec3)
+		gl.ProgramUniform3fv(uint32(u.progID), int32(u.location), 1, &value[0])
+	case gl.FLOAT_VEC4:
+		value := value.(math.Vec4)
+		gl.ProgramUniform4fv(uint32(u.progID), int32(u.location), 1, &value[0])
+	case gl.FLOAT_MAT4:
+		value := value.(*math.Mat4)
+		gl.ProgramUniformMatrix4fv(uint32(u.progID), int32(u.location), 1, true, &value[0])
+	case gl.SAMPLER_2D:
+		// TODO: other shaders can mess with this texture index
+		value := value.(*Texture2D)
+		gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(value.id))
+		gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
+	case gl.SAMPLER_CUBE:
+		// TODO: other shaders can mess with this texture index
+		value := value.(*CubeMap)
+		gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(value.id))
+		gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
 	}
-	gl.ProgramUniform1f(uint32(u.progID), int32(u.location), f)
-}
-
-func (u *UniformVector2) Set(v math.Vec2) {
-	if u == nil {
-		return
-	}
-	gl.ProgramUniform2fv(uint32(u.progID), int32(u.location), 1, &v[0])
-}
-
-func (u *UniformVector3) Set(v math.Vec3) {
-	if u == nil {
-		return
-	}
-	gl.ProgramUniform3fv(uint32(u.progID), int32(u.location), 1, &v[0])
-}
-
-func (u *UniformVector4) Set(v math.Vec4) {
-	if u == nil {
-		return
-	}
-	gl.ProgramUniform4fv(uint32(u.progID), int32(u.location), 1, &v[0])
-}
-
-func (u *UniformMatrix4) Set(m *math.Mat4) {
-	if u == nil {
-		return
-	}
-	gl.ProgramUniformMatrix4fv(uint32(u.progID), int32(u.location), 1, true, &m[0])
-}
-
-func (u *UniformSampler) Set2D(t *Texture2D) {
-	if u == nil {
-		return
-	}
-	// TODO: other shaders can mess with this texture index
-	gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(t.id))
-	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
-}
-
-func (u *UniformSampler) SetCube(t *CubeMap) {
-	if u == nil {
-		return
-	}
-	// TODO: other shaders can mess with this texture index
-	gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(t.id))
-	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
-}
-
-func (u *UniformBool) Set(b bool) {
-	if u == nil {
-		return
-	}
-	var i int32
-	if b {
-		i = 1
-	} else {
-		i = 0
-	}
-	gl.ProgramUniform1i(uint32(u.progID), int32(u.location), i)
 }
 
 func (a *Attrib) SetSource(b *Buffer, el interface{}, i int) {
@@ -460,8 +401,10 @@ func (p *ShaderProgram) Attrib(name string) *Attrib {
 	return &a
 }
 
-func (p *ShaderProgram) uniformBasic(name string) *uniformBasic {
-	var u uniformBasic
+var textureUnitsUsed int = 0
+
+func (p *ShaderProgram) Uniform(name string) *Uniform {
+	var u Uniform
 	loc := gl.GetUniformLocation(uint32(p.id), gl.Str(name+"\x00"))
 	if loc == -1 {
 		println("error getting uniform " + name)
@@ -473,115 +416,12 @@ func (p *ShaderProgram) uniformBasic(name string) *uniformBasic {
 	var gltype uint32
 	gl.GetActiveUniform(uint32(p.id), index, 0, nil, nil, &gltype, nil)
 	u.glType = int(gltype)
-	return &u
-}
 
-func (p *ShaderProgram) UniformInteger(name string) *UniformInteger {
-	var u UniformInteger
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
+	// TODO: allow more sampler types
+	if u.glType == gl.SAMPLER_2D || u.glType == gl.SAMPLER_CUBE {
+		u.textureUnitIndex = textureUnitsUsed
+		textureUnitsUsed++ // TODO: make texture unit mapping more sophisticated
 	}
-	u.uniformBasic = *ptr
-	if u.glType != gl.INT {
-		return nil
-	}
-	return &u
-}
 
-func (p *ShaderProgram) UniformFloat(name string) *UniformFloat {
-	var u UniformFloat
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
-	}
-	u.uniformBasic = *ptr
-	if u.glType != gl.FLOAT {
-		return nil
-	}
-	return &u
-}
-
-func (p *ShaderProgram) UniformVector2(name string) *UniformVector2 {
-	var u UniformVector2
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
-	}
-	u.uniformBasic = *ptr
-	if u.glType != gl.FLOAT_VEC2 {
-		return nil
-	}
-	return &u
-}
-
-func (p *ShaderProgram) UniformVector3(name string) *UniformVector3 {
-	var u UniformVector3
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
-	}
-	u.uniformBasic = *ptr
-	if u.glType != gl.FLOAT_VEC3 {
-		return nil
-	}
-	return &u
-}
-
-func (p *ShaderProgram) UniformVector4(name string) *UniformVector4 {
-	var u UniformVector4
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
-	}
-	u.uniformBasic = *ptr
-	if u.glType != gl.FLOAT_VEC4 {
-		return nil
-	}
-	return &u
-}
-
-func (p *ShaderProgram) UniformMatrix4(name string) *UniformMatrix4 {
-	var u UniformMatrix4
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
-	}
-	u.uniformBasic = *ptr
-	// TODO: what if things not found?
-	if u.glType != gl.FLOAT_MAT4 {
-		return nil
-	}
-	return &u
-}
-
-var textureUnitsUsed int = 0
-
-func (p *ShaderProgram) UniformSampler(name string) *UniformSampler {
-	var u UniformSampler
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
-	}
-	u.uniformBasic = *ptr
-	if u.glType != gl.SAMPLER_2D && u.glType != gl.SAMPLER_CUBE { // TODO: allow more sampler types
-		return nil
-	}
-	u.textureUnitIndex = textureUnitsUsed // TODO: make texture unit mapping more sophisticated
-	textureUnitsUsed++
-	return &u
-}
-
-func (p *ShaderProgram) UniformBool(name string) *UniformBool {
-	var u UniformBool
-	ptr := p.uniformBasic(name)
-	if ptr == nil {
-		return nil
-	}
-	u.uniformBasic = *ptr
-	// TODO: what if things not found?
-	if u.glType != gl.BOOL {
-		return nil
-	}
 	return &u
 }
