@@ -20,7 +20,7 @@ const (
 
 type ShaderProgram struct {
 	id int
-	va *VertexArray
+	va *vertexArray
 }
 
 type Shader struct {
@@ -41,13 +41,13 @@ type Uniform struct {
 	textureUnitIndex int
 }
 
-type VertexArray struct {
+type vertexArray struct {
 	id             int
 	hasIndexBuffer bool
 }
 
-func NewVertexArray() *VertexArray {
-	var va VertexArray
+func newVertexArray() *vertexArray {
+	var va vertexArray
 	var id uint32
 	gl.CreateVertexArrays(1, &id)
 	va.id = int(id)
@@ -56,14 +56,14 @@ func NewVertexArray() *VertexArray {
 }
 
 // TODO: normalize should not be set for some types
-func (va *VertexArray) SetAttribFormat(a *Attrib, dim, typ int, normalize bool) {
+func (va *vertexArray) setAttribFormat(a *Attrib, dim, typ int, normalize bool) {
 	if a == nil {
 		return
 	}
 	gl.VertexArrayAttribFormat(uint32(va.id), uint32(a.id), int32(dim), uint32(typ), normalize, 0)
 }
 
-func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int) {
+func (va *vertexArray) setAttribSource(a *Attrib, b *Buffer, offset, stride int) {
 	if a == nil {
 		return
 	}
@@ -72,12 +72,12 @@ func (va *VertexArray) SetAttribSource(a *Attrib, b *Buffer, offset, stride int)
 	gl.EnableVertexArrayAttrib(uint32(va.id), uint32(a.id))
 }
 
-func (va *VertexArray) SetIndexBuffer(b *Buffer) {
+func (va *vertexArray) setIndexBuffer(b *Buffer) {
 	gl.VertexArrayElementBuffer(uint32(va.id), uint32(b.id))
 	va.hasIndexBuffer = true
 }
 
-func (va *VertexArray) Bind() {
+func (va *vertexArray) bind() {
 	gl.BindVertexArray(uint32(va.id))
 }
 
@@ -183,12 +183,12 @@ func NewShaderProgram(vShader, fShader, gShader *Shader) (*ShaderProgram, error)
 		defer gl.DetachShader(uint32(p.id), uint32(gShader.id))
 	}
 
-	err := p.Link()
+	err := p.link()
 	if err != nil {
 		return nil, err
 	}
 
-	p.va = NewVertexArray()
+	p.va = newVertexArray()
 	return &p, err
 }
 
@@ -260,13 +260,13 @@ func ReadShaderProgramFromTemplates(vShaderFilename, fShaderFilename, gShaderFil
 	return NewShaderProgram(vShader, fShader, gShader)
 }
 
-func (p *ShaderProgram) Linked() bool {
+func (p *ShaderProgram) linked() bool {
 	var status int32
 	gl.GetProgramiv(uint32(p.id), gl.LINK_STATUS, &status)
 	return status == gl.TRUE
 }
 
-func (p *ShaderProgram) Log() string {
+func (p *ShaderProgram) log() string {
 	var length int32
 	gl.GetProgramiv(uint32(p.id), gl.INFO_LOG_LENGTH, &length)
 	log := string(make([]byte, length+1))
@@ -275,12 +275,12 @@ func (p *ShaderProgram) Log() string {
 	return log
 }
 
-func (p *ShaderProgram) Link() error {
+func (p *ShaderProgram) link() error {
 	gl.LinkProgram(uint32(p.id))
-	if p.Linked() {
+	if p.linked() {
 		return nil
 	}
-	return errors.New(p.Log())
+	return errors.New(p.log())
 }
 
 func (u *Uniform) Set(value interface{}) {
@@ -360,15 +360,15 @@ func (a *Attrib) SetSource(b *Buffer, el interface{}, i int) {
 
 	stride := int(t.Size())
 
-	a.prog.va.SetAttribFormat(a, a.nComponents, _type, false)
-	a.prog.va.SetAttribSource(a, b, offset, stride)
+	a.prog.va.setAttribFormat(a, a.nComponents, _type, false)
+	a.prog.va.setAttribSource(a, b, offset, stride)
 }
 
 func (p *ShaderProgram) SetAttribIndexBuffer(b *Buffer) {
-	p.va.SetIndexBuffer(b)
+	p.va.setIndexBuffer(b)
 }
 
-func (p *ShaderProgram) Bind() {
+func (p *ShaderProgram) bind() {
 	gl.UseProgram(uint32(p.id))
 }
 
