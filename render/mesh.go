@@ -194,7 +194,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
 	r.sp1 = NewMeshShaderProgram("DEPTH", "AMBIENT")
-	r.sp2 = NewMeshShaderProgram("POINT")
+	r.sp2 = NewMeshShaderProgram("POINT", "SHADOW")
 	r.sp3 = NewMeshShaderProgram("SPOT")
 	r.sp4 = NewMeshShaderProgram("DIR")
 
@@ -217,6 +217,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.shadowRenderState.Framebuffer = r.shadowMapFramebuffer
 	r.shadowRenderState.DepthTest = graphics.LessDepthTest
 	r.shadowRenderState.Cull = graphics.CullBack
+	r.shadowRenderState.PrimitiveType = graphics.Triangle
 
 	return &r, nil
 }

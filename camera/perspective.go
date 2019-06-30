@@ -58,6 +58,11 @@ func (c *PerspectiveCamera) Scale(factor math.Vec3) {
 	c.dirtyFrustumPlanes = true
 }
 
+func (c *PerspectiveCamera) SetForwardUp(forward, up math.Vec3) {
+	c.BasicCamera.SetForwardUp(forward, up)
+	c.dirtyFrustumPlanes = true
+}
+
 func (c *PerspectiveCamera) SetScale(scaling math.Vec3) {
 	c.BasicCamera.SetScale(scaling)
 	c.dirtyFrustumPlanes = true

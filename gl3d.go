@@ -47,6 +47,7 @@ func main() {
 
 	l := light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
 	l.Attenuation = 0.1
+	l.CastShadows = true
 	s.AddPointLight(l)
 
 	f1 := "assets/skyboxes/mountain/posx.jpg"
