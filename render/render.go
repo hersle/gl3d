@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
@@ -36,13 +35,13 @@ func NewRenderer() (*Renderer, error) {
 	w, h := 1920, 1080
 	w, h = w/1, h/1
 
-	r.sceneRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, w, h, gl.RGBA8)
-	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, w, h, gl.DEPTH_COMPONENT16)
+	r.sceneRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h)
+	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h)
 	r.sceneFramebuffer = graphics.NewFramebuffer()
 	r.sceneFramebuffer.Attach(r.sceneRenderTarget)
 	r.sceneFramebuffer.Attach(r.sceneDepthRenderTarget)
 
-	r.overlayRenderTarget = graphics.NewTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, w, h, gl.RGBA8)
+	r.overlayRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h)
 	r.overlayFramebuffer = graphics.NewFramebuffer()
 	r.overlayFramebuffer.Attach(r.overlayRenderTarget)
 
@@ -75,10 +74,6 @@ func (r *Renderer) RenderNormals(s *scene.Scene, c camera.Camera) {
 
 func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 	r.arrowRenderer.RenderTangents(s, c, r.sceneFramebuffer)
-}
-
-func (r *Renderer) RenderShadowMap() {
-	r.quadRenderer.Render(r.meshRenderer.ShadowMap(), graphics.DefaultFramebuffer)
 }
 
 func (r *Renderer) Clear() {

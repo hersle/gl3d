@@ -16,14 +16,14 @@ type Texture2D struct {
 	id     int
 	width  int
 	height int
-	format uint32
+	type_  TextureType
 }
 
 type CubeMap struct {
 	id     int
 	width  int
 	height int
-	format uint32
+	type_  TextureType
 }
 
 type CubeMapFace struct {
@@ -31,7 +31,12 @@ type CubeMapFace struct {
 	layer CubeMapLayer
 }
 
-type CubeMapLayer int // TODO: rename?
+type TextureType int
+
+const (
+	ColorTexture TextureType = iota
+	DepthTexture
+)
 
 type TextureFilter int
 
@@ -48,6 +53,8 @@ const (
 	RepeatWrap      TextureWrap = TextureWrap(gl.REPEAT)
 )
 
+type CubeMapLayer int // TODO: rename?
+
 const (
 	PositiveX CubeMapLayer = CubeMapLayer(0)
 	NegativeX CubeMapLayer = CubeMapLayer(1)
@@ -57,11 +64,11 @@ const (
 	NegativeZ CubeMapLayer = CubeMapLayer(5)
 )
 
-func NewTexture2D(filter TextureFilter, wrap TextureWrap, width, height int, format uint32) *Texture2D {
+func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, width, height int) *Texture2D {
 	var t Texture2D
 	t.width = width
 	t.height = height
-	t.format = format
+	t.type_ = type_
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &id)
 	t.id = int(id)
@@ -69,11 +76,11 @@ func NewTexture2D(filter TextureFilter, wrap TextureWrap, width, height int, for
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MAG_FILTER, int32(filter))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_S, int32(wrap))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_T, int32(wrap))
-	gl.TextureStorage2D(uint32(t.id), 1, format, int32(width), int32(height))
+	gl.TextureStorage2D(uint32(t.id), 1, t.glFormat(), int32(width), int32(height))
 	return &t
 }
 
-func LoadTexture2D(filter TextureFilter, wrap TextureWrap, format uint32, img image.Image) *Texture2D {
+func LoadTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, img image.Image) *Texture2D {
 	switch img.(type) {
 	case *image.RGBA:
 		img := img.(*image.RGBA)
@@ -86,7 +93,7 @@ func LoadTexture2D(filter TextureFilter, wrap TextureWrap, format uint32, img im
 			}
 		}
 
-		t := NewTexture2D(filter, wrap, w, h, format)
+		t := NewTexture2D(type_, filter, wrap, w, h)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		p := unsafe.Pointer(&byteSlice(img2.Pix)[0])
 		gl.TextureSubImage2D(uint32(t.id), 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
@@ -94,7 +101,7 @@ func LoadTexture2D(filter TextureFilter, wrap TextureWrap, format uint32, img im
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
-		return LoadTexture2D(filter, wrap, format, imgRGBA)
+		return LoadTexture2D(type_, filter, wrap, imgRGBA)
 	}
 }
 
@@ -106,7 +113,18 @@ func NewUniformTexture2D(rgba math.Vec4) *Texture2D {
 	a := uint8(float32(0xff) * rgba.W())
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
-	return LoadTexture2D(NearestFilter, EdgeClampWrap, gl.RGBA8, img)
+	return LoadTexture2D(ColorTexture, NearestFilter, EdgeClampWrap, img)
+}
+
+func (t *Texture2D) glFormat() uint32 {
+	switch t.type_ {
+	case ColorTexture:
+		return gl.RGBA8
+	case DepthTexture:
+		return gl.DEPTH_COMPONENT16
+	default:
+		panic("invalid texture type")
+	}
 }
 
 func (t *Texture2D) Width() int {
@@ -123,13 +141,14 @@ func (t *Texture2D) SetBorderColor(rgba math.Vec4) {
 
 func (t *Texture2D) attachTo(f *Framebuffer) {
 	var glatt uint32
-	switch t.format {
-	case gl.RGBA8:
+	switch t.type_ {
+	case ColorTexture:
 		glatt = gl.COLOR_ATTACHMENT0
-	case gl.DEPTH_COMPONENT16:
+	case DepthTexture:
 		glatt = gl.DEPTH_ATTACHMENT
-	case gl.STENCIL_INDEX8:
-		glatt = gl.STENCIL_ATTACHMENT
+	// TODO: stencil texture
+	//case gl.STENCIL_INDEX8:
+		//glatt = gl.STENCIL_ATTACHMENT
 	default:
 		panic("invalid texture format")
 	}
@@ -138,24 +157,25 @@ func (t *Texture2D) attachTo(f *Framebuffer) {
 
 func (cf *CubeMapFace) attachTo(f *Framebuffer) {
 	var glatt uint32
-	switch cf.CubeMap.format {
-	case gl.RGBA8:
+	switch cf.CubeMap.type_ {
+	case ColorTexture:
 		glatt = gl.COLOR_ATTACHMENT0
-	case gl.DEPTH_COMPONENT16:
+	case DepthTexture:
 		glatt = gl.DEPTH_ATTACHMENT
-	case gl.STENCIL_INDEX8:
-		glatt = gl.STENCIL_ATTACHMENT
+	// TODO: stencil texture
+	//case gl.STENCIL_INDEX8:
+		//glatt = gl.STENCIL_ATTACHMENT
 	default:
 		panic("invalid texture format")
 	}
 	gl.NamedFramebufferTextureLayer(uint32(f.id), glatt, uint32(cf.CubeMap.id), 0, int32(cf.layer))
 }
 
-func NewCubeMap(filter TextureFilter, format uint32, width, height int) *CubeMap {
+func NewCubeMap(type_ TextureType, filter TextureFilter, width, height int) *CubeMap {
 	var t CubeMap
 	t.width = width
 	t.height = height
-	t.format = format
+	t.type_ = type_
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_CUBE_MAP, 1, &id)
 	t.id = int(id)
@@ -165,14 +185,14 @@ func NewCubeMap(filter TextureFilter, format uint32, width, height int) *CubeMap
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE)
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE)
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE)
-	gl.TextureStorage2D(uint32(t.id), 1, format, int32(width), int32(height))
+	gl.TextureStorage2D(uint32(t.id), 1, t.glFormat(), int32(width), int32(height))
 
 	return &t
 }
 
 func LoadCubeMap(filter TextureFilter, img1, img2, img3, img4, img5, img6 image.Image) *CubeMap {
 	w, h := img1.Bounds().Size().X, img1.Bounds().Size().Y
-	t := NewCubeMap(filter, gl.RGBA8, w, h)
+	t := NewCubeMap(ColorTexture, filter, w, h)
 
 	imgs := []image.Image{img1, img2, img3, img4, img5, img6}
 	for i, img := range imgs {
@@ -200,6 +220,17 @@ func NewUniformCubeMap(rgba math.Vec4) *CubeMap {
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
 	return LoadCubeMap(NearestFilter, img, img, img, img, img, img)
+}
+
+func (t *CubeMap) glFormat() uint32 {
+	switch t.type_ {
+	case ColorTexture:
+		return gl.RGBA8
+	case DepthTexture:
+		return gl.DEPTH_COMPONENT16
+	default:
+		panic("invalid texture type")
+	}
 }
 
 func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {

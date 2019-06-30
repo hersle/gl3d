@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/light"
@@ -222,13 +221,6 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	return &r, nil
 }
 
-func (r *MeshRenderer) ShadowMap() *graphics.Texture2D {
-	for _, val := range r.dirLightShadowMaps {
-		return val
-	}
-	return nil
-}
-
 func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
 	r.SetMesh(sp, ri.subMesh.Mesh)
 	sp.NormalMatrix.Set(ri.normalMatrix)
@@ -355,7 +347,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found := r.tex2ds[mtl.AmbientMap]
 	if !found {
-		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AmbientMap)
+		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AmbientMap)
 		r.tex2ds[mtl.AmbientMap] = tex
 	}
 	sp.Ambient.Set(mtl.Ambient)
@@ -363,7 +355,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.DiffuseMap]
 	if !found {
-		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.DiffuseMap)
+		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.DiffuseMap)
 		r.tex2ds[mtl.DiffuseMap] = tex
 	}
 	sp.Diffuse.Set(mtl.Diffuse)
@@ -371,7 +363,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.SpecularMap]
 	if !found {
-		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.SpecularMap)
+		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.SpecularMap)
 		r.tex2ds[mtl.SpecularMap] = tex
 	}
 	sp.Specular.Set(mtl.Specular)
@@ -381,7 +373,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.AlphaMap]
 	if !found {
-		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.AlphaMap)
+		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AlphaMap)
 		r.tex2ds[mtl.AlphaMap] = tex
 	}
 	sp.Alpha.Set(mtl.Alpha)
@@ -389,7 +381,7 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	tex, found = r.tex2ds[mtl.BumpMap]
 	if !found {
-		tex = graphics.LoadTexture2D(graphics.LinearFilter, graphics.RepeatWrap, gl.RGBA8, mtl.BumpMap)
+		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.BumpMap)
 		r.tex2ds[mtl.BumpMap] = tex
 	}
 	sp.BumpMap.Set(tex)
@@ -546,7 +538,7 @@ func (r *MeshRenderer) SetDirShadowSubMesh(sm *object.SubMesh) {
 func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
 	smap, found := r.pointLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewCubeMap(graphics.NearestFilter, gl.DEPTH_COMPONENT16, 512, 512)
+		smap = graphics.NewCubeMap(graphics.DepthTexture, graphics.NearestFilter, 512, 512)
 		r.pointLightShadowMaps[l.ID] = smap
 	}
 
@@ -604,7 +596,7 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
 	smap, found := r.spotLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, 512, 512, gl.DEPTH_COMPONENT16)
+		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.BorderClampWrap, 512, 512)
 		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 		r.spotLightShadowMaps[l.ID] = smap
 	}
@@ -636,7 +628,7 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
 	smap, found := r.dirLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, 512, 512, gl.DEPTH_COMPONENT16)
+		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.BorderClampWrap, 512, 512)
 		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 		r.dirLightShadowMaps[l.ID] = smap
 	}

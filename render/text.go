@@ -1,7 +1,6 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
@@ -50,7 +49,7 @@ func NewTextRenderer() *TextRenderer {
 	r.ibo = graphics.NewIndexBuffer()
 
 	img := basicfont.Face7x13.Mask
-	r.tex = graphics.LoadTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
+	r.tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, img)
 
 	r.renderState = graphics.NewState()
 	r.renderState.Program = r.sp.ShaderProgram
