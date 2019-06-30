@@ -119,6 +119,8 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 	sp.Far = sp.Uniform("far")
 	sp.Position = sp.Attrib("position")
 
+	sp.Position.SetFormat(gl.FLOAT, false) // TODO: remove dependency on GL constants
+
 	return &sp
 }
 
@@ -136,6 +138,7 @@ func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShade
 	sp.ViewMatrix = sp.Uniform("viewMatrix")
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.Position = sp.Attrib("position")
+	sp.Position.SetFormat(gl.FLOAT, false)
 
 	return &sp
 }
@@ -186,6 +189,11 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.DirShadowMap = sp.Uniform("dirShadowMap")
 	sp.ShadowFar = sp.Uniform("light.far")
 	sp.LightAttQuad = sp.Uniform("light.attenuationQuadratic")
+
+	sp.Position.SetFormat(gl.FLOAT, false)
+	sp.Normal.SetFormat(gl.FLOAT, false)
+	sp.TexCoord.SetFormat(gl.FLOAT, false)
+	sp.Tangent.SetFormat(gl.FLOAT, false)
 
 	return &sp
 }
@@ -405,10 +413,10 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	}
 
 	var v object.Vertex
-	sp.Position.SetSource(vbo, v, 0)
-	sp.Normal.SetSource(vbo, v, 2)
-	sp.TexCoord.SetSource(vbo, v, 1)
-	sp.Tangent.SetSource(vbo, v, 3)
+	sp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
+	sp.Normal.SetSource(vbo, v.NormalOffset(), v.Size())
+	sp.TexCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
+	sp.Tangent.SetSource(vbo, v.TangentOffset(), v.Size())
 	sp.SetAttribIndexBuffer(ibo)
 }
 

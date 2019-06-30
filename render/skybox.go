@@ -1,10 +1,12 @@
 package render
 
 import (
+	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/scene"
+	"unsafe"
 )
 
 type SkyboxShaderProgram struct {
@@ -110,7 +112,8 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 }
 
 func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {
-	r.sp.Position.SetSource(vbo, math.Vec3{}, 0)
+	r.sp.Position.SetFormat(gl.FLOAT, false)
+	r.sp.Position.SetSource(vbo, 0, int(unsafe.Sizeof(math.Vec3{0, 0, 0})))
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 

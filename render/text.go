@@ -38,6 +38,9 @@ func NewTextShaderProgram() *TextShaderProgram {
 	sp.Position = sp.Attrib("position")
 	sp.TexCoord = sp.Attrib("texCoordV")
 
+	sp.Position.SetFormat(gl.FLOAT, false)
+	sp.TexCoord.SetFormat(gl.FLOAT, false)
+
 	return &sp
 }
 
@@ -67,8 +70,8 @@ func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
 
 func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
 	var v object.Vertex
-	r.sp.Position.SetSource(vbo, v, 0)
-	r.sp.TexCoord.SetSource(vbo, v, 1)
+	r.sp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
+	r.sp.TexCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 

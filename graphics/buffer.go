@@ -12,10 +12,6 @@ type Buffer struct {
 	size int
 }
 
-// setsource: where is data, how to read it from there?
-type BufferLayout struct {
-}
-
 func NewBuffer() *Buffer {
 	var b Buffer
 	var id uint32

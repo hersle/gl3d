@@ -7,7 +7,6 @@ import (
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"io/ioutil"
 	"strings"
-	"reflect"
 )
 
 type ShaderType int
@@ -266,38 +265,17 @@ func (u *Uniform) Set(value interface{}) {
 	}
 }
 
-func (a *Attrib) SetSource(b *Buffer, el interface{}, i int) {
+func (a *Attrib) SetFormat(_type int, normalize bool) {
 	if a == nil {
 		return
 	}
+	a.prog.va.setAttribFormat(a, a.nComponents, _type, normalize)
+}
 
-	t := reflect.TypeOf(el)
-
-	var offset int
-	var typeCand interface{}
-	if t.Kind() == reflect.Struct {
-		// set source to i-th field of the struct
-		offset = int(t.Field(i).Offset)
-		typeCand = reflect.ValueOf(el).Field(i).Interface()
-	} else if t.Kind() == reflect.Array {
-		// set source to i-th subelement
-		offset = int(t.Elem().Size()) * i
-		typeCand = reflect.ValueOf(el).Index(i).Interface()
-	} else {
-		panic("invalid element type")
+func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
+	if a == nil {
+		return
 	}
-
-	var _type int
-	switch typeCand.(type) {
-	case float32, math.Vec2, math.Vec3, math.Vec4:
-		_type = gl.FLOAT
-	default:
-		panic("unknown type " + reflect.TypeOf(typeCand).String())
-	}
-
-	stride := int(t.Size())
-
-	a.prog.va.setAttribFormat(a, a.nComponents, _type, false)
 	a.prog.va.setAttribSource(a, b, offset, stride)
 }
 
