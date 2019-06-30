@@ -203,6 +203,30 @@ func (state *State) apply() {
 	}
 }
 
+func (state *State) Render(vertexCount int) {
+	state.apply()
+
+	if state.Program.indexBuffer == nil {
+		gl.DrawArrays(uint32(state.PrimitiveType), 0, int32(vertexCount))
+	} else {
+		var gltype uint32
+		switch state.Program.indexBuffer.index.Size() {
+		case 1: // 8 bits
+			gltype = gl.UNSIGNED_BYTE
+		case 2: // 16 bits
+			gltype = gl.UNSIGNED_SHORT
+		case 4: // 32 bits
+			gltype = gl.UNSIGNED_INT
+		default:
+			panic("invalid index buffer type")
+		}
+		gl.DrawElements(uint32(state.PrimitiveType), int32(vertexCount), gltype, nil)
+	}
+
+	Stats.DrawCallCount++
+	Stats.VertexCount += vertexCount
+}
+
 func init() {
 	gl.Enable(gl.BLEND)
 

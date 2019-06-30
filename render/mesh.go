@@ -225,7 +225,7 @@ func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
 	r.SetMesh(sp, ri.subMesh.Mesh)
 	sp.NormalMatrix.Set(ri.normalMatrix)
 	r.SetSubMesh(sp, ri.subMesh)
-	graphics.NewCommand(ri.subMesh.Geo.Inds, r.renderState).Execute()
+	r.renderState.Render(ri.subMesh.Geo.Inds)
 }
 
 func (r *MeshRenderer) AmbientPass(c camera.Camera) {
@@ -584,7 +584,7 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 				if !c.Cull(subMesh) {
 					r.SetShadowSubMesh(subMesh)
 
-					graphics.NewCommand(subMesh.Geo.Inds, r.shadowRenderState).Execute()
+					r.shadowRenderState.Render(subMesh.Geo.Inds)
 				}
 			}
 		}

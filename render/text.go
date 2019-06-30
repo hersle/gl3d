@@ -125,5 +125,5 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *gra
 	r.ibo.SetData(inds, 0)
 	r.SetAttribs(r.vbo, r.ibo)
 	r.renderState.Framebuffer = fb
-	graphics.NewCommand(len(inds), r.renderState).Execute()
+	r.renderState.Render(len(inds))
 }
