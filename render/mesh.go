@@ -68,8 +68,8 @@ type MeshRenderer struct {
 	spotLightShadowMaps  map[int]*graphics.Texture2D
 	dirLightShadowMaps   map[int]*graphics.Texture2D
 
-	shadowSp             *ShadowMapShaderProgram
-	dirshadowSp          *DirectionalLightShadowMapShaderProgram
+	shadowSp1             *ShadowMapShaderProgram
+	shadowSp2             *ShadowMapShaderProgram
 	shadowMapFramebuffer *graphics.Framebuffer
 	shadowRenderState    *graphics.State
 
@@ -92,21 +92,13 @@ type ShadowMapShaderProgram struct {
 	Position         *graphics.Attrib
 }
 
-type DirectionalLightShadowMapShaderProgram struct {
-	*graphics.ShaderProgram
-	ModelMatrix      *graphics.Uniform
-	ViewMatrix       *graphics.Uniform
-	ProjectionMatrix *graphics.Uniform
-	Position         *graphics.Attrib
-}
-
-func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
+func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 	var sp ShadowMapShaderProgram
 	var err error
 
-	vFile := "render/shaders/pointlightshadowmapvshader.glsl" // TODO: make independent from executable directory
-	fFile := "render/shaders/pointlightshadowmapfshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile)
+	vFile := "render/shaders/shadowmapvshadertemplate.glsl" // TODO: make independent from executable directory
+	fFile := "render/shaders/shadowmapfshadertemplate.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, defines...)
 	if err != nil {
 		panic(err)
 	}
@@ -116,24 +108,6 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.LightPosition = sp.Uniform("lightPosition")
 	sp.Far = sp.Uniform("far")
-	sp.Position = sp.Attrib("position")
-
-	return &sp
-}
-
-func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShaderProgram {
-	var sp DirectionalLightShadowMapShaderProgram
-	var err error
-
-	vShaderFilename := "render/shaders/directionallightvshader.glsl"
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, "")
-	if err != nil {
-		panic(err)
-	}
-
-	sp.ModelMatrix = sp.Uniform("modelMatrix")
-	sp.ViewMatrix = sp.Uniform("viewMatrix")
-	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.Position = sp.Attrib("position")
 
 	return &sp
@@ -207,8 +181,8 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
 	r.tex2ds = make(map[image.Image]*graphics.Texture2D)
 
-	r.shadowSp = NewShadowMapShaderProgram()
-	r.dirshadowSp = NewDirectionalLightShadowMapShaderProgram()
+	r.shadowSp1 = NewShadowMapShaderProgram("POINT") // point light and spot light
+	r.shadowSp2 = NewShadowMapShaderProgram() // directional light
 
 	r.shadowMapFramebuffer = graphics.NewFramebuffer()
 
@@ -470,18 +444,28 @@ func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 
 // shadow stuff below
 
-func (r *MeshRenderer) SetShadowCamera(c *camera.PerspectiveCamera) {
-	r.shadowSp.Far.Set(c.Far)
-	r.shadowSp.LightPosition.Set(c.Position)
-	r.shadowSp.ViewMatrix.Set(c.ViewMatrix())
-	r.shadowSp.ProjectionMatrix.Set(c.ProjectionMatrix())
+func (r *MeshRenderer) SetShadowCamera(sp *ShadowMapShaderProgram, c camera.Camera) {
+	sp.ViewMatrix.Set(c.ViewMatrix())
+	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
+
+	switch c.(type) {
+	case *camera.PerspectiveCamera:
+		c := c.(*camera.PerspectiveCamera)
+		println("set persp")
+		sp.Far.Set(c.Far)
+		sp.LightPosition.Set(c.Position)
+	case *camera.OrthoCamera:
+		c := c.(*camera.OrthoCamera)
+		sp.Far.Set(c.Far)
+		sp.LightPosition.Set(c.Position)
+	}
 }
 
-func (r *MeshRenderer) SetShadowMesh(m *object.Mesh) {
-	r.shadowSp.ModelMatrix.Set(m.WorldMatrix())
+func (r *MeshRenderer) SetShadowMesh(sp *ShadowMapShaderProgram, m *object.Mesh) {
+	sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
+func (r *MeshRenderer) SetShadowSubMesh(sp *ShadowMapShaderProgram, sm *object.SubMesh) {
 	var vbo *graphics.VertexBuffer
 	var ibo *graphics.IndexBuffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
@@ -499,39 +483,8 @@ func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
 		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
 	}
 
-	r.shadowSp.Position.SetSourceVertex(vbo, 0)
-	r.shadowSp.SetAttribIndexBuffer(ibo)
-}
-
-func (r *MeshRenderer) SetDirShadowCamera(c *camera.OrthoCamera) {
-	r.dirshadowSp.ViewMatrix.Set(c.ViewMatrix())
-	r.dirshadowSp.ProjectionMatrix.Set(c.ProjectionMatrix())
-}
-
-func (r *MeshRenderer) SetDirShadowMesh(m *object.Mesh) {
-	r.dirshadowSp.ModelMatrix.Set(m.WorldMatrix())
-}
-
-func (r *MeshRenderer) SetDirShadowSubMesh(sm *object.SubMesh) {
-	var vbo *graphics.VertexBuffer
-	var ibo *graphics.IndexBuffer
-	i, found := r.vboCache[&sm.Geo.Verts[0]]
-	if found {
-		vbo = r.vbos[i]
-		ibo = r.ibos[i]
-	} else {
-		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewIndexBuffer()
-		vbo.SetData(sm.Geo.Verts, 0)
-		ibo.SetData(sm.Geo.Faces, 0)
-
-		r.vbos = append(r.vbos, vbo)
-		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
-	}
-
-	r.dirshadowSp.Position.SetSourceVertex(vbo, 0)
-	r.dirshadowSp.SetAttribIndexBuffer(ibo)
+	sp.Position.SetSourceVertex(vbo, 0)
+	sp.SetAttribIndexBuffer(ibo)
 }
 
 // render shadow map to l's shadow map
@@ -569,20 +522,20 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	c := camera.NewPerspectiveCamera(90, 1, 0.1, l.ShadowFar)
 	c.Place(l.Position)
 
-	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
+	r.shadowRenderState.Program = r.shadowSp1.ShaderProgram
 
 	for face := 0; face < 6; face++ {
 		r.shadowMapFramebuffer.Attach(smap.Face(graphics.CubeMapLayer(face)))
 		r.shadowMapFramebuffer.ClearDepth(1)
 		c.SetForwardUp(forwards[face], ups[face])
 
-		r.SetShadowCamera(c)
+		r.SetShadowCamera(r.shadowSp1, c)
 
 		for _, m := range s.Meshes {
-			r.SetShadowMesh(m)
+			r.SetShadowMesh(r.shadowSp1, m)
 			for _, subMesh := range m.SubMeshes {
 				if !c.Cull(subMesh) {
-					r.SetShadowSubMesh(subMesh)
+					r.SetShadowSubMesh(r.shadowSp1, subMesh)
 
 					r.shadowRenderState.Render(subMesh.Geo.Inds)
 				}
@@ -608,14 +561,14 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 
 	r.shadowMapFramebuffer.Attach(smap)
 	r.shadowMapFramebuffer.ClearDepth(1)
-	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
-	r.SetShadowCamera(&l.PerspectiveCamera)
+	r.shadowRenderState.Program = r.shadowSp1.ShaderProgram
+	r.SetShadowCamera(r.shadowSp1, &l.PerspectiveCamera)
 
 	for _, m := range s.Meshes {
-		r.SetShadowMesh(m)
+		r.SetShadowMesh(r.shadowSp1, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.PerspectiveCamera.Cull(subMesh) {
-				r.SetShadowSubMesh(subMesh)
+				r.SetShadowSubMesh(r.shadowSp1, subMesh)
 
 				r.shadowRenderState.Render(subMesh.Geo.Inds)
 			}
@@ -640,14 +593,14 @@ func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.
 
 	r.shadowMapFramebuffer.Attach(smap)
 	r.shadowMapFramebuffer.ClearDepth(1)
-	r.shadowRenderState.Program = r.dirshadowSp.ShaderProgram
-	r.SetDirShadowCamera(&l.OrthoCamera)
+	r.shadowRenderState.Program = r.shadowSp2.ShaderProgram
+	r.SetShadowCamera(r.shadowSp2, &l.OrthoCamera)
 
 	for _, m := range s.Meshes {
-		r.SetDirShadowMesh(m)
+		r.SetShadowMesh(r.shadowSp2, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.OrthoCamera.Cull(subMesh) {
-				r.SetDirShadowSubMesh(subMesh)
+				r.SetShadowSubMesh(r.shadowSp2, subMesh)
 
 				r.shadowRenderState.Render(subMesh.Geo.Inds)
 			}
