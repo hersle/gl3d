@@ -18,7 +18,8 @@ const (
 
 type ShaderProgram struct {
 	id int
-	va *vertexArray
+	vaid int
+	indexBuffer *IndexBuffer
 }
 
 type Shader struct {
@@ -42,41 +43,6 @@ type Uniform struct {
 type vertexArray struct {
 	id             int
 	indexBuffer    *IndexBuffer
-}
-
-func newVertexArray() *vertexArray {
-	var va vertexArray
-	var id uint32
-	gl.CreateVertexArrays(1, &id)
-	va.id = int(id)
-	va.indexBuffer = nil
-	return &va
-}
-
-// TODO: normalize should not be set for some types
-func (va *vertexArray) setAttribFormat(a *Attrib, dim, typ int, normalize bool) {
-	if a == nil {
-		return
-	}
-	gl.VertexArrayAttribFormat(uint32(va.id), uint32(a.id), int32(dim), uint32(typ), normalize, 0)
-}
-
-func (va *vertexArray) setAttribSource(a *Attrib, b *Buffer, offset, stride int) {
-	if a == nil {
-		return
-	}
-	gl.VertexArrayAttribBinding(uint32(va.id), uint32(a.id), uint32(a.id))
-	gl.VertexArrayVertexBuffer(uint32(va.id), uint32(a.id), uint32(b.id), offset, int32(stride))
-	gl.EnableVertexArrayAttrib(uint32(va.id), uint32(a.id))
-}
-
-func (va *vertexArray) setIndexBuffer(b *IndexBuffer) {
-	gl.VertexArrayElementBuffer(uint32(va.id), uint32(b.id))
-	va.indexBuffer = b
-}
-
-func (va *vertexArray) bind() {
-	gl.BindVertexArray(uint32(va.id))
 }
 
 func NewShader(type_ ShaderType, src string, defines ...string) (*Shader, error) {
@@ -167,7 +133,11 @@ func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
 		return nil, err
 	}
 
-	p.va = newVertexArray()
+	var id uint32
+	gl.CreateVertexArrays(1, &id)
+	p.vaid = int(id)
+	p.indexBuffer = nil
+
 	return &p, err
 }
 
@@ -265,12 +235,16 @@ func (u *Uniform) Set(value interface{}) {
 	}
 }
 
-func (a *Attrib) SetSourceRaw(b *Buffer, offset, stride int, _type int, normalize bool) {
+func (a *Attrib) SetSourceRaw(b *Buffer, offset, stride int, type_ int, normalize bool) {
 	if a == nil {
 		return
 	}
-	a.prog.va.setAttribSource(a, b, offset, stride)
-	a.prog.va.setAttribFormat(a, a.nComponents, _type, normalize)
+
+	gl.VertexArrayAttribFormat(uint32(a.prog.vaid), uint32(a.id), int32(a.nComponents), uint32(type_), normalize, 0)
+
+	gl.VertexArrayAttribBinding(uint32(a.prog.vaid), uint32(a.id), uint32(a.id))
+	gl.VertexArrayVertexBuffer(uint32(a.prog.vaid), uint32(a.id), uint32(b.id), offset, int32(stride))
+	gl.EnableVertexArrayAttrib(uint32(a.prog.vaid), uint32(a.id))
 }
 
 func (a *Attrib) SetSourceVertex(b *VertexBuffer, i int) {
@@ -280,11 +254,13 @@ func (a *Attrib) SetSourceVertex(b *VertexBuffer, i int) {
 }
 
 func (p *ShaderProgram) SetAttribIndexBuffer(b *IndexBuffer) {
-	p.va.setIndexBuffer(b)
+	gl.VertexArrayElementBuffer(uint32(p.vaid), uint32(b.id))
+	p.indexBuffer = b
 }
 
 func (p *ShaderProgram) bind() {
 	gl.UseProgram(uint32(p.id))
+	gl.BindVertexArray(uint32(p.vaid))
 }
 
 func (p *ShaderProgram) Attrib(name string) *Attrib {

@@ -89,7 +89,6 @@ func (rs *RenderState) apply() {
 		case nil:
 			panic("tried to apply a render state with no shader program")
 		default:
-			rs.Program.va.bind()
 			rs.Program.bind()
 		}
 		currentState.Program = rs.Program
