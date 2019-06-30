@@ -19,7 +19,7 @@ type TextRenderer struct {
 	sp          *TextShaderProgram
 	tex         *graphics.Texture2D
 	vbo         *graphics.VertexBuffer
-	ibo         *graphics.Buffer
+	ibo         *graphics.IndexBuffer
 	renderState *graphics.RenderState
 }
 
@@ -47,7 +47,7 @@ func NewTextRenderer() *TextRenderer {
 	r.sp = NewTextShaderProgram()
 
 	r.vbo = graphics.NewVertexBuffer()
-	r.ibo = graphics.NewBuffer()
+	r.ibo = graphics.NewIndexBuffer()
 
 	img := basicfont.Face7x13.Mask
 	r.tex = graphics.LoadTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
@@ -63,7 +63,7 @@ func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
 	r.sp.Atlas.Set(tex)
 }
 
-func (r *TextRenderer) SetAttribs(vbo *graphics.VertexBuffer, ibo *graphics.Buffer) {
+func (r *TextRenderer) SetAttribs(vbo *graphics.VertexBuffer, ibo *graphics.IndexBuffer) {
 	r.sp.Position.SetSourceVertex(vbo, 0)
 	r.sp.TexCoord.SetSourceVertex(vbo, 1)
 	r.sp.SetAttribIndexBuffer(ibo)

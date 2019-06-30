@@ -17,6 +17,11 @@ type VertexBuffer struct {
 	vertex reflect.Type
 }
 
+type IndexBuffer struct {
+	Buffer
+	index reflect.Type
+}
+
 func NewBuffer() *Buffer {
 	var b Buffer
 	var id uint32
@@ -84,4 +89,15 @@ func (b *VertexBuffer) Offset(i int) int {
 
 func (b *VertexBuffer) Stride() int {
 	return int(b.vertex.Size())
+}
+
+func NewIndexBuffer() *IndexBuffer {
+	var b IndexBuffer
+	b.Buffer = *NewBuffer()
+	return &b
+}
+
+func (b *IndexBuffer) SetData(data interface{}, byteOffset int) {
+	b.index = reflect.TypeOf(data).Elem()
+	b.Buffer.SetData(data, byteOffset)
 }

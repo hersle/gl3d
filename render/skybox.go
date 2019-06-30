@@ -18,7 +18,7 @@ type SkyboxShaderProgram struct {
 type SkyboxRenderer struct {
 	sp          *SkyboxShaderProgram
 	vbo         *graphics.VertexBuffer
-	ibo         *graphics.Buffer
+	ibo         *graphics.IndexBuffer
 	tex         *graphics.CubeMap
 	renderState *graphics.RenderState
 	cubemaps    map[*scene.CubeMap]*graphics.CubeMap
@@ -64,7 +64,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	}
 	r.vbo.SetData(verts, 0)
 
-	r.ibo = graphics.NewBuffer()
+	r.ibo = graphics.NewIndexBuffer()
 	inds := []int32{
 		4, 5, 6, 4, 6, 7,
 		5, 1, 2, 5, 2, 6,
@@ -109,7 +109,7 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 	r.sp.CubeMap.Set(cm)
 }
 
-func (r *SkyboxRenderer) setCube(vbo *graphics.VertexBuffer, ibo *graphics.Buffer) {
+func (r *SkyboxRenderer) setCube(vbo *graphics.VertexBuffer, ibo *graphics.IndexBuffer) {
 	r.sp.Position.SetSourceVertex(vbo, 0)
 	r.sp.SetAttribIndexBuffer(ibo)
 }

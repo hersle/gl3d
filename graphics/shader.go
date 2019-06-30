@@ -41,7 +41,7 @@ type Uniform struct {
 
 type vertexArray struct {
 	id             int
-	hasIndexBuffer bool
+	indexBuffer    *IndexBuffer
 }
 
 func newVertexArray() *vertexArray {
@@ -49,7 +49,7 @@ func newVertexArray() *vertexArray {
 	var id uint32
 	gl.CreateVertexArrays(1, &id)
 	va.id = int(id)
-	va.hasIndexBuffer = false
+	va.indexBuffer = nil
 	return &va
 }
 
@@ -70,9 +70,9 @@ func (va *vertexArray) setAttribSource(a *Attrib, b *Buffer, offset, stride int)
 	gl.EnableVertexArrayAttrib(uint32(va.id), uint32(a.id))
 }
 
-func (va *vertexArray) setIndexBuffer(b *Buffer) {
+func (va *vertexArray) setIndexBuffer(b *IndexBuffer) {
 	gl.VertexArrayElementBuffer(uint32(va.id), uint32(b.id))
-	va.hasIndexBuffer = true
+	va.indexBuffer = b
 }
 
 func (va *vertexArray) bind() {
@@ -279,7 +279,7 @@ func (a *Attrib) SetSourceVertex(b *VertexBuffer, i int) {
 	a.SetSourceRaw(&b.Buffer, offset, stride, gl.FLOAT, false)
 }
 
-func (p *ShaderProgram) SetAttribIndexBuffer(b *Buffer) {
+func (p *ShaderProgram) SetAttribIndexBuffer(b *IndexBuffer) {
 	p.va.setIndexBuffer(b)
 }
 

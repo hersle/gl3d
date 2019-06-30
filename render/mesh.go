@@ -61,7 +61,7 @@ type MeshRenderer struct {
 
 	vboCache map[*object.Vertex]int
 	vbos     []*graphics.VertexBuffer
-	ibos     []*graphics.Buffer
+	ibos     []*graphics.IndexBuffer
 
 	tex2ds map[image.Image]*graphics.Texture2D
 
@@ -388,14 +388,14 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 
 	// upload to GPU
 	var vbo *graphics.VertexBuffer
-	var ibo *graphics.Buffer
+	var ibo *graphics.IndexBuffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
 	} else {
 		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewBuffer()
+		ibo = graphics.NewIndexBuffer()
 		vbo.SetData(sm.Geo.Verts, 0)
 		ibo.SetData(sm.Geo.Faces, 0)
 
@@ -483,14 +483,14 @@ func (r *MeshRenderer) SetShadowMesh(m *object.Mesh) {
 
 func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
 	var vbo *graphics.VertexBuffer
-	var ibo *graphics.Buffer
+	var ibo *graphics.IndexBuffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
 	} else {
 		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewBuffer()
+		ibo = graphics.NewIndexBuffer()
 		vbo.SetData(sm.Geo.Verts, 0)
 		ibo.SetData(sm.Geo.Faces, 0)
 
@@ -514,14 +514,14 @@ func (r *MeshRenderer) SetDirShadowMesh(sp *MeshShaderProgram, m *object.Mesh) {
 
 func (r *MeshRenderer) SetDirShadowSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	var vbo *graphics.VertexBuffer
-	var ibo *graphics.Buffer
+	var ibo *graphics.IndexBuffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
 	} else {
 		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewBuffer()
+		ibo = graphics.NewIndexBuffer()
 		vbo.SetData(sm.Geo.Verts, 0)
 		ibo.SetData(sm.Geo.Faces, 0)
 
