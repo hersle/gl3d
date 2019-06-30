@@ -57,7 +57,7 @@ type MeshRenderer struct {
 	sp3 *MeshShaderProgram
 	sp4 *MeshShaderProgram
 
-	renderState *graphics.RenderState
+	renderState *graphics.State
 
 	vboCache map[*object.Vertex]int
 	vbos     []*graphics.VertexBuffer
@@ -72,7 +72,7 @@ type MeshRenderer struct {
 	shadowSp             *ShadowMapShaderProgram
 	dirshadowSp          *DirectionalLightShadowMapShaderProgram
 	shadowMapFramebuffer *graphics.Framebuffer
-	shadowRenderState    *graphics.RenderState
+	shadowRenderState    *graphics.State
 
 	normalMatrices []math.Mat4
 	renderInfos []renderInfo
@@ -198,7 +198,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.sp3 = NewMeshShaderProgram("SPOT")
 	r.sp4 = NewMeshShaderProgram("DIR")
 
-	r.renderState = graphics.NewRenderState()
+	r.renderState = graphics.NewState()
 	r.renderState.Cull = graphics.CullBack
 	r.renderState.PrimitiveType = graphics.Triangle
 
@@ -213,7 +213,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.shadowMapFramebuffer = graphics.NewFramebuffer()
 
-	r.shadowRenderState = graphics.NewRenderState()
+	r.shadowRenderState = graphics.NewState()
 	r.shadowRenderState.Framebuffer = r.shadowMapFramebuffer
 	r.shadowRenderState.DepthTest = graphics.LessDepthTest
 	r.shadowRenderState.Cull = graphics.CullBack
@@ -225,7 +225,7 @@ func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
 	r.SetMesh(sp, ri.subMesh.Mesh)
 	sp.NormalMatrix.Set(ri.normalMatrix)
 	r.SetSubMesh(sp, ri.subMesh)
-	graphics.NewRenderCommand(ri.subMesh.Geo.Inds, r.renderState).Execute()
+	graphics.NewCommand(ri.subMesh.Geo.Inds, r.renderState).Execute()
 }
 
 func (r *MeshRenderer) AmbientPass(c camera.Camera) {
@@ -584,7 +584,7 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 				if !c.Cull(subMesh) {
 					r.SetShadowSubMesh(subMesh)
 
-					graphics.NewRenderCommand(subMesh.Geo.Inds, r.shadowRenderState).Execute()
+					graphics.NewCommand(subMesh.Geo.Inds, r.shadowRenderState).Execute()
 				}
 			}
 		}

@@ -5,19 +5,19 @@ import (
 	_ "github.com/hersle/gl3d/window" // initialize graphics
 )
 
-type RenderStatistics struct {
+type Statistics struct {
 	DrawCallCount   int
 	VertexCount     int
 }
 
-var RenderStats *RenderStatistics = &RenderStatistics{}
+var Stats *Statistics = &Statistics{}
 
-func (stats *RenderStatistics) Reset() {
+func (stats *Statistics) Reset() {
 	stats.DrawCallCount = 0
 	stats.VertexCount = 0
 }
 
-func (stats *RenderStatistics) String() string {
+func (stats *Statistics) String() string {
 	text := fmt.Sprint(stats.DrawCallCount) + " draw calls, "
 	text += fmt.Sprint(stats.VertexCount) + " vertices"
 	return text

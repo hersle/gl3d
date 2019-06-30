@@ -12,7 +12,7 @@ type ArrowRenderer struct {
 	sp          *ArrowShaderProgram
 	points      []math.Vec3
 	vbo         *graphics.VertexBuffer
-	renderState *graphics.RenderState
+	renderState *graphics.State
 }
 
 type ArrowShaderProgram struct {
@@ -49,7 +49,7 @@ func NewArrowRenderer() *ArrowRenderer {
 
 	r.sp = NewArrowShaderProgram()
 
-	r.renderState = graphics.NewRenderState()
+	r.renderState = graphics.NewState()
 	r.renderState.Program = r.sp.ShaderProgram
 	r.renderState.PrimitiveType = graphics.Line
 
@@ -92,7 +92,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 	r.vbo.SetData(r.points, 0)
 	r.SetPosition(r.vbo)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
+	graphics.NewCommand(len(r.points), r.renderState).Execute()
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
@@ -112,7 +112,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 	r.vbo.SetData(r.points, 0)
 	r.SetPosition(r.vbo)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
+	graphics.NewCommand(len(r.points), r.renderState).Execute()
 }
 
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
@@ -132,5 +132,5 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graph
 	r.vbo.SetData(r.points, 0)
 	r.SetPosition(r.vbo)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
+	graphics.NewCommand(len(r.points), r.renderState).Execute()
 }

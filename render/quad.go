@@ -15,7 +15,7 @@ type QuadRenderer struct {
 	sp          *QuadShaderProgram
 	vbo         *graphics.VertexBuffer
 	tex         *graphics.Texture2D
-	renderState *graphics.RenderState
+	renderState *graphics.State
 }
 
 func NewQuadShaderProgram() *QuadShaderProgram {
@@ -53,7 +53,7 @@ func NewQuadRenderer() *QuadRenderer {
 
 	r.sp.Position.SetSourceVertex(r.vbo, 0)
 
-	r.renderState = graphics.NewRenderState()
+	r.renderState = graphics.NewState()
 	r.renderState.Program = r.sp.ShaderProgram
 	r.renderState.BlendSourceFactor = graphics.SourceAlphaBlendFactor
 	r.renderState.BlendDestinationFactor = graphics.OneMinusSourceAlphaBlendFactor
@@ -65,5 +65,5 @@ func NewQuadRenderer() *QuadRenderer {
 func (r *QuadRenderer) Render(tex *graphics.Texture2D, fb *graphics.Framebuffer) {
 	r.sp.Texture.Set(tex)
 	r.renderState.Framebuffer = fb
-	graphics.NewRenderCommand(6, r.renderState).Execute()
+	graphics.NewCommand(6, r.renderState).Execute()
 }

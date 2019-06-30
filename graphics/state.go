@@ -58,7 +58,7 @@ const (
 )
 
 // TODO: enable sorting of these states to reduce state changes?
-type RenderState struct {
+type State struct {
 	Program                *ShaderProgram
 	Framebuffer            *Framebuffer
 	DepthTest              DepthTest
@@ -69,44 +69,44 @@ type RenderState struct {
 	PrimitiveType          Primitive
 }
 
-var currentState RenderState
+var currentState State
 
-func NewRenderState() *RenderState {
-	var rs RenderState
-	rs.DisableBlending()
-	rs.Framebuffer = DefaultFramebuffer
-	return &rs
+func NewState() *State {
+	var state State
+	state.DisableBlending()
+	state.Framebuffer = DefaultFramebuffer
+	return &state
 }
 
-func (rs *RenderState) DisableBlending() {
-	rs.BlendSourceFactor = OneBlendFactor
-	rs.BlendDestinationFactor = ZeroBlendFactor
+func (state *State) DisableBlending() {
+	state.BlendSourceFactor = OneBlendFactor
+	state.BlendDestinationFactor = ZeroBlendFactor
 }
 
-func (rs *RenderState) apply() {
-	if currentState.Program != rs.Program {
-		switch rs.Program {
+func (state *State) apply() {
+	if currentState.Program != state.Program {
+		switch state.Program {
 		case nil:
 			panic("tried to apply a render state with no shader program")
 		default:
-			rs.Program.bind()
+			state.Program.bind()
 		}
-		currentState.Program = rs.Program
+		currentState.Program = state.Program
 	}
 
-	if currentState.Framebuffer != rs.Framebuffer {
-		switch rs.Framebuffer {
+	if currentState.Framebuffer != state.Framebuffer {
+		switch state.Framebuffer {
 		case nil:
 			panic("tried to apply a render state with no framebuffer")
 		default:
-			rs.Framebuffer.bindDraw()
-			gl.Viewport(0, 0, int32(rs.Framebuffer.Width()), int32(rs.Framebuffer.Height()))
+			state.Framebuffer.bindDraw()
+			gl.Viewport(0, 0, int32(state.Framebuffer.Width()), int32(state.Framebuffer.Height()))
 		}
-		currentState.Framebuffer = rs.Framebuffer
+		currentState.Framebuffer = state.Framebuffer
 	}
 
-	if currentState.DepthTest != rs.DepthTest {
-		switch rs.DepthTest {
+	if currentState.DepthTest != state.DepthTest {
+		switch state.DepthTest {
 		case NeverDepthTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.NEVER)
@@ -133,14 +133,14 @@ func (rs *RenderState) apply() {
 		default:
 			panic("tried to apply a render state with unknown depth test")
 		}
-		currentState.DepthTest = rs.DepthTest
+		currentState.DepthTest = state.DepthTest
 	}
 
-	if currentState.BlendSourceFactor != rs.BlendSourceFactor || currentState.BlendDestinationFactor != rs.BlendDestinationFactor {
+	if currentState.BlendSourceFactor != state.BlendSourceFactor || currentState.BlendDestinationFactor != state.BlendDestinationFactor {
 		var factors [2]BlendFactor
 		var funcs [2]uint32
-		factors[0] = rs.BlendSourceFactor
-		factors[1] = rs.BlendDestinationFactor
+		factors[0] = state.BlendSourceFactor
+		factors[1] = state.BlendDestinationFactor
 		for i := 0; i < 2; i++ {
 			switch factors[i] {
 			case ZeroBlendFactor:
@@ -168,12 +168,12 @@ func (rs *RenderState) apply() {
 			}
 		}
 		gl.BlendFunc(funcs[0], funcs[1])
-		currentState.BlendSourceFactor = rs.BlendSourceFactor
-		currentState.BlendDestinationFactor = rs.BlendDestinationFactor
+		currentState.BlendSourceFactor = state.BlendSourceFactor
+		currentState.BlendDestinationFactor = state.BlendDestinationFactor
 	}
 
-	if currentState.Cull != rs.Cull {
-		switch rs.Cull {
+	if currentState.Cull != state.Cull {
+		switch state.Cull {
 		case CullNothing:
 			gl.Disable(gl.CULL_FACE)
 		case CullFront:
@@ -185,11 +185,11 @@ func (rs *RenderState) apply() {
 		default:
 			panic("tried to apply a render state with an unknown culling mode")
 		}
-		currentState.Cull = rs.Cull
+		currentState.Cull = state.Cull
 	}
 
-	if currentState.TriangleMode != rs.TriangleMode {
-		switch rs.TriangleMode {
+	if currentState.TriangleMode != state.TriangleMode {
+		switch state.TriangleMode {
 		case PointTriangleMode:
 			gl.PolygonMode(gl.FRONT_AND_BACK, gl.POINT)
 		case LineTriangleMode:
@@ -199,7 +199,7 @@ func (rs *RenderState) apply() {
 		default:
 			panic("tried to apply a render state with an unknown polygonmode")
 		}
-		currentState.TriangleMode = rs.TriangleMode
+		currentState.TriangleMode = state.TriangleMode
 	}
 }
 

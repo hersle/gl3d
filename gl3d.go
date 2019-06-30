@@ -113,14 +113,14 @@ func main() {
 		text := "FPS:        " + fpsCounter.String() + "\n"
 		text += "position:   " + c.Position.String() + "\n"
 		text += "forward:    " + c.Forward().String() + "\n"
-		text += "draw calls: " + fmt.Sprint(graphics.RenderStats.DrawCallCount) + "\n"
-		text += "vertices:   " + fmt.Sprint(graphics.RenderStats.VertexCount)
+		text += "draw calls: " + fmt.Sprint(graphics.Stats.DrawCallCount) + "\n"
+		text += "vertices:   " + fmt.Sprint(graphics.Stats.VertexCount)
 		renderer.RenderText(math.Vec2{-1, +1}, text, 0.05)
 
 		renderer.Render()
 		input.Update()  // TODO: make line order not matter
 		window.Update() // TODO: make line order not matter
-		graphics.RenderStats.Reset()
+		graphics.Stats.Reset()
 
 		fpsCounter.Count()
 	}

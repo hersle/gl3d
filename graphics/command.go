@@ -7,19 +7,19 @@ import (
 
 // TODO: absorb into renderstate?
 
-type RenderCommand struct {
+type Command struct {
 	vertexCount int
-	state       *RenderState
+	state       *State
 }
 
-func NewRenderCommand(vertexCount int, state *RenderState) *RenderCommand {
-	var cmd RenderCommand
+func NewCommand(vertexCount int, state *State) *Command {
+	var cmd Command
 	cmd.vertexCount = vertexCount
 	cmd.state = state
 	return &cmd
 }
 
-func (cmd *RenderCommand) Execute() {
+func (cmd *Command) Execute() {
 	cmd.state.apply()
 	if cmd.state.Program.indexBuffer == nil {
 		gl.DrawArrays(uint32(cmd.state.PrimitiveType), 0, int32(cmd.vertexCount))
@@ -38,6 +38,6 @@ func (cmd *RenderCommand) Execute() {
 		gl.DrawElements(uint32(cmd.state.PrimitiveType), int32(cmd.vertexCount), gltype, nil)
 	}
 
-	RenderStats.DrawCallCount++
-	RenderStats.VertexCount += cmd.vertexCount
+	Stats.DrawCallCount++
+	Stats.VertexCount += cmd.vertexCount
 }
