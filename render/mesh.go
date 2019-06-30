@@ -195,7 +195,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.sp1 = NewMeshShaderProgram("DEPTH", "AMBIENT")
 	r.sp2 = NewMeshShaderProgram("POINT", "SHADOW")
-	r.sp3 = NewMeshShaderProgram("SPOT")
+	r.sp3 = NewMeshShaderProgram("SPOT", "SHADOW")
 	r.sp4 = NewMeshShaderProgram("DIR")
 
 	r.renderState = graphics.NewState()
@@ -594,11 +594,10 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	//l.DirtyShadowMap = false
 }
 
-/*
 func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
 	smap, found := r.spotLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
+		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, 512, 512, gl.DEPTH_COMPONENT16)
 		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 		r.spotLightShadowMaps[l.ID] = smap
 	}
@@ -608,7 +607,7 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 		//return
 	//}
 
-	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, smap, 0)
+	r.shadowMapFramebuffer.Attach(smap)
 	r.shadowMapFramebuffer.ClearDepth(1)
 	r.shadowRenderState.Program = r.shadowSp.ShaderProgram
 	r.SetShadowCamera(&l.PerspectiveCamera)
@@ -619,7 +618,7 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 			if !l.PerspectiveCamera.Cull(subMesh) {
 				r.SetShadowSubMesh(subMesh)
 
-				graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, r.shadowRenderState).Execute()
+				r.shadowRenderState.Render(subMesh.Geo.Inds)
 			}
 		}
 	}
@@ -627,6 +626,7 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 	//l.DirtyShadowMap = false
 }
 
+/*
 func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
 	smap, found := r.dirLightShadowMaps[l.ID]
 	if !found {
@@ -666,12 +666,12 @@ func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
 			r.RenderPointLightShadowMap(s, l)
 		}
 	}
-	/*
-		for _, l := range s.SpotLights {
-			if l.CastShadows {
-				r.RenderSpotLightShadowMap(s, l)
-			}
+	for _, l := range s.SpotLights {
+		if l.CastShadows {
+			r.RenderSpotLightShadowMap(s, l)
 		}
+	}
+	/*
 		for _, l := range s.DirectionalLights {
 			if l.CastShadows {
 				r.RenderDirectionalLightShadowMap(s, l)

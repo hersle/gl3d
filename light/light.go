@@ -59,7 +59,7 @@ func NewSpotLight(diffuse, specular math.Vec3) *SpotLight {
 	var l SpotLight
 	l.Diffuse = diffuse
 	l.Specular = specular
-	l.PerspectiveCamera.Object = *object.NewObject()
+	l.PerspectiveCamera = *camera.NewPerspectiveCamera(90, 1, 0.1, 50)
 	l.Attenuation = 0
 	l.CastShadows = false
 	return &l

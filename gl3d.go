@@ -45,10 +45,10 @@ func main() {
 
 	s.AmbientLight = light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1})
 
-	l := light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
+	l := light.NewSpotLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
 	l.Attenuation = 0.1
 	l.CastShadows = true
-	s.AddPointLight(l)
+	s.AddSpotLight(l)
 
 	f1 := "assets/skyboxes/mountain/posx.jpg"
 	f2 := "assets/skyboxes/mountain/negx.jpg"
@@ -99,6 +99,7 @@ func main() {
 		}
 		if input.KeySpace.JustPressed() {
 			l.Place(c.Position)
+			l.Orient(c.UnitX, c.UnitY)
 		}
 		if input.KeyMinus.JustPressed() {
 			for _, mesh := range s.Meshes {
