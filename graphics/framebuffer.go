@@ -3,7 +3,7 @@ package graphics
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/math"
-	"github.com/hersle/gl3d/window" // initialize graphics
+	"github.com/hersle/gl3d/window"
 )
 
 type Framebuffer struct {

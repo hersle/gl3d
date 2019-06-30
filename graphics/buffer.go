@@ -2,7 +2,6 @@ package graphics
 
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
-	_ "github.com/hersle/gl3d/window" // initialize graphics
 	"reflect"
 	"unsafe"
 )

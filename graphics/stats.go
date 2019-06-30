@@ -2,7 +2,6 @@ package graphics
 
 import (
 	"fmt"
-	_ "github.com/hersle/gl3d/window" // initialize graphics
 )
 
 type Statistics struct {
