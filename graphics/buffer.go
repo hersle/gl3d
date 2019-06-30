@@ -101,3 +101,17 @@ func (b *IndexBuffer) SetData(data interface{}, byteOffset int) {
 	b.index = reflect.TypeOf(data).Elem()
 	b.Buffer.SetData(data, byteOffset)
 }
+
+func (b *IndexBuffer) elementGlType() uint32 {
+	bits := b.index.Size() * 8
+	switch bits {
+	case 8:
+		return gl.UNSIGNED_BYTE
+	case 16:
+		return gl.UNSIGNED_SHORT
+	case 32:
+		return gl.UNSIGNED_INT
+	default:
+		panic("invalid index buffer type")
+	}
+}
