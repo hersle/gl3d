@@ -18,7 +18,7 @@ type TextShaderProgram struct {
 type TextRenderer struct {
 	sp          *TextShaderProgram
 	tex         *graphics.Texture2D
-	vbo         *graphics.Buffer
+	vbo         *graphics.VertexBuffer
 	ibo         *graphics.Buffer
 	renderState *graphics.RenderState
 }
@@ -38,9 +38,6 @@ func NewTextShaderProgram() *TextShaderProgram {
 	sp.Position = sp.Attrib("position")
 	sp.TexCoord = sp.Attrib("texCoordV")
 
-	sp.Position.SetFormat(gl.FLOAT, false)
-	sp.TexCoord.SetFormat(gl.FLOAT, false)
-
 	return &sp
 }
 
@@ -49,10 +46,8 @@ func NewTextRenderer() *TextRenderer {
 
 	r.sp = NewTextShaderProgram()
 
-	r.vbo = graphics.NewBuffer()
+	r.vbo = graphics.NewVertexBuffer()
 	r.ibo = graphics.NewBuffer()
-
-	r.SetAttribs(r.vbo, r.ibo)
 
 	img := basicfont.Face7x13.Mask
 	r.tex = graphics.LoadTexture2D(graphics.NearestFilter, graphics.EdgeClampWrap, gl.RGBA8, img)
@@ -68,10 +63,9 @@ func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
 	r.sp.Atlas.Set(tex)
 }
 
-func (r *TextRenderer) SetAttribs(vbo, ibo *graphics.Buffer) {
-	var v object.Vertex
-	r.sp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
-	r.sp.TexCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
+func (r *TextRenderer) SetAttribs(vbo *graphics.VertexBuffer, ibo *graphics.Buffer) {
+	r.sp.Position.SetSourceVertex(vbo, 0)
+	r.sp.TexCoord.SetSourceVertex(vbo, 1)
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 
@@ -129,6 +123,7 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *gra
 	r.SetAtlas(r.tex)
 	r.vbo.SetData(verts, 0)
 	r.ibo.SetData(inds, 0)
+	r.SetAttribs(r.vbo, r.ibo)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(inds), r.renderState).Execute()
 }

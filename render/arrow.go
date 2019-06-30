@@ -1,19 +1,17 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
-	"unsafe"
 )
 
 type ArrowRenderer struct {
 	sp          *ArrowShaderProgram
 	points      []math.Vec3
-	vbo         *graphics.Buffer
+	vbo         *graphics.VertexBuffer
 	renderState *graphics.RenderState
 }
 
@@ -43,8 +41,6 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.Color = sp.Uniform("color")
 
-	sp.Position.SetFormat(gl.FLOAT, false) // TODO: remove dependency on GL constants
-
 	return &sp
 }
 
@@ -57,8 +53,7 @@ func NewArrowRenderer() *ArrowRenderer {
 	r.renderState.Program = r.sp.ShaderProgram
 	r.renderState.PrimitiveType = graphics.Line
 
-	r.vbo = graphics.NewBuffer()
-	r.SetPosition(r.vbo)
+	r.vbo = graphics.NewVertexBuffer()
 
 	return &r
 }
@@ -76,9 +71,8 @@ func (r *ArrowRenderer) SetColor(color math.Vec3) {
 	r.sp.Color.Set(color)
 }
 
-func (r *ArrowRenderer) SetPosition(vbo *graphics.Buffer) {
-	stride := int(unsafe.Sizeof(math.Vec3{0, 0, 0}))
-	r.sp.Position.SetSource(vbo, 0, stride)
+func (r *ArrowRenderer) SetPosition(vbo *graphics.VertexBuffer) {
+	r.sp.Position.SetSourceVertex(vbo, 0)
 }
 
 func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
@@ -96,6 +90,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 		}
 	}
 	r.vbo.SetData(r.points, 0)
+	r.SetPosition(r.vbo)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
@@ -115,6 +110,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 		}
 	}
 	r.vbo.SetData(r.points, 0)
+	r.SetPosition(r.vbo)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }
@@ -134,6 +130,7 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graph
 		}
 	}
 	r.vbo.SetData(r.points, 0)
+	r.SetPosition(r.vbo)
 	r.renderState.Framebuffer = fb
 	graphics.NewRenderCommand(len(r.points), r.renderState).Execute()
 }

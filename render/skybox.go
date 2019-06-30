@@ -1,12 +1,10 @@
 package render
 
 import (
-	"github.com/go-gl/gl/v4.5-core/gl"
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/scene"
-	"unsafe"
 )
 
 type SkyboxShaderProgram struct {
@@ -19,7 +17,7 @@ type SkyboxShaderProgram struct {
 
 type SkyboxRenderer struct {
 	sp          *SkyboxShaderProgram
-	vbo         *graphics.Buffer
+	vbo         *graphics.VertexBuffer
 	ibo         *graphics.Buffer
 	tex         *graphics.CubeMap
 	renderState *graphics.RenderState
@@ -53,7 +51,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 
 	r.sp = NewSkyboxShaderProgram()
 
-	r.vbo = graphics.NewBuffer()
+	r.vbo = graphics.NewVertexBuffer()
 	verts := []math.Vec3{
 		math.Vec3{-1.0, -1.0, -1.0},
 		math.Vec3{+1.0, -1.0, -1.0},
@@ -111,9 +109,8 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 	r.sp.CubeMap.Set(cm)
 }
 
-func (r *SkyboxRenderer) setCube(vbo, ibo *graphics.Buffer) {
-	r.sp.Position.SetFormat(gl.FLOAT, false)
-	r.sp.Position.SetSource(vbo, 0, int(unsafe.Sizeof(math.Vec3{0, 0, 0})))
+func (r *SkyboxRenderer) setCube(vbo *graphics.VertexBuffer, ibo *graphics.Buffer) {
+	r.sp.Position.SetSourceVertex(vbo, 0)
 	r.sp.SetAttribIndexBuffer(ibo)
 }
 

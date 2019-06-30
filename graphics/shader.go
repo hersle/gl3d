@@ -265,18 +265,18 @@ func (u *Uniform) Set(value interface{}) {
 	}
 }
 
-func (a *Attrib) SetFormat(_type int, normalize bool) {
-	if a == nil {
-		return
-	}
-	a.prog.va.setAttribFormat(a, a.nComponents, _type, normalize)
-}
-
-func (a *Attrib) SetSource(b *Buffer, offset, stride int) {
+func (a *Attrib) SetSourceRaw(b *Buffer, offset, stride int, _type int, normalize bool) {
 	if a == nil {
 		return
 	}
 	a.prog.va.setAttribSource(a, b, offset, stride)
+	a.prog.va.setAttribFormat(a, a.nComponents, _type, normalize)
+}
+
+func (a *Attrib) SetSourceVertex(b *VertexBuffer, i int) {
+	offset := b.Offset(i)
+	stride := b.Stride()
+	a.SetSourceRaw(&b.Buffer, offset, stride, gl.FLOAT, false)
 }
 
 func (p *ShaderProgram) SetAttribIndexBuffer(b *Buffer) {

@@ -12,6 +12,11 @@ type Buffer struct {
 	size int
 }
 
+type VertexBuffer struct {
+	Buffer
+	vertex reflect.Type
+}
+
 func NewBuffer() *Buffer {
 	var b Buffer
 	var id uint32
@@ -49,4 +54,34 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 		b.Allocate(size)
 	}
 	gl.NamedBufferSubData(uint32(b.id), byteOffset, int32(size), p)
+}
+
+func NewVertexBuffer() *VertexBuffer {
+	var b VertexBuffer
+	b.Buffer = *NewBuffer()
+	return &b
+}
+
+func (b *VertexBuffer) SetData(data interface{}, byteOffset int) {
+	b.vertex = reflect.TypeOf(data).Elem()
+	b.Buffer.SetData(data, byteOffset)
+}
+
+func (b *VertexBuffer) Offset(i int) int {
+	if b.vertex == nil {
+		panic("queried vertex buffer with unknown vertex type")
+	}
+
+	switch b.vertex.Kind() {
+	case reflect.Struct:
+		return int(b.vertex.Field(i).Offset)
+	case reflect.Slice, reflect.Array:
+		return int(b.vertex.Elem().Size()) * i
+	default:
+		panic("invalid vertex type")
+	}
+}
+
+func (b *VertexBuffer) Stride() int {
+	return int(b.vertex.Size())
 }

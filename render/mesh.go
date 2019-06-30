@@ -60,7 +60,7 @@ type MeshRenderer struct {
 	renderState *graphics.RenderState
 
 	vboCache map[*object.Vertex]int
-	vbos     []*graphics.Buffer
+	vbos     []*graphics.VertexBuffer
 	ibos     []*graphics.Buffer
 
 	tex2ds map[image.Image]*graphics.Texture2D
@@ -119,8 +119,6 @@ func NewShadowMapShaderProgram() *ShadowMapShaderProgram {
 	sp.Far = sp.Uniform("far")
 	sp.Position = sp.Attrib("position")
 
-	sp.Position.SetFormat(gl.FLOAT, false) // TODO: remove dependency on GL constants
-
 	return &sp
 }
 
@@ -138,7 +136,6 @@ func NewDirectionalLightShadowMapShaderProgram() *DirectionalLightShadowMapShade
 	sp.ViewMatrix = sp.Uniform("viewMatrix")
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.Position = sp.Attrib("position")
-	sp.Position.SetFormat(gl.FLOAT, false)
 
 	return &sp
 }
@@ -189,11 +186,6 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.DirShadowMap = sp.Uniform("dirShadowMap")
 	sp.ShadowFar = sp.Uniform("light.far")
 	sp.LightAttQuad = sp.Uniform("light.attenuationQuadratic")
-
-	sp.Position.SetFormat(gl.FLOAT, false)
-	sp.Normal.SetFormat(gl.FLOAT, false)
-	sp.TexCoord.SetFormat(gl.FLOAT, false)
-	sp.Tangent.SetFormat(gl.FLOAT, false)
 
 	return &sp
 }
@@ -395,14 +387,14 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	sp.BumpMap.Set(tex)
 
 	// upload to GPU
-	var vbo *graphics.Buffer
+	var vbo *graphics.VertexBuffer
 	var ibo *graphics.Buffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
 	} else {
-		vbo = graphics.NewBuffer()
+		vbo = graphics.NewVertexBuffer()
 		ibo = graphics.NewBuffer()
 		vbo.SetData(sm.Geo.Verts, 0)
 		ibo.SetData(sm.Geo.Faces, 0)
@@ -412,11 +404,11 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
 	}
 
-	var v object.Vertex
-	sp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
-	sp.Normal.SetSource(vbo, v.NormalOffset(), v.Size())
-	sp.TexCoord.SetSource(vbo, v.TexCoordOffset(), v.Size())
-	sp.Tangent.SetSource(vbo, v.TangentOffset(), v.Size())
+	sp.Position.SetSourceVertex(vbo, 0)
+	sp.Normal.SetSourceVertex(vbo, 2)
+	sp.TexCoord.SetSourceVertex(vbo, 1)
+	sp.Tangent.SetSourceVertex(vbo, 3)
+
 	sp.SetAttribIndexBuffer(ibo)
 }
 
@@ -490,14 +482,14 @@ func (r *MeshRenderer) SetShadowMesh(m *object.Mesh) {
 }
 
 func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
-	var vbo *graphics.Buffer
+	var vbo *graphics.VertexBuffer
 	var ibo *graphics.Buffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
 	} else {
-		vbo = graphics.NewBuffer()
+		vbo = graphics.NewVertexBuffer()
 		ibo = graphics.NewBuffer()
 		vbo.SetData(sm.Geo.Verts, 0)
 		ibo.SetData(sm.Geo.Faces, 0)
@@ -507,8 +499,7 @@ func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
 		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
 	}
 
-	var v object.Vertex
-	r.shadowSp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
+	r.shadowSp.Position.SetSourceVertex(vbo, 0)
 	r.shadowSp.SetAttribIndexBuffer(ibo)
 }
 
@@ -522,14 +513,14 @@ func (r *MeshRenderer) SetDirShadowMesh(sp *MeshShaderProgram, m *object.Mesh) {
 }
 
 func (r *MeshRenderer) SetDirShadowSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
-	var vbo *graphics.Buffer
+	var vbo *graphics.VertexBuffer
 	var ibo *graphics.Buffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
 	if found {
 		vbo = r.vbos[i]
 		ibo = r.ibos[i]
 	} else {
-		vbo = graphics.NewBuffer()
+		vbo = graphics.NewVertexBuffer()
 		ibo = graphics.NewBuffer()
 		vbo.SetData(sm.Geo.Verts, 0)
 		ibo.SetData(sm.Geo.Faces, 0)
@@ -539,8 +530,7 @@ func (r *MeshRenderer) SetDirShadowSubMesh(sp *MeshShaderProgram, sm *object.Sub
 		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
 	}
 
-	var v object.Vertex
-	r.dirshadowSp.Position.SetSource(vbo, v.PositionOffset(), v.Size())
+	r.dirshadowSp.Position.SetSourceVertex(vbo, 0)
 	r.dirshadowSp.SetAttribIndexBuffer(ibo)
 }
 
