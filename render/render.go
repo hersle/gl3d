@@ -77,6 +77,10 @@ func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 	r.arrowRenderer.RenderTangents(s, c, r.sceneFramebuffer)
 }
 
+func (r *Renderer) RenderShadowMap() {
+	r.quadRenderer.Render(r.meshRenderer.ShadowMap(), graphics.DefaultFramebuffer)
+}
+
 func (r *Renderer) Clear() {
 	graphics.DefaultFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
 	r.sceneFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})

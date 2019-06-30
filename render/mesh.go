@@ -196,7 +196,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.sp1 = NewMeshShaderProgram("DEPTH", "AMBIENT")
 	r.sp2 = NewMeshShaderProgram("POINT", "SHADOW")
 	r.sp3 = NewMeshShaderProgram("SPOT", "SHADOW")
-	r.sp4 = NewMeshShaderProgram("DIR")
+	r.sp4 = NewMeshShaderProgram("DIR", "SHADOW")
 
 	r.renderState = graphics.NewState()
 	r.renderState.Cull = graphics.CullBack
@@ -220,6 +220,13 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.shadowRenderState.PrimitiveType = graphics.Triangle
 
 	return &r, nil
+}
+
+func (r *MeshRenderer) ShadowMap() *graphics.Texture2D {
+	for _, val := range r.dirLightShadowMaps {
+		return val
+	}
+	return nil
 }
 
 func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
@@ -456,7 +463,7 @@ func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 	sp.LightDir.Set(l.Forward())
 	sp.DiffuseLight.Set(l.Diffuse)
 	sp.SpecularLight.Set(l.Specular)
-	sp.LightAttQuad.Set(0)
+	sp.LightAttQuad.Set(float32(0))
 
 	if l.CastShadows {
 		sp.ShadowViewMatrix.Set(l.ViewMatrix())
@@ -504,16 +511,16 @@ func (r *MeshRenderer) SetShadowSubMesh(sm *object.SubMesh) {
 	r.shadowSp.SetAttribIndexBuffer(ibo)
 }
 
-func (r *MeshRenderer) SetDirShadowCamera(sp *MeshShaderProgram, c *camera.OrthoCamera) {
+func (r *MeshRenderer) SetDirShadowCamera(c *camera.OrthoCamera) {
 	r.dirshadowSp.ViewMatrix.Set(c.ViewMatrix())
 	r.dirshadowSp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *MeshRenderer) SetDirShadowMesh(sp *MeshShaderProgram, m *object.Mesh) {
+func (r *MeshRenderer) SetDirShadowMesh(m *object.Mesh) {
 	r.dirshadowSp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *MeshRenderer) SetDirShadowSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
+func (r *MeshRenderer) SetDirShadowSubMesh(sm *object.SubMesh) {
 	var vbo *graphics.VertexBuffer
 	var ibo *graphics.IndexBuffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]
@@ -626,11 +633,10 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 	//l.DirtyShadowMap = false
 }
 
-/*
 func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
 	smap, found := r.dirLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, gl.DEPTH_COMPONENT16, 512, 512)
+		smap = graphics.NewTexture2D(graphics.NearestFilter, graphics.BorderClampWrap, 512, 512, gl.DEPTH_COMPONENT16)
 		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 		r.dirLightShadowMaps[l.ID] = smap
 	}
@@ -640,7 +646,7 @@ func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.
 		//return
 	//}
 
-	r.shadowMapFramebuffer.AttachTexture2D(graphics.DepthAttachment, smap, 0)
+	r.shadowMapFramebuffer.Attach(smap)
 	r.shadowMapFramebuffer.ClearDepth(1)
 	r.shadowRenderState.Program = r.dirshadowSp.ShaderProgram
 	r.SetDirShadowCamera(&l.OrthoCamera)
@@ -651,14 +657,13 @@ func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.
 			if !l.OrthoCamera.Cull(subMesh) {
 				r.SetDirShadowSubMesh(subMesh)
 
-				graphics.NewRenderCommand(graphics.Triangle, subMesh.Geo.Inds, r.shadowRenderState).Execute()
+				r.shadowRenderState.Render(subMesh.Geo.Inds)
 			}
 		}
 	}
 
 	//l.DirtyShadowMap = false
 }
-*/
 
 func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
 	for _, l := range s.PointLights {
@@ -671,13 +676,11 @@ func (r *MeshRenderer) RenderShadowMaps(s *scene.Scene) {
 			r.RenderSpotLightShadowMap(s, l)
 		}
 	}
-	/*
-		for _, l := range s.DirectionalLights {
-			if l.CastShadows {
-				r.RenderDirectionalLightShadowMap(s, l)
-			}
+	for _, l := range s.DirectionalLights {
+		if l.CastShadows {
+			r.RenderDirectionalLightShadowMap(s, l)
 		}
-	*/
+	}
 }
 
 func PointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
