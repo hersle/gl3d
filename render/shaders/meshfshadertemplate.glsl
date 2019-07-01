@@ -24,53 +24,49 @@ in vec3 tanCameraToVertex;
 in vec4 lightSpacePosition;
 #endif
 
-uniform struct Material {
-	#if defined(DEPTH)
-	float alpha; // TODO: let textures modify alpha
-	sampler2D alphaMap;
-	#endif
+#if defined(DEPTH)
+uniform float materialAlpha; // TODO: let textures modify alpha
+uniform sampler2D materialAlphaMap;
+#endif
 
-	#if defined(AMBIENT)
-	vec3 ambient;
-	sampler2D ambientMap;
-	#endif
+#if defined(AMBIENT)
+uniform vec3 materialAmbient;
+uniform sampler2D materialAmbientMap;
+#endif
 
-	#if defined(POINT) || defined(SPOT) || defined(DIR)
-	vec3 diffuse;
-	vec3 specular;
-	float shine;
-	sampler2D diffuseMap;
-	sampler2D specularMap;
-	sampler2D bumpMap;
-	#endif
-} material;
+#if defined(POINT) || defined(SPOT) || defined(DIR)
+uniform vec3 materialDiffuse;
+uniform vec3 materialSpecular;
+uniform float materialShine;
+uniform sampler2D materialDiffuseMap;
+uniform sampler2D materialSpecularMap;
+uniform sampler2D materialBumpMap;
+#endif
 
-uniform struct Light {
-	#if defined(AMBIENT)
-	vec3 color;
-	#endif
+#if defined(AMBIENT)
+uniform vec3 lightColor;
+#endif
 
-	#if defined(POINT)
-	vec3 position;
-	vec3 color;
-	float far;
-	float attenuationQuadratic;
-	#endif
+#if defined(POINT)
+uniform vec3 lightPosition;
+uniform vec3 lightColor;
+uniform float lightFar;
+uniform float lightAttenuation;
+#endif
 
-	#if defined(SPOT)
-	vec3 position;
-	vec3 direction;
-	vec3 color;
-	float far;
-	float attenuationQuadratic;
-	#endif
+#if defined(SPOT)
+uniform vec3 lightPosition;
+uniform vec3 lightDirection;
+uniform vec3 lightColor;
+uniform float lightFar;
+uniform float lightAttenuation;
+#endif
 
-	#if defined(DIR)
-	vec3 direction;
-	vec3 color;
-	float attenuationQuadratic;
-	#endif
-} light;
+#if defined(DIR)
+uniform vec3 lightDirection;
+uniform vec3 lightColor;
+uniform float lightAttenuation;
+#endif
 
 #if defined(SHADOW)
 #if defined(POINT)
@@ -82,7 +78,7 @@ uniform sampler2D shadowMap;
 
 void main() {
 	#if defined(DEPTH)
-	float alpha = material.alpha * texture(material.alphaMap, texCoordF).r;
+	float alpha = materialAlpha * texture(materialAlphaMap, texCoordF).r;
 	// TODO: add proper transparency?
 	if (alpha < 1) {
 		discard;
@@ -91,31 +87,31 @@ void main() {
 
 	#if defined(AMBIENT)
 	vec4 tex;
-	tex = texture(material.ambientMap, texCoordF);
-	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
-				 * light.color;
+	tex = texture(materialAmbientMap, texCoordF);
+	vec3 ambient = ((1 - tex.a) * materialAmbient + tex.a * tex.rgb)
+				 * lightColor;
 	fragColor = vec4(ambient, 1);
 	#endif
 
 	#if defined(POINT) || defined(SPOT) || defined(DIR)
-	vec3 tanNormal = vec3(-1, -1, -1) + 2 * texture(material.bumpMap, texCoordF).rgb;
+	vec3 tanNormal = vec3(-1, -1, -1) + 2 * texture(materialBumpMap, texCoordF).rgb;
 	tanNormal = normalize(tanNormal);
 
 	vec4 tex;
 	vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));
 	bool facing = dot(tanNormal, tanLightToVertex) < 0;
 
-	float attenuation = 1 / (1.0 + light.attenuationQuadratic * dot(tanLightToVertex, tanLightToVertex));
+	float attenuation = 1 / (1.0 + lightAttenuation * dot(tanLightToVertex, tanLightToVertex));
 
-	tex = texture(material.diffuseMap, texCoordF);
-	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
+	tex = texture(materialDiffuseMap, texCoordF);
+	vec3 diffuse = ((1 - tex.a) * materialDiffuse + tex.a * tex.rgb)
 				 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
-				 * light.color
+				 * lightColor
 				 * attenuation;
 
-	tex = texture(material.specularMap, texCoordF);
-	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
-				  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
+	tex = texture(materialSpecularMap, texCoordF);
+	vec3 specular = ((1 - tex.a) * materialSpecular + tex.a * tex.rgb)
+				  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), materialShine)
 				  * (facing ? 1 : 0)
 				  * attenuation;
 
@@ -132,16 +128,16 @@ void main() {
 	#if defined(SHADOW)
 
 	#if defined(POINT)
-	float depth = length(worldPosition - light.position);
-	float depthFront = textureCube(shadowMap, worldPosition - light.position).r * light.far;
+	float depth = length(worldPosition - lightPosition);
+	float depthFront = textureCube(shadowMap, worldPosition - lightPosition).r * lightFar;
 	bool inShadow = depth > depthFront + 1.0;
 	#endif
 
 	#if defined(SPOT)
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
-	float depth = length(worldPosition - light.position);
-	float depthFront = texture(shadowMap, texCoordS).r * light.far;
+	float depth = length(worldPosition - lightPosition);
+	float depthFront = texture(shadowMap, texCoordS).r * lightFar;
 	bool inShadow = depth > depthFront + 1.0;
 	#endif
 

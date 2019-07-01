@@ -39,33 +39,49 @@ uniform mat4 normalMatrix;
 uniform mat4 shadowProjectionViewMatrix;
 #endif
 
-uniform struct Light {
-	#if defined(AMBIENT)
-	vec3 color;
-	#endif
+#if defined(DEPTH)
+uniform float materialAlpha; // TODO: let textures modify alpha
+uniform sampler2D materialAlphaMap;
+#endif
 
-	#if defined(POINT)
-	vec3 position;
-	vec3 color;
-	float far;
-	float attenuationQuadratic;
-	#endif
+#if defined(AMBIENT)
+uniform vec3 materialAmbient;
+uniform sampler2D materialAmbientMap;
+#endif
 
-	#if defined(SPOT)
-	vec3 position;
-	vec3 direction;
-	vec3 color;
-	float far;
-	float attenuationQuadratic;
-	#endif
+#if defined(POINT) || defined(SPOT) || defined(DIR)
+uniform vec3 materialDiffuse;
+uniform vec3 materialSpecular;
+uniform float materialShine;
+uniform sampler2D materialDiffuseMap;
+uniform sampler2D materialSpecularMap;
+uniform sampler2D materialBumpMap;
+#endif
 
-	#if defined(DIR)
-	vec3 direction;
-	vec3 color;
-	float attenuationQuadratic;
-	#endif
-} light;
+#if defined(AMBIENT)
+uniform vec3 lightColor;
+#endif
 
+#if defined(POINT)
+uniform vec3 lightPosition;
+uniform vec3 lightColor;
+uniform float lightFar;
+uniform float lightAttenuation;
+#endif
+
+#if defined(SPOT)
+uniform vec3 lightPosition;
+uniform vec3 lightDirection;
+uniform vec3 lightColor;
+uniform float lightFar;
+uniform float lightAttenuation;
+#endif
+
+#if defined(DIR)
+uniform vec3 lightDirection;
+uniform vec3 lightColor;
+uniform float lightAttenuation;
+#endif
 
 void main() {
 	worldPosition = vec3(modelMatrix * vec4(position, 1));
@@ -82,9 +98,9 @@ void main() {
 	mat3 viewToTan = transpose(tanToView); // orthonormal
 
 	#if defined(DIR)
-	vec3 worldLightToVertex = light.direction;
+	vec3 worldLightToVertex = lightDirection;
 	#else
-	vec3 worldLightToVertex = worldPosition - light.position;
+	vec3 worldLightToVertex = worldPosition - lightPosition;
 	#endif
 	vec3 viewLightToVertex = vec3(viewMatrix * vec4(worldLightToVertex, 0));
 	tanLightToVertex = viewToTan * viewLightToVertex;
@@ -92,7 +108,7 @@ void main() {
 	#endif
 
 	#if defined(SPOT)
-	vec3 viewLightDirection = vec3(viewMatrix * vec4(light.direction, 0));
+	vec3 viewLightDirection = vec3(viewMatrix * vec4(lightDirection, 0));
 	tanLightDirection = viewToTan * viewLightDirection;
 	#endif
 
