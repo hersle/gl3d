@@ -45,7 +45,7 @@ func main() {
 
 	s.AmbientLight = light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1})
 
-	l := light.NewPointLight(math.Vec3{1, 1, 1}, math.Vec3{1, 1, 1})
+	l := light.NewPointLight(math.Vec3{1, 1, 1})
 	l.Attenuation = 0.1
 	l.CastShadows = true
 	s.AddPointLight(l)

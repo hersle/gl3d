@@ -42,13 +42,12 @@ uniform mat4 shadowProjectionMatrix;
 
 uniform struct Light {
 	#if defined(AMBIENT)
-	vec3 ambient;
+	vec3 color;
 	#endif
 
 	#if defined(POINT)
 	vec3 position;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	float far;
 	float attenuationQuadratic;
 	#endif
@@ -56,16 +55,14 @@ uniform struct Light {
 	#if defined(SPOT)
 	vec3 position;
 	vec3 direction;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	float far;
 	float attenuationQuadratic;
 	#endif
 
 	#if defined(DIR)
 	vec3 direction;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	float attenuationQuadratic;
 	#endif
 } light;

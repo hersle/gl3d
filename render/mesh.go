@@ -38,9 +38,7 @@ type MeshShaderProgram struct {
 
 	LightPos               *graphics.Uniform
 	LightDir               *graphics.Uniform
-	AmbientLight           *graphics.Uniform
-	DiffuseLight           *graphics.Uniform
-	SpecularLight          *graphics.Uniform
+	LightColor             *graphics.Uniform
 	ShadowViewMatrix       *graphics.Uniform
 	ShadowProjectionMatrix *graphics.Uniform
 	SpotShadowMap          *graphics.Uniform
@@ -158,9 +156,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 
 	sp.LightPos = sp.Uniform("light.position")
 	sp.LightDir = sp.Uniform("light.direction")
-	sp.AmbientLight = sp.Uniform("light.ambient")
-	sp.DiffuseLight = sp.Uniform("light.diffuse")
-	sp.SpecularLight = sp.Uniform("light.specular")
+	sp.LightColor = sp.Uniform("light.color")
 	sp.ShadowViewMatrix = sp.Uniform("shadowViewMatrix")
 	sp.ShadowProjectionMatrix = sp.Uniform("shadowProjectionMatrix")
 	sp.CubeShadowMap = sp.Uniform("cubeShadowMap")
@@ -396,14 +392,13 @@ func (r *MeshRenderer) SetSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 }
 
 func (r *MeshRenderer) SetAmbientLight(sp *MeshShaderProgram, l *light.AmbientLight) {
-	sp.AmbientLight.Set(l.Color)
+	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	sp.LightAttQuad.Set(0)
 }
 
 func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight) {
 	sp.LightPos.Set(l.Position)
-	sp.DiffuseLight.Set(l.Diffuse)
-	sp.SpecularLight.Set(l.Specular)
+	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	if l.CastShadows {
 		sp.ShadowFar.Set(l.ShadowFar)
 		smap, found := r.pointLightShadowMaps[l.ID]
@@ -418,8 +413,7 @@ func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight)
 func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 	sp.LightPos.Set(l.Position)
 	sp.LightDir.Set(l.Forward())
-	sp.DiffuseLight.Set(l.Diffuse)
-	sp.SpecularLight.Set(l.Specular)
+	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	sp.LightAttQuad.Set(l.Attenuation)
 
 	if l.CastShadows {
@@ -436,8 +430,7 @@ func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 
 func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.DirectionalLight) {
 	sp.LightDir.Set(l.Forward())
-	sp.DiffuseLight.Set(l.Diffuse)
-	sp.SpecularLight.Set(l.Specular)
+	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	sp.LightAttQuad.Set(float32(0))
 
 	if l.CastShadows {
@@ -460,7 +453,6 @@ func (r *MeshRenderer) SetShadowCamera(sp *ShadowMapShaderProgram, c camera.Came
 	switch c.(type) {
 	case *camera.PerspectiveCamera:
 		c := c.(*camera.PerspectiveCamera)
-		println("set persp")
 		sp.Far.Set(c.Far)
 		sp.LightPosition.Set(c.Position)
 	case *camera.OrthoCamera:

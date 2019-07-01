@@ -47,13 +47,12 @@ uniform struct Material {
 
 uniform struct Light {
 	#if defined(AMBIENT)
-	vec3 ambient;
+	vec3 color;
 	#endif
 
 	#if defined(POINT)
 	vec3 position;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	float far;
 	float attenuationQuadratic;
 	#endif
@@ -61,16 +60,14 @@ uniform struct Light {
 	#if defined(SPOT)
 	vec3 position;
 	vec3 direction;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	float far;
 	float attenuationQuadratic;
 	#endif
 
 	#if defined(DIR)
 	vec3 direction;
-	vec3 diffuse;
-	vec3 specular;
+	vec3 color;
 	float attenuationQuadratic;
 	#endif
 } light;
@@ -100,7 +97,7 @@ void main() {
 	vec4 tex;
 	tex = texture(material.ambientMap, texCoordF);
 	vec3 ambient = ((1 - tex.a) * material.ambient + tex.a * tex.rgb)
-				 * light.ambient;
+				 * light.color;
 	fragColor = vec4(ambient, 1);
 	#endif
 
@@ -117,13 +114,12 @@ void main() {
 	tex = texture(material.diffuseMap, texCoordF);
 	vec3 diffuse = ((1 - tex.a) * material.diffuse + tex.a * tex.rgb)
 				 * max(dot(tanNormal, normalize(-tanLightToVertex)), 0)
-				 * light.diffuse
+				 * light.color
 				 * attenuation;
 
 	tex = texture(material.specularMap, texCoordF);
 	vec3 specular = ((1 - tex.a) * material.specular + tex.a * tex.rgb)
 				  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), material.shine)
-				  * light.specular
 				  * (facing ? 1 : 0)
 				  * attenuation;
 
