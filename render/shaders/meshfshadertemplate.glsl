@@ -72,16 +72,12 @@ uniform struct Light {
 	#endif
 } light;
 
-#if defined(SHADOW) && defined(POINT)
-uniform samplerCube cubeShadowMap;
+#if defined(SHADOW)
+#if defined(POINT)
+uniform samplerCube shadowMap;
+#elif defined(SPOT) || defined(DIR)
+uniform sampler2D shadowMap;
 #endif
-
-#if defined(SHADOW) && defined(SPOT)
-uniform sampler2D spotShadowMap;
-#endif
-
-#if defined(SHADOW) && defined(DIR)
-uniform sampler2D dirShadowMap;
 #endif
 
 void main() {
@@ -137,7 +133,7 @@ void main() {
 
 	#if defined(POINT)
 	float depth = length(worldPosition - light.position);
-	float depthFront = textureCube(cubeShadowMap, worldPosition - light.position).r * light.far;
+	float depthFront = textureCube(shadowMap, worldPosition - light.position).r * light.far;
 	bool inShadow = depth > depthFront + 1.0;
 	#endif
 
@@ -145,7 +141,7 @@ void main() {
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = length(worldPosition - light.position);
-	float depthFront = texture(spotShadowMap, texCoordS).r * light.far;
+	float depthFront = texture(shadowMap, texCoordS).r * light.far;
 	bool inShadow = depth > depthFront + 1.0;
 	#endif
 
@@ -153,7 +149,7 @@ void main() {
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = 0.5 + 0.5 * ndcCoords.z; // make into [0, 1]
-	float depthFront = texture(dirShadowMap, texCoordS).r;
+	float depthFront = texture(shadowMap, texCoordS).r;
 	bool inShadow = depth > depthFront + 0.05;
 	#endif
 

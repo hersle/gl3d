@@ -41,9 +41,7 @@ type MeshShaderProgram struct {
 	LightColor             *graphics.Uniform
 	ShadowViewMatrix       *graphics.Uniform
 	ShadowProjectionMatrix *graphics.Uniform
-	SpotShadowMap          *graphics.Uniform
-	CubeShadowMap          *graphics.Uniform
-	DirShadowMap           *graphics.Uniform
+	ShadowMap              *graphics.Uniform
 	ShadowFar              *graphics.Uniform
 	LightAttQuad           *graphics.Uniform
 }
@@ -160,9 +158,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.LightColor = sp.Uniform("light.color")
 	sp.ShadowViewMatrix = sp.Uniform("shadowViewMatrix")
 	sp.ShadowProjectionMatrix = sp.Uniform("shadowProjectionMatrix")
-	sp.CubeShadowMap = sp.Uniform("cubeShadowMap")
-	sp.SpotShadowMap = sp.Uniform("spotShadowMap")
-	sp.DirShadowMap = sp.Uniform("dirShadowMap")
+	sp.ShadowMap = sp.Uniform("shadowMap")
 	sp.ShadowFar = sp.Uniform("light.far")
 	sp.LightAttQuad = sp.Uniform("light.attenuationQuadratic")
 
@@ -407,7 +403,7 @@ func (r *MeshRenderer) SetPointLight(sp *MeshShaderProgram, l *light.PointLight)
 		if !found {
 			panic("set point light with no shadow map")
 		}
-		sp.CubeShadowMap.Set(smap)
+		sp.ShadowMap.Set(smap)
 	}
 	sp.LightAttQuad.Set(l.Attenuation)
 }
@@ -426,7 +422,7 @@ func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 		if !found {
 			panic("set spot light with no shadow map")
 		}
-		sp.SpotShadowMap.Set(smap)
+		sp.ShadowMap.Set(smap)
 	}
 }
 
@@ -442,7 +438,7 @@ func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 		if !found {
 			panic("set directional light with no shadow map")
 		}
-		sp.DirShadowMap.Set(smap)
+		sp.ShadowMap.Set(smap)
 	}
 }
 
