@@ -6,9 +6,9 @@ uniform mat4 projectionMatrix;
 
 in vec3 position;
 
-out vec3 worldPosition;
+out vec3 worldPositionG;
 
 void main() {
-	worldPosition = vec3(modelMatrix * vec4(position, 1));
-	gl_Position = projectionMatrix * viewMatrix * vec4(worldPosition, 1);
+	worldPositionG = vec3(modelMatrix * vec4(position, 1));
+	gl_Position = projectionMatrix * viewMatrix * vec4(worldPositionG, 1);
 }

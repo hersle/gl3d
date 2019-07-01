@@ -8,6 +8,7 @@ import (
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
 	"image"
+	"fmt"
 )
 
 type MeshShaderProgram struct {
@@ -89,6 +90,7 @@ type ShadowMapShaderProgram struct {
 	ProjectionMatrix *graphics.Uniform
 	LightPosition    *graphics.Uniform
 	Far              *graphics.Uniform
+	ProjViewMats     []*graphics.Uniform
 	Position         *graphics.Attrib
 }
 
@@ -98,7 +100,8 @@ func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 
 	vFile := "render/shaders/shadowmapvshadertemplate.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/shadowmapfshadertemplate.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "", defines...)
+	gFile := "render/shaders/shadowmapgshadertemplate.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, gFile, defines...)
 	if err != nil {
 		panic(err)
 	}
@@ -109,6 +112,12 @@ func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 	sp.LightPosition = sp.Uniform("lightPosition")
 	sp.Far = sp.Uniform("far")
 	sp.Position = sp.Attrib("position")
+
+	sp.ProjViewMats = make([]*graphics.Uniform, 6)
+	for i := 0; i < 6; i++ {
+		name := fmt.Sprintf("projectionViewMatrices[%d]", i)
+		sp.ProjViewMats[i] = sp.Uniform(name)
+	}
 
 	return &sp
 }
@@ -525,21 +534,25 @@ func (r *MeshRenderer) RenderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	r.shadowRenderState.Program = r.shadowSp1.ShaderProgram
 
 	for face := 0; face < 6; face++ {
-		r.shadowMapFramebuffer.Attach(smap.Face(graphics.CubeMapLayer(face)))
-		r.shadowMapFramebuffer.ClearDepth(1)
 		c.SetForwardUp(forwards[face], ups[face])
+		mat := math.Mat4{}
+		mat.Identity()
+		mat.Mult(c.ProjectionMatrix())
+		mat.Mult(c.ViewMatrix())
+		r.shadowSp1.ProjViewMats[face].Set(&mat)
+	}
 
-		r.SetShadowCamera(r.shadowSp1, c)
+	r.shadowMapFramebuffer.Attach(smap)
+	r.shadowMapFramebuffer.ClearDepth(1)
 
-		for _, m := range s.Meshes {
-			r.SetShadowMesh(r.shadowSp1, m)
-			for _, subMesh := range m.SubMeshes {
-				if !c.Cull(subMesh) {
-					r.SetShadowSubMesh(r.shadowSp1, subMesh)
+	r.SetShadowCamera(r.shadowSp1, c)
 
-					r.shadowRenderState.Render(subMesh.Geo.Inds)
-				}
-			}
+	for _, m := range s.Meshes {
+		r.SetShadowMesh(r.shadowSp1, m)
+		for _, subMesh := range m.SubMeshes {
+			r.SetShadowSubMesh(r.shadowSp1, subMesh)
+
+			r.shadowRenderState.Render(subMesh.Geo.Inds)
 		}
 	}
 
