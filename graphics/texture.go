@@ -171,6 +171,22 @@ func (cf *CubeMapFace) attachTo(f *Framebuffer) {
 	gl.NamedFramebufferTextureLayer(uint32(f.id), glatt, uint32(cf.CubeMap.id), 0, int32(cf.layer))
 }
 
+func (c *CubeMap) attachTo(f *Framebuffer) {
+	var glatt uint32
+	switch c.type_ {
+	case ColorTexture:
+		glatt = gl.COLOR_ATTACHMENT0
+	case DepthTexture:
+		glatt = gl.DEPTH_ATTACHMENT
+	// TODO: stencil texture
+	//case gl.STENCIL_INDEX8:
+		//glatt = gl.STENCIL_ATTACHMENT
+	default:
+		panic("invalid texture format")
+	}
+	gl.NamedFramebufferTexture(uint32(f.id), glatt, uint32(c.id), 0)
+}
+
 func NewCubeMap(type_ TextureType, filter TextureFilter, width, height int) *CubeMap {
 	var t CubeMap
 	t.width = width
@@ -220,6 +236,14 @@ func NewUniformCubeMap(rgba math.Vec4) *CubeMap {
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
 	return LoadCubeMap(NearestFilter, img, img, img, img, img, img)
+}
+
+func (t *CubeMap) Width() int {
+	return t.width
+}
+
+func (t *CubeMap) Height() int {
+	return t.height
 }
 
 func (t *CubeMap) glFormat() uint32 {
