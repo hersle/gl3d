@@ -6,6 +6,7 @@ import (
 	"github.com/hersle/gl3d/math"
 	"io/ioutil"
 	"strings"
+	"strconv"
 )
 
 type ShaderType int
@@ -317,6 +318,16 @@ func (p *ShaderProgram) UniformNames() []string {
 }
 
 func (p *ShaderProgram) Uniform(name string) *Uniform {
+	// handle variable names referencing array elements
+	arrayindex := 0
+	i1 := strings.LastIndex(name, "[")
+	i2 := strings.LastIndex(name, "]")
+	if i1 != -1 && i2 != -1 {
+		// [0]-name must be used for querying correct type, etc.
+		arrayindex, _ = strconv.Atoi(name[i1+1:i2])
+		name = name[:i1] + "[0]" + name[i2+1:]
+	}
+
 	var u Uniform
 	loc := gl.GetUniformLocation(uint32(p.id), gl.Str(name+"\x00"))
 	if loc == -1 {
@@ -329,6 +340,8 @@ func (p *ShaderProgram) Uniform(name string) *Uniform {
 	var gltype uint32
 	gl.GetActiveUniform(uint32(p.id), index, 0, nil, nil, &gltype, nil)
 	u.glType = int(gltype)
+
+	u.location += arrayindex // location increments by one in uniform arrays
 
 	// TODO: allow more sampler types
 	if u.glType == gl.SAMPLER_2D || u.glType == gl.SAMPLER_CUBE {
