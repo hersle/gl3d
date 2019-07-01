@@ -98,7 +98,7 @@ func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 
 	vFile := "render/shaders/shadowmapvshadertemplate.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/shadowmapfshadertemplate.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, defines...)
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "", defines...)
 	if err != nil {
 		panic(err)
 	}
@@ -120,7 +120,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	vFile := "render/shaders/meshvshadertemplate.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/meshfshadertemplate.glsl" // TODO: make independent from executable directory
 
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, defines...)
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "", defines...)
 	if err != nil {
 		panic(err)
 	}

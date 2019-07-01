@@ -31,7 +31,7 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 	vShaderFilename := "render/shaders/skyboxvshader.glsl" // TODO: make independent from executable directory
 	fShaderFilename := "render/shaders/skyboxfshader.glsl" // TODO: make independent from executable directory
 
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename)
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
 	if err != nil {
 		panic(err)
 	}

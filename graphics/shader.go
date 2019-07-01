@@ -13,6 +13,7 @@ type ShaderType int
 const (
 	VertexShader ShaderType = iota
 	FragmentShader
+	GeometryShader
 )
 
 type ShaderProgram struct {
@@ -53,6 +54,8 @@ func NewShader(type_ ShaderType, src string, defines ...string) (*Shader, error)
 		gltype = gl.VERTEX_SHADER
 	case FragmentShader:
 		gltype = gl.FRAGMENT_SHADER
+	case GeometryShader:
+		gltype = gl.GEOMETRY_SHADER
 	default:
 		panic("unknown shader type")
 	}
@@ -114,17 +117,13 @@ func (s *Shader) compile() error {
 	}
 }
 
-func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
+func NewShaderProgram(shaders ...*Shader) (*ShaderProgram, error) {
 	var p ShaderProgram
 	p.id = int(gl.CreateProgram())
 
-	if vShader != nil {
-		gl.AttachShader(uint32(p.id), uint32(vShader.id))
-		defer gl.DetachShader(uint32(p.id), uint32(vShader.id))
-	}
-	if fShader != nil {
-		gl.AttachShader(uint32(p.id), uint32(fShader.id))
-		defer gl.DetachShader(uint32(p.id), uint32(fShader.id))
+	for _, shader := range shaders {
+		gl.AttachShader(uint32(p.id), uint32(shader.id))
+		defer gl.DetachShader(uint32(p.id), uint32(shader.id))
 	}
 
 	err := p.link()
@@ -140,29 +139,33 @@ func NewShaderProgram(vShader, fShader *Shader) (*ShaderProgram, error) {
 	return &p, err
 }
 
-func ReadShaderProgram(vFile, fFile string, defines ...string) (*ShaderProgram, error) {
-	var vShader, fShader *Shader
-	var err error
+func ReadShaderProgram(vFile, fFile, gFile string, defines ...string) (*ShaderProgram, error) {
+	var shaders []*Shader
 
-	if vFile == "" {
-		vShader = nil
-	} else {
-		vShader, err = ReadShader(VertexShader, vFile, defines...)
+	if vFile != "" {
+		vShader, err := ReadShader(VertexShader, vFile, defines...)
 		if err != nil {
 			return nil, err
 		}
+		shaders = append(shaders, vShader)
 	}
-
-	if fFile == "" {
-		fShader = nil
-	} else {
-		fShader, err = ReadShader(FragmentShader, fFile, defines...)
+	if fFile != "" {
+		fShader, err := ReadShader(FragmentShader, fFile, defines...)
 		if err != nil {
 			return nil, err
 		}
+		shaders = append(shaders, fShader)
 	}
 
-	return NewShaderProgram(vShader, fShader)
+	if gFile != "" {
+		gShader, err := ReadShader(GeometryShader, gFile, defines...)
+		if err != nil {
+			return nil, err
+		}
+		shaders = append(shaders, gShader)
+	}
+
+	return NewShaderProgram(shaders...)
 }
 
 func (p *ShaderProgram) linked() bool {
