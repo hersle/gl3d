@@ -298,6 +298,24 @@ func (p *ShaderProgram) Attrib(name string) *Attrib {
 
 var textureUnitsUsed int = 0
 
+func (p *ShaderProgram) UniformNames() []string {
+	var c int32
+	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_UNIFORMS, &c)
+	uniformCount := int(c)
+
+	names := make([]string, uniformCount)
+
+	for i := 0; i < uniformCount; i++ {
+		bytes := make([]uint8, 100)
+		gl.GetActiveUniform(uint32(p.id), uint32(i), 95, nil, nil, nil, &bytes[0])
+		name := string(bytes)
+		names = append(names, name)
+		println(name)
+	}
+
+	return names
+}
+
 func (p *ShaderProgram) Uniform(name string) *Uniform {
 	var u Uniform
 	loc := gl.GetUniformLocation(uint32(p.id), gl.Str(name+"\x00"))
