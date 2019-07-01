@@ -234,6 +234,8 @@ func (u *Uniform) Set(value interface{}) {
 		value := value.(*CubeMap)
 		gl.BindTextureUnit(uint32(u.textureUnitIndex), uint32(value.id))
 		gl.ProgramUniform1i(uint32(u.progID), int32(u.location), int32(u.textureUnitIndex))
+	default:
+		panic("invalid uniform")
 	}
 }
 
