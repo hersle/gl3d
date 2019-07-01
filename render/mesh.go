@@ -69,6 +69,7 @@ type MeshRenderer struct {
 
 	shadowSp1             *ShadowMapShaderProgram
 	shadowSp2             *ShadowMapShaderProgram
+	shadowSp3             *ShadowMapShaderProgram
 	shadowMapFramebuffer *graphics.Framebuffer
 	shadowRenderState    *graphics.State
 
@@ -186,8 +187,9 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
 	r.tex2ds = make(map[image.Image]*graphics.Texture2D)
 
-	r.shadowSp1 = NewShadowMapShaderProgram("POINT") // point light and spot light
-	r.shadowSp2 = NewShadowMapShaderProgram() // directional light
+	r.shadowSp1 = NewShadowMapShaderProgram("POINT") // point light
+	r.shadowSp2 = NewShadowMapShaderProgram("SPOT") // spot light
+	r.shadowSp3 = NewShadowMapShaderProgram("DIR") // directional light
 
 	r.shadowMapFramebuffer = graphics.NewFramebuffer()
 
@@ -566,14 +568,14 @@ func (r *MeshRenderer) RenderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 
 	r.shadowMapFramebuffer.Attach(smap)
 	r.shadowMapFramebuffer.ClearDepth(1)
-	r.shadowRenderState.Program = r.shadowSp1.ShaderProgram
-	r.SetShadowCamera(r.shadowSp1, &l.PerspectiveCamera)
+	r.shadowRenderState.Program = r.shadowSp2.ShaderProgram
+	r.SetShadowCamera(r.shadowSp2, &l.PerspectiveCamera)
 
 	for _, m := range s.Meshes {
-		r.SetShadowMesh(r.shadowSp1, m)
+		r.SetShadowMesh(r.shadowSp2, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.PerspectiveCamera.Cull(subMesh) {
-				r.SetShadowSubMesh(r.shadowSp1, subMesh)
+				r.SetShadowSubMesh(r.shadowSp2, subMesh)
 
 				r.shadowRenderState.Render(subMesh.Geo.Inds)
 			}
@@ -598,14 +600,14 @@ func (r *MeshRenderer) RenderDirectionalLightShadowMap(s *scene.Scene, l *light.
 
 	r.shadowMapFramebuffer.Attach(smap)
 	r.shadowMapFramebuffer.ClearDepth(1)
-	r.shadowRenderState.Program = r.shadowSp2.ShaderProgram
-	r.SetShadowCamera(r.shadowSp2, &l.OrthoCamera)
+	r.shadowRenderState.Program = r.shadowSp3.ShaderProgram
+	r.SetShadowCamera(r.shadowSp3, &l.OrthoCamera)
 
 	for _, m := range s.Meshes {
-		r.SetShadowMesh(r.shadowSp2, m)
+		r.SetShadowMesh(r.shadowSp3, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.OrthoCamera.Cull(subMesh) {
-				r.SetShadowSubMesh(r.shadowSp2, subMesh)
+				r.SetShadowSubMesh(r.shadowSp3, subMesh)
 
 				r.shadowRenderState.Render(subMesh.Geo.Inds)
 			}
