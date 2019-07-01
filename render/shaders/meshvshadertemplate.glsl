@@ -36,8 +36,7 @@ uniform mat4 normalMatrix;
 #endif
 
 #if defined(SHADOW) && (defined(SPOT) || defined(DIR))
-uniform mat4 shadowViewMatrix;
-uniform mat4 shadowProjectionMatrix;
+uniform mat4 shadowProjectionViewMatrix;
 #endif
 
 uniform struct Light {
@@ -98,7 +97,6 @@ void main() {
 	#endif
 
 	#if defined(SHADOW) && (defined(SPOT) || defined(DIR))
-	mat4 shadowProjectionViewModelMatrix = shadowProjectionMatrix * shadowViewMatrix * modelMatrix;
-	lightSpacePosition = shadowProjectionViewModelMatrix * vec4(position, 1);
+	lightSpacePosition = shadowProjectionViewMatrix * modelMatrix * vec4(position, 1);
 	#endif
 }

@@ -39,8 +39,7 @@ type MeshShaderProgram struct {
 	LightPos               *graphics.Uniform
 	LightDir               *graphics.Uniform
 	LightColor             *graphics.Uniform
-	ShadowViewMatrix       *graphics.Uniform
-	ShadowProjectionMatrix *graphics.Uniform
+	ShadowProjectionViewMatrix *graphics.Uniform
 	ShadowMap              *graphics.Uniform
 	ShadowFar              *graphics.Uniform
 	LightAttQuad           *graphics.Uniform
@@ -70,6 +69,8 @@ type MeshRenderer struct {
 	shadowSp3             *ShadowMapShaderProgram
 	shadowMapFramebuffer *graphics.Framebuffer
 	shadowRenderState    *graphics.State
+
+	shadowProjViewMat math.Mat4
 
 	normalMatrices []math.Mat4
 	renderInfos []renderInfo
@@ -156,8 +157,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.LightPos = sp.Uniform("light.position")
 	sp.LightDir = sp.Uniform("light.direction")
 	sp.LightColor = sp.Uniform("light.color")
-	sp.ShadowViewMatrix = sp.Uniform("shadowViewMatrix")
-	sp.ShadowProjectionMatrix = sp.Uniform("shadowProjectionMatrix")
+	sp.ShadowProjectionViewMatrix = sp.Uniform("shadowProjectionViewMatrix")
 	sp.ShadowMap = sp.Uniform("shadowMap")
 	sp.ShadowFar = sp.Uniform("light.far")
 	sp.LightAttQuad = sp.Uniform("light.attenuationQuadratic")
@@ -415,8 +415,10 @@ func (r *MeshRenderer) SetSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 	sp.LightAttQuad.Set(l.Attenuation)
 
 	if l.CastShadows {
-		sp.ShadowViewMatrix.Set(l.ViewMatrix())
-		sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
+		r.shadowProjViewMat.Identity()
+		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
+		r.shadowProjViewMat.Mult(l.ViewMatrix())
+		sp.ShadowProjectionViewMatrix.Set(&r.shadowProjViewMat)
 		sp.ShadowFar.Set(l.PerspectiveCamera.Far)
 		smap, found := r.spotLightShadowMaps[l.ID]
 		if !found {
@@ -432,8 +434,10 @@ func (r *MeshRenderer) SetDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 	sp.LightAttQuad.Set(float32(0))
 
 	if l.CastShadows {
-		sp.ShadowViewMatrix.Set(l.ViewMatrix())
-		sp.ShadowProjectionMatrix.Set(l.ProjectionMatrix())
+		r.shadowProjViewMat.Identity()
+		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
+		r.shadowProjViewMat.Mult(l.ViewMatrix())
+		sp.ShadowProjectionViewMatrix.Set(&r.shadowProjViewMat)
 		smap, found := r.dirLightShadowMaps[l.ID]
 		if !found {
 			panic("set directional light with no shadow map")
