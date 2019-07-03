@@ -31,6 +31,10 @@ type Attrib struct {
 	prog        *ShaderProgram
 	id          int
 	nComponents int
+
+	glType uint32
+	normalize bool
+	enabled bool
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
@@ -245,11 +249,19 @@ func (a *Attrib) SetSourceRaw(b *Buffer, offset, stride int, type_ int, normaliz
 		return
 	}
 
-	gl.VertexArrayAttribFormat(uint32(a.prog.vaid), uint32(a.id), int32(a.nComponents), uint32(type_), normalize, 0)
+	if !a.enabled || uint32(type_) != a.glType || normalize != a.normalize {
+		gl.VertexArrayAttribFormat(uint32(a.prog.vaid), uint32(a.id), int32(a.nComponents), uint32(type_), normalize, 0)
+		a.glType = uint32(type_)
+		a.normalize = normalize
+	}
 
-	gl.VertexArrayAttribBinding(uint32(a.prog.vaid), uint32(a.id), uint32(a.id))
 	gl.VertexArrayVertexBuffer(uint32(a.prog.vaid), uint32(a.id), uint32(b.id), offset, int32(stride))
-	gl.EnableVertexArrayAttrib(uint32(a.prog.vaid), uint32(a.id))
+
+	if !a.enabled {
+		gl.VertexArrayAttribBinding(uint32(a.prog.vaid), uint32(a.id), uint32(a.id))
+		gl.EnableVertexArrayAttrib(uint32(a.prog.vaid), uint32(a.id))
+		a.enabled = true
+	}
 }
 
 func (a *Attrib) SetSourceVertex(b *VertexBuffer, i int) {
