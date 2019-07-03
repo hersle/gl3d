@@ -146,12 +146,12 @@ void main() {
 		}
 	}
 	factor = factor / (kernelSize * kernelSize * kernelSize); // average
-	factor = 1.0 - 0.5 * factor;
+	factor = 1.0 - 1.0 * factor;
 	#else
 	float depth = length(worldPosition - lightPosition);
 	float depthFront = textureCube(shadowMap, worldPosition - lightPosition).r * lightFar;
 	bool inShadow = depth > depthFront + 1.0;
-	float factor = 1.0 - 0.5 * float(inShadow);
+	float factor = 1.0 - 1.0 * float(inShadow);
 	#endif
 	#endif
 
@@ -173,14 +173,14 @@ void main() {
 		}
 	}
 	factor = factor / (kernelSize * kernelSize); // average
-	factor = 1.0 - 0.5 * factor;
+	factor = 1.0 - 1.0 * factor;
 	#else
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = length(worldPosition - lightPosition);
 	float depthFront = texture(shadowMap, texCoordS).r * lightFar;
 	bool inShadow = depth > depthFront + 1.0;
-	float factor = 1.0 - 0.5 * float(inShadow);
+	float factor = 1.0 - 1.0 * float(inShadow);
 	#endif
 	#endif
 
@@ -202,14 +202,14 @@ void main() {
 		}
 	}
 	factor = factor / (kernelSize * kernelSize); // average
-	factor = 1.0 - 0.5 * factor;
+	factor = 1.0 - 1.0 * factor;
 	#else
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = 0.5 + 0.5 * ndcCoords.z; // make into [0, 1]
 	float depthFront = texture(shadowMap, texCoordS).r;
 	bool inShadow = depth > depthFront + 0.05;
-	float factor = 1.0 - 0.5 * float(inShadow);
+	float factor = 1.0 - 1.0 * float(inShadow);
 	#endif
 	#endif
 
