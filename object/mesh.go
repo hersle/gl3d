@@ -332,7 +332,7 @@ func NewMesh(geo *Geometry, mtl *material.Material) *Mesh {
 	var mesh Mesh
 	mesh.Object = *NewObject()
 	if geo != nil {
-		if mtl != nil {
+		if mtl == nil {
 			mtl = material.NewDefaultMaterial("")
 		}
 		mesh.AddSubMesh(NewSubMesh(geo, mtl, &mesh))
