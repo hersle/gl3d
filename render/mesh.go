@@ -173,9 +173,9 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
 	r.sp1 = NewMeshShaderProgram("DEPTH", "AMBIENT")
-	r.sp2 = NewMeshShaderProgram("POINT", "SHADOW")
-	r.sp3 = NewMeshShaderProgram("SPOT", "SHADOW")
-	r.sp4 = NewMeshShaderProgram("DIR", "SHADOW")
+	r.sp2 = NewMeshShaderProgram("POINT", "SHADOW", "PCF")
+	r.sp3 = NewMeshShaderProgram("SPOT", "SHADOW", "PCF")
+	r.sp4 = NewMeshShaderProgram("DIR", "SHADOW", "PCF")
 
 	r.renderState = graphics.NewState()
 	r.renderState.Cull = graphics.CullBack
