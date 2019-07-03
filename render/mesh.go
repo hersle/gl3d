@@ -5,6 +5,7 @@ import (
 	"github.com/hersle/gl3d/graphics"
 	"github.com/hersle/gl3d/light"
 	"github.com/hersle/gl3d/math"
+	"github.com/hersle/gl3d/material"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
 	"image"
@@ -74,6 +75,8 @@ type MeshRenderer struct {
 
 	normalMatrices []math.Mat4
 	renderInfos []renderInfo
+
+	pointLightMesh *object.Mesh
 }
 
 type renderInfo struct {
@@ -199,6 +202,11 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.shadowRenderState.Cull = graphics.CullBack
 	r.shadowRenderState.PrimitiveType = graphics.Triangle
 
+	geo := object.NewSphere(math.Vec3{0, 0, 0}, 0.1).Geometry(6)
+	mtl := material.NewDefaultMaterial("")
+	mtl.Ambient = math.Vec3{1, 1, 1}
+	r.pointLightMesh = object.NewMesh(geo, mtl)
+
 	return &r, nil
 }
 
@@ -209,11 +217,12 @@ func (r *MeshRenderer) ExecRenderInfo(ri *renderInfo, sp *MeshShaderProgram) {
 	r.renderState.Render(ri.subMesh.Geo.Inds)
 }
 
-func (r *MeshRenderer) AmbientPass(c camera.Camera) {
+func (r *MeshRenderer) AmbientPass(s *scene.Scene, c camera.Camera) {
 	r.renderState.DisableBlending()
 	r.renderState.DepthTest = graphics.LessDepthTest
 	r.renderState.Program = r.sp1.ShaderProgram
 
+	r.sp1.LightColor.Set(s.AmbientLight.Color) // TODO: move into ambient pass
 	r.SetCamera(r.sp1, c)
 
 	for _, ri := range r.renderInfos {
@@ -302,7 +311,19 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Fram
 
 	r.renderState.Framebuffer = fb
 
-	r.AmbientPass(c) // also works as depth pass
+	r.AmbientPass(s, c) // also works as depth pass
+
+	// render lights
+	for _, l := range s.PointLights {
+		r.sp1.LightColor.Set(l.Color)
+		r.pointLightMesh.Place(l.Position)
+		r.SetMesh(r.sp1, r.pointLightMesh)
+		for _, subMesh := range r.pointLightMesh.SubMeshes {
+			r.SetSubMesh(r.sp1, subMesh)
+			r.renderState.Render(subMesh.Geo.Inds)
+		}
+	}
+
 	r.LightPass(s, c)
 }
 
