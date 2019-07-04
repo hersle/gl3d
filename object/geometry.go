@@ -39,6 +39,12 @@ type Circle struct {
 	Normal math.Vec3
 }
 
+type Cone struct {
+	Base math.Vec3
+	Tip math.Vec3
+	Radius float32
+}
+
 func NewBox(pos, unitX, unitY math.Vec3, dx, dy, dz float32) *Box {
 	var b Box
 	b.Object = *NewObject()
@@ -341,6 +347,52 @@ func (c *Circle) Geometry(n int) *Geometry {
 
 		geo.AddTriangle(v1, v2, v3) // front face
 		geo.AddTriangle(v1, v3, v2) // back face
+
+		v2 = v3
+	}
+
+	geo.CalculateNormals()
+	geo.CalculateTangents()
+	return &geo
+}
+
+func NewCone(base, tip math.Vec3, radius float32) *Cone {
+	var c Cone
+	c.Base = base
+	c.Tip = tip
+	c.Radius = radius
+	return &c
+}
+
+func (c *Cone) Height() float32 {
+	return c.Tip.Sub(c.Base).Length()
+}
+
+func (c *Cone) Up() math.Vec3 {
+	return c.Tip.Sub(c.Base).Norm()
+}
+
+func (c *Cone) Geometry(n int) *Geometry {
+	up := c.Up()
+	t1 := up.Normal()
+	t2 := up.Cross(t1).Norm()
+
+	var geo Geometry
+
+	var v0, v1, v2, v3 Vertex
+	v0.Position = c.Base
+	v1.Position = c.Tip
+	v2.Position = c.Base.Add(t1.Scale(c.Radius))
+	for i := 1; i <= n; i++ {
+		ang := 2 * gomath.Pi / float64(n) * float64(i)
+		cos := float32(gomath.Cos(ang))
+		sin := float32(gomath.Sin(ang))
+		d1 := t1.Scale(c.Radius*cos)
+		d2 := t2.Scale(c.Radius*sin)
+		v3.Position = c.Base.Add(d1).Add(d2)
+
+		geo.AddTriangle(v1, v2, v3) // front face
+		geo.AddTriangle(v0, v3, v2)
 
 		v2 = v3
 	}

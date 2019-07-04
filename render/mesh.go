@@ -39,6 +39,7 @@ type MeshRenderer struct {
 	shadowProjViewMat math.Mat4
 
 	pointLightMesh *object.Mesh
+	spotLightMesh *object.Mesh
 
 	normalMatrices []math.Mat4
 
@@ -122,6 +123,9 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	mtl := material.NewDefaultMaterial("")
 	mtl.Ambient = math.Vec3{1, 1, 1}
 	r.pointLightMesh = object.NewMesh(geo, mtl)
+
+	geo = object.NewCone(math.Vec3{0, 0, -1}, math.Vec3{0, 0, 0}, 0.5).Geometry(6)
+	r.spotLightMesh = object.NewMesh(geo, mtl)
 
 	return &r, nil
 }
@@ -258,6 +262,17 @@ func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
 		r.pointLightMesh.Place(l.Position)
 		r.setMesh(r.ambientProg, r.pointLightMesh)
 		for _, subMesh := range r.pointLightMesh.SubMeshes {
+			r.setSubMesh(r.ambientProg, subMesh)
+			r.renderState.Render(subMesh.Geo.Inds)
+		}
+	}
+
+	for _, l := range s.SpotLights {
+		r.ambientProg.LightColor.Set(l.Color)
+		r.spotLightMesh.Place(l.Position)
+		r.spotLightMesh.Orient(l.UnitX, l.UnitY)
+		r.setMesh(r.ambientProg, r.spotLightMesh)
+		for _, subMesh := range r.spotLightMesh.SubMeshes {
 			r.setSubMesh(r.ambientProg, subMesh)
 			r.renderState.Render(subMesh.Geo.Inds)
 		}
