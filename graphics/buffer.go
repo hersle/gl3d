@@ -30,9 +30,40 @@ func NewBuffer() *Buffer {
 	return &b
 }
 
+func (b *Buffer) Size() int {
+	return b.size
+}
+
+func (b *Buffer) Bytes(i, j int) []byte {
+	if b.size == 0 {
+		return nil
+	}
+	if j < i {
+		panic("invalid buffer data selection")
+	}
+
+	size := j-i
+	bytes := make([]byte, size)
+	ptr := unsafe.Pointer(&bytes[0])
+	gl.GetNamedBufferSubData(uint32(b.id), i, int32(size), ptr)
+	return bytes
+}
+
 func (b *Buffer) Allocate(size int) {
 	b.size = size
 	gl.NamedBufferData(uint32(b.id), int32(b.size), nil, gl.STREAM_DRAW)
+}
+
+func (b *Buffer) Reallocate(size int) {
+	println("reallocating buffer")
+	if size < b.size {
+		return
+	}
+
+	// TODO: very slow. make faster and better!
+	bytes := b.Bytes(0, b.size)
+	b.Allocate(size)
+	b.SetBytes(bytes, 0)
 }
 
 func byteSlice(data interface{}) []byte {
@@ -52,12 +83,16 @@ func (b *Buffer) SetData(data interface{}, byteOffset int) {
 }
 
 func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
-	size := len(bytes)
+	if len(bytes) == 0 {
+		return
+	}
+
+	size := byteOffset + len(bytes)
 	p := unsafe.Pointer(&bytes[0])
 	if size > b.size {
-		b.Allocate(size)
+		b.Reallocate(size)
 	}
-	gl.NamedBufferSubData(uint32(b.id), byteOffset, int32(size), p)
+	gl.NamedBufferSubData(uint32(b.id), byteOffset, int32(len(bytes)), p)
 }
 
 func NewVertexBuffer() *VertexBuffer {
@@ -86,7 +121,7 @@ func (b *VertexBuffer) Offset(i int) int {
 	}
 }
 
-func (b *VertexBuffer) Stride() int {
+func (b *VertexBuffer) ElementSize() int {
 	return int(b.vertex.Size())
 }
 
@@ -113,4 +148,8 @@ func (b *IndexBuffer) elementGlType() uint32 {
 	default:
 		panic("invalid index buffer type")
 	}
+}
+
+func (b *IndexBuffer) ElementSize() int {
+	return int(b.index.Size())
 }

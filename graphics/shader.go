@@ -266,7 +266,7 @@ func (a *Attrib) SetSourceRaw(b *Buffer, offset, stride int, type_ int, normaliz
 
 func (a *Attrib) SetSourceVertex(b *VertexBuffer, i int) {
 	offset := b.Offset(i)
-	stride := b.Stride()
+	stride := b.ElementSize()
 	a.SetSourceRaw(&b.Buffer, offset, stride, gl.FLOAT, false)
 }
 
