@@ -3,6 +3,7 @@ package graphics
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	_ "github.com/hersle/gl3d/window" // initialize graphics
+	"unsafe"
 )
 
 type DepthTest int
@@ -212,6 +213,21 @@ func (state *State) Render(vertexCount int) {
 	} else {
 		gltype := state.Program.indexBuffer.elementGlType()
 		gl.DrawElements(uint32(state.PrimitiveType), int32(vertexCount), gltype, nil)
+	}
+
+	Stats.DrawCallCount++
+	Stats.VertexCount += vertexCount
+}
+
+func (state *State) RenderOffset(vertexCount, iboOffset, baseVertex int) {
+	state.apply()
+
+	if state.Program.indexBuffer == nil {
+		panic("need index buffer")
+	} else {
+		gltype := state.Program.indexBuffer.elementGlType()
+		byteOffset := iboOffset * state.Program.indexBuffer.ElementSize()
+		gl.DrawElementsBaseVertex(uint32(state.PrimitiveType), int32(vertexCount), gltype, unsafe.Pointer(uintptr(byteOffset)), int32(baseVertex))
 	}
 
 	Stats.DrawCallCount++
