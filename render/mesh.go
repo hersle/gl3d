@@ -20,9 +20,12 @@ type MeshRenderer struct {
 
 	renderState *graphics.State
 
-	vboCache map[*object.Vertex]int
-	vbos     []*graphics.VertexBuffer
-	ibos     []*graphics.IndexBuffer
+	vboOffsets map[*object.SubMesh]int
+	iboOffsets map[*object.SubMesh]int
+	vbo        *graphics.VertexBuffer
+	ibo        *graphics.IndexBuffer
+	vertexCount int
+	indexCount int
 
 	tex2ds map[image.Image]*graphics.Texture2D
 
@@ -105,7 +108,11 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.renderState = graphics.NewState()
 
-	r.vboCache = make(map[*object.Vertex]int)
+	r.vboOffsets = make(map[*object.SubMesh]int)
+	r.iboOffsets = make(map[*object.SubMesh]int)
+	r.vbo = graphics.NewVertexBuffer()
+	r.ibo = graphics.NewIndexBuffer()
+
 	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
 	r.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
 	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
@@ -126,6 +133,23 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	geo = object.NewCone(math.Vec3{0, 0, -1}, math.Vec3{0, 0, 0}, 0.5).Geometry(6)
 	r.spotLightMesh = object.NewMesh(geo, mtl)
+
+	// TODO: do once!
+	v := []object.Vertex{object.Vertex{}}
+	i := []int{0}
+	r.vbo.SetData(v, 0)
+	r.ibo.SetData(i, 0)
+	for _, sp := range []*MeshShaderProgram{r.ambientProg, r.pointLitProg, r.spotLitProg, r.dirLitProg} {
+		sp.Position.SetSourceVertex(r.vbo, 0)
+		sp.Normal.SetSourceVertex(r.vbo, 2)
+		sp.TexCoord.SetSourceVertex(r.vbo, 1)
+		sp.Tangent.SetSourceVertex(r.vbo, 3)
+		sp.SetAttribIndexBuffer(r.ibo)
+	}
+	for _, sp := range []*ShadowMapShaderProgram{r.shadowSp1, r.shadowSp2, r.shadowSp3} {
+		sp.Position.SetSourceVertex(r.vbo, 0)
+		sp.SetAttribIndexBuffer(r.ibo)
+	}
 
 	return &r, nil
 }
@@ -244,6 +268,22 @@ func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
 			i++
 		}
 	}
+
+	// upload mesh vertices to GPU
+	for _, m := range s.Meshes {
+		for _, sm := range m.SubMeshes {
+			_, found := r.vboOffsets[sm]
+			if !found {
+				r.vboOffsets[sm] = r.vertexCount
+				r.vbo.SetData(sm.Geo.Verts, r.vbo.Size())
+				r.vertexCount += len(sm.Geo.Verts)
+
+				r.iboOffsets[sm] = r.indexCount
+				r.ibo.SetData(sm.Geo.Faces, r.ibo.Size())
+				r.indexCount += len(sm.Geo.Faces)
+			}
+		}
+	}
 }
 
 func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
@@ -257,6 +297,7 @@ func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
 
 	// render light source
 	// TODO: do with shaders instead for fancier effects?
+	/*
 	for _, l := range s.PointLights {
 		r.ambientProg.LightColor.Set(l.Color)
 		r.pointLightMesh.Place(l.Position)
@@ -277,6 +318,7 @@ func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
 			r.renderState.Render(subMesh.Geo.Inds)
 		}
 	}
+	*/
 }
 
 func (r *MeshRenderer) lightPass(s *scene.Scene, c camera.Camera) {
@@ -314,7 +356,9 @@ func (r *MeshRenderer) renderMeshes(s *scene.Scene, c camera.Camera, sp *MeshSha
 		for _, sm := range m.SubMeshes {
 			if !r.cullCache[j] {
 				r.setSubMesh(sp, sm)
-				r.renderState.Render(sm.Geo.Inds)
+				iboOffset := r.iboOffsets[sm]
+				vboOffset := r.vboOffsets[sm]
+				r.renderState.RenderOffset(sm.Geo.Inds, iboOffset, vboOffset)
 			}
 			j++
 		}
@@ -373,30 +417,6 @@ func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 		r.tex2ds[mtl.BumpMap] = tex
 	}
 	sp.MaterialBumpMap.Set(tex)
-
-	// upload to GPU
-	var vbo *graphics.VertexBuffer
-	var ibo *graphics.IndexBuffer
-	i, found := r.vboCache[&sm.Geo.Verts[0]]
-	if found {
-		vbo = r.vbos[i]
-		ibo = r.ibos[i]
-	} else {
-		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewIndexBuffer()
-		vbo.SetData(sm.Geo.Verts, 0)
-		ibo.SetData(sm.Geo.Faces, 0)
-
-		r.vbos = append(r.vbos, vbo)
-		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
-	}
-
-	sp.Position.SetSourceVertex(vbo, 0)
-	sp.Normal.SetSourceVertex(vbo, 2)
-	sp.TexCoord.SetSourceVertex(vbo, 1)
-	sp.Tangent.SetSourceVertex(vbo, 3)
-	sp.SetAttribIndexBuffer(ibo)
 }
 
 func (r *MeshRenderer) setAmbientLight(sp *MeshShaderProgram, l *light.AmbientLight) {
@@ -486,25 +506,6 @@ func (r *MeshRenderer) setShadowMesh(sp *ShadowMapShaderProgram, m *object.Mesh)
 }
 
 func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapShaderProgram, sm *object.SubMesh) {
-	var vbo *graphics.VertexBuffer
-	var ibo *graphics.IndexBuffer
-	i, found := r.vboCache[&sm.Geo.Verts[0]]
-	if found {
-		vbo = r.vbos[i]
-		ibo = r.ibos[i]
-	} else {
-		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewIndexBuffer()
-		vbo.SetData(sm.Geo.Verts, 0)
-		ibo.SetData(sm.Geo.Faces, 0)
-
-		r.vbos = append(r.vbos, vbo)
-		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
-	}
-
-	sp.Position.SetSourceVertex(vbo, 0)
-	sp.SetAttribIndexBuffer(ibo)
 }
 
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {
@@ -584,8 +585,9 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 		r.setShadowMesh(r.shadowSp1, m)
 		for _, subMesh := range m.SubMeshes {
 			r.setShadowSubMesh(r.shadowSp1, subMesh)
-
-			r.shadowRenderState.Render(subMesh.Geo.Inds)
+			iboOffset := r.iboOffsets[subMesh]
+			vboOffset := r.vboOffsets[subMesh]
+			r.shadowRenderState.RenderOffset(subMesh.Geo.Inds, iboOffset, vboOffset)
 		}
 	}
 
@@ -616,7 +618,9 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 			if !l.PerspectiveCamera.Cull(subMesh) {
 				r.setShadowSubMesh(r.shadowSp2, subMesh)
 
-				r.shadowRenderState.Render(subMesh.Geo.Inds)
+				iboOffset := r.iboOffsets[subMesh]
+				vboOffset := r.vboOffsets[subMesh]
+				r.shadowRenderState.RenderOffset(subMesh.Geo.Inds, iboOffset, vboOffset)
 			}
 		}
 	}
@@ -648,7 +652,9 @@ func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.
 			if !l.OrthoCamera.Cull(subMesh) {
 				r.setShadowSubMesh(r.shadowSp3, subMesh)
 
-				r.shadowRenderState.Render(subMesh.Geo.Inds)
+				iboOffset := r.iboOffsets[subMesh]
+				vboOffset := r.vboOffsets[subMesh]
+				r.shadowRenderState.RenderOffset(subMesh.Geo.Inds, iboOffset, vboOffset)
 			}
 		}
 	}
