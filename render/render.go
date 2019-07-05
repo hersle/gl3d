@@ -35,13 +35,13 @@ func NewRenderer() (*Renderer, error) {
 	w, h := 1920, 1080
 	w, h = w/1, h/1
 
-	r.sceneRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h)
-	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h)
+	r.sceneRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
+	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
 	r.sceneFramebuffer = graphics.NewFramebuffer()
 	r.sceneFramebuffer.Attach(r.sceneRenderTarget)
 	r.sceneFramebuffer.Attach(r.sceneDepthRenderTarget)
 
-	r.overlayRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h)
+	r.overlayRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
 	r.overlayFramebuffer = graphics.NewFramebuffer()
 	r.overlayFramebuffer.Attach(r.overlayRenderTarget)
 

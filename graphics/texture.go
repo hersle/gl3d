@@ -10,6 +10,7 @@ import (
 	_ "image/png"
 	_ "github.com/ftrvxmtrx/tga" // must be imported after jpeg?
 	"unsafe"
+	gomath "math"
 )
 
 type Texture2D struct {
@@ -64,7 +65,7 @@ const (
 	NegativeZ CubeMapLayer = CubeMapLayer(5)
 )
 
-func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, width, height int) *Texture2D {
+func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, width, height int, mipmap bool) *Texture2D {
 	var t Texture2D
 	t.width = width
 	t.height = height
@@ -72,15 +73,26 @@ func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, wid
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &id)
 	t.id = int(id)
-	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MIN_FILTER, int32(filter))
+
+	var levels int
+	if mipmap {
+		levels = 1 + int(gomath.Log2(gomath.Max(float64(width), float64(height))))
+	} else {
+		levels = 1
+	}
+	if mipmap && filter == LinearFilter {
+		gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
+	} else {
+		gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MIN_FILTER, int32(filter))
+	}
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MAG_FILTER, int32(filter))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_S, int32(wrap))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_T, int32(wrap))
-	gl.TextureStorage2D(uint32(t.id), 1, t.glFormat(), int32(width), int32(height))
+	gl.TextureStorage2D(uint32(t.id), int32(levels), t.glFormat(), int32(width), int32(height))
 	return &t
 }
 
-func LoadTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, img image.Image) *Texture2D {
+func LoadTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, img image.Image, mipmap bool) *Texture2D {
 	switch img.(type) {
 	case *image.RGBA:
 		img := img.(*image.RGBA)
@@ -93,15 +105,18 @@ func LoadTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, im
 			}
 		}
 
-		t := NewTexture2D(type_, filter, wrap, w, h)
+		t := NewTexture2D(type_, filter, wrap, w, h, mipmap)
 		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
 		p := unsafe.Pointer(&byteSlice(img2.Pix)[0])
 		gl.TextureSubImage2D(uint32(t.id), 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
+		if mipmap {
+			gl.GenerateTextureMipmap(uint32(t.id))
+		}
 		return t
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
 		draw.Draw(imgRGBA, imgRGBA.Bounds(), img, img.Bounds().Min, draw.Over)
-		return LoadTexture2D(type_, filter, wrap, imgRGBA)
+		return LoadTexture2D(type_, filter, wrap, imgRGBA, mipmap)
 	}
 }
 
@@ -113,7 +128,7 @@ func NewUniformTexture2D(rgba math.Vec4) *Texture2D {
 	a := uint8(float32(0xff) * rgba.W())
 	img := image.NewRGBA(image.Rect(0, 0, 1, 1))
 	img.Set(0, 0, color.RGBA{r, g, b, a})
-	return LoadTexture2D(ColorTexture, NearestFilter, EdgeClampWrap, img)
+	return LoadTexture2D(ColorTexture, NearestFilter, EdgeClampWrap, img, false)
 }
 
 func (t *Texture2D) glFormat() uint32 {

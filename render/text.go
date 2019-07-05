@@ -49,7 +49,7 @@ func NewTextRenderer() *TextRenderer {
 	r.ibo = graphics.NewIndexBuffer()
 
 	img := basicfont.Face7x13.Mask
-	r.tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, img)
+	r.tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, img, false)
 
 	r.renderState = graphics.NewState()
 	r.renderState.Program = r.sp.ShaderProgram
