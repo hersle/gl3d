@@ -57,6 +57,7 @@ func TestMain(m *testing.M) {
 	s.AddPointLight(l3)
 
 	c := camera.NewPerspectiveCamera(60, 1, 0.1, 50)
+	c.Place(math.Vec3{0, 1, +10})
 
 	input.AddCameraFPSControls(c, 0.1)
 
