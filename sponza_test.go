@@ -42,6 +42,7 @@ func TestMain(m *testing.M) {
 	l2.Place(math.Vec3{0, 1, 0})
 	l2.Attenuation = 0.01
 	l2.CastShadows = true
+	l2.FOV = 3.1415 / 4
 	s.AddSpotLight(l2)
 
 	l3 := light.NewPointLight(math.Vec3{0, 1, 0})

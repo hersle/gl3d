@@ -60,6 +60,7 @@ uniform vec3 lightDirection;
 uniform vec3 lightColor;
 uniform float lightFar;
 uniform float lightAttenuation;
+uniform float lightCosAng;
 #endif
 
 #if defined(DIR)
@@ -116,7 +117,7 @@ void main() {
 				  * attenuation;
 
 	#if defined(SPOT)
-	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < 0.75)  {
+	if (dot(normalize(tanLightDirection), normalize(tanLightToVertex)) < lightCosAng)  {
 		diffuse = vec3(0, 0, 0);
 		specular = vec3(0, 0, 0);
 	}

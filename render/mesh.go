@@ -10,6 +10,7 @@ import (
 	"github.com/hersle/gl3d/scene"
 	"image"
 	"fmt"
+	gomath "math"
 )
 
 type MeshRenderer struct {
@@ -74,6 +75,7 @@ type MeshShaderProgram struct {
 	LightDirection         *graphics.Uniform
 	LightColor             *graphics.Uniform
 	LightAttenuation       *graphics.Uniform
+	LightCosAngle          *graphics.Uniform
 
 	ShadowProjectionViewMatrix *graphics.Uniform
 	ShadowMap              *graphics.Uniform
@@ -166,6 +168,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.LightDirection = sp.Uniform("lightDirection")
 	sp.LightColor = sp.Uniform("lightColor")
 	sp.LightAttenuation = sp.Uniform("lightAttenuation")
+	sp.LightCosAngle = sp.Uniform("lightCosAng")
 
 	sp.ShadowProjectionViewMatrix = sp.Uniform("shadowProjectionViewMatrix")
 	sp.ShadowMap = sp.Uniform("shadowMap")
@@ -422,6 +425,7 @@ func (r *MeshRenderer) setSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 	sp.LightDirection.Set(l.Forward())
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	sp.LightAttenuation.Set(l.Attenuation)
+	sp.LightCosAngle.Set(float32(gomath.Cos(float64(l.FOV/2))))
 
 	if l.CastShadows {
 		r.shadowProjViewMat.Identity()

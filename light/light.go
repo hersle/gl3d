@@ -4,6 +4,7 @@ import (
 	"github.com/hersle/gl3d/camera"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/object"
+	gomath "math"
 )
 
 type AmbientLight struct {
@@ -26,6 +27,7 @@ type SpotLight struct {
 	Intensity            float32
 	Attenuation          float32
 	CastShadows          bool
+	FOV                  float32
 }
 
 type DirectionalLight struct {
@@ -64,6 +66,7 @@ func NewSpotLight(color math.Vec3) *SpotLight {
 	l.PerspectiveCamera = *camera.NewPerspectiveCamera(90, 1, 0.1, 50)
 	l.Attenuation = 0
 	l.CastShadows = false
+	l.FOV = gomath.Pi / 2
 	return &l
 }
 

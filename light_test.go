@@ -49,6 +49,7 @@ func TestMain(m *testing.M) {
 	l2.Orient(math.Vec3{1, 0, 0}, math.Vec3{0, 0, -1})
 	l2.RotateX(3.1415 / 4)
 	l2.RotateY(3.1415 / 4)
+	l2.FOV = 3.1415 / 8
 	s.AddSpotLight(l2)
 
 	l3 := light.NewPointLight(math.Vec3{0, 1, 0})
