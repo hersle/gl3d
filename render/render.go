@@ -63,7 +63,8 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {
-	r.textRenderer.Render(tl, text, height, r.overlayFramebuffer)
+	color := math.Vec3{1, 1, 1}
+	r.textRenderer.Render(tl, text, height, color, r.overlayFramebuffer)
 }
 
 func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {

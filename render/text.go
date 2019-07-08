@@ -12,6 +12,7 @@ type TextShaderProgram struct {
 	Atlas    *graphics.Uniform
 	Position *graphics.Attrib
 	TexCoord *graphics.Attrib
+	Color    *graphics.Attrib
 }
 
 type TextRenderer struct {
@@ -36,6 +37,7 @@ func NewTextShaderProgram() *TextShaderProgram {
 	sp.Atlas = sp.Uniform("fontAtlas")
 	sp.Position = sp.Attrib("position")
 	sp.TexCoord = sp.Attrib("texCoordV")
+	sp.Color = sp.Attrib("colorV")
 
 	return &sp
 }
@@ -66,9 +68,10 @@ func (r *TextRenderer) SetAttribs(vbo *graphics.VertexBuffer, ibo *graphics.Inde
 	r.sp.Position.SetSourceVertex(vbo, 0)
 	r.sp.TexCoord.SetSourceVertex(vbo, 1)
 	r.sp.SetAttribIndexBuffer(ibo)
+	r.sp.Color.SetSourceVertex(vbo, 2) // normal TODO: don't abuse normal
 }
 
-func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *graphics.Framebuffer) {
+func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color math.Vec3, fb *graphics.Framebuffer) {
 	var verts []object.Vertex
 	var inds []int32
 
@@ -99,6 +102,10 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, fb *gra
 				vert2 := object.NewVertex(br.Vec3(0), math.Vec2{texX2, texY2}, normal, math.Vec3{})
 				vert3 := object.NewVertex(tr.Vec3(0), math.Vec2{texX2, texY1}, normal, math.Vec3{})
 				vert4 := object.NewVertex(tl.Vec3(0), math.Vec2{texX1, texY1}, normal, math.Vec3{})
+				vert1.Normal = color
+				vert2.Normal = color
+				vert3.Normal = color
+				vert4.Normal = color
 				inds = append(inds, int32(len(verts)+0))
 				inds = append(inds, int32(len(verts)+1))
 				inds = append(inds, int32(len(verts)+2))
