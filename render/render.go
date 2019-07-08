@@ -18,6 +18,7 @@ type Renderer struct {
 
 	sceneFramebuffer       *graphics.Framebuffer
 	sceneRenderTarget      *graphics.Texture2D
+	sceneRenderTarget2     *graphics.Texture2D
 	sceneDepthRenderTarget *graphics.Texture2D
 
 	overlayFramebuffer  *graphics.Framebuffer
@@ -38,6 +39,7 @@ func NewRenderer() (*Renderer, error) {
 	w, h = w/1, h/1
 
 	r.sceneRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
+	r.sceneRenderTarget2 = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
 	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
 	r.sceneFramebuffer = graphics.NewFramebuffer()
 	r.sceneFramebuffer.Attach(r.sceneRenderTarget)
@@ -57,6 +59,7 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 
 	r.meshRenderer.Render(s, c, r.sceneFramebuffer)
 	r.effectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
+	r.effectRenderer.RenderGaussianBlur(r.sceneRenderTarget, r.sceneRenderTarget2)
 }
 
 func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {

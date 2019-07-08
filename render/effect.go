@@ -14,6 +14,8 @@ type EffectRenderer struct {
 	invProjectionMatrix math.Mat4
 
 	fogSp *FogShaderProgram
+
+	gaussianSp *GaussianShaderProgram
 }
 
 type FogShaderProgram struct {
@@ -23,6 +25,15 @@ type FogShaderProgram struct {
 	depthMap *graphics.Uniform
 	invProjectionMatrix *graphics.Uniform
 	camFar *graphics.Uniform
+}
+
+type GaussianShaderProgram struct {
+	*graphics.ShaderProgram
+
+	position *graphics.Attrib
+	inTexture *graphics.Uniform
+	direction *graphics.Uniform
+	texDim *graphics.Uniform
 }
 
 func NewEffectRenderer() *EffectRenderer {
@@ -40,6 +51,9 @@ func NewEffectRenderer() *EffectRenderer {
 
 	r.fogSp = NewFogShaderProgram()
 	r.fogSp.position.SetSourceVertex(r.vbo, 0)
+
+	r.gaussianSp = NewGaussianShaderProgram()
+	r.gaussianSp.position.SetSourceVertex(r.vbo, 0)
 
 	r.framebuffer = graphics.NewFramebuffer()
 
@@ -73,6 +87,23 @@ func (r *EffectRenderer) RenderFog(c camera.Camera, depthMap, fogTarget *graphic
 	r.renderState.Render(6)
 }
 
+func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D) {
+	r.renderState.DisableBlending()
+	r.renderState.Program = r.gaussianSp.ShaderProgram
+
+	r.framebuffer.Attach(extra)
+	r.gaussianSp.inTexture.Set(target)
+	r.gaussianSp.texDim.Set(float32(target.Width()))
+	r.gaussianSp.direction.Set(math.Vec2{1, 0})
+	r.renderState.Render(6)
+
+	r.framebuffer.Attach(target)
+	r.gaussianSp.inTexture.Set(extra)
+	r.gaussianSp.texDim.Set(float32(extra.Height()))
+	r.gaussianSp.direction.Set(math.Vec2{0, 1})
+	r.renderState.Render(6)
+}
+
 func NewFogShaderProgram() *FogShaderProgram {
 	var sp FogShaderProgram
 	var err error
@@ -88,6 +119,25 @@ func NewFogShaderProgram() *FogShaderProgram {
 	sp.depthMap = sp.Uniform("depthTexture")
 	sp.invProjectionMatrix = sp.Uniform("invProjectionMatrix")
 	sp.camFar = sp.Uniform("cameraFar")
+
+	return &sp
+}
+
+func NewGaussianShaderProgram() *GaussianShaderProgram {
+	var sp GaussianShaderProgram
+	var err error
+
+	vFile := "render/shaders/gaussianvshader.glsl" // TODO: make independent from executable directory
+	fFile := "render/shaders/gaussianfshader.glsl" // TODO: make independent from executable directory
+	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "")
+	if err != nil {
+		panic(err)
+	}
+
+	sp.position = sp.Attrib("position")
+	sp.inTexture = sp.Uniform("inTexture")
+	sp.direction = sp.Uniform("dir")
+	sp.texDim = sp.Uniform("texDim")
 
 	return &sp
 }
