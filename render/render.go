@@ -14,6 +14,7 @@ type Renderer struct {
 	textRenderer   *TextRenderer
 	quadRenderer   *QuadRenderer
 	arrowRenderer  *ArrowRenderer
+	effectRenderer *EffectRenderer
 
 	sceneFramebuffer       *graphics.Framebuffer
 	sceneRenderTarget      *graphics.Texture2D
@@ -31,6 +32,7 @@ func NewRenderer() (*Renderer, error) {
 	r.textRenderer = NewTextRenderer()
 	r.quadRenderer = NewQuadRenderer()
 	r.arrowRenderer = NewArrowRenderer()
+	r.effectRenderer = NewEffectRenderer()
 
 	w, h := 1920, 1080
 	w, h = w/1, h/1
@@ -54,6 +56,7 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 	}
 
 	r.meshRenderer.Render(s, c, r.sceneFramebuffer)
+	r.effectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
 }
 
 func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {
