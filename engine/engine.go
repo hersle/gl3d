@@ -8,11 +8,12 @@ import (
 	"github.com/hersle/gl3d/console"
 	"github.com/hersle/gl3d/render"
 	"github.com/hersle/gl3d/input"
+	"time"
 )
 
 type Engine struct {
 	Scene *scene.Scene
-	camera *camera.PerspectiveCamera
+	Camera *camera.PerspectiveCamera
 
 	console *console.Console
 
@@ -36,7 +37,7 @@ func (eng *Engine) Initialize() {
 	}
 
 	eng.Scene = scene.NewScene()
-	eng.camera = camera.NewPerspectiveCamera(60, 1, 0.1, 50)
+	eng.Camera = camera.NewPerspectiveCamera(60, 1, 0.1, 50)
 
 	if eng.InitializeCustom != nil {
 		eng.InitializeCustom()
@@ -44,7 +45,7 @@ func (eng *Engine) Initialize() {
 }
 
 func (eng *Engine) Update(dt float32) {
-	eng.camera.SetAspect(window.Aspect())
+	eng.Camera.SetAspect(window.Aspect())
 	if eng.UpdateCustom != nil {
 		eng.UpdateCustom(dt)
 	}
@@ -56,50 +57,56 @@ func (eng *Engine) React() {
 	speed := float32(0.1)
 
 	if input.KeyW.Held() {
-		eng.camera.Translate(eng.camera.Forward().Scale(+speed))
+		eng.Camera.Translate(eng.Camera.Forward().Scale(+speed))
 	}
 
 	if input.KeyS.Held() {
-		eng.camera.Translate(eng.camera.Forward().Scale(-speed))
+		eng.Camera.Translate(eng.Camera.Forward().Scale(-speed))
 	}
 
 	if input.KeyA.Held() {
-		eng.camera.Translate(eng.camera.Right().Scale(-speed))
+		eng.Camera.Translate(eng.Camera.Right().Scale(-speed))
 	}
 
 	if input.KeyD.Held() {
-		eng.camera.Translate(eng.camera.Right().Scale(+speed))
+		eng.Camera.Translate(eng.Camera.Right().Scale(+speed))
 	}
 
 	if input.KeyUp.Held() {
-		eng.camera.Rotate(eng.camera.Right(), +0.03)
+		eng.Camera.Rotate(eng.Camera.Right(), +0.03)
 	}
 
 	if input.KeyDown.Held() {
-		eng.camera.Rotate(eng.camera.Right(), -0.03)
+		eng.Camera.Rotate(eng.Camera.Right(), -0.03)
 	}
 
 	if input.KeyLeft.Held() {
-		eng.camera.Rotate(math.Vec3{0, 1, 0}, +0.03)
+		eng.Camera.Rotate(math.Vec3{0, 1, 0}, +0.03)
 	}
 
 	if input.KeyRight.Held() {
-		eng.camera.Rotate(math.Vec3{0, 1, 0}, -0.03)
+		eng.Camera.Rotate(math.Vec3{0, 1, 0}, -0.03)
 	}
 }
 
 func (eng *Engine) Render() {
 	eng.renderer.Clear()
-	eng.renderer.RenderScene(eng.Scene, eng.camera)
+	eng.renderer.RenderScene(eng.Scene, eng.Camera)
 	eng.renderer.Render()
 	window.Update()
 }
 
 func (eng *Engine) Run() {
 	eng.Initialize()
+	t0 := time.Now()
 	for !window.ShouldClose() {
+		t := time.Now()
+		dt := t.Sub(t0).Seconds()
+
 		eng.React()
-		eng.Update(0)
+		eng.Update(float32(dt))
 		eng.Render()
+
+		t0 = t
 	}
 }
