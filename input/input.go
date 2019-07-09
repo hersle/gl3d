@@ -222,6 +222,12 @@ func Update() {
 	}
 }
 
+func ListenToText(f func(char rune)) {
+	window.Win.SetCharCallback(func(w *glfw.Window, char rune) {
+		f(char)
+	})
+}
+
 func init() {
 	window.Win.SetCharCallback(func(w *glfw.Window, char rune) {
 	})
