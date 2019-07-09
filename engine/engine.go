@@ -9,7 +9,10 @@ import (
 	"github.com/hersle/gl3d/render"
 	"github.com/hersle/gl3d/input"
 	"time"
+	"flag"
 )
+
+var frames = flag.Int("frames", -1, "number of frames to run")
 
 type Engine struct {
 	Scene *scene.Scene
@@ -99,7 +102,11 @@ func (eng *Engine) Render() {
 func (eng *Engine) Run() {
 	eng.Initialize()
 	t0 := time.Now()
-	for !window.ShouldClose() {
+	for !window.ShouldClose() && *frames != 0 {
+		if *frames > 0 {
+			*frames--
+		}
+
 		t := time.Now()
 		dt := t.Sub(t0).Seconds()
 
