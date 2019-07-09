@@ -11,7 +11,6 @@ import (
 	"time"
 	"flag"
 )
-
 var frames = flag.Int("frames", -1, "number of frames to run")
 
 type Engine struct {
