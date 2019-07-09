@@ -200,11 +200,14 @@ func (button MouseButton) JustReleased() bool {
 }
 
 func Update() {
+	// TODO: can replace with more effective use of key callbacks only?
 	for key := KeySpace; key < KeyLast; key++ {
 		keyHeldNew := window.Win.GetKey(glfw.Key(key)) == glfw.Press
+
 		keyPressed[key] = !keyHeld[key] && keyHeldNew
 		keyReleased[key] = keyHeld[key] && !keyHeldNew
 		keyHeld[key] = keyHeldNew
+
 		for _, listener := range keyListeners[key] {
 			if key.JustPressed() {
 				listener(Press)
@@ -216,8 +219,6 @@ func Update() {
 				listener(Release)
 			}
 		}
-		keyPressed[key] = false  // not pressed after this frame
-		keyReleased[key] = false // not released after this frame
 	}
 }
 
@@ -228,14 +229,6 @@ func init() {
 		MousePosition = math.Vec2{float32(x), float32(y)}
 	})
 	window.Win.SetKeyCallback(func(w *glfw.Window, key glfw.Key, scan int, action glfw.Action, mods glfw.ModifierKey) {
-		switch action {
-		case glfw.Release:
-			keyHeld[key] = false
-			keyReleased[key] = true
-		case glfw.Press:
-			keyHeld[key] = true
-			keyPressed[key] = true
-		}
 	})
 	window.Win.SetMouseButtonCallback(func(w *glfw.Window, button glfw.MouseButton, action glfw.Action, mods glfw.ModifierKey) {
 		switch action {
