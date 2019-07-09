@@ -18,6 +18,7 @@ type Engine struct {
 	Camera *camera.PerspectiveCamera
 
 	console *console.Console
+	consoleActive bool
 
 	renderer *render.Renderer
 
@@ -44,6 +45,26 @@ func (eng *Engine) Initialize() {
 	if eng.InitializeCustom != nil {
 		eng.InitializeCustom()
 	}
+
+	eng.console = console.NewConsole()
+	input.ListenToText(func(char rune) {
+		eng.console.AddToPrompt(char)
+	})
+	input.KeyBackspace.Listen(func(action input.Action) {
+		if action == input.Press {
+			eng.console.DeleteFromPrompt()
+		}
+	})
+	input.KeyTab.Listen(func(action input.Action) {
+		if action == input.Press {
+			eng.consoleActive = !eng.consoleActive
+		}
+	})
+	input.KeyEnter.Listen(func(action input.Action) {
+		if action == input.Press {
+			eng.console.Execute()
+		}
+	})
 }
 
 func (eng *Engine) Update(dt float32) {
@@ -55,6 +76,10 @@ func (eng *Engine) Update(dt float32) {
 
 func (eng *Engine) React() {
 	input.Update()  // TODO: make line order not matter
+
+	if eng.consoleActive {
+		return
+	}
 
 	speed := float32(0.1)
 
@@ -94,6 +119,9 @@ func (eng *Engine) React() {
 func (eng *Engine) Render() {
 	eng.renderer.Clear()
 	eng.renderer.RenderScene(eng.Scene, eng.Camera)
+	if eng.consoleActive {
+		eng.renderer.RenderText(math.Vec2{-1, +1}, eng.console.String(), 0.1)
+	}
 	eng.renderer.Render()
 	window.Update()
 }
