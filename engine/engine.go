@@ -190,6 +190,8 @@ func (eng *Engine) ExecuteCommand(cmd string) {
 		ptr = &eng.renderer.MeshRenderer.MaterialAlphaEnabled
 	case "materialnormal":
 		ptr = &eng.renderer.MeshRenderer.MaterialNormalEnabled
+	case "shadows":
+		ptr = &eng.renderer.MeshRenderer.ShadowsEnabled
 	default:
 		log.Print("invalid field: ", fields[0])
 		return

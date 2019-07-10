@@ -17,6 +17,8 @@ var blueTexture *graphics.Texture2D
 var whiteTexture *graphics.Texture2D
 var blackTexture *graphics.Texture2D
 
+var whiteCubeMap *graphics.CubeMap
+
 type MeshRenderer struct {
 	ambientProg *MeshShaderProgram
 	pointLitProg *MeshShaderProgram
@@ -57,6 +59,7 @@ type MeshRenderer struct {
 	MaterialSpecularEnabled bool
 	MaterialAlphaEnabled bool
 	MaterialNormalEnabled bool
+	ShadowsEnabled bool
 }
 
 type MeshShaderProgram struct {
@@ -147,6 +150,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.MaterialSpecularEnabled = true
 	r.MaterialAlphaEnabled = true
 	r.MaterialNormalEnabled = true
+	r.ShadowsEnabled = true
 
 	return &r, nil
 }
@@ -458,13 +462,16 @@ func (r *MeshRenderer) setAmbientLight(sp *MeshShaderProgram, l *light.AmbientLi
 func (r *MeshRenderer) setPointLight(sp *MeshShaderProgram, l *light.PointLight) {
 	sp.LightPosition.Set(l.Position)
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
-	if l.CastShadows {
+	if r.ShadowsEnabled && l.CastShadows {
 		sp.ShadowFar.Set(l.ShadowFar)
 		smap, found := r.pointLightShadowMaps[l.ID]
 		if !found {
 			panic("set point light with no shadow map")
 		}
 		sp.ShadowMap.Set(smap)
+	} else {
+		sp.ShadowFar.Set(float32(100))
+		sp.ShadowMap.Set(whiteCubeMap)
 	}
 	sp.LightAttenuation.Set(l.Attenuation)
 }
@@ -476,7 +483,7 @@ func (r *MeshRenderer) setSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 	sp.LightAttenuation.Set(l.Attenuation)
 	sp.LightCosAngle.Set(float32(gomath.Cos(float64(l.FOV/2))))
 
-	if l.CastShadows {
+	if r.ShadowsEnabled && l.CastShadows {
 		r.shadowProjViewMat.Identity()
 		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
 		r.shadowProjViewMat.Mult(l.ViewMatrix())
@@ -487,6 +494,9 @@ func (r *MeshRenderer) setSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 			panic("set spot light with no shadow map")
 		}
 		sp.ShadowMap.Set(smap)
+	} else {
+		sp.ShadowFar.Set(float32(100))
+		sp.ShadowMap.Set(whiteTexture)
 	}
 }
 
@@ -495,7 +505,7 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	sp.LightAttenuation.Set(float32(0))
 
-	if l.CastShadows {
+	if r.ShadowsEnabled && l.CastShadows {
 		r.shadowProjViewMat.Identity()
 		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
 		r.shadowProjViewMat.Mult(l.ViewMatrix())
@@ -505,6 +515,9 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 			panic("set directional light with no shadow map")
 		}
 		sp.ShadowMap.Set(smap)
+	} else {
+		sp.ShadowFar.Set(float32(100))
+		sp.ShadowMap.Set(whiteTexture)
 	}
 }
 
@@ -723,4 +736,6 @@ func init() {
 	blueTexture = graphics.NewUniformTexture2D(math.Vec4{0.5, 0.5, 1, 0})
 	whiteTexture = graphics.NewUniformTexture2D(math.Vec4{1, 1, 1, 1})
 	blackTexture = graphics.NewUniformTexture2D(math.Vec4{0, 0, 0, 1})
+
+	whiteCubeMap = graphics.NewUniformCubeMap(math.Vec4{1, 1, 1, 1})
 }
