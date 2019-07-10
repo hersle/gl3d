@@ -11,6 +11,9 @@ import (
 	"time"
 	"flag"
 	"log"
+	"strings"
+	"reflect"
+	"strconv"
 )
 var frames = flag.Int("frames", -1, "number of frames to run")
 
@@ -68,7 +71,8 @@ func (eng *Engine) Initialize() {
 	})
 	input.KeyEnter.Listen(func(action input.Action) {
 		if action == input.Press {
-			eng.console.Execute()
+			eng.ExecuteCommand(eng.console.Prompt())
+			eng.console.ClearPrompt()
 		}
 	})
 }
@@ -149,4 +153,53 @@ func (eng *Engine) Run() {
 
 		t0 = t
 	}
+}
+
+func (eng *Engine) ExecuteCommand(cmd string) {
+	fields := strings.Fields(cmd)
+
+	if len(fields) == 0 || len(fields) >= 3{
+		log.Print("invalid number of fields: ", len(fields))
+		return
+	}
+
+	// get pointer to field value
+	var ptr interface{}
+	switch fields[0] {
+	case "fog":
+		ptr = &eng.renderer.Fog
+	case "blurradius":
+		ptr = &eng.renderer.BlurRadius
+	default:
+		log.Print("invalid field: ", fields[0])
+		return
+	}
+
+	// set field value
+	if len(fields) == 2 {
+		switch ptr.(type) {
+		case *bool:
+			ptr := ptr.(*bool)
+			val, err := strconv.ParseBool(fields[1])
+			if err == nil {
+				*ptr = val
+			} else {
+				log.Print("invalid value: ", fields[1])
+				return
+			}
+		case *float32:
+			ptr := ptr.(*float32)
+			val, err := strconv.ParseFloat(fields[1], 32)
+			if err == nil {
+				*ptr = float32(val)
+			} else {
+				log.Print("invalid value: ", fields[1])
+				return
+			}
+		}
+	}
+
+	// get field value
+	val := reflect.Indirect(reflect.ValueOf(ptr)).Interface()
+	log.Print(fields[0], ": ", val)
 }

@@ -72,6 +72,10 @@ func (c *Console) DeleteFromPrompt() {
 	}
 }
 
+func (c *Console) ClearPrompt() {
+	c.prompt = ""
+}
+
 func (c *Console) Write(p []byte) (n int, err error) {
 	str := string(p)
 	lines := strings.Split(str, "\n")

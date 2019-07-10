@@ -23,6 +23,9 @@ type Renderer struct {
 
 	overlayFramebuffer  *graphics.Framebuffer
 	overlayRenderTarget *graphics.Texture2D
+
+	Fog bool
+	BlurRadius float32
 }
 
 func NewRenderer() (*Renderer, error) {
@@ -58,8 +61,12 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 	}
 
 	r.meshRenderer.Render(s, c, r.sceneFramebuffer)
-	r.effectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
-	r.effectRenderer.RenderGaussianBlur(r.sceneRenderTarget, r.sceneRenderTarget2)
+	if r.Fog {
+		r.effectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
+	}
+	if r.BlurRadius > 0 {
+		r.effectRenderer.RenderGaussianBlur(r.sceneRenderTarget, r.sceneRenderTarget2, r.BlurRadius)
+	}
 }
 
 func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {

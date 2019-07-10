@@ -8,11 +8,12 @@ uniform float texDim;
 out vec4 fragColor;
 
 const float pi = 3.1415;
-const float stddev = 3.0;
-const int size = int(ceil(3.0 * stddev));
+uniform float stddev = 3.0;
 
 void main() {
 	vec2 coord0 = 0.5 + 0.5 * fragPosition;
+
+	int size = int(ceil(3.0 * stddev));
 
 	vec3 color = vec3(texture(inTexture, coord0));
 	float sum = 1.0;
