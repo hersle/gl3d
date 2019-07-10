@@ -180,6 +180,16 @@ func (eng *Engine) ExecuteCommand(cmd string) {
 		ptr = &eng.renderer.BlurRadius
 	case "shadowkernelsize":
 		ptr = &eng.renderer.MeshRenderer.ShadowKernelSize
+	case "materialambient":
+		ptr = &eng.renderer.MeshRenderer.MaterialAmbientEnabled
+	case "materialdiffuse":
+		ptr = &eng.renderer.MeshRenderer.MaterialDiffuseEnabled
+	case "materialspecular":
+		ptr = &eng.renderer.MeshRenderer.MaterialSpecularEnabled
+	case "materialalpha":
+		ptr = &eng.renderer.MeshRenderer.MaterialAlphaEnabled
+	case "materialnormal":
+		ptr = &eng.renderer.MeshRenderer.MaterialNormalEnabled
 	default:
 		log.Print("invalid field: ", fields[0])
 		return
