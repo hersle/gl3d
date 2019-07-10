@@ -10,6 +10,7 @@ import (
 	"github.com/hersle/gl3d/input"
 	"time"
 	"flag"
+	"log"
 )
 var frames = flag.Int("frames", -1, "number of frames to run")
 
@@ -34,6 +35,10 @@ func NewEngine() *Engine {
 func (eng *Engine) Initialize() {
 	var err error
 
+	eng.console = console.NewConsole()
+	log.SetOutput(eng.console)
+	log.SetFlags(0)
+
 	eng.renderer, err = render.NewRenderer()
 	if err != nil {
 		panic(err)
@@ -46,9 +51,10 @@ func (eng *Engine) Initialize() {
 		eng.InitializeCustom()
 	}
 
-	eng.console = console.NewConsole()
 	input.ListenToText(func(char rune) {
-		eng.console.AddToPrompt(char)
+		if eng.consoleActive {
+			eng.console.AddToPrompt(char)
+		}
 	})
 	input.KeyBackspace.Listen(func(action input.Action) {
 		if action == input.Press {
@@ -120,7 +126,7 @@ func (eng *Engine) Render() {
 	eng.renderer.Clear()
 	eng.renderer.RenderScene(eng.Scene, eng.Camera)
 	if eng.consoleActive {
-		eng.renderer.RenderText(math.Vec2{-1, +1}, eng.console.String(), 0.1)
+		eng.renderer.RenderText(math.Vec2{-1, +1}, eng.console.String(), 0.05)
 	}
 	eng.renderer.Render()
 	window.Update()

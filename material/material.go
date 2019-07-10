@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strings"
+	"log"
 )
 
 type Material struct {
@@ -194,7 +195,7 @@ func ReadMaterials(filenames []string) []*Material {
 					panic(err)
 				}
 			default:
-				println("ignored material file prefix", fields[0])
+				log.Print("ignored material line prefix ", fields[0])
 			}
 		}
 

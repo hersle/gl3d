@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"strconv"
+	"log"
 )
 
 type ShaderType int
@@ -343,7 +344,7 @@ func (p *ShaderProgram) Uniform(name string) *Uniform {
 	var u Uniform
 	loc := gl.GetUniformLocation(uint32(p.id), gl.Str(name+"\x00"))
 	if loc == -1 {
-		println("error getting uniform " + name)
+		log.Println("error getting uniform", name)
 		return nil
 	}
 	u.location = int(loc)
