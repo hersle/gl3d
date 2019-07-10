@@ -8,12 +8,14 @@ import (
 	"github.com/hersle/gl3d/console"
 	"github.com/hersle/gl3d/render"
 	"github.com/hersle/gl3d/input"
+	"github.com/hersle/gl3d/utils"
 	"time"
 	"flag"
 	"log"
 	"strings"
 	"reflect"
 	"strconv"
+	"fmt"
 )
 var frames = flag.Int("frames", -1, "number of frames to run")
 
@@ -30,6 +32,8 @@ type Engine struct {
 	InitializeCustom func()
 
 	paused bool
+
+	frameCounter *utils.FrequencyCounter
 }
 
 func NewEngine() *Engine {
@@ -77,6 +81,9 @@ func (eng *Engine) Initialize() {
 			eng.console.ClearPrompt()
 		}
 	})
+
+	eng.frameCounter = utils.NewFrequencyCounter()
+	eng.frameCounter.Interval = 10
 }
 
 func (eng *Engine) Update(dt float32) {
@@ -139,6 +146,12 @@ func (eng *Engine) Render() {
 	if eng.consoleActive {
 		eng.renderer.RenderText(math.Vec2{-1, +1}, eng.console.String(), 0.05, render.TopLeft)
 	}
+
+	period := eng.frameCounter.Period() * 1000 // ms
+	framerate := eng.frameCounter.Frequency() // Hz
+	text := fmt.Sprintf("%d Hz\n%.1f ms", framerate, period)
+	eng.renderer.RenderText(math.Vec2{+1, +1}, text, 0.10, render.TopRight)
+
 	eng.renderer.Render()
 	window.Update()
 }
@@ -161,6 +174,8 @@ func (eng *Engine) Run() {
 		eng.Render()
 
 		t0 = t
+
+		eng.frameCounter.Count()
 	}
 }
 
