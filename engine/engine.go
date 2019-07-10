@@ -178,6 +178,8 @@ func (eng *Engine) ExecuteCommand(cmd string) {
 		ptr = &eng.renderer.Fog
 	case "blurradius":
 		ptr = &eng.renderer.BlurRadius
+	case "shadowkernelsize":
+		ptr = &eng.renderer.MeshRenderer.ShadowKernelSize
 	default:
 		log.Print("invalid field: ", fields[0])
 		return
@@ -200,6 +202,15 @@ func (eng *Engine) ExecuteCommand(cmd string) {
 			val, err := strconv.ParseFloat(fields[1], 32)
 			if err == nil {
 				*ptr = float32(val)
+			} else {
+				log.Print("invalid value: ", fields[1])
+				return
+			}
+		case *int:
+			ptr := ptr.(*int)
+			val, err := strconv.ParseInt(fields[1], 0, 0)
+			if err == nil {
+				*ptr = int(val)
 			} else {
 				log.Print("invalid value: ", fields[1])
 				return

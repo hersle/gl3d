@@ -75,6 +75,9 @@ uniform samplerCube shadowMap;
 #elif defined(SPOT) || defined(DIR)
 uniform sampler2D shadowMap;
 #endif
+#if defined(PCF)
+uniform int kernelSize;
+#endif
 #endif
 
 void main() {
@@ -130,9 +133,8 @@ void main() {
 
 	#if defined(POINT)
 	#if defined(PCF)
-	const float offset = 0.1;
-	const int kernelSize = 3;
-	const float incr = 2 * offset / (kernelSize - 1);
+	float offset = 1.0 / 512.0 * float(kernelSize);
+	float incr = kernelSize > 0 ? 2 * offset / (2 * kernelSize) : 10.0;
 	float factor = 0.0;
 	vec3 coord0 = worldPosition - lightPosition;
 	float depth = length(coord0);
@@ -146,7 +148,7 @@ void main() {
 			}
 		}
 	}
-	factor = factor / (kernelSize * kernelSize * kernelSize); // average
+	factor = factor / pow(float(2 * kernelSize + 1), 3); // average
 	factor = 1.0 - 1.0 * factor;
 	#else
 	float depth = length(worldPosition - lightPosition);
@@ -158,9 +160,8 @@ void main() {
 
 	#if defined(SPOT)
 	#if defined(PCF)
-	const float offset = 0.01;
-	const int kernelSize = 3;
-	const float incr = 2 * offset / (kernelSize - 1);
+	float offset = 1.0 / 512.0 * float(kernelSize);
+	float incr = kernelSize > 0 ? 2 * offset / (2 * kernelSize) : 10.0;
 	float factor = 0.0;
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS0 = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
@@ -173,7 +174,7 @@ void main() {
 			factor += inShadow ? 1.0 : 0.0;
 		}
 	}
-	factor = factor / (kernelSize * kernelSize); // average
+	factor = factor / ((2*kernelSize+1) * (2*kernelSize+1)); // average
 	factor = 1.0 - 1.0 * factor;
 	#else
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
@@ -187,9 +188,8 @@ void main() {
 
 	#if defined(DIR)
 	#if defined(PCF)
-	const float offset = 0.001;
-	const int kernelSize = 3;
-	const float incr = 2 * offset / (kernelSize - 1);
+	float offset = 1.0 / 512.0 * float(kernelSize);
+	float incr = kernelSize > 0 ? 2 * offset / (2 * kernelSize) : 10.0;
 	float factor = 0.0;
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS0 = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
@@ -202,7 +202,7 @@ void main() {
 			factor += inShadow ? 1.0 : 0.0;
 		}
 	}
-	factor = factor / (kernelSize * kernelSize); // average
+	factor = factor / ((2*kernelSize+1) * (2*kernelSize+1)); // average
 	factor = 1.0 - 1.0 * factor;
 	#else
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;

@@ -45,6 +45,8 @@ type MeshRenderer struct {
 	normalMatrices []math.Mat4
 
 	cullCache []bool
+
+	ShadowKernelSize int
 }
 
 type MeshShaderProgram struct {
@@ -80,6 +82,7 @@ type MeshShaderProgram struct {
 	ShadowProjectionViewMatrix *graphics.Uniform
 	ShadowMap              *graphics.Uniform
 	ShadowFar              *graphics.Uniform
+	ShadowKernelSize       *graphics.Uniform
 }
 
 type ShadowMapShaderProgram struct {
@@ -173,6 +176,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.ShadowProjectionViewMatrix = sp.Uniform("shadowProjectionViewMatrix")
 	sp.ShadowMap = sp.Uniform("shadowMap")
 	sp.ShadowFar = sp.Uniform("lightFar")
+	sp.ShadowKernelSize = sp.Uniform("kernelSize")
 
 	return &sp
 }
@@ -247,6 +251,11 @@ func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
 			i++
 		}
 	}
+
+	r.ambientProg.ShadowKernelSize.Set(r.ShadowKernelSize)
+	r.pointLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
+	r.spotLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
+	r.dirLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
 }
 
 func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
