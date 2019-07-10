@@ -137,7 +137,7 @@ func (eng *Engine) Render() {
 	eng.renderer.Clear()
 	eng.renderer.RenderScene(eng.Scene, eng.Camera)
 	if eng.consoleActive {
-		eng.renderer.RenderText(math.Vec2{-1, +1}, eng.console.String(), 0.05)
+		eng.renderer.RenderText(math.Vec2{-1, +1}, eng.console.String(), 0.05, render.TopLeft)
 	}
 	eng.renderer.Render()
 	window.Update()

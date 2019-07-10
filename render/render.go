@@ -69,9 +69,9 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {
-	color := math.Vec3{1, 1, 1}
-	r.TextRenderer.Render(tl, text, height, color, r.overlayFramebuffer)
+func (r *Renderer) RenderText(tl math.Vec2, text string, height float32, just Justification) {
+	color := math.Vec3{1, 1, 0}
+	r.TextRenderer.Render(tl, text, height, color, just, r.overlayFramebuffer)
 }
 
 func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
