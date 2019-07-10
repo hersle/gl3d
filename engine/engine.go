@@ -28,6 +28,8 @@ type Engine struct {
 
 	UpdateCustom func(dt float32)
 	InitializeCustom func()
+
+	paused bool
 }
 
 func NewEngine() *Engine {
@@ -91,6 +93,10 @@ func (eng *Engine) React() {
 		return
 	}
 
+	if input.KeyP.JustPressed() {
+		eng.paused = !eng.paused
+	}
+
 	speed := float32(0.1)
 
 	if input.KeyW.Held() {
@@ -148,7 +154,9 @@ func (eng *Engine) Run() {
 		dt := t.Sub(t0).Seconds()
 
 		eng.React()
-		eng.Update(float32(dt))
+		if !eng.paused {
+			eng.Update(float32(dt))
+		}
 		eng.Render()
 
 		t0 = t

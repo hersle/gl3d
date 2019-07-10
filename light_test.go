@@ -8,7 +8,6 @@ import (
 	"github.com/hersle/gl3d/material"
 	"github.com/hersle/gl3d/engine"
 	"testing"
-	"time"
 	gomath "math"
 )
 
@@ -54,9 +53,9 @@ func TestMain(m *testing.M) {
 		eng.Scene.AddPointLight(l3)
 	}
 
-	t0 := time.Now()
+	t := float32(0)
 	eng.UpdateCustom = func(dt float32) {
-		t := float32(time.Now().Sub(t0).Seconds())
+		t += dt
 		ball.Place(math.Vec3{float32(3*gomath.Cos(float64(t))), 2, float32(3*gomath.Sin(float64(t)))})
 		box.RotateX(0.01)
 		box.RotateY(0.02)
