@@ -86,7 +86,7 @@ func (eng *Engine) Update(dt float32) {
 	}
 }
 
-func (eng *Engine) React() {
+func (eng *Engine) React(dt float32) {
 	input.Update()  // TODO: make line order not matter
 
 	if eng.consoleActive {
@@ -97,38 +97,39 @@ func (eng *Engine) React() {
 		eng.paused = !eng.paused
 	}
 
-	speed := float32(0.1)
+	moveSpeed := 5.0 * dt
+	lookSpeed := 2.0 * dt
 
 	if input.KeyW.Held() {
-		eng.Camera.Translate(eng.Camera.Forward().Scale(+speed))
+		eng.Camera.Translate(eng.Camera.Forward().Scale(+moveSpeed))
 	}
 
 	if input.KeyS.Held() {
-		eng.Camera.Translate(eng.Camera.Forward().Scale(-speed))
+		eng.Camera.Translate(eng.Camera.Forward().Scale(-moveSpeed))
 	}
 
 	if input.KeyA.Held() {
-		eng.Camera.Translate(eng.Camera.Right().Scale(-speed))
+		eng.Camera.Translate(eng.Camera.Right().Scale(-moveSpeed))
 	}
 
 	if input.KeyD.Held() {
-		eng.Camera.Translate(eng.Camera.Right().Scale(+speed))
+		eng.Camera.Translate(eng.Camera.Right().Scale(+moveSpeed))
 	}
 
 	if input.KeyUp.Held() {
-		eng.Camera.Rotate(eng.Camera.Right(), +0.03)
+		eng.Camera.Rotate(eng.Camera.Right(), +lookSpeed)
 	}
 
 	if input.KeyDown.Held() {
-		eng.Camera.Rotate(eng.Camera.Right(), -0.03)
+		eng.Camera.Rotate(eng.Camera.Right(), -lookSpeed)
 	}
 
 	if input.KeyLeft.Held() {
-		eng.Camera.Rotate(math.Vec3{0, 1, 0}, +0.03)
+		eng.Camera.Rotate(math.Vec3{0, 1, 0}, +lookSpeed)
 	}
 
 	if input.KeyRight.Held() {
-		eng.Camera.Rotate(math.Vec3{0, 1, 0}, -0.03)
+		eng.Camera.Rotate(math.Vec3{0, 1, 0}, -lookSpeed)
 	}
 }
 
@@ -151,11 +152,11 @@ func (eng *Engine) Run() {
 		}
 
 		t := time.Now()
-		dt := t.Sub(t0).Seconds()
+		dt := float32(t.Sub(t0).Seconds())
 
-		eng.React()
+		eng.React(dt)
 		if !eng.paused {
-			eng.Update(float32(dt))
+			eng.Update(dt)
 		}
 		eng.Render()
 
