@@ -60,6 +60,7 @@ type MeshRenderer struct {
 	MaterialAlphaEnabled bool
 	MaterialNormalEnabled bool
 	ShadowsEnabled bool
+	Wireframe bool
 }
 
 type MeshShaderProgram struct {
@@ -233,6 +234,12 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Fram
 	r.renderState.Cull = graphics.CullBack
 	r.renderState.PrimitiveType = graphics.Triangle
 	r.renderState.Framebuffer = fb
+
+	if r.Wireframe {
+		r.renderState.TriangleMode = graphics.LineTriangleMode
+	} else {
+		r.renderState.TriangleMode = graphics.TriangleTriangleMode
+	}
 
 	r.preparationPass(s, c)
 	r.shadowPass(s)

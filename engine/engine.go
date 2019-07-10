@@ -193,6 +193,8 @@ func (eng *Engine) ExecuteCommand(cmd string) {
 		ptr = &eng.renderer.MeshRenderer.MaterialNormalEnabled
 	case "shadows":
 		ptr = &eng.renderer.MeshRenderer.ShadowsEnabled
+	case "wireframe":
+		ptr = &eng.renderer.MeshRenderer.Wireframe
 	default:
 		log.Print("invalid field: ", fields[0])
 		return
