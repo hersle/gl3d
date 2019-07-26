@@ -45,13 +45,13 @@ func (b *Buffer) Bytes(i, j int) []byte {
 	size := j-i
 	bytes := make([]byte, size)
 	ptr := unsafe.Pointer(&bytes[0])
-	gl.GetNamedBufferSubData(uint32(b.id), i, int32(size), ptr)
+	gl.GetNamedBufferSubData(uint32(b.id), i, size, ptr)
 	return bytes
 }
 
 func (b *Buffer) Allocate(size int) {
 	b.size = size
-	gl.NamedBufferData(uint32(b.id), int32(b.size), nil, gl.STREAM_DRAW)
+	gl.NamedBufferData(uint32(b.id), b.size, nil, gl.STREAM_DRAW)
 }
 
 func (b *Buffer) Reallocate(size int) {
@@ -92,7 +92,7 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 	if size > b.size {
 		b.Reallocate(size)
 	}
-	gl.NamedBufferSubData(uint32(b.id), byteOffset, int32(len(bytes)), p)
+	gl.NamedBufferSubData(uint32(b.id), byteOffset, len(bytes), p)
 }
 
 func NewVertexBuffer() *VertexBuffer {
