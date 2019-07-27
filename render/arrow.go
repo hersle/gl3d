@@ -22,6 +22,8 @@ type ArrowShaderProgram struct {
 	ProjectionMatrix *graphics.Uniform
 	Color            *graphics.Uniform
 	Position         *graphics.Attrib
+	OutColor         *graphics.Output
+	Depth            *graphics.Output
 }
 
 func NewArrowShaderProgram() *ArrowShaderProgram {
@@ -40,6 +42,8 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	sp.ViewMatrix = sp.Uniform("viewMatrix")
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.Color = sp.Uniform("color")
+	sp.OutColor = sp.OutputColor("fragColor")
+	sp.Depth = sp.OutputDepth()
 
 	return &sp
 }
@@ -75,7 +79,7 @@ func (r *ArrowRenderer) SetPosition(vbo *graphics.VertexBuffer) {
 	r.sp.Position.SetSourceVertex(vbo, 0)
 }
 
-func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{1, 0, 0})
@@ -91,11 +95,12 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, fb *grap
 	}
 	r.vbo.SetData(r.points, 0)
 	r.SetPosition(r.vbo)
-	r.renderState.Framebuffer = fb
+	r.sp.OutColor.Set(colorTexture)
+	r.sp.Depth.Set(depthTexture)
 	r.renderState.Render(len(r.points))
 }
 
-func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 1, 0})
@@ -111,11 +116,12 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, fb *gr
 	}
 	r.vbo.SetData(r.points, 0)
 	r.SetPosition(r.vbo)
-	r.renderState.Framebuffer = fb
+	r.sp.OutColor.Set(colorTexture)
+	r.sp.Depth.Set(depthTexture)
 	r.renderState.Render(len(r.points))
 }
 
-func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
 	r.SetCamera(c)
 	r.points = r.points[:0]
 	r.SetColor(math.Vec3{0, 0, 1})
@@ -131,6 +137,7 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, fb *graph
 	}
 	r.vbo.SetData(r.points, 0)
 	r.SetPosition(r.vbo)
-	r.renderState.Framebuffer = fb
+	r.sp.OutColor.Set(colorTexture)
+	r.sp.Depth.Set(depthTexture)
 	r.renderState.Render(len(r.points))
 }

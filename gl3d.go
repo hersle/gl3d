@@ -50,12 +50,12 @@ func main() {
 	l.CastShadows = true
 	s.AddPointLight(l)
 
-	f1 := "assets/skyboxes/mountain/posx.jpg"
-	f2 := "assets/skyboxes/mountain/negx.jpg"
-	f3 := "assets/skyboxes/mountain/posy.jpg"
-	f4 := "assets/skyboxes/mountain/negy.jpg"
-	f5 := "assets/skyboxes/mountain/posz.jpg"
-	f6 := "assets/skyboxes/mountain/negz.jpg"
+	f1 := "assets/skyboxes/mountain/posx.tga"
+	f2 := "assets/skyboxes/mountain/negx.tga"
+	f3 := "assets/skyboxes/mountain/posy.tga"
+	f4 := "assets/skyboxes/mountain/negy.tga"
+	f5 := "assets/skyboxes/mountain/posz.tga"
+	f6 := "assets/skyboxes/mountain/negz.tga"
 	skybox, err := scene.ReadCubeMap(f1, f2, f3, f4, f5, f6)
 	if err != nil {
 		panic(err)

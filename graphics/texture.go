@@ -18,6 +18,7 @@ type Texture2D struct {
 	width  int
 	height int
 	type_  TextureType
+	levels int
 }
 
 type CubeMap struct {
@@ -25,6 +26,7 @@ type CubeMap struct {
 	width  int
 	height int
 	type_  TextureType
+	levels int
 }
 
 type CubeMapFace struct {
@@ -74,11 +76,10 @@ func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, wid
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &id)
 	t.id = int(id)
 
-	var levels int
 	if mipmap {
-		levels = 1 + int(gomath.Log2(gomath.Max(float64(width), float64(height))))
+		t.levels = 1 + int(gomath.Log2(gomath.Max(float64(width), float64(height))))
 	} else {
-		levels = 1
+		t.levels = 1
 	}
 	if mipmap && filter == LinearFilter {
 		gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
@@ -88,7 +89,7 @@ func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, wid
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MAG_FILTER, int32(filter))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_S, int32(wrap))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_WRAP_T, int32(wrap))
-	gl.TextureStorage2D(uint32(t.id), int32(levels), t.glFormat(), int32(width), int32(height))
+	gl.TextureStorage2D(uint32(t.id), int32(t.levels), t.glFormat(), int32(width), int32(height))
 	return &t
 }
 
@@ -170,6 +171,23 @@ func (t *Texture2D) attachTo(f *Framebuffer) {
 	gl.NamedFramebufferTexture(uint32(f.id), glatt, uint32(t.id), 0)
 }
 
+func (t *Texture2D) Clear(rgba math.Vec4) {
+	var format uint32
+	switch t.type_ {
+	case ColorTexture:
+		format = gl.RGBA
+	case DepthTexture:
+		format = gl.DEPTH_COMPONENT
+	default:
+		panic("invalid texture type")
+	}
+	type_ := uint32(gl.FLOAT)
+
+	for level := 0; level < t.levels; level++ {
+		gl.ClearTexImage(uint32(t.id), int32(level), format, type_, unsafe.Pointer(&rgba[0]))
+	}
+}
+
 func (cf *CubeMapFace) attachTo(f *Framebuffer) {
 	var glatt uint32
 	switch cf.CubeMap.type_ {
@@ -210,6 +228,7 @@ func NewCubeMap(type_ TextureType, filter TextureFilter, width, height int) *Cub
 	var id uint32
 	gl.CreateTextures(gl.TEXTURE_CUBE_MAP, 1, &id)
 	t.id = int(id)
+	t.levels = 1 // TODO: increase?
 
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MIN_FILTER, int32(filter))
 	gl.TextureParameteri(uint32(t.id), gl.TEXTURE_MAG_FILTER, int32(filter))
@@ -269,6 +288,23 @@ func (t *CubeMap) glFormat() uint32 {
 		return gl.DEPTH_COMPONENT16
 	default:
 		panic("invalid texture type")
+	}
+}
+
+func (t *CubeMap) Clear(rgba math.Vec4) {
+	var format uint32
+	switch t.type_ {
+	case ColorTexture:
+		format = gl.RGBA
+	case DepthTexture:
+		format = gl.DEPTH_COMPONENT
+	default:
+		panic("invalid texture type")
+	}
+	type_ := uint32(gl.FLOAT)
+
+	for level := 0; level < t.levels; level++ {
+		gl.ClearTexImage(uint32(t.id), int32(level), format, type_, unsafe.Pointer(&rgba[0]))
 	}
 }
 

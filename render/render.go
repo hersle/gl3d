@@ -16,12 +16,10 @@ type Renderer struct {
 	arrowRenderer  *ArrowRenderer
 	effectRenderer *EffectRenderer
 
-	sceneFramebuffer       *graphics.Framebuffer
 	sceneRenderTarget      *graphics.Texture2D
 	sceneRenderTarget2     *graphics.Texture2D
 	sceneDepthRenderTarget *graphics.Texture2D
 
-	overlayFramebuffer  *graphics.Framebuffer
 	overlayRenderTarget *graphics.Texture2D
 }
 
@@ -41,30 +39,25 @@ func NewRenderer() (*Renderer, error) {
 	r.sceneRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
 	r.sceneRenderTarget2 = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
 	r.sceneDepthRenderTarget = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
-	r.sceneFramebuffer = graphics.NewFramebuffer()
-	r.sceneFramebuffer.Attach(r.sceneRenderTarget)
-	r.sceneFramebuffer.Attach(r.sceneDepthRenderTarget)
 
 	r.overlayRenderTarget = graphics.NewTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, w, h, false)
-	r.overlayFramebuffer = graphics.NewFramebuffer()
-	r.overlayFramebuffer.Attach(r.overlayRenderTarget)
 
 	return &r, nil
 }
 
 func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 	if s.Skybox != nil {
-		r.skyboxRenderer.Render(s.Skybox, c, r.sceneFramebuffer)
+		r.skyboxRenderer.Render(s.Skybox, c, r.sceneRenderTarget)
 	}
 
-	r.meshRenderer.Render(s, c, r.sceneFramebuffer)
+	r.meshRenderer.Render(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
 	r.effectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
 	r.effectRenderer.RenderGaussianBlur(r.sceneRenderTarget, r.sceneRenderTarget2)
 }
 
 func (r *Renderer) RenderText(tl math.Vec2, text string, height float32) {
 	color := math.Vec3{1, 1, 1}
-	r.textRenderer.Render(tl, text, height, color, r.overlayFramebuffer)
+	r.textRenderer.Render(tl, text, height, color, r.overlayRenderTarget)
 }
 
 func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
@@ -72,22 +65,23 @@ func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
 }
 
 func (r *Renderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
-	r.arrowRenderer.RenderBitangents(s, c, r.sceneFramebuffer)
+	r.arrowRenderer.RenderBitangents(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
 }
 
 func (r *Renderer) RenderNormals(s *scene.Scene, c camera.Camera) {
-	r.arrowRenderer.RenderNormals(s, c, r.sceneFramebuffer)
+	r.arrowRenderer.RenderNormals(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
 }
 
 func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
-	r.arrowRenderer.RenderTangents(s, c, r.sceneFramebuffer)
+	r.arrowRenderer.RenderTangents(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
 }
 
 func (r *Renderer) Clear() {
 	graphics.DefaultFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
-	r.sceneFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
-	r.sceneFramebuffer.ClearDepth(1)
-	r.overlayFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
+	r.sceneRenderTarget.Clear(math.Vec4{0, 0, 0, 0})
+	r.sceneRenderTarget2.Clear(math.Vec4{0, 0, 0, 0})
+	r.sceneDepthRenderTarget.Clear(math.Vec4{1, 1, 1, 1})
+	r.overlayRenderTarget.Clear(math.Vec4{0, 0, 0, 0})
 }
 
 func (r *Renderer) Render() {

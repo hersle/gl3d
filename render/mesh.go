@@ -34,7 +34,6 @@ type MeshRenderer struct {
 	shadowSp1             *ShadowMapShaderProgram
 	shadowSp2             *ShadowMapShaderProgram
 	shadowSp3             *ShadowMapShaderProgram
-	shadowMapFramebuffer *graphics.Framebuffer
 	shadowRenderState    *graphics.State
 
 	shadowProjViewMat math.Mat4
@@ -54,6 +53,9 @@ type MeshShaderProgram struct {
 	TexCoord *graphics.Attrib
 	Normal   *graphics.Attrib
 	Tangent  *graphics.Attrib
+
+	Color *graphics.Output
+	Depth *graphics.Output
 
 	ModelMatrix      *graphics.Uniform
 	ViewMatrix       *graphics.Uniform
@@ -95,6 +97,8 @@ type ShadowMapShaderProgram struct {
 	LightFar         *graphics.Uniform
 
 	ProjViewMats     []*graphics.Uniform
+
+	Depth *graphics.Output
 }
 
 func NewMeshRenderer() (*MeshRenderer, error) {
@@ -116,8 +120,6 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.shadowSp1 = NewShadowMapShaderProgram("POINT") // point light
 	r.shadowSp2 = NewShadowMapShaderProgram("SPOT") // spot light
 	r.shadowSp3 = NewShadowMapShaderProgram("DIR") // directional light
-
-	r.shadowMapFramebuffer = graphics.NewFramebuffer()
 
 	r.shadowRenderState = graphics.NewState()
 
@@ -147,6 +149,9 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.TexCoord = sp.Attrib("texCoordV")
 	sp.Normal = sp.Attrib("normalV")
 	sp.Tangent = sp.Attrib("tangentV")
+
+	sp.Color = sp.OutputColor("fragColor")
+	sp.Depth = sp.OutputDepth()
 
 	sp.ModelMatrix = sp.Uniform("modelMatrix")
 	sp.ViewMatrix = sp.Uniform("viewMatrix")
@@ -202,13 +207,23 @@ func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 		sp.ProjViewMats[i] = sp.Uniform(name)
 	}
 
+	sp.Depth = sp.OutputDepth()
+
 	return &sp
 }
 
-func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, fb *graphics.Framebuffer) {
+func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
 	r.renderState.Cull = graphics.CullBack
 	r.renderState.PrimitiveType = graphics.Triangle
-	r.renderState.Framebuffer = fb
+
+	r.ambientProg.Color.Set(colorTexture)
+	r.pointLitProg.Color.Set(colorTexture)
+	r.spotLitProg.Color.Set(colorTexture)
+	r.dirLitProg.Color.Set(colorTexture)
+	r.ambientProg.Depth.Set(depthTexture)
+	r.pointLitProg.Depth.Set(depthTexture)
+	r.spotLitProg.Depth.Set(depthTexture)
+	r.dirLitProg.Depth.Set(depthTexture)
 
 	r.preparationPass(s, c)
 	r.shadowPass(s)
@@ -512,7 +527,6 @@ func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapShaderProgram, sm *object.S
 }
 
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {
-	r.shadowRenderState.Framebuffer = r.shadowMapFramebuffer
 	r.shadowRenderState.DepthTest = graphics.LessDepthTest
 	r.shadowRenderState.Cull = graphics.CullBack
 	r.shadowRenderState.PrimitiveType = graphics.Triangle
@@ -579,8 +593,8 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 		r.shadowSp1.ProjViewMats[face].Set(&r.shadowProjViewMat)
 	}
 
-	r.shadowMapFramebuffer.Attach(smap)
-	r.shadowMapFramebuffer.ClearDepth(1)
+	smap.Clear(math.Vec4{1, 1, 1, 1})
+	r.shadowSp1.Depth.Set(smap)
 
 	r.setShadowCamera(r.shadowSp1, c)
 
@@ -609,8 +623,8 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 		//return
 	//}
 
-	r.shadowMapFramebuffer.Attach(smap)
-	r.shadowMapFramebuffer.ClearDepth(1)
+	r.shadowSp2.Depth.Set(smap)
+	smap.Clear(math.Vec4{1, 1, 1, 1})
 	r.shadowRenderState.Program = r.shadowSp2.ShaderProgram
 	r.setShadowCamera(r.shadowSp2, &l.PerspectiveCamera)
 
@@ -641,8 +655,8 @@ func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.
 		//return
 	//}
 
-	r.shadowMapFramebuffer.Attach(smap)
-	r.shadowMapFramebuffer.ClearDepth(1)
+	r.shadowSp3.Depth.Set(smap)
+	smap.Clear(math.Vec4{1, 1, 1, 1})
 	r.shadowRenderState.Program = r.shadowSp3.ShaderProgram
 	r.setShadowCamera(r.shadowSp3, &l.OrthoCamera)
 

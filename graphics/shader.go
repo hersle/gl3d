@@ -19,8 +19,11 @@ const (
 
 type ShaderProgram struct {
 	id int
+
 	vaid int
 	indexBuffer *IndexBuffer
+
+	Framebuffer *Framebuffer
 }
 
 type Shader struct {
@@ -35,6 +38,11 @@ type Attrib struct {
 	glType uint32
 	normalize bool
 	enabled bool
+}
+
+type Output struct {
+	prog *ShaderProgram
+	id int
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
@@ -140,6 +148,8 @@ func NewShaderProgram(shaders ...*Shader) (*ShaderProgram, error) {
 	gl.CreateVertexArrays(1, &id)
 	p.vaid = int(id)
 	p.indexBuffer = nil
+
+	p.Framebuffer = NewFramebuffer()
 
 	return &p, err
 }
@@ -278,6 +288,8 @@ func (p *ShaderProgram) SetAttribIndexBuffer(b *IndexBuffer) {
 func (p *ShaderProgram) bind() {
 	gl.UseProgram(uint32(p.id))
 	gl.BindVertexArray(uint32(p.vaid))
+	p.Framebuffer.bindDraw()
+	gl.Viewport(0, 0, int32(p.Framebuffer.Width()), int32(p.Framebuffer.Height()))
 }
 
 func (p *ShaderProgram) Attrib(name string) *Attrib {
@@ -307,6 +319,28 @@ func (p *ShaderProgram) Attrib(name string) *Attrib {
 	}
 
 	return &a
+}
+
+func (p *ShaderProgram) OutputColor(name string) *Output {
+	var o Output
+	loc := gl.GetFragDataLocation(uint32(p.id), gl.Str(name+"\x00"))
+	if loc == -1 {
+		return nil
+	}
+	o.id = int(loc)
+	o.prog = p
+	return &o
+}
+
+func (p *ShaderProgram) OutputDepth() *Output {
+	var o Output
+	o.id = -2 // special depth output identifier
+	o.prog = p
+	return &o
+}
+
+func (o *Output) Set(att FramebufferAttachment) {
+	o.prog.Framebuffer.Attach(att)
 }
 
 var textureUnitsUsed int = 0

@@ -13,6 +13,8 @@ type TextShaderProgram struct {
 	Position *graphics.Attrib
 	TexCoord *graphics.Attrib
 	Color    *graphics.Attrib
+
+	OutColor *graphics.Output
 }
 
 type TextRenderer struct {
@@ -38,6 +40,8 @@ func NewTextShaderProgram() *TextShaderProgram {
 	sp.Position = sp.Attrib("position")
 	sp.TexCoord = sp.Attrib("texCoordV")
 	sp.Color = sp.Attrib("colorV")
+
+	sp.OutColor = sp.OutputColor("fragColor")
 
 	return &sp
 }
@@ -71,7 +75,7 @@ func (r *TextRenderer) SetAttribs(vbo *graphics.VertexBuffer, ibo *graphics.Inde
 	r.sp.Color.SetSourceVertex(vbo, 2) // normal TODO: don't abuse normal
 }
 
-func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color math.Vec3, fb *graphics.Framebuffer) {
+func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color math.Vec3, target *graphics.Texture2D) {
 	var verts []object.Vertex
 	var inds []int32
 
@@ -130,6 +134,6 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color m
 	r.vbo.SetData(verts, 0)
 	r.ibo.SetData(inds, 0)
 	r.SetAttribs(r.vbo, r.ibo)
-	r.renderState.Framebuffer = fb
+	r.sp.OutColor.Set(target)
 	r.renderState.Render(len(inds))
 }

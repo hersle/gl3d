@@ -62,7 +62,6 @@ const (
 // TODO: enable sorting of these states to reduce state changes?
 type State struct {
 	Program                *ShaderProgram
-	Framebuffer            *Framebuffer
 	DepthTest              DepthTest
 	BlendSourceFactor      BlendFactor
 	BlendDestinationFactor BlendFactor
@@ -76,7 +75,6 @@ var currentState State
 func NewState() *State {
 	var state State
 	state.DisableBlending()
-	state.Framebuffer = DefaultFramebuffer
 	return &state
 }
 
@@ -94,17 +92,6 @@ func (state *State) apply() {
 			state.Program.bind()
 		}
 		currentState.Program = state.Program
-	}
-
-	if currentState.Framebuffer != state.Framebuffer {
-		switch state.Framebuffer {
-		case nil:
-			panic("tried to apply a render state with no framebuffer")
-		default:
-			state.Framebuffer.bindDraw()
-			gl.Viewport(0, 0, int32(state.Framebuffer.Width()), int32(state.Framebuffer.Height()))
-		}
-		currentState.Framebuffer = state.Framebuffer
 	}
 
 	if currentState.DepthTest != state.DepthTest {
@@ -239,7 +226,6 @@ func init() {
 
 	// initialize cached state to default OpenGL values TODO: run apply with it?
 	currentState.Program = nil
-	currentState.Framebuffer = nil
 	currentState.DepthTest = AlwaysDepthTest
 	currentState.DisableBlending()
 	currentState.Cull = CullNothing

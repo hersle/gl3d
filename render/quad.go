@@ -32,6 +32,8 @@ func NewQuadShaderProgram() *QuadShaderProgram {
 	sp.Position = sp.Attrib("position")
 	sp.Texture = sp.Uniform("tex")
 
+	sp.Framebuffer = graphics.DefaultFramebuffer // output to default framebuffer instead
+
 	return &sp
 }
 
@@ -64,6 +66,5 @@ func NewQuadRenderer() *QuadRenderer {
 
 func (r *QuadRenderer) Render(tex *graphics.Texture2D, fb *graphics.Framebuffer) {
 	r.sp.Texture.Set(tex)
-	r.renderState.Framebuffer = fb
 	r.renderState.Render(6)
 }

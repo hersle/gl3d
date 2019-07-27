@@ -8,7 +8,6 @@ import (
 
 type EffectRenderer struct {
 	vbo *graphics.VertexBuffer
-	framebuffer *graphics.Framebuffer
 	renderState *graphics.State
 
 	invProjectionMatrix math.Mat4
@@ -25,6 +24,8 @@ type FogShaderProgram struct {
 	depthMap *graphics.Uniform
 	invProjectionMatrix *graphics.Uniform
 	camFar *graphics.Uniform
+
+	color *graphics.Output
 }
 
 type GaussianShaderProgram struct {
@@ -34,6 +35,8 @@ type GaussianShaderProgram struct {
 	inTexture *graphics.Uniform
 	direction *graphics.Uniform
 	texDim *graphics.Uniform
+
+	color *graphics.Output
 }
 
 func NewEffectRenderer() *EffectRenderer {
@@ -55,17 +58,15 @@ func NewEffectRenderer() *EffectRenderer {
 	r.gaussianSp = NewGaussianShaderProgram()
 	r.gaussianSp.position.SetSourceVertex(r.vbo, 0)
 
-	r.framebuffer = graphics.NewFramebuffer()
-
 	r.renderState = graphics.NewState()
 	r.renderState.PrimitiveType = graphics.Triangle
-	r.renderState.Framebuffer = r.framebuffer
+	//r.renderState.Framebuffer = r.framebuffer
 
 	return &r
 }
 
 func (r *EffectRenderer) RenderFog(c camera.Camera, depthMap, fogTarget *graphics.Texture2D) {
-	r.framebuffer.Attach(fogTarget)
+	r.fogSp.color.Set(fogTarget)
 
 	r.fogSp.depthMap.Set(depthMap)
 
@@ -91,13 +92,13 @@ func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D) {
 	r.renderState.DisableBlending()
 	r.renderState.Program = r.gaussianSp.ShaderProgram
 
-	r.framebuffer.Attach(extra)
+	r.gaussianSp.color.Set(extra)
 	r.gaussianSp.inTexture.Set(target)
 	r.gaussianSp.texDim.Set(float32(target.Width()))
 	r.gaussianSp.direction.Set(math.Vec2{1, 0})
 	r.renderState.Render(6)
 
-	r.framebuffer.Attach(target)
+	r.gaussianSp.color.Set(target)
 	r.gaussianSp.inTexture.Set(extra)
 	r.gaussianSp.texDim.Set(float32(extra.Height()))
 	r.gaussianSp.direction.Set(math.Vec2{0, 1})
@@ -119,6 +120,7 @@ func NewFogShaderProgram() *FogShaderProgram {
 	sp.depthMap = sp.Uniform("depthTexture")
 	sp.invProjectionMatrix = sp.Uniform("invProjectionMatrix")
 	sp.camFar = sp.Uniform("cameraFar")
+	sp.color = sp.OutputColor("fragColor")
 
 	return &sp
 }
@@ -138,6 +140,7 @@ func NewGaussianShaderProgram() *GaussianShaderProgram {
 	sp.inTexture = sp.Uniform("inTexture")
 	sp.direction = sp.Uniform("dir")
 	sp.texDim = sp.Uniform("texDim")
+	sp.color = sp.OutputColor("fragColor")
 
 	return &sp
 }
