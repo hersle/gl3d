@@ -49,10 +49,10 @@ type MeshRenderer struct {
 type MeshShaderProgram struct {
 	*graphics.ShaderProgram
 
-	Position *graphics.Attrib
-	TexCoord *graphics.Attrib
-	Normal   *graphics.Attrib
-	Tangent  *graphics.Attrib
+	Position *graphics.Input
+	TexCoord *graphics.Input
+	Normal   *graphics.Input
+	Tangent  *graphics.Input
 
 	Color *graphics.Output
 	Depth *graphics.Output
@@ -87,7 +87,7 @@ type MeshShaderProgram struct {
 type ShadowMapShaderProgram struct {
 	*graphics.ShaderProgram
 
-	Position         *graphics.Attrib
+	Position         *graphics.Input
 
 	ModelMatrix      *graphics.Uniform
 	ViewMatrix       *graphics.Uniform
@@ -145,10 +145,10 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 		panic(err)
 	}
 
-	sp.Position = sp.Attrib("position")
-	sp.TexCoord = sp.Attrib("texCoordV")
-	sp.Normal = sp.Attrib("normalV")
-	sp.Tangent = sp.Attrib("tangentV")
+	sp.Position = sp.Input("position")
+	sp.TexCoord = sp.Input("texCoordV")
+	sp.Normal = sp.Input("normalV")
+	sp.Tangent = sp.Input("tangentV")
 
 	sp.Color = sp.OutputColor("fragColor")
 	sp.Depth = sp.OutputDepth()
@@ -199,7 +199,7 @@ func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.LightPosition = sp.Uniform("lightPosition")
 	sp.LightFar = sp.Uniform("far")
-	sp.Position = sp.Attrib("position")
+	sp.Position = sp.Input("position")
 
 	sp.ProjViewMats = make([]*graphics.Uniform, 6)
 	for i := 0; i < 6; i++ {
@@ -414,7 +414,7 @@ func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	sp.Normal.SetSourceVertex(vbo, 2)
 	sp.TexCoord.SetSourceVertex(vbo, 1)
 	sp.Tangent.SetSourceVertex(vbo, 3)
-	sp.SetAttribIndexBuffer(ibo)
+	sp.SetInputIndexBuffer(ibo)
 }
 
 func (r *MeshRenderer) setAmbientLight(sp *MeshShaderProgram, l *light.AmbientLight) {
@@ -523,7 +523,7 @@ func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapShaderProgram, sm *object.S
 	}
 
 	sp.Position.SetSourceVertex(vbo, 0)
-	sp.SetAttribIndexBuffer(ibo)
+	sp.SetInputIndexBuffer(ibo)
 }
 
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {

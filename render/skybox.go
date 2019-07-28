@@ -12,7 +12,7 @@ type SkyboxShaderProgram struct {
 	ViewMatrix       *graphics.Uniform
 	ProjectionMatrix *graphics.Uniform
 	CubeMap          *graphics.Uniform
-	Position         *graphics.Attrib
+	Position         *graphics.Input
 	Color            *graphics.Output
 }
 
@@ -40,7 +40,7 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 	sp.ViewMatrix = sp.Uniform("viewMatrix")
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.CubeMap = sp.Uniform("cubeMap")
-	sp.Position = sp.Attrib("positionV")
+	sp.Position = sp.Input("positionV")
 	sp.Color = sp.OutputColor("fragColor")
 
 	return &sp
@@ -109,7 +109,7 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 
 func (r *SkyboxRenderer) setCube(vbo *graphics.VertexBuffer, ibo *graphics.IndexBuffer) {
 	r.sp.Position.SetSourceVertex(vbo, 0)
-	r.sp.SetAttribIndexBuffer(ibo)
+	r.sp.SetInputIndexBuffer(ibo)
 }
 
 func (r *SkyboxRenderer) Render(sb *scene.CubeMap, c camera.Camera, target *graphics.Texture2D) {

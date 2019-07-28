@@ -10,9 +10,9 @@ import (
 type TextShaderProgram struct {
 	*graphics.ShaderProgram
 	Atlas    *graphics.Uniform
-	Position *graphics.Attrib
-	TexCoord *graphics.Attrib
-	Color    *graphics.Attrib
+	Position *graphics.Input
+	TexCoord *graphics.Input
+	Color    *graphics.Input
 
 	OutColor *graphics.Output
 }
@@ -37,9 +37,9 @@ func NewTextShaderProgram() *TextShaderProgram {
 	}
 
 	sp.Atlas = sp.Uniform("fontAtlas")
-	sp.Position = sp.Attrib("position")
-	sp.TexCoord = sp.Attrib("texCoordV")
-	sp.Color = sp.Attrib("colorV")
+	sp.Position = sp.Input("position")
+	sp.TexCoord = sp.Input("texCoordV")
+	sp.Color = sp.Input("colorV")
 
 	sp.OutColor = sp.OutputColor("fragColor")
 
@@ -68,10 +68,10 @@ func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
 	r.sp.Atlas.Set(tex)
 }
 
-func (r *TextRenderer) SetAttribs(vbo *graphics.VertexBuffer, ibo *graphics.IndexBuffer) {
+func (r *TextRenderer) SetInputs(vbo *graphics.VertexBuffer, ibo *graphics.IndexBuffer) {
 	r.sp.Position.SetSourceVertex(vbo, 0)
 	r.sp.TexCoord.SetSourceVertex(vbo, 1)
-	r.sp.SetAttribIndexBuffer(ibo)
+	r.sp.SetInputIndexBuffer(ibo)
 	r.sp.Color.SetSourceVertex(vbo, 2) // normal TODO: don't abuse normal
 }
 
@@ -133,7 +133,7 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color m
 	r.SetAtlas(r.tex)
 	r.vbo.SetData(verts, 0)
 	r.ibo.SetData(inds, 0)
-	r.SetAttribs(r.vbo, r.ibo)
+	r.SetInputs(r.vbo, r.ibo)
 	r.sp.OutColor.Set(target)
 	r.renderState.Render(len(inds))
 }

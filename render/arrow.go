@@ -21,7 +21,7 @@ type ArrowShaderProgram struct {
 	ViewMatrix       *graphics.Uniform
 	ProjectionMatrix *graphics.Uniform
 	Color            *graphics.Uniform
-	Position         *graphics.Attrib
+	Position         *graphics.Input
 	OutColor         *graphics.Output
 	Depth            *graphics.Output
 }
@@ -37,7 +37,7 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 		panic(err)
 	}
 
-	sp.Position = sp.Attrib("position")
+	sp.Position = sp.Input("position")
 	sp.ModelMatrix = sp.Uniform("modelMatrix")
 	sp.ViewMatrix = sp.Uniform("viewMatrix")
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")

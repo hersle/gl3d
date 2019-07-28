@@ -20,7 +20,7 @@ type EffectRenderer struct {
 type FogShaderProgram struct {
 	*graphics.ShaderProgram
 
-	position *graphics.Attrib
+	position *graphics.Input
 	depthMap *graphics.Uniform
 	invProjectionMatrix *graphics.Uniform
 	camFar *graphics.Uniform
@@ -31,7 +31,7 @@ type FogShaderProgram struct {
 type GaussianShaderProgram struct {
 	*graphics.ShaderProgram
 
-	position *graphics.Attrib
+	position *graphics.Input
 	inTexture *graphics.Uniform
 	direction *graphics.Uniform
 	texDim *graphics.Uniform
@@ -116,7 +116,7 @@ func NewFogShaderProgram() *FogShaderProgram {
 		panic(err)
 	}
 
-	sp.position = sp.Attrib("position")
+	sp.position = sp.Input("position")
 	sp.depthMap = sp.Uniform("depthTexture")
 	sp.invProjectionMatrix = sp.Uniform("invProjectionMatrix")
 	sp.camFar = sp.Uniform("cameraFar")
@@ -136,7 +136,7 @@ func NewGaussianShaderProgram() *GaussianShaderProgram {
 		panic(err)
 	}
 
-	sp.position = sp.Attrib("position")
+	sp.position = sp.Input("position")
 	sp.inTexture = sp.Uniform("inTexture")
 	sp.direction = sp.Uniform("dir")
 	sp.texDim = sp.Uniform("texDim")

@@ -7,7 +7,7 @@ import (
 
 type QuadShaderProgram struct {
 	*graphics.ShaderProgram
-	Position *graphics.Attrib
+	Position *graphics.Input
 	Texture  *graphics.Uniform
 }
 
@@ -29,7 +29,7 @@ func NewQuadShaderProgram() *QuadShaderProgram {
 		panic(err)
 	}
 
-	sp.Position = sp.Attrib("position")
+	sp.Position = sp.Input("position")
 	sp.Texture = sp.Uniform("tex")
 
 	sp.Framebuffer = graphics.DefaultFramebuffer // output to default framebuffer instead
