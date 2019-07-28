@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"strconv"
+	"unsafe"
 )
 
 type ShaderType int
@@ -57,6 +58,8 @@ type vertexArray struct {
 	id             int
 	indexBuffer    *IndexBuffer
 }
+
+var currentProg *ShaderProgram
 
 func NewShader(type_ ShaderType, src string, defines ...string) (*Shader, error) {
 	var s Shader
@@ -206,6 +209,41 @@ func (p *ShaderProgram) link() error {
 	return errors.New(p.log())
 }
 
+func (p *ShaderProgram) Render(vertexCount int, opts *RenderOptions) {
+	if currentProg != p {
+		p.bind()
+	}
+	opts.apply()
+
+	if p.indexBuffer == nil {
+		gl.DrawArrays(uint32(opts.PrimitiveType), 0, int32(vertexCount))
+	} else {
+		gltype := p.indexBuffer.elementGlType()
+		gl.DrawElements(uint32(opts.PrimitiveType), int32(vertexCount), gltype, nil)
+	}
+
+	Stats.DrawCallCount++
+	Stats.VertexCount += vertexCount
+}
+
+func (p *ShaderProgram) RenderOffset(vertexCount, iboOffset, baseVertex int, opts *RenderOptions) {
+	if currentProg != p {
+		p.bind()
+	}
+	opts.apply()
+
+	if p.indexBuffer == nil {
+		panic("need index buffer")
+	} else {
+		gltype := p.indexBuffer.elementGlType()
+		byteOffset := iboOffset * p.indexBuffer.ElementSize()
+		gl.DrawElementsBaseVertex(uint32(opts.PrimitiveType), int32(vertexCount), gltype, unsafe.Pointer(uintptr(byteOffset)), int32(baseVertex))
+	}
+
+	Stats.DrawCallCount++
+	Stats.VertexCount += vertexCount
+}
+
 func (u *Uniform) Set(value interface{}) {
 	if u == nil {
 		return
@@ -290,6 +328,8 @@ func (p *ShaderProgram) bind() {
 	gl.BindVertexArray(uint32(p.vaid))
 	p.Framebuffer.bindDraw()
 	gl.Viewport(0, 0, int32(p.Framebuffer.Width()), int32(p.Framebuffer.Height()))
+
+	currentProg = p
 }
 
 func (p *ShaderProgram) Input(name string) *Input {

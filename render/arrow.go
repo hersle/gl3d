@@ -12,7 +12,7 @@ type ArrowRenderer struct {
 	sp          *ArrowShaderProgram
 	points      []math.Vec3
 	vbo         *graphics.VertexBuffer
-	renderState *graphics.State
+	renderOpts  *graphics.RenderOptions
 }
 
 type ArrowShaderProgram struct {
@@ -53,9 +53,8 @@ func NewArrowRenderer() *ArrowRenderer {
 
 	r.sp = NewArrowShaderProgram()
 
-	r.renderState = graphics.NewState()
-	r.renderState.Program = r.sp.ShaderProgram
-	r.renderState.PrimitiveType = graphics.Line
+	r.renderOpts = graphics.NewRenderOptions()
+	r.renderOpts.PrimitiveType = graphics.Line
 
 	r.vbo = graphics.NewVertexBuffer()
 
@@ -97,7 +96,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, colorTex
 	r.SetPosition(r.vbo)
 	r.sp.OutColor.Set(colorTexture)
 	r.sp.Depth.Set(depthTexture)
-	r.renderState.Render(len(r.points))
+	r.sp.Render(len(r.points), r.renderOpts)
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
@@ -118,7 +117,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, colorT
 	r.SetPosition(r.vbo)
 	r.sp.OutColor.Set(colorTexture)
 	r.sp.Depth.Set(depthTexture)
-	r.renderState.Render(len(r.points))
+	r.sp.Render(len(r.points), r.renderOpts)
 }
 
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
@@ -139,5 +138,5 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, colorText
 	r.SetPosition(r.vbo)
 	r.sp.OutColor.Set(colorTexture)
 	r.sp.Depth.Set(depthTexture)
-	r.renderState.Render(len(r.points))
+	r.sp.Render(len(r.points), r.renderOpts)
 }

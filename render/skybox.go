@@ -21,7 +21,7 @@ type SkyboxRenderer struct {
 	vbo         *graphics.VertexBuffer
 	ibo         *graphics.IndexBuffer
 	tex         *graphics.CubeMap
-	renderState *graphics.State
+	renderOpts  *graphics.RenderOptions
 	cubemaps    map[*scene.CubeMap]*graphics.CubeMap
 }
 
@@ -79,9 +79,8 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 
 	r.setCube(r.vbo, r.ibo)
 
-	r.renderState = graphics.NewState()
-	r.renderState.Program = r.sp.ShaderProgram
-	r.renderState.PrimitiveType = graphics.Triangle
+	r.renderOpts = graphics.NewRenderOptions()
+	r.renderOpts.PrimitiveType = graphics.Triangle
 
 	return &r
 }
@@ -117,5 +116,5 @@ func (r *SkyboxRenderer) Render(sb *scene.CubeMap, c camera.Camera, target *grap
 	r.setCamera(c)
 	r.sp.Color.Set(target)
 
-	r.renderState.Render(36)
+	r.sp.Render(36, r.renderOpts)
 }

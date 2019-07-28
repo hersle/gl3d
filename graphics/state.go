@@ -3,7 +3,6 @@ package graphics
 import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	_ "github.com/hersle/gl3d/window" // initialize graphics
-	"unsafe"
 )
 
 type DepthTest int
@@ -60,8 +59,7 @@ const (
 )
 
 // TODO: enable sorting of these states to reduce state changes?
-type State struct {
-	Program                *ShaderProgram
+type RenderOptions struct {
 	DepthTest              DepthTest
 	BlendSourceFactor      BlendFactor
 	BlendDestinationFactor BlendFactor
@@ -70,32 +68,22 @@ type State struct {
 	PrimitiveType          Primitive
 }
 
-var currentState State
+var currentOpts RenderOptions
 
-func NewState() *State {
-	var state State
-	state.DisableBlending()
-	return &state
+func NewRenderOptions() *RenderOptions {
+	var opts RenderOptions
+	opts.DisableBlending()
+	return &opts
 }
 
-func (state *State) DisableBlending() {
-	state.BlendSourceFactor = OneBlendFactor
-	state.BlendDestinationFactor = ZeroBlendFactor
+func (opts *RenderOptions) DisableBlending() {
+	opts.BlendSourceFactor = OneBlendFactor
+	opts.BlendDestinationFactor = ZeroBlendFactor
 }
 
-func (state *State) apply() {
-	if currentState.Program != state.Program {
-		switch state.Program {
-		case nil:
-			panic("tried to apply a render state with no shader program")
-		default:
-			state.Program.bind()
-		}
-		currentState.Program = state.Program
-	}
-
-	if currentState.DepthTest != state.DepthTest {
-		switch state.DepthTest {
+func (opts *RenderOptions) apply() {
+	if currentOpts.DepthTest != opts.DepthTest {
+		switch opts.DepthTest {
 		case NeverDepthTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.NEVER)
@@ -122,14 +110,14 @@ func (state *State) apply() {
 		default:
 			panic("tried to apply a render state with unknown depth test")
 		}
-		currentState.DepthTest = state.DepthTest
+		currentOpts.DepthTest = opts.DepthTest
 	}
 
-	if currentState.BlendSourceFactor != state.BlendSourceFactor || currentState.BlendDestinationFactor != state.BlendDestinationFactor {
+	if currentOpts.BlendSourceFactor != opts.BlendSourceFactor || currentOpts.BlendDestinationFactor != opts.BlendDestinationFactor {
 		var factors [2]BlendFactor
 		var funcs [2]uint32
-		factors[0] = state.BlendSourceFactor
-		factors[1] = state.BlendDestinationFactor
+		factors[0] = opts.BlendSourceFactor
+		factors[1] = opts.BlendDestinationFactor
 		for i := 0; i < 2; i++ {
 			switch factors[i] {
 			case ZeroBlendFactor:
@@ -157,12 +145,12 @@ func (state *State) apply() {
 			}
 		}
 		gl.BlendFunc(funcs[0], funcs[1])
-		currentState.BlendSourceFactor = state.BlendSourceFactor
-		currentState.BlendDestinationFactor = state.BlendDestinationFactor
+		currentOpts.BlendSourceFactor = opts.BlendSourceFactor
+		currentOpts.BlendDestinationFactor = opts.BlendDestinationFactor
 	}
 
-	if currentState.Cull != state.Cull {
-		switch state.Cull {
+	if currentOpts.Cull != opts.Cull {
+		switch opts.Cull {
 		case CullNothing:
 			gl.Disable(gl.CULL_FACE)
 		case CullFront:
@@ -174,11 +162,11 @@ func (state *State) apply() {
 		default:
 			panic("tried to apply a render state with an unknown culling mode")
 		}
-		currentState.Cull = state.Cull
+		currentOpts.Cull = opts.Cull
 	}
 
-	if currentState.TriangleMode != state.TriangleMode {
-		switch state.TriangleMode {
+	if currentOpts.TriangleMode != opts.TriangleMode {
+		switch opts.TriangleMode {
 		case PointTriangleMode:
 			gl.PolygonMode(gl.FRONT_AND_BACK, gl.POINT)
 		case LineTriangleMode:
@@ -188,46 +176,16 @@ func (state *State) apply() {
 		default:
 			panic("tried to apply a render state with an unknown polygonmode")
 		}
-		currentState.TriangleMode = state.TriangleMode
+		currentOpts.TriangleMode = opts.TriangleMode
 	}
-}
-
-func (state *State) Render(vertexCount int) {
-	state.apply()
-
-	if state.Program.indexBuffer == nil {
-		gl.DrawArrays(uint32(state.PrimitiveType), 0, int32(vertexCount))
-	} else {
-		gltype := state.Program.indexBuffer.elementGlType()
-		gl.DrawElements(uint32(state.PrimitiveType), int32(vertexCount), gltype, nil)
-	}
-
-	Stats.DrawCallCount++
-	Stats.VertexCount += vertexCount
-}
-
-func (state *State) RenderOffset(vertexCount, iboOffset, baseVertex int) {
-	state.apply()
-
-	if state.Program.indexBuffer == nil {
-		panic("need index buffer")
-	} else {
-		gltype := state.Program.indexBuffer.elementGlType()
-		byteOffset := iboOffset * state.Program.indexBuffer.ElementSize()
-		gl.DrawElementsBaseVertex(uint32(state.PrimitiveType), int32(vertexCount), gltype, unsafe.Pointer(uintptr(byteOffset)), int32(baseVertex))
-	}
-
-	Stats.DrawCallCount++
-	Stats.VertexCount += vertexCount
 }
 
 func init() {
 	gl.Enable(gl.BLEND)
 
 	// initialize cached state to default OpenGL values TODO: run apply with it?
-	currentState.Program = nil
-	currentState.DepthTest = AlwaysDepthTest
-	currentState.DisableBlending()
-	currentState.Cull = CullNothing
-	currentState.TriangleMode = TriangleTriangleMode
+	currentOpts.DepthTest = AlwaysDepthTest
+	currentOpts.DisableBlending()
+	currentOpts.Cull = CullNothing
+	currentOpts.TriangleMode = TriangleTriangleMode
 }

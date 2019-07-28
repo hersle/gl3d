@@ -8,7 +8,7 @@ import (
 
 type EffectRenderer struct {
 	vbo *graphics.VertexBuffer
-	renderState *graphics.State
+	renderOpts *graphics.RenderOptions
 
 	invProjectionMatrix math.Mat4
 
@@ -58,9 +58,9 @@ func NewEffectRenderer() *EffectRenderer {
 	r.gaussianSp = NewGaussianShaderProgram()
 	r.gaussianSp.position.SetSourceVertex(r.vbo, 0)
 
-	r.renderState = graphics.NewState()
-	r.renderState.PrimitiveType = graphics.Triangle
-	//r.renderState.Framebuffer = r.framebuffer
+	r.renderOpts = graphics.NewRenderOptions()
+	r.renderOpts.PrimitiveType = graphics.Triangle
+	//r.renderOpts.Framebuffer = r.framebuffer
 
 	return &r
 }
@@ -81,28 +81,26 @@ func (r *EffectRenderer) RenderFog(c camera.Camera, depthMap, fogTarget *graphic
 		r.fogSp.camFar.Set(c.Far)
 	}
 
-	r.renderState.BlendDestinationFactor = graphics.OneMinusSourceAlphaBlendFactor
-	r.renderState.BlendSourceFactor = graphics.SourceAlphaBlendFactor
-	r.renderState.Program = r.fogSp.ShaderProgram
+	r.renderOpts.BlendDestinationFactor = graphics.OneMinusSourceAlphaBlendFactor
+	r.renderOpts.BlendSourceFactor = graphics.SourceAlphaBlendFactor
 
-	r.renderState.Render(6)
+	r.fogSp.Render(6, r.renderOpts)
 }
 
 func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D) {
-	r.renderState.DisableBlending()
-	r.renderState.Program = r.gaussianSp.ShaderProgram
+	r.renderOpts.DisableBlending()
 
 	r.gaussianSp.color.Set(extra)
 	r.gaussianSp.inTexture.Set(target)
 	r.gaussianSp.texDim.Set(float32(target.Width()))
 	r.gaussianSp.direction.Set(math.Vec2{1, 0})
-	r.renderState.Render(6)
+	r.gaussianSp.Render(6, r.renderOpts)
 
 	r.gaussianSp.color.Set(target)
 	r.gaussianSp.inTexture.Set(extra)
 	r.gaussianSp.texDim.Set(float32(extra.Height()))
 	r.gaussianSp.direction.Set(math.Vec2{0, 1})
-	r.renderState.Render(6)
+	r.gaussianSp.Render(6, r.renderOpts)
 }
 
 func NewFogShaderProgram() *FogShaderProgram {

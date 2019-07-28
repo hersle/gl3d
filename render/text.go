@@ -22,7 +22,7 @@ type TextRenderer struct {
 	tex         *graphics.Texture2D
 	vbo         *graphics.VertexBuffer
 	ibo         *graphics.IndexBuffer
-	renderState *graphics.State
+	renderOpts  *graphics.RenderOptions
 }
 
 func NewTextShaderProgram() *TextShaderProgram {
@@ -57,9 +57,8 @@ func NewTextRenderer() *TextRenderer {
 	img := basicfont.Face7x13.Mask
 	r.tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, img, false)
 
-	r.renderState = graphics.NewState()
-	r.renderState.Program = r.sp.ShaderProgram
-	r.renderState.PrimitiveType = graphics.Triangle
+	r.renderOpts = graphics.NewRenderOptions()
+	r.renderOpts.PrimitiveType = graphics.Triangle
 
 	return &r
 }
@@ -135,5 +134,5 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color m
 	r.ibo.SetData(inds, 0)
 	r.SetInputs(r.vbo, r.ibo)
 	r.sp.OutColor.Set(target)
-	r.renderState.Render(len(inds))
+	r.sp.Render(len(inds), r.renderOpts)
 }
