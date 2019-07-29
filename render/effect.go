@@ -84,7 +84,7 @@ func (r *EffectRenderer) RenderFog(c camera.Camera, depthMap, fogTarget *graphic
 	r.renderOpts.BlendDestinationFactor = graphics.OneMinusSourceAlphaBlendFactor
 	r.renderOpts.BlendSourceFactor = graphics.SourceAlphaBlendFactor
 
-	r.fogSp.Render(6, r.renderOpts)
+	r.fogSp.RenderSequential(6, r.renderOpts)
 }
 
 func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D) {
@@ -94,13 +94,13 @@ func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D) {
 	r.gaussianSp.inTexture.Set(target)
 	r.gaussianSp.texDim.Set(float32(target.Width()))
 	r.gaussianSp.direction.Set(math.Vec2{1, 0})
-	r.gaussianSp.Render(6, r.renderOpts)
+	r.gaussianSp.RenderSequential(6, r.renderOpts)
 
 	r.gaussianSp.color.Set(target)
 	r.gaussianSp.inTexture.Set(extra)
 	r.gaussianSp.texDim.Set(float32(extra.Height()))
 	r.gaussianSp.direction.Set(math.Vec2{0, 1})
-	r.gaussianSp.Render(6, r.renderOpts)
+	r.gaussianSp.RenderSequential(6, r.renderOpts)
 }
 
 func NewFogShaderProgram() *FogShaderProgram {

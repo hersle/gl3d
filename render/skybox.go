@@ -108,7 +108,6 @@ func (r *SkyboxRenderer) setSkybox(skybox *scene.CubeMap) {
 
 func (r *SkyboxRenderer) setCube(vbo *graphics.VertexBuffer, ibo *graphics.IndexBuffer) {
 	r.sp.Position.SetSourceVertex(vbo, 0)
-	r.sp.SetInputIndexBuffer(ibo)
 }
 
 func (r *SkyboxRenderer) Render(sb *scene.CubeMap, c camera.Camera, target *graphics.Texture2D) {
@@ -116,5 +115,5 @@ func (r *SkyboxRenderer) Render(sb *scene.CubeMap, c camera.Camera, target *grap
 	r.setCamera(c)
 	r.sp.Color.Set(target)
 
-	r.sp.Render(36, r.renderOpts)
+	r.sp.RenderIndexed(r.ibo, 36, r.renderOpts)
 }

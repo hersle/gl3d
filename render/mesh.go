@@ -22,6 +22,7 @@ type MeshRenderer struct {
 	renderOpts *graphics.RenderOptions
 
 	vboCache map[*object.Vertex]int
+	iboCache map[*object.Vertex]int
 	vbos     []*graphics.VertexBuffer
 	ibos     []*graphics.IndexBuffer
 
@@ -112,6 +113,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.renderOpts = graphics.NewRenderOptions()
 
 	r.vboCache = make(map[*object.Vertex]int)
+	r.iboCache = make(map[*object.Vertex]int)
 	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
 	r.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
 	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
@@ -280,7 +282,8 @@ func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
 		r.setMesh(r.ambientProg, r.pointLightMesh)
 		for _, subMesh := range r.pointLightMesh.SubMeshes {
 			r.setSubMesh(r.ambientProg, subMesh)
-			r.ambientProg.Render(subMesh.Geo.Inds, r.renderOpts)
+			ibo := r.subMeshIndexBuffer(subMesh)
+			r.ambientProg.RenderIndexed(ibo, subMesh.Geo.Inds, r.renderOpts)
 		}
 	}
 
@@ -291,7 +294,8 @@ func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
 		r.setMesh(r.ambientProg, r.spotLightMesh)
 		for _, subMesh := range r.spotLightMesh.SubMeshes {
 			r.setSubMesh(r.ambientProg, subMesh)
-			r.ambientProg.Render(subMesh.Geo.Inds, r.renderOpts)
+			ibo := r.subMeshIndexBuffer(subMesh)
+			r.ambientProg.RenderIndexed(ibo, subMesh.Geo.Inds, r.renderOpts)
 		}
 	}
 }
@@ -328,7 +332,8 @@ func (r *MeshRenderer) renderMeshes(s *scene.Scene, c camera.Camera, sp *MeshSha
 		for _, sm := range m.SubMeshes {
 			if !r.cullCache[j] {
 				r.setSubMesh(sp, sm)
-				sp.Render(sm.Geo.Inds, r.renderOpts)
+				ibo := r.subMeshIndexBuffer(sm)
+				sp.RenderIndexed(ibo, sm.Geo.Inds, r.renderOpts)
 			}
 			j++
 		}
@@ -342,6 +347,34 @@ func (r *MeshRenderer) setCamera(sp *MeshShaderProgram, c camera.Camera) {
 
 func (r *MeshRenderer) setMesh(sp *MeshShaderProgram, m *object.Mesh) {
 	sp.ModelMatrix.Set(m.WorldMatrix())
+}
+
+func (r *MeshRenderer) subMeshVertexBuffer(sm *object.SubMesh) *graphics.VertexBuffer {
+	var vbo *graphics.VertexBuffer
+	i, found := r.vboCache[&sm.Geo.Verts[0]]
+	if found {
+		vbo = r.vbos[i]
+	} else {
+		vbo = graphics.NewVertexBuffer()
+		vbo.SetData(sm.Geo.Verts, 0)
+		r.vbos = append(r.vbos, vbo)
+		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
+	}
+	return vbo
+}
+
+func (r *MeshRenderer) subMeshIndexBuffer(sm *object.SubMesh) *graphics.IndexBuffer {
+	var ibo *graphics.IndexBuffer
+	i, found := r.iboCache[&sm.Geo.Verts[0]]
+	if found {
+		ibo = r.ibos[i]
+	} else {
+		ibo = graphics.NewIndexBuffer()
+		ibo.SetData(sm.Geo.Faces, 0)
+		r.ibos = append(r.ibos, ibo)
+		r.iboCache[&sm.Geo.Verts[0]] = len(r.ibos) - 1
+	}
+	return ibo
 }
 
 func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
@@ -388,29 +421,12 @@ func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	}
 	sp.MaterialBumpMap.Set(tex)
 
-	// upload to GPU
-	var vbo *graphics.VertexBuffer
-	var ibo *graphics.IndexBuffer
-	i, found := r.vboCache[&sm.Geo.Verts[0]]
-	if found {
-		vbo = r.vbos[i]
-		ibo = r.ibos[i]
-	} else {
-		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewIndexBuffer()
-		vbo.SetData(sm.Geo.Verts, 0)
-		ibo.SetData(sm.Geo.Faces, 0)
-
-		r.vbos = append(r.vbos, vbo)
-		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
-	}
+	vbo := r.subMeshVertexBuffer(sm)
 
 	sp.Position.SetSourceVertex(vbo, 0)
 	sp.Normal.SetSourceVertex(vbo, 2)
 	sp.TexCoord.SetSourceVertex(vbo, 1)
 	sp.Tangent.SetSourceVertex(vbo, 3)
-	sp.SetInputIndexBuffer(ibo)
 }
 
 func (r *MeshRenderer) setAmbientLight(sp *MeshShaderProgram, l *light.AmbientLight) {
@@ -501,25 +517,9 @@ func (r *MeshRenderer) setShadowMesh(sp *ShadowMapShaderProgram, m *object.Mesh)
 }
 
 func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapShaderProgram, sm *object.SubMesh) {
-	var vbo *graphics.VertexBuffer
-	var ibo *graphics.IndexBuffer
-	i, found := r.vboCache[&sm.Geo.Verts[0]]
-	if found {
-		vbo = r.vbos[i]
-		ibo = r.ibos[i]
-	} else {
-		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewIndexBuffer()
-		vbo.SetData(sm.Geo.Verts, 0)
-		ibo.SetData(sm.Geo.Faces, 0)
-
-		r.vbos = append(r.vbos, vbo)
-		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
-	}
+	vbo := r.subMeshVertexBuffer(sm)
 
 	sp.Position.SetSourceVertex(vbo, 0)
-	sp.SetInputIndexBuffer(ibo)
 }
 
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {
@@ -597,7 +597,8 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 		for _, subMesh := range m.SubMeshes {
 			r.setShadowSubMesh(r.shadowSp1, subMesh)
 
-			r.shadowSp1.Render(subMesh.Geo.Inds, r.shadowRenderOpts)
+			ibo := r.subMeshIndexBuffer(subMesh)
+			r.shadowSp1.RenderIndexed(ibo, subMesh.Geo.Inds, r.shadowRenderOpts)
 		}
 	}
 
@@ -627,7 +628,8 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 			if !l.PerspectiveCamera.Cull(subMesh) {
 				r.setShadowSubMesh(r.shadowSp2, subMesh)
 
-				r.shadowSp2.Render(subMesh.Geo.Inds, r.shadowRenderOpts)
+				ibo := r.subMeshIndexBuffer(subMesh)
+				r.shadowSp2.RenderIndexed(ibo, subMesh.Geo.Inds, r.shadowRenderOpts)
 			}
 		}
 	}
@@ -658,7 +660,8 @@ func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.
 			if !l.OrthoCamera.Cull(subMesh) {
 				r.setShadowSubMesh(r.shadowSp3, subMesh)
 
-				r.shadowSp3.Render(subMesh.Geo.Inds, r.shadowRenderOpts)
+				ibo := r.subMeshIndexBuffer(subMesh)
+				r.shadowSp3.RenderIndexed(ibo, subMesh.Geo.Inds, r.shadowRenderOpts)
 			}
 		}
 	}

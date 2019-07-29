@@ -96,7 +96,7 @@ func (r *ArrowRenderer) RenderTangents(s *scene.Scene, c camera.Camera, colorTex
 	r.SetPosition(r.vbo)
 	r.sp.OutColor.Set(colorTexture)
 	r.sp.Depth.Set(depthTexture)
-	r.sp.Render(len(r.points), r.renderOpts)
+	r.sp.RenderSequential(len(r.points), r.renderOpts)
 }
 
 func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
@@ -117,7 +117,7 @@ func (r *ArrowRenderer) RenderBitangents(s *scene.Scene, c camera.Camera, colorT
 	r.SetPosition(r.vbo)
 	r.sp.OutColor.Set(colorTexture)
 	r.sp.Depth.Set(depthTexture)
-	r.sp.Render(len(r.points), r.renderOpts)
+	r.sp.RenderSequential(len(r.points), r.renderOpts)
 }
 
 func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
@@ -138,5 +138,5 @@ func (r *ArrowRenderer) RenderNormals(s *scene.Scene, c camera.Camera, colorText
 	r.SetPosition(r.vbo)
 	r.sp.OutColor.Set(colorTexture)
 	r.sp.Depth.Set(depthTexture)
-	r.sp.Render(len(r.points), r.renderOpts)
+	r.sp.RenderSequential(len(r.points), r.renderOpts)
 }
