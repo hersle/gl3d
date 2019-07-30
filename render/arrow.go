@@ -37,7 +37,7 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 		panic(err)
 	}
 
-	sp.Position = sp.Input("position")
+	sp.Position = sp.InputByName("position")
 	sp.ModelMatrix = sp.Uniform("modelMatrix")
 	sp.ViewMatrix = sp.Uniform("viewMatrix")
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")

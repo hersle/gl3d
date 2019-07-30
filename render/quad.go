@@ -29,7 +29,7 @@ func NewQuadShaderProgram() *QuadShaderProgram {
 		panic(err)
 	}
 
-	sp.Position = sp.Input("position")
+	sp.Position = sp.InputByName("position")
 	sp.Texture = sp.Uniform("tex")
 
 	sp.Framebuffer = graphics.DefaultFramebuffer // output to default framebuffer instead

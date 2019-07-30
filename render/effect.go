@@ -114,7 +114,7 @@ func NewFogShaderProgram() *FogShaderProgram {
 		panic(err)
 	}
 
-	sp.position = sp.Input("position")
+	sp.position = sp.InputByName("position")
 	sp.depthMap = sp.Uniform("depthTexture")
 	sp.invProjectionMatrix = sp.Uniform("invProjectionMatrix")
 	sp.camFar = sp.Uniform("cameraFar")
@@ -134,7 +134,7 @@ func NewGaussianShaderProgram() *GaussianShaderProgram {
 		panic(err)
 	}
 
-	sp.position = sp.Input("position")
+	sp.position = sp.InputByName("position")
 	sp.inTexture = sp.Uniform("inTexture")
 	sp.direction = sp.Uniform("dir")
 	sp.texDim = sp.Uniform("texDim")

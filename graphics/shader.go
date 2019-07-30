@@ -24,6 +24,9 @@ type ShaderProgram struct {
 	indexBuffer *IndexBuffer
 
 	Framebuffer *Framebuffer
+
+	inputsByLocation map[int]*Input
+	inputLocationsByName map[string]int
 }
 
 type Shader struct {
@@ -32,7 +35,7 @@ type Shader struct {
 
 type Input struct {
 	prog        *ShaderProgram
-	id          int
+	location    int
 	nComponents int
 
 	glType uint32
@@ -153,6 +156,39 @@ func NewShaderProgram(shaders ...*Shader) (*ShaderProgram, error) {
 
 	p.Framebuffer = NewFramebuffer()
 
+	p.inputsByLocation = make(map[int]*Input)
+	p.inputLocationsByName = make(map[string]int)
+
+	for i := 0; i < p.inputCount(); i++ {
+		var size int32
+		var type_ uint32
+		var bytes [100]byte
+		var namelength int32
+		gl.GetActiveAttrib(uint32(p.id), uint32(i), 95, &namelength, &size, &type_, &bytes[0])
+		name := string(bytes[:namelength])
+		location := gl.GetAttribLocation(uint32(p.id), gl.Str(name+"\x00"))
+
+		var in Input
+		in.location = int(location)
+		in.prog = &p
+
+		switch type_ {
+		case gl.FLOAT:
+			in.nComponents = 1
+		case gl.FLOAT_VEC2:
+			in.nComponents = 2
+		case gl.FLOAT_VEC3:
+			in.nComponents = 3
+		case gl.FLOAT_VEC4:
+			in.nComponents = 4
+		default:
+			panic("unrecognized attribute GL type")
+		}
+
+		p.inputsByLocation[in.location] = &in
+		p.inputLocationsByName[name] = in.location
+	}
+
 	return &p, err
 }
 
@@ -183,6 +219,12 @@ func ReadShaderProgram(vFile, fFile, gFile string, defines ...string) (*ShaderPr
 	}
 
 	return NewShaderProgram(shaders...)
+}
+
+func (p *ShaderProgram) inputCount() int {
+	var count int32
+	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_ATTRIBUTES, &count)
+	return int(count)
 }
 
 func (p *ShaderProgram) linked() bool {
@@ -279,16 +321,16 @@ func (in *Input) SetSourceRaw(b *Buffer, offset, stride int, type_ int, normaliz
 	}
 
 	if !in.enabled || uint32(type_) != in.glType || normalize != in.normalize {
-		gl.VertexArrayAttribFormat(uint32(in.prog.vaid), uint32(in.id), int32(in.nComponents), uint32(type_), normalize, 0)
+		gl.VertexArrayAttribFormat(uint32(in.prog.vaid), uint32(in.location), int32(in.nComponents), uint32(type_), normalize, 0)
 		in.glType = uint32(type_)
 		in.normalize = normalize
 	}
 
-	gl.VertexArrayVertexBuffer(uint32(in.prog.vaid), uint32(in.id), uint32(b.id), offset, int32(stride))
+	gl.VertexArrayVertexBuffer(uint32(in.prog.vaid), uint32(in.location), uint32(b.id), offset, int32(stride))
 
 	if !in.enabled {
-		gl.VertexArrayAttribBinding(uint32(in.prog.vaid), uint32(in.id), uint32(in.id))
-		gl.EnableVertexArrayAttrib(uint32(in.prog.vaid), uint32(in.id))
+		gl.VertexArrayAttribBinding(uint32(in.prog.vaid), uint32(in.location), uint32(in.location))
+		gl.EnableVertexArrayAttrib(uint32(in.prog.vaid), uint32(in.location))
 		in.enabled = true
 	}
 }
@@ -313,33 +355,19 @@ func (p *ShaderProgram) bind() {
 	currentProg = p
 }
 
-func (p *ShaderProgram) Input(name string) *Input {
-	var in Input
-	loc := gl.GetAttribLocation(uint32(p.id), gl.Str(name+"\x00"))
-	if loc == -1 {
+func (p *ShaderProgram) InputByLocation(location int) *Input {
+	if location == -1 {
 		return nil
 	}
-	in.id = int(loc)
-	in.prog = p
+	return p.inputsByLocation[location]
+}
 
-	var size int32
-	var typ uint32
-	gl.GetActiveAttrib(uint32(in.prog.id), uint32(in.id), 0, nil, &size, &typ, nil)
-
-	switch typ {
-	case gl.FLOAT:
-		in.nComponents = 1
-	case gl.FLOAT_VEC2:
-		in.nComponents = 2
-	case gl.FLOAT_VEC3:
-		in.nComponents = 3
-	case gl.FLOAT_VEC4:
-		in.nComponents = 4
-	default:
-		panic("unrecognized attribute GL type")
+func (p *ShaderProgram) InputByName(name string) *Input {
+	location, found := p.inputLocationsByName[name]
+	if !found {
+		return nil
 	}
-
-	return &in
+	return p.InputByLocation(location)
 }
 
 func (p *ShaderProgram) OutputColor(name string) *Output {

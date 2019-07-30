@@ -145,10 +145,10 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 		panic(err)
 	}
 
-	sp.Position = sp.Input("position")
-	sp.TexCoord = sp.Input("texCoordV")
-	sp.Normal = sp.Input("normalV")
-	sp.Tangent = sp.Input("tangentV")
+	sp.Position = sp.InputByName("position")
+	sp.TexCoord = sp.InputByName("texCoordV")
+	sp.Normal = sp.InputByName("normalV")
+	sp.Tangent = sp.InputByName("tangentV")
 
 	sp.Color = sp.OutputColor("fragColor")
 	sp.Depth = sp.OutputDepth()
@@ -199,7 +199,7 @@ func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
 	sp.LightPosition = sp.Uniform("lightPosition")
 	sp.LightFar = sp.Uniform("far")
-	sp.Position = sp.Input("position")
+	sp.Position = sp.InputByName("position")
 
 	sp.ProjViewMats = make([]*graphics.Uniform, 6)
 	for i := 0; i < 6; i++ {

@@ -37,9 +37,9 @@ func NewTextShaderProgram() *TextShaderProgram {
 	}
 
 	sp.Atlas = sp.Uniform("fontAtlas")
-	sp.Position = sp.Input("position")
-	sp.TexCoord = sp.Input("texCoordV")
-	sp.Color = sp.Input("colorV")
+	sp.Position = sp.InputByName("position")
+	sp.TexCoord = sp.InputByName("texCoordV")
+	sp.Color = sp.InputByName("colorV")
 
 	sp.OutColor = sp.OutputColor("fragColor")
 
