@@ -70,7 +70,7 @@ func (r *TextRenderer) SetAtlas(tex *graphics.Texture2D) {
 func (r *TextRenderer) SetInputs(vbo *graphics.VertexBuffer, ibo *graphics.IndexBuffer) {
 	r.sp.Position.SetSourceVertex(vbo, 0)
 	r.sp.TexCoord.SetSourceVertex(vbo, 1)
-	r.sp.SetInputIndexBuffer(ibo)
+	r.sp.SetIndices(ibo)
 	r.sp.Color.SetSourceVertex(vbo, 2) // normal TODO: don't abuse normal
 }
 

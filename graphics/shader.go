@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"strings"
 	"strconv"
-	"unsafe"
 )
 
 type ShaderType int
@@ -226,24 +225,6 @@ func (p *ShaderProgram) Render(vertexCount int, opts *RenderOptions) {
 	Stats.VertexCount += vertexCount
 }
 
-func (p *ShaderProgram) RenderOffset(vertexCount, iboOffset, baseVertex int, opts *RenderOptions) {
-	if currentProg != p {
-		p.bind()
-	}
-	opts.apply()
-
-	if p.indexBuffer == nil {
-		panic("need index buffer")
-	} else {
-		gltype := p.indexBuffer.elementGlType()
-		byteOffset := iboOffset * p.indexBuffer.ElementSize()
-		gl.DrawElementsBaseVertex(uint32(opts.PrimitiveType), int32(vertexCount), gltype, unsafe.Pointer(uintptr(byteOffset)), int32(baseVertex))
-	}
-
-	Stats.DrawCallCount++
-	Stats.VertexCount += vertexCount
-}
-
 func (u *Uniform) Set(value interface{}) {
 	if u == nil {
 		return
@@ -318,7 +299,7 @@ func (in *Input) SetSourceVertex(b *VertexBuffer, i int) {
 	in.SetSourceRaw(&b.Buffer, offset, stride, gl.FLOAT, false)
 }
 
-func (p *ShaderProgram) SetInputIndexBuffer(b *IndexBuffer) {
+func (p *ShaderProgram) SetIndices(b *IndexBuffer) {
 	gl.VertexArrayElementBuffer(uint32(p.vaid), uint32(b.id))
 	p.indexBuffer = b
 }

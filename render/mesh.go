@@ -410,7 +410,7 @@ func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	sp.Normal.SetSourceVertex(vbo, 2)
 	sp.TexCoord.SetSourceVertex(vbo, 1)
 	sp.Tangent.SetSourceVertex(vbo, 3)
-	sp.SetInputIndexBuffer(ibo)
+	sp.SetIndices(ibo)
 }
 
 func (r *MeshRenderer) setAmbientLight(sp *MeshShaderProgram, l *light.AmbientLight) {
@@ -519,7 +519,7 @@ func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapShaderProgram, sm *object.S
 	}
 
 	sp.Position.SetSourceVertex(vbo, 0)
-	sp.SetInputIndexBuffer(ibo)
+	sp.SetIndices(ibo)
 }
 
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {
