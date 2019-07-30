@@ -7,8 +7,8 @@ import (
 	"golang.org/x/image/font/basicfont"
 )
 
-type TextShaderProgram struct {
-	*graphics.ShaderProgram
+type TextProgram struct {
+	*graphics.Program
 	Atlas    *graphics.Uniform
 	Position *graphics.Input
 	TexCoord *graphics.Input
@@ -18,7 +18,7 @@ type TextShaderProgram struct {
 }
 
 type TextRenderer struct {
-	sp          *TextShaderProgram
+	sp          *TextProgram
 	tex         *graphics.Texture2D
 	vbo         *graphics.VertexBuffer
 	ibo         *graphics.IndexBuffer
@@ -34,16 +34,12 @@ const (
 	TopLeft
 )
 
-func NewTextShaderProgram() *TextShaderProgram {
-	var sp TextShaderProgram
-	var err error
+func NewTextProgram() *TextProgram {
+	var sp TextProgram
 
 	vShaderFilename := "render/shaders/textvshader.glsl" // TODO: make independent from executable directory
 	fShaderFilename := "render/shaders/textfshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vShaderFilename, fShaderFilename, "")
 
 	sp.Atlas = sp.UniformByName("fontAtlas")
 	sp.Position = sp.InputByName("position")
@@ -58,7 +54,7 @@ func NewTextShaderProgram() *TextShaderProgram {
 func NewTextRenderer() *TextRenderer {
 	var r TextRenderer
 
-	r.sp = NewTextShaderProgram()
+	r.sp = NewTextProgram()
 
 	r.vbo = graphics.NewVertexBuffer()
 	r.ibo = graphics.NewIndexBuffer()

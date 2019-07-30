@@ -9,14 +9,14 @@ import (
 )
 
 type ArrowRenderer struct {
-	sp          *ArrowShaderProgram
+	sp          *ArrowProgram
 	points      []math.Vec3
 	vbo         *graphics.VertexBuffer
 	renderOpts  *graphics.RenderOptions
 }
 
-type ArrowShaderProgram struct {
-	*graphics.ShaderProgram
+type ArrowProgram struct {
+	*graphics.Program
 	ModelMatrix      *graphics.Uniform
 	ViewMatrix       *graphics.Uniform
 	ProjectionMatrix *graphics.Uniform
@@ -26,16 +26,12 @@ type ArrowShaderProgram struct {
 	Depth            *graphics.Output
 }
 
-func NewArrowShaderProgram() *ArrowShaderProgram {
-	var sp ArrowShaderProgram
-	var err error
+func NewArrowProgram() *ArrowProgram {
+	var sp ArrowProgram
 
 	vFile := "render/shaders/arrowvshader.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/arrowfshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "")
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vFile, fFile, "")
 
 	sp.Position = sp.InputByName("position")
 	sp.ModelMatrix = sp.UniformByName("modelMatrix")
@@ -51,7 +47,7 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 func NewArrowRenderer() *ArrowRenderer {
 	var r ArrowRenderer
 
-	r.sp = NewArrowShaderProgram()
+	r.sp = NewArrowProgram()
 
 	r.renderOpts = graphics.NewRenderOptions()
 	r.renderOpts.PrimitiveType = graphics.Line

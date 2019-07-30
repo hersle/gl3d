@@ -20,10 +20,10 @@ var blackTexture *graphics.Texture2D
 var whiteCubeMap *graphics.CubeMap
 
 type MeshRenderer struct {
-	ambientProg *MeshShaderProgram
-	pointLitProg *MeshShaderProgram
-	spotLitProg *MeshShaderProgram
-	dirLitProg *MeshShaderProgram
+	ambientProg *MeshProgram
+	pointLitProg *MeshProgram
+	spotLitProg *MeshProgram
+	dirLitProg *MeshProgram
 
 	renderOpts *graphics.RenderOptions
 
@@ -37,9 +37,9 @@ type MeshRenderer struct {
 	spotLightShadowMaps  map[int]*graphics.Texture2D
 	dirLightShadowMaps   map[int]*graphics.Texture2D
 
-	shadowSp1             *ShadowMapShaderProgram
-	shadowSp2             *ShadowMapShaderProgram
-	shadowSp3             *ShadowMapShaderProgram
+	shadowSp1             *ShadowMapProgram
+	shadowSp2             *ShadowMapProgram
+	shadowSp3             *ShadowMapProgram
 	shadowRenderOpts      *graphics.RenderOptions
 
 	shadowProjViewMat math.Mat4
@@ -62,8 +62,8 @@ type MeshRenderer struct {
 	Wireframe bool
 }
 
-type MeshShaderProgram struct {
-	*graphics.ShaderProgram
+type MeshProgram struct {
+	*graphics.Program
 
 	Position *graphics.Input
 	TexCoord *graphics.Input
@@ -101,8 +101,8 @@ type MeshShaderProgram struct {
 	ShadowKernelSize       *graphics.Uniform
 }
 
-type ShadowMapShaderProgram struct {
-	*graphics.ShaderProgram
+type ShadowMapProgram struct {
+	*graphics.Program
 
 	Position         *graphics.Input
 
@@ -121,10 +121,10 @@ type ShadowMapShaderProgram struct {
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
-	r.ambientProg = NewMeshShaderProgram("DEPTH", "AMBIENT")
-	r.pointLitProg = NewMeshShaderProgram("POINT", "SHADOW", "PCF")
-	r.spotLitProg = NewMeshShaderProgram("SPOT", "SHADOW", "PCF")
-	r.dirLitProg = NewMeshShaderProgram("DIR", "SHADOW", "PCF")
+	r.ambientProg = NewMeshProgram("DEPTH", "AMBIENT")
+	r.pointLitProg = NewMeshProgram("POINT", "SHADOW", "PCF")
+	r.spotLitProg = NewMeshProgram("SPOT", "SHADOW", "PCF")
+	r.dirLitProg = NewMeshProgram("DIR", "SHADOW", "PCF")
 
 	r.renderOpts = graphics.NewRenderOptions()
 
@@ -134,9 +134,9 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
 	r.tex2ds = make(map[image.Image]*graphics.Texture2D)
 
-	r.shadowSp1 = NewShadowMapShaderProgram("POINT") // point light
-	r.shadowSp2 = NewShadowMapShaderProgram("SPOT") // spot light
-	r.shadowSp3 = NewShadowMapShaderProgram("DIR") // directional light
+	r.shadowSp1 = NewShadowMapProgram("POINT") // point light
+	r.shadowSp2 = NewShadowMapProgram("SPOT") // spot light
+	r.shadowSp3 = NewShadowMapProgram("DIR") // directional light
 
 	r.shadowRenderOpts = graphics.NewRenderOptions()
 
@@ -158,16 +158,12 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	return &r, nil
 }
 
-func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
-	var sp MeshShaderProgram
-	var err error
+func NewMeshProgram(defines ...string) *MeshProgram {
+	var sp MeshProgram
 
 	vFile := "render/shaders/meshvshadertemplate.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/meshfshadertemplate.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "", defines...)
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vFile, fFile, "", defines...)
 
 	sp.Position = sp.InputByName("position")
 	sp.TexCoord = sp.InputByName("texCoordV")
@@ -207,17 +203,13 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	return &sp
 }
 
-func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
-	var sp ShadowMapShaderProgram
-	var err error
+func NewShadowMapProgram(defines ...string) *ShadowMapProgram {
+	var sp ShadowMapProgram
 
 	vFile := "render/shaders/shadowmapvshadertemplate.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/shadowmapfshadertemplate.glsl" // TODO: make independent from executable directory
 	gFile := "render/shaders/shadowmapgshadertemplate.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, gFile, defines...)
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vFile, fFile, gFile, defines...)
 
 	sp.ModelMatrix = sp.UniformByName("modelMatrix")
 	sp.ViewMatrix = sp.UniformByName("viewMatrix")
@@ -355,7 +347,7 @@ func (r *MeshRenderer) lightPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *MeshRenderer) renderMeshes(s *scene.Scene, c camera.Camera, sp *MeshShaderProgram) {
+func (r *MeshRenderer) renderMeshes(s *scene.Scene, c camera.Camera, sp *MeshProgram) {
 	j := 0
 	for i, m := range s.Meshes {
 		r.setMesh(sp, m)
@@ -370,16 +362,16 @@ func (r *MeshRenderer) renderMeshes(s *scene.Scene, c camera.Camera, sp *MeshSha
 	}
 }
 
-func (r *MeshRenderer) setCamera(sp *MeshShaderProgram, c camera.Camera) {
+func (r *MeshRenderer) setCamera(sp *MeshProgram, c camera.Camera) {
 	sp.ViewMatrix.Set(c.ViewMatrix())
 	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 }
 
-func (r *MeshRenderer) setMesh(sp *MeshShaderProgram, m *object.Mesh) {
+func (r *MeshRenderer) setMesh(sp *MeshProgram, m *object.Mesh) {
 	sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
+func (r *MeshRenderer) setSubMesh(sp *MeshProgram, sm *object.SubMesh) {
 	mtl := sm.Mtl
 
 	if r.MaterialAmbientEnabled {
@@ -472,11 +464,11 @@ func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	sp.SetIndices(ibo)
 }
 
-func (r *MeshRenderer) setAmbientLight(sp *MeshShaderProgram, l *light.AmbientLight) {
+func (r *MeshRenderer) setAmbientLight(sp *MeshProgram, l *light.AmbientLight) {
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 }
 
-func (r *MeshRenderer) setPointLight(sp *MeshShaderProgram, l *light.PointLight) {
+func (r *MeshRenderer) setPointLight(sp *MeshProgram, l *light.PointLight) {
 	sp.LightPosition.Set(l.Position)
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	if r.ShadowsEnabled && l.CastShadows {
@@ -493,7 +485,7 @@ func (r *MeshRenderer) setPointLight(sp *MeshShaderProgram, l *light.PointLight)
 	sp.LightAttenuation.Set(l.Attenuation)
 }
 
-func (r *MeshRenderer) setSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
+func (r *MeshRenderer) setSpotLight(sp *MeshProgram, l *light.SpotLight) {
 	sp.LightPosition.Set(l.Position)
 	sp.LightDirection.Set(l.Forward())
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
@@ -517,7 +509,7 @@ func (r *MeshRenderer) setSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 	}
 }
 
-func (r *MeshRenderer) setDirectionalLight(sp *MeshShaderProgram, l *light.DirectionalLight) {
+func (r *MeshRenderer) setDirectionalLight(sp *MeshProgram, l *light.DirectionalLight) {
 	sp.LightDirection.Set(l.Forward())
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	sp.LightAttenuation.Set(float32(0))
@@ -548,7 +540,7 @@ func (r *MeshRenderer) SetWireframe(wireframe bool) {
 
 // shadow stuff below
 
-func (r *MeshRenderer) setShadowCamera(sp *ShadowMapShaderProgram, c camera.Camera) {
+func (r *MeshRenderer) setShadowCamera(sp *ShadowMapProgram, c camera.Camera) {
 	sp.ViewMatrix.Set(c.ViewMatrix())
 	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 
@@ -564,11 +556,11 @@ func (r *MeshRenderer) setShadowCamera(sp *ShadowMapShaderProgram, c camera.Came
 	}
 }
 
-func (r *MeshRenderer) setShadowMesh(sp *ShadowMapShaderProgram, m *object.Mesh) {
+func (r *MeshRenderer) setShadowMesh(sp *ShadowMapProgram, m *object.Mesh) {
 	sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapShaderProgram, sm *object.SubMesh) {
+func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapProgram, sm *object.SubMesh) {
 	var vbo *graphics.VertexBuffer
 	var ibo *graphics.IndexBuffer
 	i, found := r.vboCache[&sm.Geo.Verts[0]]

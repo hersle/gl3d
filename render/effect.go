@@ -12,13 +12,13 @@ type EffectRenderer struct {
 
 	invProjectionMatrix math.Mat4
 
-	fogSp *FogShaderProgram
+	fogSp *FogProgram
 
-	gaussianSp *GaussianShaderProgram
+	gaussianSp *GaussianProgram
 }
 
-type FogShaderProgram struct {
-	*graphics.ShaderProgram
+type FogProgram struct {
+	*graphics.Program
 
 	position *graphics.Input
 	depthMap *graphics.Uniform
@@ -28,8 +28,8 @@ type FogShaderProgram struct {
 	color *graphics.Output
 }
 
-type GaussianShaderProgram struct {
-	*graphics.ShaderProgram
+type GaussianProgram struct {
+	*graphics.Program
 
 	position *graphics.Input
 	inTexture *graphics.Uniform
@@ -52,10 +52,10 @@ func NewEffectRenderer() *EffectRenderer {
 		math.Vec2{-1.0, +1.0},
 	}, 0)
 
-	r.fogSp = NewFogShaderProgram()
+	r.fogSp = NewFogProgram()
 	r.fogSp.position.SetSourceVertex(r.vbo, 0)
 
-	r.gaussianSp = NewGaussianShaderProgram()
+	r.gaussianSp = NewGaussianProgram()
 	r.gaussianSp.position.SetSourceVertex(r.vbo, 0)
 
 	r.renderOpts = graphics.NewRenderOptions()
@@ -104,16 +104,12 @@ func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D, s
 	r.gaussianSp.Render(6, r.renderOpts)
 }
 
-func NewFogShaderProgram() *FogShaderProgram {
-	var sp FogShaderProgram
-	var err error
+func NewFogProgram() *FogProgram {
+	var sp FogProgram
 
 	vFile := "render/shaders/fogvshader.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/fogfshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "")
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vFile, fFile, "")
 
 	sp.position = sp.InputByName("position")
 	sp.depthMap = sp.UniformByName("depthTexture")
@@ -124,16 +120,12 @@ func NewFogShaderProgram() *FogShaderProgram {
 	return &sp
 }
 
-func NewGaussianShaderProgram() *GaussianShaderProgram {
-	var sp GaussianShaderProgram
-	var err error
+func NewGaussianProgram() *GaussianProgram {
+	var sp GaussianProgram
 
 	vFile := "render/shaders/gaussianvshader.glsl" // TODO: make independent from executable directory
 	fFile := "render/shaders/gaussianfshader.glsl" // TODO: make independent from executable directory
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vFile, fFile, "")
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vFile, fFile, "")
 
 	sp.position = sp.InputByName("position")
 	sp.inTexture = sp.UniformByName("inTexture")

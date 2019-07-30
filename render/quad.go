@@ -5,29 +5,25 @@ import (
 	"github.com/hersle/gl3d/math"
 )
 
-type QuadShaderProgram struct {
-	*graphics.ShaderProgram
+type QuadProgram struct {
+	*graphics.Program
 	Position *graphics.Input
 	Texture  *graphics.Uniform
 }
 
 type QuadRenderer struct {
-	sp          *QuadShaderProgram
+	sp          *QuadProgram
 	vbo         *graphics.VertexBuffer
 	tex         *graphics.Texture2D
 	renderOpts  *graphics.RenderOptions
 }
 
-func NewQuadShaderProgram() *QuadShaderProgram {
-	var sp QuadShaderProgram
-	var err error
+func NewQuadProgram() *QuadProgram {
+	var sp QuadProgram
 
 	vShaderFilename := "render/shaders/quadvshader.glsl" // TODO: make independent...
 	fShaderFilename := "render/shaders/quadfshader.glsl" // TODO: make independent...
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vShaderFilename, fShaderFilename, "")
 
 	sp.Position = sp.InputByName("position")
 	sp.Texture = sp.UniformByName("tex")
@@ -40,7 +36,7 @@ func NewQuadShaderProgram() *QuadShaderProgram {
 func NewQuadRenderer() *QuadRenderer {
 	var r QuadRenderer
 
-	r.sp = NewQuadShaderProgram()
+	r.sp = NewQuadProgram()
 
 	verts := []math.Vec2{
 		math.Vec2{-1.0, -1.0},

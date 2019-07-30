@@ -7,23 +7,23 @@ import (
 	"log"
 )
 
-type Buffer struct {
+type buffer struct {
 	id   int
 	size int
 }
 
 type VertexBuffer struct {
-	Buffer
+	buffer
 	vertex reflect.Type
 }
 
 type IndexBuffer struct {
-	Buffer
+	buffer
 	index reflect.Type
 }
 
-func NewBuffer() *Buffer {
-	var b Buffer
+func newBuffer() *buffer {
+	var b buffer
 	var id uint32
 	gl.CreateBuffers(1, &id)
 	b.id = int(id)
@@ -31,11 +31,11 @@ func NewBuffer() *Buffer {
 	return &b
 }
 
-func (b *Buffer) Size() int {
+func (b *buffer) Size() int {
 	return b.size
 }
 
-func (b *Buffer) Bytes(i, j int) []byte {
+func (b *buffer) Bytes(i, j int) []byte {
 	if b.size == 0 {
 		return nil
 	}
@@ -50,12 +50,12 @@ func (b *Buffer) Bytes(i, j int) []byte {
 	return bytes
 }
 
-func (b *Buffer) Allocate(size int) {
+func (b *buffer) Allocate(size int) {
 	b.size = size
 	gl.NamedBufferData(uint32(b.id), b.size, nil, gl.STREAM_DRAW)
 }
 
-func (b *Buffer) Reallocate(size int) {
+func (b *buffer) Reallocate(size int) {
 	log.Print("reallocating buffer from ", b.size, " to ", size, " bytes")
 	if size < b.size {
 		return
@@ -78,12 +78,12 @@ func byteSlice(data interface{}) []byte {
 	return bytes
 }
 
-func (b *Buffer) SetData(data interface{}, byteOffset int) {
+func (b *buffer) SetData(data interface{}, byteOffset int) {
 	bytes := byteSlice(data)
 	b.SetBytes(bytes, byteOffset)
 }
 
-func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
+func (b *buffer) SetBytes(bytes []byte, byteOffset int) {
 	if len(bytes) == 0 {
 		return
 	}
@@ -98,13 +98,13 @@ func (b *Buffer) SetBytes(bytes []byte, byteOffset int) {
 
 func NewVertexBuffer() *VertexBuffer {
 	var b VertexBuffer
-	b.Buffer = *NewBuffer()
+	b.buffer = *newBuffer()
 	return &b
 }
 
 func (b *VertexBuffer) SetData(data interface{}, byteOffset int) {
 	b.vertex = reflect.TypeOf(data).Elem()
-	b.Buffer.SetData(data, byteOffset)
+	b.buffer.SetData(data, byteOffset)
 }
 
 func (b *VertexBuffer) Offset(i int) int {
@@ -128,13 +128,13 @@ func (b *VertexBuffer) ElementSize() int {
 
 func NewIndexBuffer() *IndexBuffer {
 	var b IndexBuffer
-	b.Buffer = *NewBuffer()
+	b.buffer = *newBuffer()
 	return &b
 }
 
 func (b *IndexBuffer) SetData(data interface{}, byteOffset int) {
 	b.index = reflect.TypeOf(data).Elem()
-	b.Buffer.SetData(data, byteOffset)
+	b.buffer.SetData(data, byteOffset)
 }
 
 func (b *IndexBuffer) elementGlType() uint32 {

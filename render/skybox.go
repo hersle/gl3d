@@ -7,8 +7,8 @@ import (
 	"github.com/hersle/gl3d/scene"
 )
 
-type SkyboxShaderProgram struct {
-	*graphics.ShaderProgram
+type SkyboxProgram struct {
+	*graphics.Program
 	ViewMatrix       *graphics.Uniform
 	ProjectionMatrix *graphics.Uniform
 	CubeMap          *graphics.Uniform
@@ -17,7 +17,7 @@ type SkyboxShaderProgram struct {
 }
 
 type SkyboxRenderer struct {
-	sp          *SkyboxShaderProgram
+	sp          *SkyboxProgram
 	vbo         *graphics.VertexBuffer
 	ibo         *graphics.IndexBuffer
 	tex         *graphics.CubeMap
@@ -25,17 +25,13 @@ type SkyboxRenderer struct {
 	cubemaps    map[*scene.CubeMap]*graphics.CubeMap
 }
 
-func NewSkyboxShaderProgram() *SkyboxShaderProgram {
-	var sp SkyboxShaderProgram
-	var err error
+func NewSkyboxProgram() *SkyboxProgram {
+	var sp SkyboxProgram
 
 	vShaderFilename := "render/shaders/skyboxvshader.glsl" // TODO: make independent from executable directory
 	fShaderFilename := "render/shaders/skyboxfshader.glsl" // TODO: make independent from executable directory
 
-	sp.ShaderProgram, err = graphics.ReadShaderProgram(vShaderFilename, fShaderFilename, "")
-	if err != nil {
-		panic(err)
-	}
+	sp.Program = graphics.ReadProgram(vShaderFilename, fShaderFilename, "")
 
 	sp.ViewMatrix = sp.UniformByName("viewMatrix")
 	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
@@ -51,7 +47,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 
 	r.cubemaps = make(map[*scene.CubeMap]*graphics.CubeMap)
 
-	r.sp = NewSkyboxShaderProgram()
+	r.sp = NewSkyboxProgram()
 
 	r.vbo = graphics.NewVertexBuffer()
 	verts := []math.Vec3{

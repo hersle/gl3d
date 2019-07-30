@@ -29,7 +29,7 @@ type CubeMap struct {
 	levels int
 }
 
-type CubeMapFace struct {
+type cubeMapFace struct {
 	*CubeMap
 	layer CubeMapLayer
 }
@@ -188,7 +188,7 @@ func (t *Texture2D) Clear(rgba math.Vec4) {
 	}
 }
 
-func (cf *CubeMapFace) attachTo(f *Framebuffer) {
+func (cf *cubeMapFace) attachTo(f *Framebuffer) {
 	var glatt uint32
 	switch cf.CubeMap.type_ {
 	case ColorTexture:
@@ -308,17 +308,17 @@ func (t *CubeMap) Clear(rgba math.Vec4) {
 	}
 }
 
-func (c *CubeMap) Face(layer CubeMapLayer) *CubeMapFace {
-	var f CubeMapFace
+func (c *CubeMap) Face(layer CubeMapLayer) *cubeMapFace {
+	var f cubeMapFace
 	f.CubeMap = c
 	f.layer = layer
 	return &f
 }
 
-func (f *CubeMapFace) Width() int {
+func (f *cubeMapFace) Width() int {
 	return f.CubeMap.width
 }
 
-func (f *CubeMapFace) Height() int {
+func (f *cubeMapFace) Height() int {
 	return f.CubeMap.height
 }

@@ -9,15 +9,15 @@ import (
 	"fmt"
 )
 
-type ShaderType int
+type shaderType int
 
 const (
-	VertexShader ShaderType = iota
-	FragmentShader
-	GeometryShader
+	vertexShader shaderType = iota
+	fragmentShader
+	geometryShader
 )
 
-type ShaderProgram struct {
+type Program struct {
 	id int
 
 	vaid int
@@ -32,12 +32,12 @@ type ShaderProgram struct {
 	uniformLocationsByName map[string]int
 }
 
-type Shader struct {
+type shader struct {
 	id int
 }
 
 type Input struct {
-	prog        *ShaderProgram
+	prog        *Program
 	location    int
 	nComponents int
 
@@ -47,7 +47,7 @@ type Input struct {
 }
 
 type Output struct {
-	prog *ShaderProgram
+	prog *Program
 	location int
 }
 
@@ -65,18 +65,18 @@ type vertexArray struct {
 	indexBuffer    *IndexBuffer
 }
 
-var currentProg *ShaderProgram
+var currentProg *Program
 
-func NewShader(type_ ShaderType, src string, defines ...string) (*Shader, error) {
-	var s Shader
+func newShader(type_ shaderType, src string, defines ...string) (*shader, error) {
+	var s shader
 
 	var gltype uint32
 	switch type_ {
-	case VertexShader:
+	case vertexShader:
 		gltype = gl.VERTEX_SHADER
-	case FragmentShader:
+	case fragmentShader:
 		gltype = gl.FRAGMENT_SHADER
-	case GeometryShader:
+	case geometryShader:
 		gltype = gl.GEOMETRY_SHADER
 	default:
 		panic("unknown shader type")
@@ -100,28 +100,28 @@ func NewShader(type_ ShaderType, src string, defines ...string) (*Shader, error)
 	return &s, nil
 }
 
-func ReadShader(type_ ShaderType, file string, defines ...string) (*Shader, error) {
+func readShader(type_ shaderType, file string, defines ...string) (*shader, error) {
 	src, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
-	return NewShader(type_, string(src), defines...)
+	return newShader(type_, string(src), defines...)
 }
 
-func (s *Shader) setSource(src string) {
+func (s *shader) setSource(src string) {
 	cSrc, free := gl.Strs(src)
 	defer free()
 	length := int32(len(src))
 	gl.ShaderSource(uint32(s.id), 1, cSrc, &length)
 }
 
-func (s *Shader) compiled() bool {
+func (s *shader) compiled() bool {
 	var status int32
 	gl.GetShaderiv(uint32(s.id), gl.COMPILE_STATUS, &status)
 	return status == gl.TRUE
 }
 
-func (s *Shader) log() string {
+func (s *shader) log() string {
 	var length int32
 	gl.GetShaderiv(uint32(s.id), gl.INFO_LOG_LENGTH, &length)
 	log := string(make([]byte, length+1))
@@ -130,7 +130,7 @@ func (s *Shader) log() string {
 	return log
 }
 
-func (s *Shader) compile() error {
+func (s *shader) compile() error {
 	gl.CompileShader(uint32(s.id))
 	if s.compiled() {
 		return nil
@@ -139,8 +139,8 @@ func (s *Shader) compile() error {
 	}
 }
 
-func NewShaderProgram(shaders ...*Shader) (*ShaderProgram, error) {
-	var p ShaderProgram
+func newProgram(shaders ...*shader) *Program {
+	var p Program
 	p.id = int(gl.CreateProgram())
 
 	for _, shader := range shaders {
@@ -150,7 +150,7 @@ func NewShaderProgram(shaders ...*Shader) (*ShaderProgram, error) {
 
 	err := p.link()
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
 
 	var id uint32
@@ -229,57 +229,57 @@ func NewShaderProgram(shaders ...*Shader) (*ShaderProgram, error) {
 		}
 	}
 
-	return &p, err
+	return &p
 }
 
-func ReadShaderProgram(vFile, fFile, gFile string, defines ...string) (*ShaderProgram, error) {
-	var shaders []*Shader
+func ReadProgram(vFile, fFile, gFile string, defines ...string) *Program {
+	var shaders []*shader
 
 	if vFile != "" {
-		vShader, err := ReadShader(VertexShader, vFile, defines...)
+		vShader, err := readShader(vertexShader, vFile, defines...)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 		shaders = append(shaders, vShader)
 	}
 	if fFile != "" {
-		fShader, err := ReadShader(FragmentShader, fFile, defines...)
+		fShader, err := readShader(fragmentShader, fFile, defines...)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 		shaders = append(shaders, fShader)
 	}
 
 	if gFile != "" {
-		gShader, err := ReadShader(GeometryShader, gFile, defines...)
+		gShader, err := readShader(geometryShader, gFile, defines...)
 		if err != nil {
-			return nil, err
+			panic(err)
 		}
 		shaders = append(shaders, gShader)
 	}
 
-	return NewShaderProgram(shaders...)
+	return newProgram(shaders...)
 }
 
-func (p *ShaderProgram) inputCount() int {
+func (p *Program) inputCount() int {
 	var count int32
 	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_ATTRIBUTES, &count)
 	return int(count)
 }
 
-func (p *ShaderProgram) uniformCount() int {
+func (p *Program) uniformCount() int {
 	var count int32
 	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_UNIFORMS, &count)
 	return int(count)
 }
 
-func (p *ShaderProgram) linked() bool {
+func (p *Program) linked() bool {
 	var status int32
 	gl.GetProgramiv(uint32(p.id), gl.LINK_STATUS, &status)
 	return status == gl.TRUE
 }
 
-func (p *ShaderProgram) log() string {
+func (p *Program) log() string {
 	var length int32
 	gl.GetProgramiv(uint32(p.id), gl.INFO_LOG_LENGTH, &length)
 	log := string(make([]byte, length+1))
@@ -288,7 +288,7 @@ func (p *ShaderProgram) log() string {
 	return log
 }
 
-func (p *ShaderProgram) link() error {
+func (p *Program) link() error {
 	gl.LinkProgram(uint32(p.id))
 	if p.linked() {
 		return nil
@@ -296,7 +296,7 @@ func (p *ShaderProgram) link() error {
 	return errors.New(p.log())
 }
 
-func (p *ShaderProgram) Render(vertexCount int, opts *RenderOptions) {
+func (p *Program) Render(vertexCount int, opts *RenderOptions) {
 	if currentProg != p {
 		p.bind()
 	}
@@ -361,7 +361,7 @@ func (u *Uniform) Set(value interface{}) {
 	}
 }
 
-func (in *Input) SetSourceRaw(b *Buffer, offset, stride int, type_ int, normalize bool) {
+func (in *Input) setSourceRaw(b *buffer, offset, stride int, type_ int, normalize bool) {
 	if in == nil {
 		return
 	}
@@ -384,15 +384,15 @@ func (in *Input) SetSourceRaw(b *Buffer, offset, stride int, type_ int, normaliz
 func (in *Input) SetSourceVertex(b *VertexBuffer, i int) {
 	offset := b.Offset(i)
 	stride := b.ElementSize()
-	in.SetSourceRaw(&b.Buffer, offset, stride, gl.FLOAT, false)
+	in.setSourceRaw(&b.buffer, offset, stride, gl.FLOAT, false)
 }
 
-func (p *ShaderProgram) SetIndices(b *IndexBuffer) {
+func (p *Program) SetIndices(b *IndexBuffer) {
 	gl.VertexArrayElementBuffer(uint32(p.vaid), uint32(b.id))
 	p.indexBuffer = b
 }
 
-func (p *ShaderProgram) bind() {
+func (p *Program) bind() {
 	gl.UseProgram(uint32(p.id))
 	gl.BindVertexArray(uint32(p.vaid))
 	p.Framebuffer.bindDraw()
@@ -401,14 +401,14 @@ func (p *ShaderProgram) bind() {
 	currentProg = p
 }
 
-func (p *ShaderProgram) InputByLocation(location int) *Input {
+func (p *Program) InputByLocation(location int) *Input {
 	if location == -1 {
 		return nil
 	}
 	return p.inputsByLocation[location]
 }
 
-func (p *ShaderProgram) InputByName(name string) *Input {
+func (p *Program) InputByName(name string) *Input {
 	location, found := p.inputLocationsByName[name]
 	if !found {
 		return nil
@@ -416,7 +416,7 @@ func (p *ShaderProgram) InputByName(name string) *Input {
 	return p.InputByLocation(location)
 }
 
-func (p *ShaderProgram) OutputColorByLocation(location int) *Output {
+func (p *Program) OutputColorByLocation(location int) *Output {
 	if location == -1 {
 		return nil
 	}
@@ -426,7 +426,7 @@ func (p *ShaderProgram) OutputColorByLocation(location int) *Output {
 	return &o
 }
 
-func (p *ShaderProgram) OutputColorByName(name string) *Output {
+func (p *Program) OutputColorByName(name string) *Output {
 	location := int(gl.GetFragDataLocation(uint32(p.id), gl.Str(name+"\x00")))
 	if location == -1 {
 		return nil
@@ -434,7 +434,7 @@ func (p *ShaderProgram) OutputColorByName(name string) *Output {
 	return p.OutputColorByLocation(location)
 }
 
-func (p *ShaderProgram) OutputDepth() *Output {
+func (p *Program) OutputDepth() *Output {
 	var o Output
 	o.location = -2 // special depth output identifier
 	o.prog = p
@@ -447,7 +447,7 @@ func (o *Output) Set(att FramebufferAttachment) {
 
 var textureUnitsUsed int = 0
 
-func (p *ShaderProgram) UniformNames() []string {
+func (p *Program) UniformNames() []string {
 	var c int32
 	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_UNIFORMS, &c)
 	uniformCount := int(c)
@@ -464,7 +464,7 @@ func (p *ShaderProgram) UniformNames() []string {
 	return names
 }
 
-func (p *ShaderProgram) UniformByLocation(location int) *Uniform {
+func (p *Program) UniformByLocation(location int) *Uniform {
 	u, found := p.uniformsByLocation[location]
 	if !found {
 		return nil
@@ -472,7 +472,7 @@ func (p *ShaderProgram) UniformByLocation(location int) *Uniform {
 	return u
 }
 
-func (p *ShaderProgram) UniformByName(name string) *Uniform {
+func (p *Program) UniformByName(name string) *Uniform {
 	location, found := p.uniformLocationsByName[name]
 	if !found {
 		return nil
