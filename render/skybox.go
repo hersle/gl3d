@@ -41,7 +41,7 @@ func NewSkyboxShaderProgram() *SkyboxShaderProgram {
 	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
 	sp.CubeMap = sp.UniformByName("cubeMap")
 	sp.Position = sp.InputByName("positionV")
-	sp.Color = sp.OutputColor("fragColor")
+	sp.Color = sp.OutputColorByName("fragColor")
 
 	return &sp
 }

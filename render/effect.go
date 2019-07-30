@@ -118,7 +118,7 @@ func NewFogShaderProgram() *FogShaderProgram {
 	sp.depthMap = sp.UniformByName("depthTexture")
 	sp.invProjectionMatrix = sp.UniformByName("invProjectionMatrix")
 	sp.camFar = sp.UniformByName("cameraFar")
-	sp.color = sp.OutputColor("fragColor")
+	sp.color = sp.OutputColorByName("fragColor")
 
 	return &sp
 }
@@ -138,7 +138,7 @@ func NewGaussianShaderProgram() *GaussianShaderProgram {
 	sp.inTexture = sp.UniformByName("inTexture")
 	sp.direction = sp.UniformByName("dir")
 	sp.texDim = sp.UniformByName("texDim")
-	sp.color = sp.OutputColor("fragColor")
+	sp.color = sp.OutputColorByName("fragColor")
 
 	return &sp
 }

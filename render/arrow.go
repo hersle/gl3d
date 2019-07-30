@@ -42,7 +42,7 @@ func NewArrowShaderProgram() *ArrowShaderProgram {
 	sp.ViewMatrix = sp.UniformByName("viewMatrix")
 	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
 	sp.Color = sp.UniformByName("color")
-	sp.OutColor = sp.OutputColor("fragColor")
+	sp.OutColor = sp.OutputColorByName("fragColor")
 	sp.Depth = sp.OutputDepth()
 
 	return &sp

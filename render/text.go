@@ -41,7 +41,7 @@ func NewTextShaderProgram() *TextShaderProgram {
 	sp.TexCoord = sp.InputByName("texCoordV")
 	sp.Color = sp.InputByName("colorV")
 
-	sp.OutColor = sp.OutputColor("fragColor")
+	sp.OutColor = sp.OutputColorByName("fragColor")
 
 	return &sp
 }

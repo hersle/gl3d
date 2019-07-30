@@ -48,7 +48,7 @@ type Input struct {
 
 type Output struct {
 	prog *ShaderProgram
-	id int
+	location int
 }
 
 // TODO: store value, have Set() function and make "Uniform" an interface?
@@ -416,20 +416,27 @@ func (p *ShaderProgram) InputByName(name string) *Input {
 	return p.InputByLocation(location)
 }
 
-func (p *ShaderProgram) OutputColor(name string) *Output {
-	var o Output
-	loc := gl.GetFragDataLocation(uint32(p.id), gl.Str(name+"\x00"))
-	if loc == -1 {
+func (p *ShaderProgram) OutputColorByLocation(location int) *Output {
+	if location == -1 {
 		return nil
 	}
-	o.id = int(loc)
+	var o Output
+	o.location = location
 	o.prog = p
 	return &o
 }
 
+func (p *ShaderProgram) OutputColorByName(name string) *Output {
+	location := int(gl.GetFragDataLocation(uint32(p.id), gl.Str(name+"\x00")))
+	if location == -1 {
+		return nil
+	}
+	return p.OutputColorByLocation(location)
+}
+
 func (p *ShaderProgram) OutputDepth() *Output {
 	var o Output
-	o.id = -2 // special depth output identifier
+	o.location = -2 // special depth output identifier
 	o.prog = p
 	return &o
 }

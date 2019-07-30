@@ -150,7 +150,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.Normal = sp.InputByName("normalV")
 	sp.Tangent = sp.InputByName("tangentV")
 
-	sp.Color = sp.OutputColor("fragColor")
+	sp.Color = sp.OutputColorByName("fragColor")
 	sp.Depth = sp.OutputDepth()
 
 	sp.ModelMatrix = sp.UniformByName("modelMatrix")
