@@ -6,7 +6,7 @@ import (
 	"github.com/hersle/gl3d/math"
 	"io/ioutil"
 	"strings"
-	"strconv"
+	"fmt"
 )
 
 type ShaderType int
@@ -27,6 +27,9 @@ type ShaderProgram struct {
 
 	inputsByLocation map[int]*Input
 	inputLocationsByName map[string]int
+
+	uniformsByLocation map[int]*Uniform
+	uniformLocationsByName map[string]int
 }
 
 type Shader struct {
@@ -54,6 +57,7 @@ type Uniform struct {
 	location int
 	glType   int
 	textureUnitIndex int
+	name string
 }
 
 type vertexArray struct {
@@ -189,6 +193,42 @@ func NewShaderProgram(shaders ...*Shader) (*ShaderProgram, error) {
 		p.inputLocationsByName[name] = in.location
 	}
 
+	p.uniformsByLocation = make(map[int]*Uniform)
+	p.uniformLocationsByName = make(map[string]int)
+
+	var c int32
+	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_UNIFORMS, &c)
+	uniformCount := int(c)
+
+	for i := 0; i < uniformCount; i++ {
+		bytes := make([]uint8, 100)
+		var size int32
+		var type_ uint32
+		var namelength int32
+		gl.GetActiveUniform(uint32(p.id), uint32(i), 95, &namelength, &size, &type_, &bytes[0])
+		name := string(bytes[:namelength])
+
+		for j := 0; j < int(size); j++ {
+			fullname := strings.Replace(name, "[0]", fmt.Sprintf("[%d]", j), 1)
+			loc := gl.GetUniformLocation(uint32(p.id), gl.Str(fullname+"\x00"))
+
+			var u Uniform
+			u.location = int(loc)
+			u.progID = p.id
+			u.glType = int(type_)
+			u.name = fullname
+
+			// TODO: allow more sampler types
+			if u.glType == gl.SAMPLER_2D || u.glType == gl.SAMPLER_CUBE {
+				u.textureUnitIndex = textureUnitsUsed
+				textureUnitsUsed++ // TODO: make texture unit mapping more sophisticated
+			}
+
+			p.uniformsByLocation[u.location] = &u
+			p.uniformLocationsByName[fullname] = u.location
+		}
+	}
+
 	return &p, err
 }
 
@@ -224,6 +264,12 @@ func ReadShaderProgram(vFile, fFile, gFile string, defines ...string) (*ShaderPr
 func (p *ShaderProgram) inputCount() int {
 	var count int32
 	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_ATTRIBUTES, &count)
+	return int(count)
+}
+
+func (p *ShaderProgram) uniformCount() int {
+	var count int32
+	gl.GetProgramiv(uint32(p.id), gl.ACTIVE_UNIFORMS, &count)
 	return int(count)
 }
 
@@ -406,43 +452,23 @@ func (p *ShaderProgram) UniformNames() []string {
 		gl.GetActiveUniform(uint32(p.id), uint32(i), 95, nil, nil, nil, &bytes[0])
 		name := string(bytes)
 		names = append(names, name)
-		println(name)
 	}
 
 	return names
 }
 
-func (p *ShaderProgram) Uniform(name string) *Uniform {
-	// handle variable names referencing array elements
-	arrayindex := 0
-	i1 := strings.LastIndex(name, "[")
-	i2 := strings.LastIndex(name, "]")
-	if i1 != -1 && i2 != -1 {
-		// [0]-name must be used for querying correct type, etc.
-		arrayindex, _ = strconv.Atoi(name[i1+1:i2])
-		name = name[:i1] + "[0]" + name[i2+1:]
-	}
-
-	var u Uniform
-	loc := gl.GetUniformLocation(uint32(p.id), gl.Str(name+"\x00"))
-	if loc == -1 {
-		println("error getting uniform " + name)
+func (p *ShaderProgram) UniformByLocation(location int) *Uniform {
+	u, found := p.uniformsByLocation[location]
+	if !found {
 		return nil
 	}
-	u.location = int(loc)
-	u.progID = p.id
-	index := gl.GetProgramResourceIndex(uint32(p.id), gl.UNIFORM, gl.Str(name+"\x00"))
-	var gltype uint32
-	gl.GetActiveUniform(uint32(p.id), index, 0, nil, nil, &gltype, nil)
-	u.glType = int(gltype)
+	return u
+}
 
-	u.location += arrayindex // location increments by one in uniform arrays
-
-	// TODO: allow more sampler types
-	if u.glType == gl.SAMPLER_2D || u.glType == gl.SAMPLER_CUBE {
-		u.textureUnitIndex = textureUnitsUsed
-		textureUnitsUsed++ // TODO: make texture unit mapping more sophisticated
+func (p *ShaderProgram) UniformByName(name string) *Uniform {
+	location, found := p.uniformLocationsByName[name]
+	if !found {
+		return nil
 	}
-
-	return &u
+	return p.UniformByLocation(location)
 }

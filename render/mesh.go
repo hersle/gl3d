@@ -153,31 +153,31 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.Color = sp.OutputColor("fragColor")
 	sp.Depth = sp.OutputDepth()
 
-	sp.ModelMatrix = sp.Uniform("modelMatrix")
-	sp.ViewMatrix = sp.Uniform("viewMatrix")
-	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
-	sp.NormalMatrix = sp.Uniform("normalMatrix")
+	sp.ModelMatrix = sp.UniformByName("modelMatrix")
+	sp.ViewMatrix = sp.UniformByName("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
+	sp.NormalMatrix = sp.UniformByName("normalMatrix")
 
-	sp.MaterialAmbient = sp.Uniform("materialAmbient")
-	sp.MaterialAmbientMap = sp.Uniform("materialAmbientMap")
-	sp.MaterialDiffuse = sp.Uniform("materialDiffuse")
-	sp.MaterialDiffuseMap = sp.Uniform("materialDiffuseMap")
-	sp.MaterialSpecular = sp.Uniform("materialSpecular")
-	sp.MaterialSpecularMap = sp.Uniform("materialSpecularMap")
-	sp.MaterialShine = sp.Uniform("materialShine")
-	sp.MaterialAlpha = sp.Uniform("materialAlpha")
-	sp.MaterialAlphaMap = sp.Uniform("materialAlphaMap")
-	sp.MaterialBumpMap = sp.Uniform("materialBumpMap")
+	sp.MaterialAmbient = sp.UniformByName("materialAmbient")
+	sp.MaterialAmbientMap = sp.UniformByName("materialAmbientMap")
+	sp.MaterialDiffuse = sp.UniformByName("materialDiffuse")
+	sp.MaterialDiffuseMap = sp.UniformByName("materialDiffuseMap")
+	sp.MaterialSpecular = sp.UniformByName("materialSpecular")
+	sp.MaterialSpecularMap = sp.UniformByName("materialSpecularMap")
+	sp.MaterialShine = sp.UniformByName("materialShine")
+	sp.MaterialAlpha = sp.UniformByName("materialAlpha")
+	sp.MaterialAlphaMap = sp.UniformByName("materialAlphaMap")
+	sp.MaterialBumpMap = sp.UniformByName("materialBumpMap")
 
-	sp.LightPosition = sp.Uniform("lightPosition")
-	sp.LightDirection = sp.Uniform("lightDirection")
-	sp.LightColor = sp.Uniform("lightColor")
-	sp.LightAttenuation = sp.Uniform("lightAttenuation")
-	sp.LightCosAngle = sp.Uniform("lightCosAng")
+	sp.LightPosition = sp.UniformByName("lightPosition")
+	sp.LightDirection = sp.UniformByName("lightDirection")
+	sp.LightColor = sp.UniformByName("lightColor")
+	sp.LightAttenuation = sp.UniformByName("lightAttenuation")
+	sp.LightCosAngle = sp.UniformByName("lightCosAng")
 
-	sp.ShadowProjectionViewMatrix = sp.Uniform("shadowProjectionViewMatrix")
-	sp.ShadowMap = sp.Uniform("shadowMap")
-	sp.ShadowFar = sp.Uniform("lightFar")
+	sp.ShadowProjectionViewMatrix = sp.UniformByName("shadowProjectionViewMatrix")
+	sp.ShadowMap = sp.UniformByName("shadowMap")
+	sp.ShadowFar = sp.UniformByName("lightFar")
 
 	return &sp
 }
@@ -194,17 +194,17 @@ func NewShadowMapShaderProgram(defines ...string) *ShadowMapShaderProgram {
 		panic(err)
 	}
 
-	sp.ModelMatrix = sp.Uniform("modelMatrix")
-	sp.ViewMatrix = sp.Uniform("viewMatrix")
-	sp.ProjectionMatrix = sp.Uniform("projectionMatrix")
-	sp.LightPosition = sp.Uniform("lightPosition")
-	sp.LightFar = sp.Uniform("far")
+	sp.ModelMatrix = sp.UniformByName("modelMatrix")
+	sp.ViewMatrix = sp.UniformByName("viewMatrix")
+	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
+	sp.LightPosition = sp.UniformByName("lightPosition")
+	sp.LightFar = sp.UniformByName("far")
 	sp.Position = sp.InputByName("position")
 
 	sp.ProjViewMats = make([]*graphics.Uniform, 6)
 	for i := 0; i < 6; i++ {
 		name := fmt.Sprintf("projectionViewMatrices[%d]", i)
-		sp.ProjViewMats[i] = sp.Uniform(name)
+		sp.ProjViewMats[i] = sp.UniformByName(name)
 	}
 
 	sp.Depth = sp.OutputDepth()
