@@ -301,7 +301,7 @@ func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
-	r.renderOpts.DisableBlending()
+	r.renderOpts.BlendMode = graphics.ReplaceBlending
 	r.renderOpts.DepthTest = graphics.LessDepthTest
 
 	r.ambientProg.LightColor.Set(s.AmbientLight.Color)
@@ -334,8 +334,7 @@ func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
 
 func (r *MeshRenderer) lightPass(s *scene.Scene, c camera.Camera) {
 	r.renderOpts.DepthTest = graphics.EqualDepthTest
-	r.renderOpts.BlendSourceFactor = graphics.OneBlendFactor
-	r.renderOpts.BlendDestinationFactor = graphics.OneBlendFactor // add to framebuffer contents
+	r.renderOpts.BlendMode = graphics.AdditiveBlending // add to framebuffer contents
 
 	r.setCamera(r.pointLitProg, c)
 	for _, l := range s.PointLights {

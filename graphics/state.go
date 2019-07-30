@@ -19,19 +19,12 @@ const (
 	GreaterEqualDepthTest
 )
 
-type BlendFactor int
+type BlendMode int
 
 const (
-	ZeroBlendFactor BlendFactor = iota
-	OneBlendFactor
-	SourceColorBlendFactor
-	OneMinusSourceColorBlendFactor
-	DestinationColorBlendFactor
-	OneMinusDestinationColorBlendFactor
-	SourceAlphaBlendFactor
-	OneMinusSourceAlphaBlendFactor
-	DestinationAlphaBlendFactor
-	OneMinusDestinationAlphaBlendFactor
+	ReplaceBlending BlendMode = iota
+	AdditiveBlending
+	AlphaBlending
 )
 
 type CullMode int
@@ -61,8 +54,7 @@ const (
 // TODO: enable sorting of these states to reduce state changes?
 type RenderOptions struct {
 	DepthTest              DepthTest
-	BlendSourceFactor      BlendFactor
-	BlendDestinationFactor BlendFactor
+	BlendMode              BlendMode
 	Cull                   CullMode
 	TriangleMode           TriangleMode
 	PrimitiveType          Primitive
@@ -72,13 +64,8 @@ var currentOpts RenderOptions
 
 func NewRenderOptions() *RenderOptions {
 	var opts RenderOptions
-	opts.DisableBlending()
+	opts.BlendMode = ReplaceBlending
 	return &opts
-}
-
-func (opts *RenderOptions) DisableBlending() {
-	opts.BlendSourceFactor = OneBlendFactor
-	opts.BlendDestinationFactor = ZeroBlendFactor
 }
 
 func (opts *RenderOptions) apply() {
@@ -113,40 +100,20 @@ func (opts *RenderOptions) apply() {
 		currentOpts.DepthTest = opts.DepthTest
 	}
 
-	if currentOpts.BlendSourceFactor != opts.BlendSourceFactor || currentOpts.BlendDestinationFactor != opts.BlendDestinationFactor {
-		var factors [2]BlendFactor
-		var funcs [2]uint32
-		factors[0] = opts.BlendSourceFactor
-		factors[1] = opts.BlendDestinationFactor
-		for i := 0; i < 2; i++ {
-			switch factors[i] {
-			case ZeroBlendFactor:
-				funcs[i] = gl.ZERO
-			case OneBlendFactor:
-				funcs[i] = gl.ONE
-			case SourceColorBlendFactor:
-				funcs[i] = gl.SRC_COLOR
-			case OneMinusSourceColorBlendFactor:
-				funcs[i] = gl.ONE_MINUS_SRC_COLOR
-			case DestinationColorBlendFactor:
-				funcs[i] = gl.DST_COLOR
-			case OneMinusDestinationColorBlendFactor:
-				funcs[i] = gl.ONE_MINUS_DST_COLOR
-			case SourceAlphaBlendFactor:
-				funcs[i] = gl.SRC_ALPHA
-			case OneMinusSourceAlphaBlendFactor:
-				funcs[i] = gl.ONE_MINUS_SRC_ALPHA
-			case DestinationAlphaBlendFactor:
-				funcs[i] = gl.DST_ALPHA
-			case OneMinusDestinationAlphaBlendFactor:
-				funcs[i] = gl.ONE_MINUS_DST_ALPHA
-			default:
-				panic("tried to apply a render state with an unknown blending factor")
-			}
+	if currentOpts.BlendMode != opts.BlendMode {
+		switch opts.BlendMode {
+		case ReplaceBlending:
+			gl.Disable(gl.BLEND)
+		case AdditiveBlending:
+			gl.Enable(gl.BLEND)
+			gl.BlendFunc(gl.ONE, gl.ONE)
+		case AlphaBlending:
+			gl.Enable(gl.BLEND)
+			gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
+		default:
+			panic("invalid blend mode")
 		}
-		gl.BlendFunc(funcs[0], funcs[1])
-		currentOpts.BlendSourceFactor = opts.BlendSourceFactor
-		currentOpts.BlendDestinationFactor = opts.BlendDestinationFactor
+		currentOpts.BlendMode = opts.BlendMode
 	}
 
 	if currentOpts.Cull != opts.Cull {
@@ -185,7 +152,7 @@ func init() {
 
 	// initialize cached state to default OpenGL values TODO: run apply with it?
 	currentOpts.DepthTest = AlwaysDepthTest
-	currentOpts.DisableBlending()
+	currentOpts.BlendMode = ReplaceBlending
 	currentOpts.Cull = CullNothing
 	currentOpts.TriangleMode = TriangleTriangleMode
 }

@@ -56,8 +56,7 @@ func NewQuadRenderer() *QuadRenderer {
 	r.sp.Position.SetSourceVertex(r.vbo, 0)
 
 	r.renderOpts = graphics.NewRenderOptions()
-	r.renderOpts.BlendSourceFactor = graphics.SourceAlphaBlendFactor
-	r.renderOpts.BlendDestinationFactor = graphics.OneMinusSourceAlphaBlendFactor
+	r.renderOpts.BlendMode = graphics.AlphaBlending
 	r.renderOpts.PrimitiveType = graphics.Triangle
 
 	return &r
