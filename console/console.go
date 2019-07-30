@@ -1,5 +1,9 @@
 package console
 
+import (
+	"strings"
+)
+
 type Console struct {
 	lines []string
 	head int
@@ -66,6 +70,20 @@ func (c *Console) DeleteFromPrompt() {
 	if len(c.prompt) > 0 {
 		c.prompt = c.prompt[:len(c.prompt)-1]
 	}
+}
+
+func (c *Console) ClearPrompt() {
+	c.prompt = ""
+}
+
+func (c *Console) Write(p []byte) (n int, err error) {
+	str := string(p)
+	lines := strings.Split(str, "\n")
+	lines = lines[:len(lines)-1] // skip last empty string
+	for _, line := range lines {
+		c.AddLine(line)
+	}
+	return len(p), nil
 }
 
 func (c *Console) full() bool {

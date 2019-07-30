@@ -35,8 +35,8 @@ type GaussianShaderProgram struct {
 	inTexture *graphics.Uniform
 	direction *graphics.Uniform
 	texDim *graphics.Uniform
-
 	color *graphics.Output
+	stddev *graphics.Uniform
 }
 
 func NewEffectRenderer() *EffectRenderer {
@@ -87,8 +87,10 @@ func (r *EffectRenderer) RenderFog(c camera.Camera, depthMap, fogTarget *graphic
 	r.fogSp.Render(6, r.renderOpts)
 }
 
-func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D) {
+func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D, stddev float32) {
 	r.renderOpts.DisableBlending()
+
+	r.gaussianSp.stddev.Set(stddev)
 
 	r.gaussianSp.color.Set(extra)
 	r.gaussianSp.inTexture.Set(target)
@@ -139,6 +141,7 @@ func NewGaussianShaderProgram() *GaussianShaderProgram {
 	sp.direction = sp.UniformByName("dir")
 	sp.texDim = sp.UniformByName("texDim")
 	sp.color = sp.OutputColorByName("fragColor")
+	sp.stddev = sp.UniformByName("stddev")
 
 	return &sp
 }

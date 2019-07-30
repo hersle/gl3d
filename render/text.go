@@ -25,6 +25,15 @@ type TextRenderer struct {
 	renderOpts  *graphics.RenderOptions
 }
 
+type Justification int
+
+const (
+	BottomLeft Justification = iota
+	BottomRight
+	TopRight
+	TopLeft
+)
+
 func NewTextShaderProgram() *TextShaderProgram {
 	var sp TextShaderProgram
 	var err error
@@ -74,18 +83,69 @@ func (r *TextRenderer) SetInputs(vbo *graphics.VertexBuffer, ibo *graphics.Index
 	r.sp.Color.SetSourceVertex(vbo, 2) // normal TODO: don't abuse normal
 }
 
-func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color math.Vec3, target *graphics.Texture2D) {
+func (r *TextRenderer) Render(org math.Vec2, text string, height float32, color math.Vec3, just Justification, target *graphics.Texture2D) {
 	var verts []object.Vertex
 	var inds []int32
 
 	face := basicfont.Face7x13
 
-	x0 := tl.X()
 	imgW, imgH := face.Mask.Bounds().Dx(), face.Mask.Bounds().Dy()
 	subImgW, subImgH := face.Width, face.Ascent+face.Descent
 	h := height
 	w := h * float32(subImgW) / float32(subImgH)
 
+	lineWidths := []float32{0}
+	totalHeight := float32(h)
+	i := 0
+
+	for _, char := range text {
+		switch char {
+		case '\n':
+			totalHeight += h
+			lineWidths = append(lineWidths, 0)
+			i++
+		case '\t':
+			lineWidths[i] += 4 * float32(face.Advance) * h / float32(subImgH)
+		default:
+			lineWidths[i] += float32(face.Advance) * h / float32(subImgH)
+		}
+	}
+
+	totalWidth := lineWidths[0]
+	for _, lineWidth := range lineWidths {
+		if lineWidth > totalWidth {
+			totalWidth = lineWidth
+		}
+	}
+
+	tls := make([]math.Vec2, len(lineWidths))
+	for i := 0; i < len(lineWidths); i++ {
+		var x float32
+		switch just {
+		case BottomLeft, TopLeft: // left
+			x = org.X()
+		case BottomRight, TopRight: // right
+			x = org.X() - lineWidths[i]
+		default:
+			panic("invalid justification")
+		}
+
+		var y float32
+		switch just {
+		case TopLeft, TopRight: // top
+			y = org.Y() - float32(i) * h
+		case BottomLeft, BottomRight: // bottom
+			y = org.Y() + totalHeight - float32(i) * h
+		default:
+			panic("invalid justification")
+		}
+
+		tl := math.Vec2{x, y}
+		tls[i] = tl
+	}
+
+	i = 0
+	tl := tls[i]
 	for _, char := range text {
 		for _, runeRange := range face.Ranges {
 			lo, hi, offset := runeRange.Low, runeRange.High, runeRange.Offset
@@ -121,7 +181,8 @@ func (r *TextRenderer) Render(tl math.Vec2, text string, height float32, color m
 		}
 
 		if char == '\n' {
-			tl = math.Vec2{x0, tl.Y() - h}
+			i++
+			tl = tls[i]
 		} else if char == '\t' {
 			tl = tl.Add(math.Vec2{4 * float32(face.Advance) * h / float32(subImgH), 0})
 		} else {

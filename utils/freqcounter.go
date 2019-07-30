@@ -38,6 +38,10 @@ func (c *FrequencyCounter) Frequency() int {
 	return c.frequency // counts per second
 }
 
+func (c *FrequencyCounter) Period() float32 {
+	return 1 / float32(c.Frequency())
+}
+
 func (c *FrequencyCounter) String() string {
 	return fmt.Sprintf("%d Hz", c.Frequency())
 }

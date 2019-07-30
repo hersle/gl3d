@@ -4,6 +4,7 @@ import (
 	"github.com/go-gl/gl/v4.5-core/gl"
 	"reflect"
 	"unsafe"
+	"log"
 )
 
 type Buffer struct {
@@ -55,7 +56,7 @@ func (b *Buffer) Allocate(size int) {
 }
 
 func (b *Buffer) Reallocate(size int) {
-	println("reallocating buffer")
+	log.Print("reallocating buffer from ", b.size, " to ", size, " bytes")
 	if size < b.size {
 		return
 	}

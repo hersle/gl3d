@@ -10,6 +10,7 @@ import (
 	"path"
 	"strings"
 	"unsafe"
+	"log"
 )
 
 type Vertex struct {
@@ -442,7 +443,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 		case "g", "o":
 			continue // ignore without warning - no effect on appearance
 		default:
-			println("ignoring line prefix", fields[0])
+			log.Print("ignoring line prefix ", fields[0])
 		}
 	}
 
@@ -513,7 +514,7 @@ func ReadMeshObj(filename string) (*Mesh, error) {
 	m := NewMesh(nil, nil)
 	for i, _ := range geos {
 		if len(geos[i].Verts) > 0 {
-			println("submesh", i, "with", len(geos[i].Verts), "verts")
+			log.Print("submesh ", i, " with ", len(geos[i].Verts), " verts")
 			if mtls[i] == nil {
 				mtls[i] = material.NewDefaultMaterial("")
 			}

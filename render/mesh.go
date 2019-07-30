@@ -13,6 +13,12 @@ import (
 	gomath "math"
 )
 
+var blueTexture *graphics.Texture2D
+var whiteTexture *graphics.Texture2D
+var blackTexture *graphics.Texture2D
+
+var whiteCubeMap *graphics.CubeMap
+
 type MeshRenderer struct {
 	ambientProg *MeshShaderProgram
 	pointLitProg *MeshShaderProgram
@@ -44,6 +50,16 @@ type MeshRenderer struct {
 	normalMatrices []math.Mat4
 
 	cullCache []bool
+
+	ShadowKernelSize int
+
+	MaterialAmbientEnabled bool
+	MaterialDiffuseEnabled bool
+	MaterialSpecularEnabled bool
+	MaterialAlphaEnabled bool
+	MaterialNormalEnabled bool
+	ShadowsEnabled bool
+	Wireframe bool
 }
 
 type MeshShaderProgram struct {
@@ -82,6 +98,7 @@ type MeshShaderProgram struct {
 	ShadowProjectionViewMatrix *graphics.Uniform
 	ShadowMap              *graphics.Uniform
 	ShadowFar              *graphics.Uniform
+	ShadowKernelSize       *graphics.Uniform
 }
 
 type ShadowMapShaderProgram struct {
@@ -131,6 +148,13 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	geo = object.NewCone(math.Vec3{0, 0, -1}, math.Vec3{0, 0, 0}, 0.5).Geometry(6)
 	r.spotLightMesh = object.NewMesh(geo, mtl)
 
+	r.MaterialAmbientEnabled = true
+	r.MaterialDiffuseEnabled = true
+	r.MaterialSpecularEnabled = true
+	r.MaterialAlphaEnabled = true
+	r.MaterialNormalEnabled = true
+	r.ShadowsEnabled = true
+
 	return &r, nil
 }
 
@@ -178,6 +202,7 @@ func NewMeshShaderProgram(defines ...string) *MeshShaderProgram {
 	sp.ShadowProjectionViewMatrix = sp.UniformByName("shadowProjectionViewMatrix")
 	sp.ShadowMap = sp.UniformByName("shadowMap")
 	sp.ShadowFar = sp.UniformByName("lightFar")
+	sp.ShadowKernelSize = sp.UniformByName("kernelSize")
 
 	return &sp
 }
@@ -225,6 +250,12 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.spotLitProg.Depth.Set(depthTexture)
 	r.dirLitProg.Depth.Set(depthTexture)
 
+	if r.Wireframe {
+		r.renderOpts.TriangleMode = graphics.LineTriangleMode
+	} else {
+		r.renderOpts.TriangleMode = graphics.TriangleTriangleMode
+	}
+
 	r.preparationPass(s, c)
 	r.shadowPass(s)
 	r.depthAmbientPass(s, c)
@@ -262,6 +293,11 @@ func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
 			i++
 		}
 	}
+
+	r.ambientProg.ShadowKernelSize.Set(r.ShadowKernelSize)
+	r.pointLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
+	r.spotLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
+	r.dirLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
 }
 
 func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
@@ -347,46 +383,70 @@ func (r *MeshRenderer) setMesh(sp *MeshShaderProgram, m *object.Mesh) {
 func (r *MeshRenderer) setSubMesh(sp *MeshShaderProgram, sm *object.SubMesh) {
 	mtl := sm.Mtl
 
-	tex, found := r.tex2ds[mtl.AmbientMap]
-	if !found {
-		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AmbientMap, true)
-		r.tex2ds[mtl.AmbientMap] = tex
+	if r.MaterialAmbientEnabled {
+		tex, found := r.tex2ds[mtl.AmbientMap]
+		if !found {
+			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AmbientMap, true)
+			r.tex2ds[mtl.AmbientMap] = tex
+		}
+		sp.MaterialAmbient.Set(mtl.Ambient)
+		sp.MaterialAmbientMap.Set(tex)
+	} else {
+		sp.MaterialAmbient.Set(math.Vec3{0, 0, 0})
+		sp.MaterialAmbientMap.Set(blackTexture)
 	}
-	sp.MaterialAmbient.Set(mtl.Ambient)
-	sp.MaterialAmbientMap.Set(tex)
 
-	tex, found = r.tex2ds[mtl.DiffuseMap]
-	if !found {
-		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.DiffuseMap, true)
-		r.tex2ds[mtl.DiffuseMap] = tex
+	if r.MaterialDiffuseEnabled {
+		tex, found := r.tex2ds[mtl.DiffuseMap]
+		if !found {
+			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.DiffuseMap, true)
+			r.tex2ds[mtl.DiffuseMap] = tex
+		}
+		sp.MaterialDiffuse.Set(mtl.Diffuse)
+		sp.MaterialDiffuseMap.Set(tex)
+	} else {
+		sp.MaterialDiffuse.Set(math.Vec3{0, 0, 0})
+		sp.MaterialDiffuseMap.Set(blackTexture)
 	}
-	sp.MaterialDiffuse.Set(mtl.Diffuse)
-	sp.MaterialDiffuseMap.Set(tex)
 
-	tex, found = r.tex2ds[mtl.SpecularMap]
-	if !found {
-		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.SpecularMap, true)
-		r.tex2ds[mtl.SpecularMap] = tex
+	if r.MaterialSpecularEnabled {
+		tex, found := r.tex2ds[mtl.SpecularMap]
+		if !found {
+			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.SpecularMap, true)
+			r.tex2ds[mtl.SpecularMap] = tex
+		}
+		sp.MaterialSpecular.Set(mtl.Specular)
+		sp.MaterialSpecularMap.Set(tex)
+		sp.MaterialShine.Set(mtl.Shine)
+	} else {
+		sp.MaterialSpecular.Set(math.Vec3{0, 0, 0})
+		sp.MaterialSpecularMap.Set(blackTexture)
+		sp.MaterialShine.Set(float32(0))
 	}
-	sp.MaterialSpecular.Set(mtl.Specular)
-	sp.MaterialSpecularMap.Set(tex)
 
-	sp.MaterialShine.Set(mtl.Shine)
-
-	tex, found = r.tex2ds[mtl.AlphaMap]
-	if !found {
-		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AlphaMap, true)
-		r.tex2ds[mtl.AlphaMap] = tex
+	if r.MaterialAlphaEnabled {
+		tex, found := r.tex2ds[mtl.AlphaMap]
+		if !found {
+			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AlphaMap, true)
+			r.tex2ds[mtl.AlphaMap] = tex
+		}
+		sp.MaterialAlpha.Set(mtl.Alpha)
+		sp.MaterialAlphaMap.Set(tex)
+	} else {
+		sp.MaterialAlpha.Set(float32(1.0))
+		sp.MaterialAlphaMap.Set(whiteTexture)
 	}
-	sp.MaterialAlpha.Set(mtl.Alpha)
-	sp.MaterialAlphaMap.Set(tex)
 
-	tex, found = r.tex2ds[mtl.BumpMap]
-	if !found {
-		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.BumpMap, true)
-		r.tex2ds[mtl.BumpMap] = tex
+	if r.MaterialNormalEnabled {
+		tex, found := r.tex2ds[mtl.BumpMap]
+		if !found {
+			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.BumpMap, true)
+			r.tex2ds[mtl.BumpMap] = tex
+		}
+		sp.MaterialBumpMap.Set(tex)
+	} else {
+		sp.MaterialBumpMap.Set(blueTexture)
 	}
-	sp.MaterialBumpMap.Set(tex)
 
 	// upload to GPU
 	var vbo *graphics.VertexBuffer
@@ -420,13 +480,16 @@ func (r *MeshRenderer) setAmbientLight(sp *MeshShaderProgram, l *light.AmbientLi
 func (r *MeshRenderer) setPointLight(sp *MeshShaderProgram, l *light.PointLight) {
 	sp.LightPosition.Set(l.Position)
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
-	if l.CastShadows {
+	if r.ShadowsEnabled && l.CastShadows {
 		sp.ShadowFar.Set(l.ShadowFar)
 		smap, found := r.pointLightShadowMaps[l.ID]
 		if !found {
 			panic("set point light with no shadow map")
 		}
 		sp.ShadowMap.Set(smap)
+	} else {
+		sp.ShadowFar.Set(float32(100))
+		sp.ShadowMap.Set(whiteCubeMap)
 	}
 	sp.LightAttenuation.Set(l.Attenuation)
 }
@@ -438,7 +501,7 @@ func (r *MeshRenderer) setSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 	sp.LightAttenuation.Set(l.Attenuation)
 	sp.LightCosAngle.Set(float32(gomath.Cos(float64(l.FOV/2))))
 
-	if l.CastShadows {
+	if r.ShadowsEnabled && l.CastShadows {
 		r.shadowProjViewMat.Identity()
 		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
 		r.shadowProjViewMat.Mult(l.ViewMatrix())
@@ -449,6 +512,9 @@ func (r *MeshRenderer) setSpotLight(sp *MeshShaderProgram, l *light.SpotLight) {
 			panic("set spot light with no shadow map")
 		}
 		sp.ShadowMap.Set(smap)
+	} else {
+		sp.ShadowFar.Set(float32(100))
+		sp.ShadowMap.Set(whiteTexture)
 	}
 }
 
@@ -457,7 +523,7 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	sp.LightAttenuation.Set(float32(0))
 
-	if l.CastShadows {
+	if r.ShadowsEnabled && l.CastShadows {
 		r.shadowProjViewMat.Identity()
 		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
 		r.shadowProjViewMat.Mult(l.ViewMatrix())
@@ -467,6 +533,9 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshShaderProgram, l *light.Direc
 			panic("set directional light with no shadow map")
 		}
 		sp.ShadowMap.Set(smap)
+	} else {
+		sp.ShadowFar.Set(float32(100))
+		sp.ShadowMap.Set(whiteTexture)
 	}
 }
 
@@ -674,4 +743,12 @@ func pointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
 	}
 	dist = dist - sphere.Radius
 	return dist*dist < (1/0.05-1)/l.Attenuation
+}
+
+func init() {
+	blueTexture = graphics.NewUniformTexture2D(math.Vec4{0.5, 0.5, 1, 0})
+	whiteTexture = graphics.NewUniformTexture2D(math.Vec4{1, 1, 1, 1})
+	blackTexture = graphics.NewUniformTexture2D(math.Vec4{0, 0, 0, 1})
+
+	whiteCubeMap = graphics.NewUniformCubeMap(math.Vec4{1, 1, 1, 1})
 }
