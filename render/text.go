@@ -63,7 +63,7 @@ func NewTextRenderer() *TextRenderer {
 	r.tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.NearestFilter, graphics.EdgeClampWrap, img, false)
 
 	r.renderOpts = graphics.NewRenderOptions()
-	r.renderOpts.PrimitiveType = graphics.Triangle
+	r.renderOpts.Primitive = graphics.Triangles
 
 	return &r
 }

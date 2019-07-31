@@ -303,10 +303,10 @@ func (p *Program) Render(vertexCount int, opts *RenderOptions) {
 	opts.apply()
 
 	if p.indexBuffer == nil {
-		gl.DrawArrays(uint32(opts.PrimitiveType), 0, int32(vertexCount))
+		gl.DrawArrays(opts.Primitive.glPrimitive(), 0, int32(vertexCount))
 	} else {
 		gltype := p.indexBuffer.elementGlType()
-		gl.DrawElements(uint32(opts.PrimitiveType), int32(vertexCount), gltype, nil)
+		gl.DrawElements(opts.Primitive.glPrimitive(), int32(vertexCount), gltype, nil)
 	}
 
 	Stats.DrawCallCount++

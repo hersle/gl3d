@@ -76,7 +76,7 @@ func NewSkyboxRenderer() *SkyboxRenderer {
 	r.setCube(r.vbo, r.ibo)
 
 	r.renderOpts = graphics.NewRenderOptions()
-	r.renderOpts.PrimitiveType = graphics.Triangle
+	r.renderOpts.Primitive = graphics.Triangles
 
 	return &r
 }

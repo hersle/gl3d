@@ -231,7 +231,7 @@ func NewShadowMapProgram(defines ...string) *ShadowMapProgram {
 
 func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
 	r.renderOpts.Cull = graphics.CullBack
-	r.renderOpts.PrimitiveType = graphics.Triangle
+	r.renderOpts.Primitive = graphics.Triangles
 
 	r.ambientProg.Color.Set(colorTexture)
 	r.pointLitProg.Color.Set(colorTexture)
@@ -243,9 +243,9 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.dirLitProg.Depth.Set(depthTexture)
 
 	if r.Wireframe {
-		r.renderOpts.TriangleMode = graphics.LineTriangleMode
+		r.renderOpts.Primitive = graphics.TriangleOutlines
 	} else {
-		r.renderOpts.TriangleMode = graphics.TriangleTriangleMode
+		r.renderOpts.Primitive = graphics.Triangles
 	}
 
 	r.preparationPass(s, c)
@@ -530,14 +530,6 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshProgram, l *light.Directional
 	}
 }
 
-func (r *MeshRenderer) SetWireframe(wireframe bool) {
-	if wireframe {
-		r.renderOpts.TriangleMode = graphics.LineTriangleMode
-	} else {
-		r.renderOpts.TriangleMode = graphics.TriangleTriangleMode
-	}
-}
-
 // shadow stuff below
 
 func (r *MeshRenderer) setShadowCamera(sp *ShadowMapProgram, c camera.Camera) {
@@ -585,7 +577,7 @@ func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapProgram, sm *object.SubMesh
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {
 	r.shadowRenderOpts.DepthTest = graphics.LessDepthTest
 	r.shadowRenderOpts.Cull = graphics.CullBack
-	r.shadowRenderOpts.PrimitiveType = graphics.Triangle
+	r.shadowRenderOpts.Primitive = graphics.Triangles
 
 	for _, l := range s.PointLights {
 		if l.CastShadows {

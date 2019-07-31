@@ -59,7 +59,7 @@ func NewEffectRenderer() *EffectRenderer {
 	r.gaussianSp.position.SetSourceVertex(r.vbo, 0)
 
 	r.renderOpts = graphics.NewRenderOptions()
-	r.renderOpts.PrimitiveType = graphics.Triangle
+	r.renderOpts.Primitive = graphics.Triangles
 	//r.renderOpts.Framebuffer = r.framebuffer
 
 	return &r

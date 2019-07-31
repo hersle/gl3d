@@ -53,7 +53,7 @@ func NewQuadRenderer() *QuadRenderer {
 
 	r.renderOpts = graphics.NewRenderOptions()
 	r.renderOpts.BlendMode = graphics.AlphaBlending
-	r.renderOpts.PrimitiveType = graphics.Triangle
+	r.renderOpts.Primitive = graphics.Triangles
 
 	return &r
 }

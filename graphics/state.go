@@ -35,20 +35,19 @@ const (
 	CullBack
 )
 
-type TriangleMode int
-
-const (
-	TriangleTriangleMode TriangleMode = iota
-	PointTriangleMode
-	LineTriangleMode
-)
-
 type Primitive int
 
 const (
-	Point    Primitive = Primitive(gl.POINTS)
-	Line     Primitive = Primitive(gl.LINES)
-	Triangle Primitive = Primitive(gl.TRIANGLES)
+	Points Primitive = iota
+	Lines
+	LineStrip
+	LineLoop
+	Triangles
+	TriangleStrip
+	TriangleFan
+	TriangleOutlines
+	TriangleOutlineStrip
+	TriangleOutlineFan
 )
 
 // TODO: enable sorting of these states to reduce state changes?
@@ -56,8 +55,7 @@ type RenderOptions struct {
 	DepthTest              DepthTest
 	BlendMode              BlendMode
 	Cull                   CullMode
-	TriangleMode           TriangleMode
-	PrimitiveType          Primitive
+	Primitive              Primitive
 }
 
 var currentOpts RenderOptions
@@ -132,18 +130,35 @@ func (opts *RenderOptions) apply() {
 		currentOpts.Cull = opts.Cull
 	}
 
-	if currentOpts.TriangleMode != opts.TriangleMode {
-		switch opts.TriangleMode {
-		case PointTriangleMode:
-			gl.PolygonMode(gl.FRONT_AND_BACK, gl.POINT)
-		case LineTriangleMode:
-			gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
-		case TriangleTriangleMode:
+	if currentOpts.Primitive != opts.Primitive {
+		switch opts.Primitive {
+		case Triangles, TriangleStrip, TriangleFan:
 			gl.PolygonMode(gl.FRONT_AND_BACK, gl.FILL)
-		default:
-			panic("tried to apply a render state with an unknown polygonmode")
+		case TriangleOutlines, TriangleOutlineStrip, TriangleOutlineFan:
+			gl.PolygonMode(gl.FRONT_AND_BACK, gl.LINE)
 		}
-		currentOpts.TriangleMode = opts.TriangleMode
+		currentOpts.Primitive = opts.Primitive
+	}
+}
+
+func (p Primitive) glPrimitive() uint32 {
+	switch p {
+	case Points:
+		return gl.POINTS
+	case Lines:
+		return gl.LINES
+	case LineStrip:
+		return gl.LINE_STRIP
+	case LineLoop:
+		return gl.LINE_LOOP
+	case Triangles, TriangleOutlines:
+		return gl.TRIANGLES
+	case TriangleStrip, TriangleOutlineStrip:
+		return gl.TRIANGLE_STRIP
+	case TriangleFan, TriangleOutlineFan:
+		return gl.TRIANGLE_FAN
+	default:
+		panic("invalid primitive")
 	}
 }
 
@@ -154,5 +169,4 @@ func init() {
 	currentOpts.DepthTest = AlwaysDepthTest
 	currentOpts.BlendMode = ReplaceBlending
 	currentOpts.Cull = CullNothing
-	currentOpts.TriangleMode = TriangleTriangleMode
 }

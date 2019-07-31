@@ -97,5 +97,5 @@ func (r *Renderer) Render() {
 }
 
 func (r *Renderer) SetWireframe(wireframe bool) {
-	r.MeshRenderer.SetWireframe(wireframe)
+	r.MeshRenderer.Wireframe = wireframe
 }

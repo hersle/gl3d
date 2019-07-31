@@ -50,7 +50,7 @@ func NewArrowRenderer() *ArrowRenderer {
 	r.sp = NewArrowProgram()
 
 	r.renderOpts = graphics.NewRenderOptions()
-	r.renderOpts.PrimitiveType = graphics.Line
+	r.renderOpts.Primitive = graphics.Lines
 
 	r.vbo = graphics.NewVertexBuffer()
 
