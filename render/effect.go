@@ -81,13 +81,13 @@ func (r *EffectRenderer) RenderFog(c camera.Camera, depthMap, fogTarget *graphic
 		r.fogSp.camFar.Set(c.Far)
 	}
 
-	r.renderOpts.BlendMode = graphics.AlphaBlending
+	r.renderOpts.Blending = graphics.AlphaBlending
 
 	r.fogSp.Render(6, r.renderOpts)
 }
 
 func (r *EffectRenderer) RenderGaussianBlur(target, extra *graphics.Texture2D, stddev float32) {
-	r.renderOpts.BlendMode = graphics.ReplaceBlending
+	r.renderOpts.Blending = graphics.NoBlending
 
 	r.gaussianSp.stddev.Set(stddev)
 

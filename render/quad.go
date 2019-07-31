@@ -52,7 +52,7 @@ func NewQuadRenderer() *QuadRenderer {
 	r.sp.Position.SetSourceVertex(r.vbo, 0)
 
 	r.renderOpts = graphics.NewRenderOptions()
-	r.renderOpts.BlendMode = graphics.AlphaBlending
+	r.renderOpts.Blending = graphics.AlphaBlending
 	r.renderOpts.Primitive = graphics.Triangles
 
 	return &r

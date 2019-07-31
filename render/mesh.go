@@ -230,7 +230,7 @@ func NewShadowMapProgram(defines ...string) *ShadowMapProgram {
 }
 
 func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
-	r.renderOpts.Cull = graphics.CullBack
+	r.renderOpts.Culling = graphics.BackCulling
 	r.renderOpts.Primitive = graphics.Triangles
 
 	r.ambientProg.Color.Set(colorTexture)
@@ -293,7 +293,7 @@ func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
-	r.renderOpts.BlendMode = graphics.ReplaceBlending
+	r.renderOpts.Blending = graphics.NoBlending
 	r.renderOpts.DepthTest = graphics.LessDepthTest
 
 	r.ambientProg.LightColor.Set(s.AmbientLight.Color)
@@ -326,7 +326,7 @@ func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
 
 func (r *MeshRenderer) lightPass(s *scene.Scene, c camera.Camera) {
 	r.renderOpts.DepthTest = graphics.EqualDepthTest
-	r.renderOpts.BlendMode = graphics.AdditiveBlending // add to framebuffer contents
+	r.renderOpts.Blending = graphics.AdditiveBlending // add to framebuffer contents
 
 	r.setCamera(r.pointLitProg, c)
 	for _, l := range s.PointLights {
@@ -576,7 +576,7 @@ func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapProgram, sm *object.SubMesh
 
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {
 	r.shadowRenderOpts.DepthTest = graphics.LessDepthTest
-	r.shadowRenderOpts.Cull = graphics.CullBack
+	r.shadowRenderOpts.Culling = graphics.BackCulling
 	r.shadowRenderOpts.Primitive = graphics.Triangles
 
 	for _, l := range s.PointLights {

@@ -7,7 +7,7 @@ import (
 )
 
 type Framebuffer struct {
-	id            int
+	id            uint32
 	width, height int
 }
 
@@ -20,56 +20,54 @@ type FramebufferAttachment interface {
 var DefaultFramebuffer *Framebuffer = &Framebuffer{0, 800, 800}
 
 func NewFramebuffer() *Framebuffer {
-	var f Framebuffer
-	var id uint32
-	gl.CreateFramebuffers(1, &id)
-	f.id = int(id)
-	f.width = 0
-	f.height = 0
-	return &f
+	var fb Framebuffer
+	gl.CreateFramebuffers(1, &fb.id)
+	fb.width = 0
+	fb.height = 0
+	return &fb
 }
 
-func (f *Framebuffer) Width() int {
-	if f == DefaultFramebuffer {
+func (fb *Framebuffer) Width() int {
+	if fb == DefaultFramebuffer {
 		DefaultFramebuffer.width, _ = window.Size()
 	}
-	return f.width
+	return fb.width
 }
 
-func (f *Framebuffer) Height() int {
-	if f == DefaultFramebuffer {
+func (fb *Framebuffer) Height() int {
+	if fb == DefaultFramebuffer {
 		_, DefaultFramebuffer.height = window.Size()
 	}
-	return f.height
+	return fb.height
 }
 
-func (f *Framebuffer) Attach(att FramebufferAttachment) {
-	if f.width == 0 && f.height == 0 {
-		f.width = att.Width()
-		f.height = att.Height()
-	} else if f.width != att.Width() || f.height != att.Height() {
+func (fb *Framebuffer) ClearColor(rgba math.Vec4) {
+	gl.ClearNamedFramebufferfv(fb.id, gl.COLOR, 0, &rgba[0])
+}
+
+func (fb *Framebuffer) ClearDepth(depth float32) {
+	gl.ClearNamedFramebufferfv(fb.id, gl.DEPTH, 0, &depth)
+}
+
+func (fb *Framebuffer) Attach(att FramebufferAttachment) {
+	if fb.width == 0 && fb.height == 0 {
+		fb.width = att.Width()
+		fb.height = att.Height()
+	} else if fb.width != att.Width() || fb.height != att.Height() {
 		panic("incompatible framebuffer attachment size")
 	}
-	att.attachTo(f)
+	att.attachTo(fb)
 }
 
-func (f *Framebuffer) ClearColor(rgba math.Vec4) {
-	gl.ClearNamedFramebufferfv(uint32(f.id), gl.COLOR, 0, &rgba[0])
-}
-
-func (f *Framebuffer) ClearDepth(depth float32) {
-	gl.ClearNamedFramebufferfv(uint32(f.id), gl.DEPTH, 0, &depth)
-}
-
-func (f *Framebuffer) complete() bool {
-	status := gl.CheckNamedFramebufferStatus(uint32(f.id), gl.FRAMEBUFFER)
+func (fb *Framebuffer) complete() bool {
+	status := gl.CheckNamedFramebufferStatus(fb.id, gl.FRAMEBUFFER)
 	return status == gl.FRAMEBUFFER_COMPLETE
 }
 
-func (f *Framebuffer) bindDraw() {
-	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, uint32(f.id))
+func (fb *Framebuffer) bindDraw() {
+	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, fb.id)
 }
 
-func (f *Framebuffer) bindRead() {
-	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, uint32(f.id))
+func (fb *Framebuffer) bindRead() {
+	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, fb.id)
 }

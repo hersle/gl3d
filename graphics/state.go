@@ -8,9 +8,7 @@ import (
 type DepthTest int
 
 const (
-	AlwaysDepthTest DepthTest = iota
-	UnknownDepthTest
-	NeverDepthTest
+	NoDepthTest DepthTest = iota
 	LessDepthTest
 	LessEqualDepthTest
 	EqualDepthTest
@@ -19,20 +17,20 @@ const (
 	GreaterEqualDepthTest
 )
 
-type BlendMode int
+type Blending int
 
 const (
-	ReplaceBlending BlendMode = iota
+	NoBlending Blending = iota
 	AdditiveBlending
 	AlphaBlending
 )
 
-type CullMode int
+type Culling int
 
 const (
-	CullNothing CullMode = iota
-	CullFront
-	CullBack
+	NoCulling Culling = iota
+	FrontCulling
+	BackCulling
 )
 
 type Primitive int
@@ -52,26 +50,23 @@ const (
 
 // TODO: enable sorting of these states to reduce state changes?
 type RenderOptions struct {
-	DepthTest              DepthTest
-	BlendMode              BlendMode
-	Cull                   CullMode
-	Primitive              Primitive
+	DepthTest DepthTest
+	Blending  Blending
+	Culling   Culling
+	Primitive Primitive
 }
 
 var currentOpts RenderOptions
 
 func NewRenderOptions() *RenderOptions {
 	var opts RenderOptions
-	opts.BlendMode = ReplaceBlending
+	opts.Blending = NoBlending
 	return &opts
 }
 
 func (opts *RenderOptions) apply() {
 	if currentOpts.DepthTest != opts.DepthTest {
 		switch opts.DepthTest {
-		case NeverDepthTest:
-			gl.Enable(gl.DEPTH_TEST)
-			gl.DepthFunc(gl.NEVER)
 		case LessDepthTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.LESS)
@@ -90,7 +85,7 @@ func (opts *RenderOptions) apply() {
 		case GreaterEqualDepthTest:
 			gl.Enable(gl.DEPTH_TEST)
 			gl.DepthFunc(gl.GEQUAL)
-		case AlwaysDepthTest:
+		case NoDepthTest:
 			gl.Disable(gl.DEPTH_TEST)
 		default:
 			panic("tried to apply a render state with unknown depth test")
@@ -98,9 +93,9 @@ func (opts *RenderOptions) apply() {
 		currentOpts.DepthTest = opts.DepthTest
 	}
 
-	if currentOpts.BlendMode != opts.BlendMode {
-		switch opts.BlendMode {
-		case ReplaceBlending:
+	if currentOpts.Blending != opts.Blending {
+		switch opts.Blending {
+		case NoBlending:
 			gl.Disable(gl.BLEND)
 		case AdditiveBlending:
 			gl.Enable(gl.BLEND)
@@ -111,23 +106,23 @@ func (opts *RenderOptions) apply() {
 		default:
 			panic("invalid blend mode")
 		}
-		currentOpts.BlendMode = opts.BlendMode
+		currentOpts.Blending = opts.Blending
 	}
 
-	if currentOpts.Cull != opts.Cull {
-		switch opts.Cull {
-		case CullNothing:
+	if currentOpts.Culling != opts.Culling {
+		switch opts.Culling {
+		case NoCulling:
 			gl.Disable(gl.CULL_FACE)
-		case CullFront:
+		case FrontCulling:
 			gl.Enable(gl.CULL_FACE)
 			gl.CullFace(gl.FRONT)
-		case CullBack:
+		case BackCulling:
 			gl.Enable(gl.CULL_FACE)
 			gl.CullFace(gl.BACK)
 		default:
 			panic("tried to apply a render state with an unknown culling mode")
 		}
-		currentOpts.Cull = opts.Cull
+		currentOpts.Culling = opts.Culling
 	}
 
 	if currentOpts.Primitive != opts.Primitive {
@@ -166,7 +161,7 @@ func init() {
 	gl.Enable(gl.BLEND)
 
 	// initialize cached state to default OpenGL values TODO: run apply with it?
-	currentOpts.DepthTest = AlwaysDepthTest
-	currentOpts.BlendMode = ReplaceBlending
-	currentOpts.Cull = CullNothing
+	currentOpts.DepthTest = NoDepthTest
+	currentOpts.Blending = NoBlending
+	currentOpts.Culling = NoCulling
 }

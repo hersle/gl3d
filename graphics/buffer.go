@@ -8,7 +8,7 @@ import (
 )
 
 type buffer struct {
-	id   int
+	id   uint32
 	size int
 }
 
@@ -23,20 +23,18 @@ type IndexBuffer struct {
 }
 
 func newBuffer() *buffer {
-	var b buffer
-	var id uint32
-	gl.CreateBuffers(1, &id)
-	b.id = int(id)
-	b.size = 0
-	return &b
+	var buf buffer
+	gl.CreateBuffers(1, &buf.id)
+	buf.size = 0
+	return &buf
 }
 
-func (b *buffer) Size() int {
-	return b.size
+func (buf *buffer) Size() int {
+	return buf.size
 }
 
-func (b *buffer) Bytes(i, j int) []byte {
-	if b.size == 0 {
+func (buf *buffer) Bytes(i, j int) []byte {
+	if buf.size == 0 {
 		return nil
 	}
 	if j < i {
@@ -46,99 +44,92 @@ func (b *buffer) Bytes(i, j int) []byte {
 	size := j-i
 	bytes := make([]byte, size)
 	ptr := unsafe.Pointer(&bytes[0])
-	gl.GetNamedBufferSubData(uint32(b.id), i, size, ptr)
+	gl.GetNamedBufferSubData(buf.id, i, size, ptr)
 	return bytes
 }
 
-func (b *buffer) Allocate(size int) {
-	b.size = size
-	gl.NamedBufferData(uint32(b.id), b.size, nil, gl.STREAM_DRAW)
+func (buf *buffer) Allocate(size int) {
+	buf.size = size
+	gl.NamedBufferData(buf.id, buf.size, nil, gl.STREAM_DRAW)
 }
 
-func (b *buffer) Reallocate(size int) {
-	log.Print("reallocating buffer from ", b.size, " to ", size, " bytes")
-	if size < b.size {
+func (buf *buffer) Reallocate(size int) {
+	log.Print("reallocating buffer from ", buf.size, " to ", size, " bytes")
+	if size < buf.size {
 		return
 	}
 
 	// TODO: very slow. make faster and better!
-	bytes := b.Bytes(0, b.size)
-	b.Allocate(size)
-	b.SetBytes(bytes, 0)
+	bytes := buf.Bytes(0, buf.size)
+	buf.Allocate(size)
+	buf.SetBytes(bytes, 0)
 }
 
-func byteSlice(data interface{}) []byte {
-	val := reflect.ValueOf(data)
-	if val.Kind() != reflect.Slice {
-		return []byte{}
-	}
-	size := val.Len() * int(val.Type().Elem().Size())
-	p := unsafe.Pointer(val.Index(0).UnsafeAddr())
-	bytes := (*(*[1 << 31]byte)(p))[:size]
-	return bytes
-}
-
-func (b *buffer) SetData(data interface{}, byteOffset int) {
+func (buf *buffer) SetData(data interface{}, byteOffset int) {
 	bytes := byteSlice(data)
-	b.SetBytes(bytes, byteOffset)
+	buf.SetBytes(bytes, byteOffset)
 }
 
-func (b *buffer) SetBytes(bytes []byte, byteOffset int) {
+func (buf *buffer) SetBytes(bytes []byte, byteOffset int) {
 	if len(bytes) == 0 {
 		return
 	}
 
 	size := byteOffset + len(bytes)
 	p := unsafe.Pointer(&bytes[0])
-	if size > b.size {
-		b.Reallocate(size)
+	if size > buf.size {
+		buf.Reallocate(size)
 	}
-	gl.NamedBufferSubData(uint32(b.id), byteOffset, len(bytes), p)
+	gl.NamedBufferSubData(buf.id, byteOffset, len(bytes), p)
 }
 
 func NewVertexBuffer() *VertexBuffer {
-	var b VertexBuffer
-	b.buffer = *newBuffer()
-	return &b
+	var buf VertexBuffer
+	buf.buffer = *newBuffer()
+	return &buf
 }
 
-func (b *VertexBuffer) SetData(data interface{}, byteOffset int) {
-	b.vertex = reflect.TypeOf(data).Elem()
-	b.buffer.SetData(data, byteOffset)
+func (buf *VertexBuffer) SetData(data interface{}, byteOffset int) {
+	buf.vertex = reflect.TypeOf(data).Elem()
+	buf.buffer.SetData(data, byteOffset)
 }
 
-func (b *VertexBuffer) Offset(i int) int {
-	if b.vertex == nil {
+func (buf *VertexBuffer) Offset(i int) int {
+	if buf.vertex == nil {
 		panic("queried vertex buffer with unknown vertex type")
 	}
 
-	switch b.vertex.Kind() {
+	switch buf.vertex.Kind() {
 	case reflect.Struct:
-		return int(b.vertex.Field(i).Offset)
+		return int(buf.vertex.Field(i).Offset)
 	case reflect.Slice, reflect.Array:
-		return int(b.vertex.Elem().Size()) * i
+		return int(buf.vertex.Elem().Size()) * i
 	default:
 		panic("invalid vertex type")
 	}
 }
 
-func (b *VertexBuffer) ElementSize() int {
-	return int(b.vertex.Size())
+func (buf *VertexBuffer) ElementSize() int {
+	return int(buf.vertex.Size())
 }
 
 func NewIndexBuffer() *IndexBuffer {
-	var b IndexBuffer
-	b.buffer = *newBuffer()
-	return &b
+	var buf IndexBuffer
+	buf.buffer = *newBuffer()
+	return &buf
 }
 
-func (b *IndexBuffer) SetData(data interface{}, byteOffset int) {
-	b.index = reflect.TypeOf(data).Elem()
-	b.buffer.SetData(data, byteOffset)
+func (buf *IndexBuffer) SetData(data interface{}, byteOffset int) {
+	buf.index = reflect.TypeOf(data).Elem()
+	buf.buffer.SetData(data, byteOffset)
 }
 
-func (b *IndexBuffer) elementGlType() uint32 {
-	bits := b.index.Size() * 8
+func (buf *IndexBuffer) ElementSize() int {
+	return int(buf.index.Size())
+}
+
+func (buf *IndexBuffer) elementGlType() uint32 {
+	bits := buf.index.Size() * 8
 	switch bits {
 	case 8:
 		return gl.UNSIGNED_BYTE
@@ -151,6 +142,13 @@ func (b *IndexBuffer) elementGlType() uint32 {
 	}
 }
 
-func (b *IndexBuffer) ElementSize() int {
-	return int(b.index.Size())
+func byteSlice(data interface{}) []byte {
+	val := reflect.ValueOf(data)
+	if val.Kind() != reflect.Slice {
+		return []byte{}
+	}
+	size := val.Len() * int(val.Type().Elem().Size())
+	p := unsafe.Pointer(val.Index(0).UnsafeAddr())
+	bytes := (*(*[1 << 31]byte)(p))[:size]
+	return bytes
 }
