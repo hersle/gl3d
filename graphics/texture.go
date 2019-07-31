@@ -39,6 +39,7 @@ type TextureType int
 const (
 	ColorTexture TextureType = iota
 	DepthTexture
+	StencilTexture
 )
 
 type TextureFilter int
@@ -166,9 +167,8 @@ func (tex *Texture2D) attachTo(f *Framebuffer) {
 		glatt = gl.COLOR_ATTACHMENT0
 	case DepthTexture:
 		glatt = gl.DEPTH_ATTACHMENT
-	// TODO: stencil texture
-	//case gl.STENCIL_INDEX8:
-		//glatt = gl.STENCIL_ATTACHMENT
+	case StencilTexture:
+		glatt = gl.STENCIL_ATTACHMENT
 	default:
 		panic("invalid texture format")
 	}
@@ -181,6 +181,8 @@ func (tex *Texture2D) glFormat() uint32 {
 		return gl.RGBA8
 	case DepthTexture:
 		return gl.DEPTH_COMPONENT16
+	case StencilTexture:
+		return gl.STENCIL_INDEX8
 	default:
 		panic("invalid texture type")
 	}
@@ -275,9 +277,8 @@ func (cube *CubeMap) attachTo(f *Framebuffer) {
 		glatt = gl.COLOR_ATTACHMENT0
 	case DepthTexture:
 		glatt = gl.DEPTH_ATTACHMENT
-	// TODO: stencil texture
-	//case gl.STENCIL_INDEX8:
-		//glatt = gl.STENCIL_ATTACHMENT
+	case StencilTexture:
+		glatt = gl.STENCIL_ATTACHMENT
 	default:
 		panic("invalid texture format")
 	}
@@ -310,9 +311,8 @@ func (face *cubeMapFace) attachTo(f *Framebuffer) {
 		glatt = gl.COLOR_ATTACHMENT0
 	case DepthTexture:
 		glatt = gl.DEPTH_ATTACHMENT
-	// TODO: stencil texture
-	//case gl.STENCIL_INDEX8:
-		//glatt = gl.STENCIL_ATTACHMENT
+	case StencilTexture:
+		glatt = gl.STENCIL_ATTACHMENT
 	default:
 		panic("invalid texture format")
 	}

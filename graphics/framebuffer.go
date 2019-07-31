@@ -49,6 +49,11 @@ func (fb *Framebuffer) ClearDepth(depth float32) {
 	gl.ClearNamedFramebufferfv(fb.id, gl.DEPTH, 0, &depth)
 }
 
+func (fb *Framebuffer) ClearStencil(index int) {
+	value := int32(index)
+	gl.ClearNamedFramebufferiv(fb.id, gl.STENCIL, 0, &value)
+}
+
 func (fb *Framebuffer) Attach(att FramebufferAttachment) {
 	if fb.width == 0 && fb.height == 0 {
 		fb.width = att.Width()
