@@ -116,6 +116,7 @@ void main() {
 	tex = texture(materialSpecularMap, texCoordF);
 	vec3 specular = ((1 - tex.a) * materialSpecular + tex.a * tex.rgb)
 				  * pow(max(dot(tanReflection, -normalize(tanCameraToVertex)), 0), materialShine)
+				  * lightColor
 				  * (facing ? 1 : 0)
 				  * attenuation;
 
