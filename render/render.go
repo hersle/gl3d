@@ -12,7 +12,6 @@ type Renderer struct {
 	MeshRenderer   *MeshRenderer
 	SkyboxRenderer *SkyboxRenderer
 	TextRenderer   *TextRenderer
-	QuadRenderer   *QuadRenderer
 	ArrowRenderer  *ArrowRenderer
 	EffectRenderer *EffectRenderer
 
@@ -32,7 +31,6 @@ func NewRenderer() (*Renderer, error) {
 	r.MeshRenderer, _ = NewMeshRenderer()
 	r.SkyboxRenderer = NewSkyboxRenderer()
 	r.TextRenderer = NewTextRenderer()
-	r.QuadRenderer = NewQuadRenderer()
 	r.ArrowRenderer = NewArrowRenderer()
 	r.EffectRenderer = NewEffectRenderer()
 
@@ -67,10 +65,6 @@ func (r *Renderer) RenderText(tl math.Vec2, text string, height float32, just Ju
 	r.TextRenderer.Render(tl, text, height, color, just, r.overlayRenderTarget)
 }
 
-func (r *Renderer) RenderQuad(tex *graphics.Texture2D) {
-	r.QuadRenderer.Render(tex, graphics.DefaultFramebuffer)
-}
-
 func (r *Renderer) RenderBitangents(s *scene.Scene, c camera.Camera) {
 	r.ArrowRenderer.RenderBitangents(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
 }
@@ -84,7 +78,7 @@ func (r *Renderer) RenderTangents(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *Renderer) Clear() {
-	graphics.DefaultFramebuffer.ClearColor(math.Vec4{0, 0, 0, 0})
+	graphics.Clear(math.Vec4{0, 0, 0, 0})
 	r.sceneRenderTarget.Clear(math.Vec4{0, 0, 0, 0})
 	r.sceneRenderTarget2.Clear(math.Vec4{0, 0, 0, 0})
 	r.sceneDepthRenderTarget.Clear(math.Vec4{1, 1, 1, 1})
@@ -92,8 +86,8 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) Render() {
-	r.RenderQuad(r.sceneRenderTarget)
-	r.RenderQuad(r.overlayRenderTarget)
+	r.sceneRenderTarget.Display(graphics.NoBlending)
+	r.overlayRenderTarget.Display(graphics.AlphaBlending)
 }
 
 func (r *Renderer) SetWireframe(wireframe bool) {

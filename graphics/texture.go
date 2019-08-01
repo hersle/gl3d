@@ -160,7 +160,11 @@ func (tex *Texture2D) SetBorderColor(rgba math.Vec4) {
 	gl.TextureParameterfv(tex.id, gl.TEXTURE_BORDER_COLOR, &rgba[0])
 }
 
-func (tex *Texture2D) attachTo(f *Framebuffer) {
+func (tex *Texture2D) Display(blend Blending) {
+	displayTexture(tex, blend)
+}
+
+func (tex *Texture2D) attachTo(f *framebuffer) {
 	var glatt uint32
 	switch tex.type_ {
 	case ColorTexture:
@@ -270,7 +274,7 @@ func (cube *CubeMap) Face(layer CubeMapLayer) *cubeMapFace {
 	return &face
 }
 
-func (cube *CubeMap) attachTo(f *Framebuffer) {
+func (cube *CubeMap) attachTo(f *framebuffer) {
 	var glatt uint32
 	switch cube.type_ {
 	case ColorTexture:
@@ -304,7 +308,7 @@ func (face *cubeMapFace) Height() int {
 	return face.CubeMap.height
 }
 
-func (face *cubeMapFace) attachTo(f *Framebuffer) {
+func (face *cubeMapFace) attachTo(f *framebuffer) {
 	var glatt uint32
 	switch face.CubeMap.type_ {
 	case ColorTexture:

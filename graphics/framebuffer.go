@@ -6,73 +6,73 @@ import (
 	"github.com/hersle/gl3d/window"
 )
 
-type Framebuffer struct {
+type framebuffer struct {
 	id            uint32
 	width, height int
 }
 
-type FramebufferAttachment interface {
-	attachTo(f *Framebuffer)
+type renderTarget interface {
+	attachTo(f *framebuffer)
 	Width() int
 	Height() int
 }
 
-var DefaultFramebuffer *Framebuffer = &Framebuffer{0, 800, 800}
+var defaultFramebuffer *framebuffer = &framebuffer{0, 800, 800}
 
-func NewFramebuffer() *Framebuffer {
-	var fb Framebuffer
+func newFramebuffer() *framebuffer {
+	var fb framebuffer
 	gl.CreateFramebuffers(1, &fb.id)
 	fb.width = 0
 	fb.height = 0
 	return &fb
 }
 
-func (fb *Framebuffer) Width() int {
-	if fb == DefaultFramebuffer {
-		DefaultFramebuffer.width, _ = window.Size()
+func (fb *framebuffer) Width() int {
+	if fb == defaultFramebuffer {
+		defaultFramebuffer.width, _ = window.Size()
 	}
 	return fb.width
 }
 
-func (fb *Framebuffer) Height() int {
-	if fb == DefaultFramebuffer {
-		_, DefaultFramebuffer.height = window.Size()
+func (fb *framebuffer) Height() int {
+	if fb == defaultFramebuffer {
+		_, defaultFramebuffer.height = window.Size()
 	}
 	return fb.height
 }
 
-func (fb *Framebuffer) ClearColor(rgba math.Vec4) {
+func (fb *framebuffer) clearColor(rgba math.Vec4) {
 	gl.ClearNamedFramebufferfv(fb.id, gl.COLOR, 0, &rgba[0])
 }
 
-func (fb *Framebuffer) ClearDepth(depth float32) {
+func (fb *framebuffer) clearDepth(depth float32) {
 	gl.ClearNamedFramebufferfv(fb.id, gl.DEPTH, 0, &depth)
 }
 
-func (fb *Framebuffer) ClearStencil(index int) {
+func (fb *framebuffer) clearStencil(index int) {
 	value := int32(index)
 	gl.ClearNamedFramebufferiv(fb.id, gl.STENCIL, 0, &value)
 }
 
-func (fb *Framebuffer) Attach(att FramebufferAttachment) {
+func (fb *framebuffer) attach(target renderTarget) {
 	if fb.width == 0 && fb.height == 0 {
-		fb.width = att.Width()
-		fb.height = att.Height()
-	} else if fb.width != att.Width() || fb.height != att.Height() {
+		fb.width = target.Width()
+		fb.height = target.Height()
+	} else if fb.width != target.Width() || fb.height != target.Height() {
 		panic("incompatible framebuffer attachment size")
 	}
-	att.attachTo(fb)
+	target.attachTo(fb)
 }
 
-func (fb *Framebuffer) complete() bool {
+func (fb *framebuffer) complete() bool {
 	status := gl.CheckNamedFramebufferStatus(fb.id, gl.FRAMEBUFFER)
 	return status == gl.FRAMEBUFFER_COMPLETE
 }
 
-func (fb *Framebuffer) bindDraw() {
+func (fb *framebuffer) bindDraw() {
 	gl.BindFramebuffer(gl.DRAW_FRAMEBUFFER, fb.id)
 }
 
-func (fb *Framebuffer) bindRead() {
+func (fb *framebuffer) bindRead() {
 	gl.BindFramebuffer(gl.READ_FRAMEBUFFER, fb.id)
 }

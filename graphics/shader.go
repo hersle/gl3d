@@ -17,7 +17,7 @@ type Program struct {
 	id            uint32
 	vertexArrayID uint32
 	indexBuffer   *IndexBuffer
-	Framebuffer   *Framebuffer
+	framebuffer   *framebuffer
 
 	inputsByLocation map[uint32]*Input
 	inputLocationsByName map[string]uint32
@@ -126,7 +126,7 @@ func buildProgram(shaders ...*shader) *Program {
 
 	gl.CreateVertexArrays(1, &prog.vertexArrayID)
 	prog.indexBuffer = nil
-	prog.Framebuffer = NewFramebuffer()
+	prog.framebuffer = newFramebuffer()
 
 	prog.inputsByLocation = make(map[uint32]*Input)
 	prog.inputLocationsByName = make(map[string]uint32)
@@ -253,8 +253,8 @@ func (prog *Program) Render(vertexCount int, opts *RenderOptions) {
 func (prog *Program) bind() {
 	gl.UseProgram(prog.id)
 	gl.BindVertexArray(prog.vertexArrayID)
-	prog.Framebuffer.bindDraw()
-	gl.Viewport(0, 0, int32(prog.Framebuffer.Width()), int32(prog.Framebuffer.Height()))
+	prog.framebuffer.bindDraw()
+	gl.Viewport(0, 0, int32(prog.framebuffer.Width()), int32(prog.framebuffer.Height()))
 
 	currentProg = prog
 }
@@ -484,6 +484,6 @@ func (ufm *Uniform) Set(value interface{}) {
 	}
 }
 
-func (out *Output) Set(att FramebufferAttachment) {
-	out.prog.Framebuffer.Attach(att)
+func (out *Output) Set(target renderTarget) {
+	out.prog.framebuffer.attach(target)
 }
