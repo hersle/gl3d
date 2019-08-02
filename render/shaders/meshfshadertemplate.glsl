@@ -41,6 +41,8 @@ uniform float materialShine;
 uniform sampler2D materialDiffuseMap;
 uniform sampler2D materialSpecularMap;
 uniform sampler2D materialBumpMap;
+uniform int materialBumpMapWidth;
+uniform int materialBumpMapHeight;
 #endif
 
 #if defined(AMBIENT)
@@ -98,8 +100,15 @@ void main() {
 	#endif
 
 	#if defined(POINT) || defined(SPOT) || defined(DIR)
-	vec3 tanNormal = vec3(-1, -1, -1) + 2 * texture(materialBumpMap, texCoordF).rgb;
-	tanNormal = normalize(tanNormal);
+	float dx = 1.0 / materialBumpMapWidth;
+	float dy = 1.0 / materialBumpMapHeight;
+	float z1 = texture(materialBumpMap, vec2(texCoordF.x-dx, texCoordF.y)).r;
+	float z2 = texture(materialBumpMap, vec2(texCoordF.x+dx, texCoordF.y)).r;
+	float dzdx = (z2-z1) * 10.0;
+	z1 = texture(materialBumpMap, vec2(texCoordF.x, texCoordF.y-dy)).r;
+	z2 = texture(materialBumpMap, vec2(texCoordF.x, texCoordF.y+dy)).r;
+	float dzdy = (z2-z1) * 10.0;
+	vec3 tanNormal = normalize(vec3(dzdx, dzdy, 2));
 
 	vec4 tex;
 	vec3 tanReflection = normalize(reflect(tanLightToVertex, tanNormal));

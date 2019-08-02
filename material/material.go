@@ -171,9 +171,8 @@ func ReadMaterials(filenames []string) []*Material {
 					bumpMapFilename = path.Join(path.Dir(filename), bumpMapFilename)
 				}
 				bumpMap, err := utils.ReadImage(bumpMapFilename)
-				normalMap := bumpMapToNormalMap(bumpMap)
 				if err == nil {
-					mtl.BumpMap = normalMap
+					mtl.BumpMap = bumpMap
 				}
 			case "map_d":
 				if len(fields[1:]) != 1 {

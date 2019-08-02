@@ -88,6 +88,8 @@ type MeshProgram struct {
 	MaterialAlpha       *graphics.Uniform
 	MaterialAlphaMap    *graphics.Uniform
 	MaterialBumpMap     *graphics.Uniform
+	MaterialBumpMapWidth  *graphics.Uniform
+	MaterialBumpMapHeight *graphics.Uniform
 
 	LightPosition          *graphics.Uniform
 	LightDirection         *graphics.Uniform
@@ -188,6 +190,8 @@ func NewMeshProgram(defines ...string) *MeshProgram {
 	sp.MaterialAlpha = sp.UniformByName("materialAlpha")
 	sp.MaterialAlphaMap = sp.UniformByName("materialAlphaMap")
 	sp.MaterialBumpMap = sp.UniformByName("materialBumpMap")
+	sp.MaterialBumpMapWidth = sp.UniformByName("materialBumpMapWidth")
+	sp.MaterialBumpMapHeight = sp.UniformByName("materialBumpMapHeight")
 
 	sp.LightPosition = sp.UniformByName("lightPosition")
 	sp.LightDirection = sp.UniformByName("lightDirection")
@@ -435,8 +439,12 @@ func (r *MeshRenderer) setSubMesh(sp *MeshProgram, sm *object.SubMesh) {
 			r.tex2ds[mtl.BumpMap] = tex
 		}
 		sp.MaterialBumpMap.Set(tex)
+		sp.MaterialBumpMapWidth.Set(tex.Width())
+		sp.MaterialBumpMapHeight.Set(tex.Height())
 	} else {
-		sp.MaterialBumpMap.Set(blueTexture)
+		sp.MaterialBumpMap.Set(whiteTexture)
+		sp.MaterialBumpMapWidth.Set(whiteTexture.Width())
+		sp.MaterialBumpMapHeight.Set(whiteTexture.Height())
 	}
 
 	// upload to GPU
