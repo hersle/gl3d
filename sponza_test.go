@@ -15,7 +15,7 @@ func TestMain(m *testing.M) {
 
 	l1 := light.NewPointLight(math.Vec3{1, 1, 1})
 	l1.Place(math.Vec3{+15, 15, 0})
-	l1.Attenuation = 0.01
+	l1.Attenuation = 0.005
 	l1.CastShadows = true
 
 	l2 := light.NewSpotLight(math.Vec3{1, 0, 0})
