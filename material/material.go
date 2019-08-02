@@ -162,7 +162,7 @@ func ReadMaterials(filenames []string) []*Material {
 				if err == nil {
 					mtl.SpecularMap = specularMap
 				}
-			case "bump":
+			case "bump", "map_bump":
 				if len(fields[1:]) != 1 {
 					panic("bump map error")
 				}
@@ -171,8 +171,9 @@ func ReadMaterials(filenames []string) []*Material {
 					bumpMapFilename = path.Join(path.Dir(filename), bumpMapFilename)
 				}
 				bumpMap, err := utils.ReadImage(bumpMapFilename)
+				normalMap := bumpMapToNormalMap(bumpMap)
 				if err == nil {
-					mtl.BumpMap = bumpMap
+					mtl.BumpMap = normalMap
 				}
 			case "map_d":
 				if len(fields[1:]) != 1 {
@@ -205,6 +206,29 @@ func ReadMaterials(filenames []string) []*Material {
 	}
 
 	return mtls
+}
+
+func bumpMapToNormalMap(bump image.Image) image.Image {
+	normal := image.NewRGBA(bump.Bounds().Inset(1))
+	for y0 := normal.Bounds().Min.Y; y0 < normal.Bounds().Max.Y - 1; y0++ {
+		for x0 := normal.Bounds().Min.X; x0 < normal.Bounds().Max.X - 1; x0++ {
+			z1, _, _, _ := bump.At(x0-1, y0).RGBA()
+			z2, _, _, _ := bump.At(x0+1, y0).RGBA()
+			dzdx := float32(z2-z1) * 0.000001
+			z1, _, _, _ = bump.At(x0, y0-1).RGBA()
+			z2, _, _, _ = bump.At(x0, y0+1).RGBA()
+			dzdy := float32(z2-z1) * 0.000001
+			n := math.Vec3{dzdx, dzdy, 2}.Norm()
+			n = n.Sub(math.Vec3{-1, -1, -1}).Scale(0.5)
+			r := uint8(float32(0xff) * n.X())
+			g := uint8(float32(0xff) * n.Y())
+			b := uint8(float32(0xff) * n.Z())
+			a := uint8(0xff)
+			rgba := color.RGBA{r, g, b, a}
+			normal.SetRGBA(x0, y0, rgba)
+		}
+	}
+	return normal
 }
 
 func init() {

@@ -2,6 +2,7 @@ package utils
 
 import (
 	"image"
+	"image/png"
 	"os"
 )
 
@@ -28,4 +29,16 @@ func ReadImages(filenames ...string) ([]image.Image, error) {
 		imgs[i] = img
 	}
 	return imgs, nil
+}
+
+func WriteImagePNG(img image.Image, filename string) error {
+	out, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+
+	png.Encode(out, img)
+	out.Close()
+
+	return nil
 }
