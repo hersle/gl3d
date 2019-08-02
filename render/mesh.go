@@ -608,7 +608,7 @@ func (r *MeshRenderer) shadowPass(s *scene.Scene) {
 func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
 	smap, found := r.pointLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewCubeMap(graphics.DepthTexture, graphics.NearestFilter, 512, 512)
+		smap = graphics.NewCubeMap(graphics.DepthTexture, graphics.LinearFilter, 512, 512)
 		r.pointLightShadowMaps[l.ID] = smap
 	}
 
@@ -667,7 +667,7 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
 	smap, found := r.spotLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.BorderClampWrap, 512, 512, false)
+		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
 		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 		r.spotLightShadowMaps[l.ID] = smap
 	}
@@ -698,7 +698,7 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
 	smap, found := r.dirLightShadowMaps[l.ID]
 	if !found {
-		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.NearestFilter, graphics.BorderClampWrap, 512, 512, false)
+		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
 		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
 		r.dirLightShadowMaps[l.ID] = smap
 	}

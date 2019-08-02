@@ -143,23 +143,12 @@ void main() {
 
 	#if defined(POINT)
 	#if defined(PCF)
-	float offset = 1.0 / 512.0 * float(kernelSize);
-	float incr = kernelSize > 0 ? 2 * offset / (2 * kernelSize) : 10.0;
-	float factor = 0.0;
-	vec3 coord0 = worldPosition - lightPosition;
-	float depth = length(coord0);
-	for (float dx = -offset; dx <= +offset*1.1; dx += incr) {
-		for (float dy = -offset; dy <= +offset*1.1; dy += incr) {
-			for (float dz = -offset; dz <= +offset*1.1; dz += incr) {
-				vec3 coord = coord0 + vec3(dx, dy, dz);
-				float depthFront = textureCube(shadowMap, coord).r * lightFar;
-				bool inShadow = depth > depthFront + 0.1;
-				factor += inShadow ? 1.0 : 0.0;
-			}
-		}
-	}
-	factor = factor / pow(float(2 * kernelSize + 1), 3); // average
-	factor = 1.0 - 1.0 * factor;
+	vec3 coord = worldPosition - lightPosition;
+	float depth = length(coord);
+	vec4 depthFront = textureGather(shadowMap, coord) * lightFar;
+	vec4 inShadow = vec4(greaterThan(vec4(depth), depthFront + 0.1));
+	float sum = float(dot(inShadow, inShadow));
+	float factor = 1.0 - sum / 4.0;
 	#else
 	float depth = length(worldPosition - lightPosition);
 	float depthFront = textureCube(shadowMap, worldPosition - lightPosition).r * lightFar;
@@ -170,22 +159,13 @@ void main() {
 
 	#if defined(SPOT)
 	#if defined(PCF)
-	float offset = 1.0 / 512.0 * float(kernelSize);
-	float incr = kernelSize > 0 ? 2 * offset / (2 * kernelSize) : 10.0;
-	float factor = 0.0;
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
-	vec2 texCoordS0 = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
+	vec2 texCoords = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = length(worldPosition - lightPosition);
-	for (float dx = -offset; dx <= +offset*1.1; dx += incr) {
-		for (float dy = -offset; dy <= +offset*1.1; dy += incr) {
-			vec2 texCoordS = texCoordS0 + vec2(dx, dy);
-			float depthFront = texture(shadowMap, texCoordS).r * lightFar;
-			bool inShadow = depth > depthFront + 1.0;
-			factor += inShadow ? 1.0 : 0.0;
-		}
-	}
-	factor = factor / ((2*kernelSize+1) * (2*kernelSize+1)); // average
-	factor = 1.0 - 1.0 * factor;
+	vec4 depthFront = textureGather(shadowMap, texCoords) * lightFar;
+	vec4 inShadow = vec4(greaterThan(vec4(depth), depthFront + 1.0));
+	float sum = float(dot(inShadow, inShadow));
+	float factor = 1.0 - sum / 4.0;
 	#else
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
@@ -198,22 +178,13 @@ void main() {
 
 	#if defined(DIR)
 	#if defined(PCF)
-	float offset = 1.0 / 512.0 * float(kernelSize);
-	float incr = kernelSize > 0 ? 2 * offset / (2 * kernelSize) : 10.0;
-	float factor = 0.0;
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
-	vec2 texCoordS0 = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
+	vec2 texCoords = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
 	float depth = 0.5 + 0.5 * ndcCoords.z; // make into [0, 1]
-	for (float dx = -offset; dx <= +offset*1.1; dx += incr) {
-		for (float dy = -offset; dy <= +offset*1.1; dy += incr) {
-			vec2 texCoordS = texCoordS0 + vec2(dx, dy);
-			float depthFront = texture(shadowMap, texCoordS).r;
-			bool inShadow = depth > depthFront + 0.05;
-			factor += inShadow ? 1.0 : 0.0;
-		}
-	}
-	factor = factor / ((2*kernelSize+1) * (2*kernelSize+1)); // average
-	factor = 1.0 - 1.0 * factor;
+	vec4 depthFront = textureGather(shadowMap, texCoords);
+	vec4 inShadow = vec4(greaterThan(vec4(depth), depthFront + 0.05));
+	float sum = float(dot(inShadow, inShadow));
+	float factor = 1.0 - sum / 4.0;
 	#else
 	vec3 ndcCoords = lightSpacePosition.xyz / lightSpacePosition.w;
 	vec2 texCoordS = vec2(0.5, 0.5) + 0.5 * ndcCoords.xy;
