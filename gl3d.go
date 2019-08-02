@@ -5,6 +5,7 @@ import (
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/math"
 	"github.com/hersle/gl3d/light"
+	"github.com/hersle/gl3d/input"
 	"flag"
 	"runtime/pprof"
 	"os"
@@ -28,6 +29,8 @@ func main() {
 
 	eng.InitializeCustom = func() {
 		eng.Scene.AddAmbientLight(light.NewAmbientLight(math.Vec3{0.5, 0.5, 0.5}))
+		eng.Scene.AddPointLight(light.NewPointLight(math.Vec3{1, 1, 1}))
+		eng.Scene.PointLights[0].Attenuation = 0.001
 		for _, filename := range flag.Args() {
 			model, err := object.ReadMesh(filename)
 			if err != nil {
@@ -36,6 +39,10 @@ func main() {
 			eng.Scene.AddMesh(model)
 		}
 	}
+
+	input.KeySpace.Listen(func(action input.Action) {
+		eng.Scene.PointLights[0].Place(eng.Camera.Position)
+	})
 
 	eng.Run()
 }
