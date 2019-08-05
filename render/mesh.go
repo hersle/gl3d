@@ -20,6 +20,7 @@ var blackTexture *graphics.Texture2D
 var whiteCubeMap *graphics.CubeMap
 
 type MeshRenderer struct {
+	depthProg *MeshProgram
 	ambientProg *MeshProgram
 	pointLitProg *MeshProgram
 	spotLitProg *MeshProgram
@@ -123,7 +124,8 @@ type ShadowMapProgram struct {
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
-	r.ambientProg = NewMeshProgram("DEPTH", "AMBIENT")
+	r.depthProg = NewMeshProgram("DEPTH")
+	r.ambientProg = NewMeshProgram("AMBIENT")
 	r.pointLitProg = NewMeshProgram("POINT", "SHADOW", "PCF")
 	r.spotLitProg = NewMeshProgram("SPOT", "SHADOW", "PCF")
 	r.dirLitProg = NewMeshProgram("DIR", "SHADOW", "PCF")
@@ -237,6 +239,7 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.renderOpts.Culling = graphics.BackCulling
 	r.renderOpts.Primitive = graphics.Triangles
 
+	r.depthProg.Depth.Set(depthTexture)
 	r.ambientProg.Color.Set(colorTexture)
 	r.pointLitProg.Color.Set(colorTexture)
 	r.spotLitProg.Color.Set(colorTexture)
@@ -254,7 +257,8 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 
 	r.preparationPass(s, c)
 	r.shadowPass(s)
-	r.depthAmbientPass(s, c)
+	r.depthPass(s, c)
+	r.ambientPass(s, c)
 	r.lightPass(s, c)
 }
 
@@ -296,9 +300,38 @@ func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
 	r.dirLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
 }
 
-func (r *MeshRenderer) depthAmbientPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) depthPass(s *scene.Scene, c camera.Camera) {
 	r.renderOpts.Blending = graphics.NoBlending
 	r.renderOpts.DepthTest = graphics.LessDepthTest
+
+	r.setCamera(r.depthProg, c)
+	r.renderMeshes(s, c, r.depthProg)
+
+	for _, l := range s.PointLights {
+		r.ambientProg.LightColor.Set(l.Color)
+		r.pointLightMesh.Place(l.Position)
+		r.setMesh(r.ambientProg, r.pointLightMesh)
+		for _, subMesh := range r.pointLightMesh.SubMeshes {
+			r.setSubMesh(r.ambientProg, subMesh)
+			r.ambientProg.Render(subMesh.Geo.Inds, r.renderOpts)
+		}
+	}
+
+	for _, l := range s.SpotLights {
+		r.ambientProg.LightColor.Set(l.Color)
+		r.spotLightMesh.Place(l.Position)
+		r.spotLightMesh.Orient(l.UnitX, l.UnitY)
+		r.setMesh(r.ambientProg, r.spotLightMesh)
+		for _, subMesh := range r.spotLightMesh.SubMeshes {
+			r.setSubMesh(r.ambientProg, subMesh)
+			r.ambientProg.Render(subMesh.Geo.Inds, r.renderOpts)
+		}
+	}
+}
+
+func (r *MeshRenderer) ambientPass(s *scene.Scene, c camera.Camera) {
+	r.renderOpts.Blending = graphics.NoBlending
+	r.renderOpts.DepthTest = graphics.EqualDepthTest
 
 	r.ambientProg.LightColor.Set(s.AmbientLight.Color)
 	r.setCamera(r.ambientProg, c)
