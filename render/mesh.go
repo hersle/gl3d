@@ -22,6 +22,7 @@ var whiteCubeMap *graphics.CubeMap
 type MeshRenderer struct {
 	depthProg *MeshProgram
 	ambientProg *MeshProgram
+	ssaoProg *ssaoProgram
 	pointLitProg *MeshProgram
 	spotLitProg *MeshProgram
 	dirLitProg *MeshProgram
@@ -121,10 +122,22 @@ type ShadowMapProgram struct {
 	Depth *graphics.Output
 }
 
+type ssaoProgram struct {
+	*graphics.Program
+
+	Position *graphics.Input
+	Color               *graphics.Output
+	DepthMap            *graphics.Uniform
+	DepthMapWidth       *graphics.Uniform
+	DepthMapHeight      *graphics.Uniform
+	InvProjectionMatrix *graphics.Uniform
+}
+
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
 	r.depthProg = NewMeshProgram("DEPTH")
+	r.ssaoProg = NewSSAOProgram()
 	r.ambientProg = NewMeshProgram("AMBIENT")
 	r.pointLitProg = NewMeshProgram("POINT", "SHADOW", "PCF")
 	r.spotLitProg = NewMeshProgram("SPOT", "SHADOW", "PCF")
@@ -158,6 +171,13 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.MaterialAlphaEnabled = true
 	r.MaterialNormalEnabled = true
 	r.ShadowsEnabled = true
+
+	verts := []math.Vec2{
+		math.Vec2{-1, -1}, math.Vec2{+1, -1}, math.Vec2{+1, +1}, math.Vec2{-1, +1},
+	}
+	vbo := graphics.NewVertexBuffer()
+	vbo.SetData(verts, 0)
+	r.ssaoProg.Position.SetSourceVertex(vbo, 0)
 
 	return &r, nil
 }
@@ -235,6 +255,23 @@ func NewShadowMapProgram(defines ...string) *ShadowMapProgram {
 	return &sp
 }
 
+func NewSSAOProgram() *ssaoProgram {
+	var sp ssaoProgram
+
+	vFile := "render/shaders/ssaovshader.glsl" // TODO: make independent from executable directory
+	fFile := "render/shaders/ssaofshader.glsl" // TODO: make independent from executable directory
+	sp.Program = graphics.ReadProgram(vFile, fFile, "")
+
+	sp.Position = sp.InputByName("position")
+	sp.Color = sp.OutputColorByName("fragColor")
+	sp.DepthMap = sp.UniformByName("depthMap")
+	sp.DepthMapWidth = sp.UniformByName("depthMapWidth")
+	sp.DepthMapHeight = sp.UniformByName("depthMapHeight")
+	sp.InvProjectionMatrix = sp.UniformByName("invProjectionMatrix")
+
+	return &sp
+}
+
 func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
 	r.renderOpts.Culling = graphics.BackCulling
 	r.renderOpts.Primitive = graphics.Triangles
@@ -259,7 +296,25 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.shadowPass(s)
 	r.depthPass(s, c)
 	r.ambientPass(s, c)
-	r.lightPass(s, c)
+
+	r.renderOpts.Primitive = graphics.TriangleFan
+	r.renderOpts.Blending = graphics.NoBlending
+	r.ssaoProg.Color.Set(colorTexture)
+	r.ssaoProg.DepthMap.Set(depthTexture)
+	r.ssaoProg.DepthMapWidth.Set(depthTexture.Width())
+	r.ssaoProg.DepthMapHeight.Set(depthTexture.Height())
+
+	var mat math.Mat4
+	mat.Identity()
+	mat.Mult(c.ProjectionMatrix())
+	mat.Invert()
+	r.ssaoProg.InvProjectionMatrix.Set(&mat)
+
+	r.ssaoProg.Render(6, r.renderOpts)
+
+
+
+	//r.lightPass(s, c)
 }
 
 func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
