@@ -8,6 +8,7 @@ import (
 	"github.com/hersle/gl3d/material"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
+	"github.com/hersle/gl3d/utils"
 	"image"
 	"fmt"
 	gomath "math"
@@ -130,7 +131,9 @@ type ssaoProgram struct {
 	DepthMap            *graphics.Uniform
 	DepthMapWidth       *graphics.Uniform
 	DepthMapHeight      *graphics.Uniform
+	ProjectionMatrix *graphics.Uniform
 	InvProjectionMatrix *graphics.Uniform
+	Directions          []*graphics.Uniform
 }
 
 func NewMeshRenderer() (*MeshRenderer, error) {
@@ -267,7 +270,18 @@ func NewSSAOProgram() *ssaoProgram {
 	sp.DepthMap = sp.UniformByName("depthMap")
 	sp.DepthMapWidth = sp.UniformByName("depthMapWidth")
 	sp.DepthMapHeight = sp.UniformByName("depthMapHeight")
+	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
 	sp.InvProjectionMatrix = sp.UniformByName("invProjectionMatrix")
+
+	sp.Directions = make([]*graphics.Uniform, 16)
+	for i := 0; i < 16; i++ {
+		name := fmt.Sprintf("directions[%d]", i)
+		sp.Directions[i] = sp.UniformByName(name)
+	}
+
+	for i := 0; i < 16; i++ {
+		sp.Directions[i].Set(utils.RandomDirection())
+	}
 
 	return &sp
 }
@@ -309,6 +323,7 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	mat.Mult(c.ProjectionMatrix())
 	mat.Invert()
 	r.ssaoProg.InvProjectionMatrix.Set(&mat)
+	r.ssaoProg.ProjectionMatrix.Set(c.ProjectionMatrix())
 
 	r.ssaoProg.Render(6, r.renderOpts)
 
