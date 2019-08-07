@@ -18,17 +18,26 @@ void main() {
 	vec4 viewPosition = invProjectionMatrix * vec4(x, y, z, 1.0);
 	viewPosition /= viewPosition.w; // perspective divide
 
-	float fraction = 1.0;
+	float fraction = 0.0;
 	for (int i = 0; i < 16; i++) {
 		vec4 viewPos = viewPosition + vec4(directions[i] * DIRECTION_LENGTH, 0);
 		vec4 projPos = projectionMatrix * viewPos;
 		projPos /= projPos.w; // perspective divide
 		float depth = texture(depthMap, vec2(0.5) + 0.5 * projPos.xy).r;
-		fraction -= depth < z ? 1.0 / 16.0 : 0.0;
+
+		float x2 = projPos.x;
+		float y2 = projPos.y;
+		float z2 = depth;
+		vec4 viewPosition2 = invProjectionMatrix * vec4(x2, y2, z2, 1.0);
+		viewPosition2 /= viewPosition2.w; // perspective divide
+
+		float dist = length(viewPosition2.xyz - viewPosition.xyz);
+
+		fraction += dist > 0.30 ? 1.0 / 16.0 : 0.0;
 	}
 
-	fraction = fraction < 0.5 ? fraction : 1.0;
+	fraction = fraction > 0.5 ? fraction : 0.0;
+	fraction = 1 - fraction;
 
-	//fragColor = vec4(vec3(length(viewPosition) / 30.0), 1.0);
 	fragColor = vec4(vec3(fraction), 1.0);
 }
