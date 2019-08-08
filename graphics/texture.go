@@ -19,6 +19,7 @@ type Texture2D struct {
 	height int
 	type_  TextureType
 	levels int
+	components int
 }
 
 type CubeMap struct {
@@ -119,6 +120,7 @@ func NewColorTexture2D(filter TextureFilter, wrap TextureWrap, width, height int
 	tex.width = width
 	tex.height = height
 	tex.type_ = ColorTexture
+	tex.components = components
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &tex.id)
 
 	if mipmap {
@@ -141,6 +143,7 @@ func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, wid
 	tex.width = width
 	tex.height = height
 	tex.type_ = type_
+	tex.components = 4 // used by color textures
 	gl.CreateTextures(gl.TEXTURE_2D, 1, &tex.id)
 
 	if mipmap {
@@ -237,7 +240,18 @@ func (tex *Texture2D) SetData(x0, y0, w, h int, data interface{}) {
 	var pixelFormat uint32
 	switch tex.type_ {
 	case ColorTexture:
-		pixelFormat = gl.RGBA
+		switch tex.components {
+		case 1:
+			pixelFormat = gl.RED
+		case 2:
+			pixelFormat = gl.RG
+		case 3:
+			pixelFormat = gl.RGB
+		case 4:
+			pixelFormat = gl.RGBA
+		default:
+			panic("invalid component count")
+		}
 	case DepthTexture:
 		pixelFormat = gl.DEPTH_COMPONENT
 	case StencilTexture:
