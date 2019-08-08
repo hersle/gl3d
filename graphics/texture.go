@@ -101,12 +101,7 @@ func LoadTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, im
 		}
 
 		tex := NewTexture2D(type_, filter, wrap, w, h, mipmap)
-		gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
-		p := unsafe.Pointer(&byteSlice(img2.Pix)[0])
-		gl.TextureSubImage2D(tex.id, 0, 0, 0, int32(w), int32(h), gl.RGBA, gl.UNSIGNED_BYTE, p)
-		if mipmap {
-			gl.GenerateTextureMipmap(tex.id)
-		}
+		tex.SetData(0, 0, w, h, img2.Pix)
 		return tex
 	default:
 		imgRGBA := image.NewRGBA(img.Bounds())
@@ -168,6 +163,42 @@ func (tex *Texture2D) SetFiltering(filter TextureFilter) {
 		gl.TextureParameteri(tex.id, gl.TEXTURE_MIN_FILTER, int32(filter))
 	}
 	gl.TextureParameteri(tex.id, gl.TEXTURE_MAG_FILTER, int32(filter))
+}
+
+func (tex *Texture2D) SetData(x0, y0, w, h int, data interface{}) {
+	var pixelFormat uint32
+	switch tex.type_ {
+	case ColorTexture:
+		pixelFormat = gl.RGBA
+	case DepthTexture:
+		pixelFormat = gl.DEPTH_COMPONENT
+	case StencilTexture:
+		pixelFormat = gl.STENCIL_INDEX
+	default:
+		panic("unknown texture type")
+	}
+
+	var pixelDataType uint32
+	switch data.(type) {
+	case []uint8: // i.e. []byte
+		pixelDataType = gl.UNSIGNED_BYTE
+	case []float32, []math.Vec2, []math.Vec3, []math.Vec4:
+		pixelDataType = gl.FLOAT
+	case []int, []int32:
+		pixelDataType = gl.INT
+	case []uint, []uint32:
+		pixelDataType = gl.UNSIGNED_INT
+	default:
+		panic("unknown pixel data type")
+	}
+
+	gl.PixelStorei(gl.UNPACK_ALIGNMENT, 1)
+	p := unsafe.Pointer(&byteSlice(data)[0])
+	gl.TextureSubImage2D(tex.id, 0, int32(x0), int32(y0), int32(w), int32(h), pixelFormat, pixelDataType, p)
+	mipmap := tex.levels > 1
+	if mipmap {
+		gl.GenerateTextureMipmap(tex.id)
+	}
 }
 
 func (tex *Texture2D) Display(blend Blending) {
