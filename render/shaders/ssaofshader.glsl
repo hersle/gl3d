@@ -33,9 +33,7 @@ void main() {
 		vec4 viewPosition2 = invProjectionMatrix * vec4(x2, y2, z2, 1.0);
 		viewPosition2 /= viewPosition2.w; // perspective divide
 
-		float dist = length(viewPosition2.xyz - viewPosition.xyz);
-
-		fraction += dist > 0.30 ? 1.0 / 16.0 : 0.0;
+		fraction += length(viewPos) > length(viewPosition2) ? 1.0 / 16.0 : 0.0;
 	}
 
 	fraction = fraction > 0.5 ? fraction : 0.0;
