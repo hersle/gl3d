@@ -80,14 +80,9 @@ func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, wid
 	} else {
 		tex.levels = 1
 	}
-	if mipmap && filter == LinearFilter {
-		gl.TextureParameteri(tex.id, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
-	} else {
-		gl.TextureParameteri(tex.id, gl.TEXTURE_MIN_FILTER, int32(filter))
-	}
-	gl.TextureParameteri(tex.id, gl.TEXTURE_MAG_FILTER, int32(filter))
-	gl.TextureParameteri(tex.id, gl.TEXTURE_WRAP_S, int32(wrap))
-	gl.TextureParameteri(tex.id, gl.TEXTURE_WRAP_T, int32(wrap))
+
+	tex.SetWrapping(wrap)
+	tex.SetFiltering(filter)
 	gl.TextureStorage2D(tex.id, int32(tex.levels), tex.glFormat(), int32(width), int32(height))
 	return &tex
 }
@@ -158,6 +153,21 @@ func (tex *Texture2D) Clear(rgba math.Vec4) {
 
 func (tex *Texture2D) SetBorderColor(rgba math.Vec4) {
 	gl.TextureParameterfv(tex.id, gl.TEXTURE_BORDER_COLOR, &rgba[0])
+}
+
+func (tex *Texture2D) SetWrapping(wrap TextureWrap) {
+	gl.TextureParameteri(tex.id, gl.TEXTURE_WRAP_S, int32(wrap))
+	gl.TextureParameteri(tex.id, gl.TEXTURE_WRAP_T, int32(wrap))
+}
+
+func (tex *Texture2D) SetFiltering(filter TextureFilter) {
+	mipmap := tex.levels > 1
+	if mipmap && filter == LinearFilter {
+		gl.TextureParameteri(tex.id, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR)
+	} else {
+		gl.TextureParameteri(tex.id, gl.TEXTURE_MIN_FILTER, int32(filter))
+	}
+	gl.TextureParameteri(tex.id, gl.TEXTURE_MAG_FILTER, int32(filter))
 }
 
 func (tex *Texture2D) Display(blend Blending) {
