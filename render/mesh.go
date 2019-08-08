@@ -63,6 +63,8 @@ type MeshRenderer struct {
 	MaterialNormalEnabled bool
 	ShadowsEnabled bool
 	Wireframe bool
+
+	randomDirectionMap *graphics.Texture2D
 }
 
 type MeshProgram struct {
@@ -134,6 +136,7 @@ type ssaoProgram struct {
 	ProjectionMatrix *graphics.Uniform
 	InvProjectionMatrix *graphics.Uniform
 	Directions          []*graphics.Uniform
+	DirectionMap        *graphics.Uniform
 }
 
 func NewMeshRenderer() (*MeshRenderer, error) {
@@ -181,6 +184,14 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	vbo := graphics.NewVertexBuffer()
 	vbo.SetData(verts, 0)
 	r.ssaoProg.Position.SetSourceVertex(vbo, 0)
+	w := 1920 / 1
+	h := 1080 / 1
+	r.randomDirectionMap = graphics.NewColorTexture2D(graphics.NearestFilter, graphics.RepeatWrap, w, h, 3, 32, true, false)
+	directions := make([]math.Vec3, w*h)
+	for i := 0; i < w*h; i++ {
+		directions[i] = utils.RandomDirection()
+	}
+	r.randomDirectionMap.SetData(0, 0, w, h, directions)
 
 	return &r, nil
 }
@@ -279,6 +290,8 @@ func NewSSAOProgram() *ssaoProgram {
 		sp.Directions[i] = sp.UniformByName(name)
 	}
 
+	sp.DirectionMap = sp.UniformByName("directionMap")
+
 	for i := 0; i < 16; i++ {
 		sp.Directions[i].Set(utils.RandomDirection())
 	}
@@ -324,10 +337,9 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	mat.Invert()
 	r.ssaoProg.InvProjectionMatrix.Set(&mat)
 	r.ssaoProg.ProjectionMatrix.Set(c.ProjectionMatrix())
+	r.ssaoProg.DirectionMap.Set(r.randomDirectionMap)
 
 	r.ssaoProg.Render(6, r.renderOpts)
-
-
 
 	//r.lightPass(s, c)
 }
