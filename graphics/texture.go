@@ -68,6 +68,74 @@ const (
 	NegativeZ CubeMapLayer = CubeMapLayer(5)
 )
 
+func colorTextureInternalFormat(floating bool, bits, components int) uint32 {
+	// TODO: more readable
+	switch floating {
+	case true:
+		switch bits {
+		case 32:
+			switch components {
+			case 1:
+				return gl.R32F
+			case 2:
+				return gl.RG32F
+			case 3:
+				return gl.RGB32F
+			case 4:
+				return gl.RGBA32F
+			}
+		}
+	case false:
+		switch bits {
+		case 8:
+			switch components {
+			case 1:
+				return gl.R8
+			case 2:
+				return gl.RG8
+			case 3:
+				return gl.RGB8
+			case 4:
+				return gl.RGBA8
+			}
+		case 16:
+			switch components {
+			case 1:
+				return gl.R16
+			case 2:
+				return gl.RG16
+			case 3:
+				return gl.RGB16
+			case 4:
+				return gl.RGBA16
+			}
+		}
+	}
+	panic("invalid internal texture format")
+}
+
+func NewColorTexture2D(filter TextureFilter, wrap TextureWrap, width, height int, components int, bits int, floating bool, mipmap bool) *Texture2D {
+	var tex Texture2D
+	tex.width = width
+	tex.height = height
+	tex.type_ = ColorTexture
+	gl.CreateTextures(gl.TEXTURE_2D, 1, &tex.id)
+
+	if mipmap {
+		tex.levels = 1 + int(gomath.Log2(gomath.Max(float64(width), float64(height))))
+	} else {
+		tex.levels = 1
+	}
+
+	tex.SetWrapping(wrap)
+	tex.SetFiltering(filter)
+
+	glType := colorTextureInternalFormat(floating, bits, components)
+
+	gl.TextureStorage2D(tex.id, int32(tex.levels), glType, int32(width), int32(height))
+	return &tex
+}
+
 func NewTexture2D(type_ TextureType, filter TextureFilter, wrap TextureWrap, width, height int, mipmap bool) *Texture2D {
 	var tex Texture2D
 	tex.width = width
