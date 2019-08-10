@@ -8,7 +8,6 @@ import (
 	"github.com/hersle/gl3d/material"
 	"github.com/hersle/gl3d/object"
 	"github.com/hersle/gl3d/scene"
-	"github.com/hersle/gl3d/utils"
 	"image"
 	"fmt"
 	gomath "math"
@@ -26,7 +25,6 @@ type MeshRenderer struct {
 
 	depthProg *MeshProgram
 	ambientProg *MeshProgram
-	ssaoProg *ssaoProgram
 	pointLitProg *MeshProgram
 	spotLitProg *MeshProgram
 	dirLitProg *MeshProgram
@@ -66,8 +64,6 @@ type MeshRenderer struct {
 	MaterialNormalEnabled bool
 	ShadowsEnabled bool
 	Wireframe bool
-
-	randomDirectionMap *graphics.Texture2D
 }
 
 type MeshProgram struct {
@@ -128,25 +124,10 @@ type ShadowMapProgram struct {
 	Depth *graphics.Output
 }
 
-type ssaoProgram struct {
-	*graphics.Program
-
-	Position *graphics.Input
-	Color               *graphics.Output
-	DepthMap            *graphics.Uniform
-	DepthMapWidth       *graphics.Uniform
-	DepthMapHeight      *graphics.Uniform
-	ProjectionMatrix *graphics.Uniform
-	InvProjectionMatrix *graphics.Uniform
-	Directions          []*graphics.Uniform
-	DirectionMap        *graphics.Uniform
-}
-
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
 	r.depthProg = NewMeshProgram("DEPTH")
-	r.ssaoProg = NewSSAOProgram()
 	r.ambientProg = NewMeshProgram("AMBIENT")
 	r.pointLitProg = NewMeshProgram("POINT", "SHADOW", "PCF")
 	r.spotLitProg = NewMeshProgram("SPOT", "SHADOW", "PCF")
@@ -180,21 +161,6 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.MaterialAlphaEnabled = true
 	r.MaterialNormalEnabled = true
 	r.ShadowsEnabled = true
-
-	verts := []math.Vec2{
-		math.Vec2{-1, -1}, math.Vec2{+1, -1}, math.Vec2{+1, +1}, math.Vec2{-1, +1},
-	}
-	vbo := graphics.NewVertexBuffer()
-	vbo.SetData(verts, 0)
-	r.ssaoProg.Position.SetSourceVertex(vbo, 0)
-	w := 1920 / 1
-	h := 1080 / 1
-	r.randomDirectionMap = graphics.NewColorTexture2D(graphics.NearestFilter, graphics.RepeatWrap, w, h, 3, 32, true, false)
-	directions := make([]math.Vec3, w*h)
-	for i := 0; i < w*h; i++ {
-		directions[i] = utils.RandomDirection()
-	}
-	r.randomDirectionMap.SetData(0, 0, w, h, directions)
 
 	return &r, nil
 }
@@ -270,58 +236,6 @@ func NewShadowMapProgram(defines ...string) *ShadowMapProgram {
 	sp.Depth = sp.OutputDepth()
 
 	return &sp
-}
-
-func NewSSAOProgram() *ssaoProgram {
-	var sp ssaoProgram
-
-	vFile := "render/shaders/ssaovshader.glsl" // TODO: make independent from executable directory
-	fFile := "render/shaders/ssaofshader.glsl" // TODO: make independent from executable directory
-	sp.Program = graphics.ReadProgram(vFile, fFile, "")
-
-	sp.Position = sp.InputByName("position")
-	sp.Color = sp.OutputColorByName("fragColor")
-	sp.DepthMap = sp.UniformByName("depthMap")
-	sp.DepthMapWidth = sp.UniformByName("depthMapWidth")
-	sp.DepthMapHeight = sp.UniformByName("depthMapHeight")
-	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
-	sp.InvProjectionMatrix = sp.UniformByName("invProjectionMatrix")
-
-	sp.Directions = make([]*graphics.Uniform, 16)
-	for i := 0; i < 16; i++ {
-		name := fmt.Sprintf("directions[%d]", i)
-		sp.Directions[i] = sp.UniformByName(name)
-	}
-
-	sp.DirectionMap = sp.UniformByName("directionMap")
-
-	for i := 0; i < 16; i++ {
-		sp.Directions[i].Set(utils.RandomDirection())
-	}
-
-	return &sp
-}
-
-func (r *MeshRenderer) Render() {
-
-	/*
-	r.renderOpts.Primitive = graphics.TriangleFan
-	r.renderOpts.Blending = graphics.NoBlending
-	r.ssaoProg.Color.Set(colorTexture)
-	r.ssaoProg.DepthMap.Set(depthTexture)
-	r.ssaoProg.DepthMapWidth.Set(depthTexture.Width())
-	r.ssaoProg.DepthMapHeight.Set(depthTexture.Height())
-
-	var mat math.Mat4
-	mat.Identity()
-	mat.Mult(c.ProjectionMatrix())
-	mat.Invert()
-	r.ssaoProg.InvProjectionMatrix.Set(&mat)
-	r.ssaoProg.ProjectionMatrix.Set(c.ProjectionMatrix())
-	r.ssaoProg.DirectionMap.Set(r.randomDirectionMap)
-
-	r.ssaoProg.Render(6, r.renderOpts)
-	*/
 }
 
 func (r *MeshRenderer) Prepare(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {

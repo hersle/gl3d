@@ -55,8 +55,13 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 	r.MeshRenderer.Prepare(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
 	r.MeshRenderer.RenderShadows()
 	r.MeshRenderer.RenderDepth()
-	r.MeshRenderer.RenderAmbient()
-	r.MeshRenderer.RenderLights()
+
+
+	r.EffectRenderer.RenderSSAO(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
+	r.EffectRenderer.RenderGaussianBlur(r.sceneRenderTarget, r.sceneRenderTarget2, 3)
+
+	//r.MeshRenderer.RenderAmbient()
+	//r.MeshRenderer.RenderLights()
 
 	if r.Fog {
 		r.EffectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
