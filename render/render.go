@@ -47,11 +47,17 @@ func NewRenderer() (*Renderer, error) {
 }
 
 func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
+
 	if s.Skybox != nil {
 		r.SkyboxRenderer.Render(s.Skybox, c, r.sceneRenderTarget)
 	}
 
-	r.MeshRenderer.Render(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
+	r.MeshRenderer.Prepare(s, c, r.sceneRenderTarget, r.sceneDepthRenderTarget)
+	r.MeshRenderer.RenderShadows()
+	r.MeshRenderer.RenderDepth()
+	r.MeshRenderer.RenderAmbient()
+	r.MeshRenderer.RenderLights()
+
 	if r.Fog {
 		r.EffectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
 	}

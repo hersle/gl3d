@@ -21,6 +21,9 @@ var blackTexture *graphics.Texture2D
 var whiteCubeMap *graphics.CubeMap
 
 type MeshRenderer struct {
+	scene *scene.Scene
+	camera camera.Camera
+
 	depthProg *MeshProgram
 	ambientProg *MeshProgram
 	ssaoProg *ssaoProgram
@@ -299,31 +302,9 @@ func NewSSAOProgram() *ssaoProgram {
 	return &sp
 }
 
-func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
-	r.renderOpts.Culling = graphics.BackCulling
-	r.renderOpts.Primitive = graphics.Triangles
+func (r *MeshRenderer) Render() {
 
-	r.depthProg.Depth.Set(depthTexture)
-	r.ambientProg.Color.Set(colorTexture)
-	r.pointLitProg.Color.Set(colorTexture)
-	r.spotLitProg.Color.Set(colorTexture)
-	r.dirLitProg.Color.Set(colorTexture)
-	r.ambientProg.Depth.Set(depthTexture)
-	r.pointLitProg.Depth.Set(depthTexture)
-	r.spotLitProg.Depth.Set(depthTexture)
-	r.dirLitProg.Depth.Set(depthTexture)
-
-	if r.Wireframe {
-		r.renderOpts.Primitive = graphics.TriangleOutlines
-	} else {
-		r.renderOpts.Primitive = graphics.Triangles
-	}
-
-	r.preparationPass(s, c)
-	r.shadowPass(s)
-	r.depthPass(s, c)
-	r.ambientPass(s, c)
-
+	/*
 	r.renderOpts.Primitive = graphics.TriangleFan
 	r.renderOpts.Blending = graphics.NoBlending
 	r.ssaoProg.Color.Set(colorTexture)
@@ -340,11 +321,32 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.ssaoProg.DirectionMap.Set(r.randomDirectionMap)
 
 	r.ssaoProg.Render(6, r.renderOpts)
-
-	//r.lightPass(s, c)
+	*/
 }
 
-func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) Prepare(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
+	r.depthProg.Depth.Set(depthTexture)
+	r.ambientProg.Color.Set(colorTexture)
+	r.pointLitProg.Color.Set(colorTexture)
+	r.spotLitProg.Color.Set(colorTexture)
+	r.dirLitProg.Color.Set(colorTexture)
+	r.ambientProg.Depth.Set(depthTexture)
+	r.pointLitProg.Depth.Set(depthTexture)
+	r.spotLitProg.Depth.Set(depthTexture)
+	r.dirLitProg.Depth.Set(depthTexture)
+
+	r.scene = s
+	r.camera = c
+
+	r.renderOpts.Culling = graphics.BackCulling
+	r.renderOpts.Primitive = graphics.Triangles
+
+	if r.Wireframe {
+		r.renderOpts.Primitive = graphics.TriangleOutlines
+	} else {
+		r.renderOpts.Primitive = graphics.Triangles
+	}
+
 	// precalculate normal matrices for use in multiple rendering passes
 	if len(r.normalMatrices) > len(s.Meshes) {
 		 r.normalMatrices = r.normalMatrices[:len(s.Meshes)]
@@ -382,14 +384,14 @@ func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
 	r.dirLitProg.ShadowKernelSize.Set(r.ShadowKernelSize)
 }
 
-func (r *MeshRenderer) depthPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) RenderDepth() {
 	r.renderOpts.Blending = graphics.NoBlending
 	r.renderOpts.DepthTest = graphics.LessDepthTest
 
-	r.setCamera(r.depthProg, c)
-	r.renderMeshes(s, c, r.depthProg)
+	r.setCamera(r.depthProg, r.camera)
+	r.renderMeshes(r.depthProg)
 
-	for _, l := range s.PointLights {
+	for _, l := range r.scene.PointLights {
 		r.ambientProg.LightColor.Set(l.Color)
 		r.pointLightMesh.Place(l.Position)
 		r.setMesh(r.ambientProg, r.pointLightMesh)
@@ -399,7 +401,7 @@ func (r *MeshRenderer) depthPass(s *scene.Scene, c camera.Camera) {
 		}
 	}
 
-	for _, l := range s.SpotLights {
+	for _, l := range r.scene.SpotLights {
 		r.ambientProg.LightColor.Set(l.Color)
 		r.spotLightMesh.Place(l.Position)
 		r.spotLightMesh.Orient(l.UnitX, l.UnitY)
@@ -411,17 +413,17 @@ func (r *MeshRenderer) depthPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *MeshRenderer) ambientPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) RenderAmbient() {
 	r.renderOpts.Blending = graphics.NoBlending
 	r.renderOpts.DepthTest = graphics.EqualDepthTest
 
-	r.ambientProg.LightColor.Set(s.AmbientLight.Color)
-	r.setCamera(r.ambientProg, c)
-	r.renderMeshes(s, c, r.ambientProg)
+	r.ambientProg.LightColor.Set(r.scene.AmbientLight.Color)
+	r.setCamera(r.ambientProg, r.camera)
+	r.renderMeshes(r.ambientProg)
 
 	// render light source
 	// TODO: do with shaders instead for fancier effects?
-	for _, l := range s.PointLights {
+	for _, l := range r.scene.PointLights {
 		r.ambientProg.LightColor.Set(l.Color)
 		r.pointLightMesh.Place(l.Position)
 		r.setMesh(r.ambientProg, r.pointLightMesh)
@@ -431,7 +433,7 @@ func (r *MeshRenderer) ambientPass(s *scene.Scene, c camera.Camera) {
 		}
 	}
 
-	for _, l := range s.SpotLights {
+	for _, l := range r.scene.SpotLights {
 		r.ambientProg.LightColor.Set(l.Color)
 		r.spotLightMesh.Place(l.Position)
 		r.spotLightMesh.Orient(l.UnitX, l.UnitY)
@@ -443,32 +445,32 @@ func (r *MeshRenderer) ambientPass(s *scene.Scene, c camera.Camera) {
 	}
 }
 
-func (r *MeshRenderer) lightPass(s *scene.Scene, c camera.Camera) {
+func (r *MeshRenderer) RenderLights() {
 	r.renderOpts.DepthTest = graphics.EqualDepthTest
 	r.renderOpts.Blending = graphics.AdditiveBlending // add to framebuffer contents
 
-	r.setCamera(r.pointLitProg, c)
-	for _, l := range s.PointLights {
+	r.setCamera(r.pointLitProg, r.camera)
+	for _, l := range r.scene.PointLights {
 		r.setPointLight(r.pointLitProg, l)
-		r.renderMeshes(s, c, r.pointLitProg)
+		r.renderMeshes(r.pointLitProg)
 	}
 
-	r.setCamera(r.spotLitProg, c)
-	for _, l := range s.SpotLights {
+	r.setCamera(r.spotLitProg, r.camera)
+	for _, l := range r.scene.SpotLights {
 		r.setSpotLight(r.spotLitProg, l)
-		r.renderMeshes(s, c, r.spotLitProg)
+		r.renderMeshes(r.spotLitProg)
 	}
 
-	r.setCamera(r.dirLitProg, c)
-	for _, l := range s.DirectionalLights {
+	r.setCamera(r.dirLitProg, r.camera)
+	for _, l := range r.scene.DirectionalLights {
 		r.setDirectionalLight(r.dirLitProg, l)
-		r.renderMeshes(s, c, r.dirLitProg)
+		r.renderMeshes(r.dirLitProg)
 	}
 }
 
-func (r *MeshRenderer) renderMeshes(s *scene.Scene, c camera.Camera, sp *MeshProgram) {
+func (r *MeshRenderer) renderMeshes(sp *MeshProgram) {
 	j := 0
-	for i, m := range s.Meshes {
+	for i, m := range r.scene.Meshes {
 		r.setMesh(sp, m)
 		sp.NormalMatrix.Set(&r.normalMatrices[i])
 		for _, sm := range m.SubMeshes {
@@ -697,30 +699,30 @@ func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapProgram, sm *object.SubMesh
 	sp.SetIndices(ibo)
 }
 
-func (r *MeshRenderer) shadowPass(s *scene.Scene) {
+func (r *MeshRenderer) RenderShadows() {
 	r.shadowRenderOpts.DepthTest = graphics.LessDepthTest
 	r.shadowRenderOpts.Culling = graphics.BackCulling
 	r.shadowRenderOpts.Primitive = graphics.Triangles
 
-	for _, l := range s.PointLights {
+	for _, l := range r.scene.PointLights {
 		if l.CastShadows {
-			r.renderPointLightShadowMap(s, l)
+			r.renderPointLightShadowMap(l)
 		}
 	}
-	for _, l := range s.SpotLights {
+	for _, l := range r.scene.SpotLights {
 		if l.CastShadows {
-			r.renderSpotLightShadowMap(s, l)
+			r.renderSpotLightShadowMap(l)
 		}
 	}
-	for _, l := range s.DirectionalLights {
+	for _, l := range r.scene.DirectionalLights {
 		if l.CastShadows {
-			r.renderDirectionalLightShadowMap(s, l)
+			r.renderDirectionalLightShadowMap(l)
 		}
 	}
 }
 
 // render shadow map to l's shadow map
-func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
+func (r *MeshRenderer) renderPointLightShadowMap(l *light.PointLight) {
 	smap, found := r.pointLightShadowMaps[l.ID]
 	if !found {
 		smap = graphics.NewCubeMap(graphics.DepthTexture, graphics.LinearFilter, 512, 512)
@@ -767,7 +769,7 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 
 	r.setShadowCamera(r.shadowSp1, c)
 
-	for _, m := range s.Meshes {
+	for _, m := range r.scene.Meshes {
 		r.setShadowMesh(r.shadowSp1, m)
 		for _, subMesh := range m.SubMeshes {
 			r.setShadowSubMesh(r.shadowSp1, subMesh)
@@ -779,7 +781,7 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	//l.DirtyShadowMap = false
 }
 
-func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
+func (r *MeshRenderer) renderSpotLightShadowMap(l *light.SpotLight) {
 	smap, found := r.spotLightShadowMaps[l.ID]
 	if !found {
 		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
@@ -796,7 +798,7 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 	smap.Clear(math.Vec4{1, 1, 1, 1})
 	r.setShadowCamera(r.shadowSp2, &l.PerspectiveCamera)
 
-	for _, m := range s.Meshes {
+	for _, m := range r.scene.Meshes {
 		r.setShadowMesh(r.shadowSp2, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.PerspectiveCamera.Cull(subMesh) {
@@ -810,7 +812,7 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 	//l.DirtyShadowMap = false
 }
 
-func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
+func (r *MeshRenderer) renderDirectionalLightShadowMap(l *light.DirectionalLight) {
 	smap, found := r.dirLightShadowMaps[l.ID]
 	if !found {
 		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
@@ -827,7 +829,7 @@ func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.
 	smap.Clear(math.Vec4{1, 1, 1, 1})
 	r.setShadowCamera(r.shadowSp3, &l.OrthoCamera)
 
-	for _, m := range s.Meshes {
+	for _, m := range r.scene.Meshes {
 		r.setShadowMesh(r.shadowSp3, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.OrthoCamera.Cull(subMesh) {
