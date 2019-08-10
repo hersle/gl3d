@@ -105,6 +105,8 @@ type MeshProgram struct {
 	ShadowMap              *graphics.Uniform
 	ShadowFar              *graphics.Uniform
 	ShadowKernelSize       *graphics.Uniform
+
+	AmbientOcclusionMap *graphics.Uniform
 }
 
 type ShadowMapProgram struct {
@@ -208,6 +210,8 @@ func NewMeshProgram(defines ...string) *MeshProgram {
 	sp.ShadowMap = sp.UniformByName("shadowMap")
 	sp.ShadowFar = sp.UniformByName("lightFar")
 	sp.ShadowKernelSize = sp.UniformByName("kernelSize")
+
+	sp.AmbientOcclusionMap = sp.UniformByName("aoMap")
 
 	return &sp
 }
@@ -327,11 +331,12 @@ func (r *MeshRenderer) RenderDepth() {
 	}
 }
 
-func (r *MeshRenderer) RenderAmbient() {
+func (r *MeshRenderer) RenderAmbient(aoMap *graphics.Texture2D) {
 	r.renderOpts.Blending = graphics.NoBlending
 	r.renderOpts.DepthTest = graphics.EqualDepthTest
 
 	r.ambientProg.LightColor.Set(r.scene.AmbientLight.Color)
+	r.ambientProg.AmbientOcclusionMap.Set(aoMap)
 	r.setCamera(r.ambientProg, r.camera)
 	r.renderMeshes(r.ambientProg)
 

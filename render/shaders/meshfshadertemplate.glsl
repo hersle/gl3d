@@ -1,6 +1,7 @@
 #version 450
 
 in vec2 texCoordF;
+in vec4 projPosition;
 
 out vec4 fragColor;
 
@@ -32,6 +33,7 @@ uniform sampler2D materialAlphaMap;
 #if defined(AMBIENT)
 uniform vec3 materialAmbient;
 uniform sampler2D materialAmbientMap;
+uniform sampler2D aoMap;
 #endif
 
 #if defined(POINT) || defined(SPOT) || defined(DIR)
@@ -92,9 +94,12 @@ void main() {
 	#endif
 
 	#if defined(AMBIENT)
+	vec2 screenTexCoord = vec2(0.5) + 0.5 * projPosition.xy / projPosition.w;
 	vec4 tex;
 	tex = texture(materialAmbientMap, texCoordF);
+	float ao = texture(aoMap, screenTexCoord).r;
 	vec3 ambient = ((1 - tex.a) * materialAmbient + tex.a * tex.rgb)
+				 * ao
 				 * lightColor;
 	fragColor = vec4(ambient, 1);
 	#endif

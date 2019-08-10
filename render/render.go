@@ -56,18 +56,20 @@ func (r *Renderer) RenderScene(s *scene.Scene, c camera.Camera) {
 	r.MeshRenderer.RenderShadows()
 	r.MeshRenderer.RenderDepth()
 
-
 	r.EffectRenderer.RenderSSAO(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
 	r.EffectRenderer.RenderGaussianBlur(r.sceneRenderTarget, r.sceneRenderTarget2, 3)
 
-	//r.MeshRenderer.RenderAmbient()
-	//r.MeshRenderer.RenderLights()
+	r.sceneRenderTarget2.Clear(math.Vec4{0, 0, 0, 0})
+	r.MeshRenderer.Prepare(s, c, r.sceneRenderTarget2, r.sceneDepthRenderTarget)
+
+	r.MeshRenderer.RenderAmbient(r.sceneRenderTarget)
+	r.MeshRenderer.RenderLights()
 
 	if r.Fog {
-		r.EffectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget)
+		r.EffectRenderer.RenderFog(c, r.sceneDepthRenderTarget, r.sceneRenderTarget2)
 	}
 	if r.BlurRadius > 0 {
-		r.EffectRenderer.RenderGaussianBlur(r.sceneRenderTarget, r.sceneRenderTarget2, r.BlurRadius)
+		r.EffectRenderer.RenderGaussianBlur(r.sceneRenderTarget2, r.sceneRenderTarget, r.BlurRadius)
 	}
 }
 
@@ -97,7 +99,7 @@ func (r *Renderer) Clear() {
 }
 
 func (r *Renderer) Render() {
-	r.sceneRenderTarget.Display(graphics.NoBlending)
+	r.sceneRenderTarget2.Display(graphics.NoBlending)
 	r.overlayRenderTarget.Display(graphics.AlphaBlending)
 }
 
