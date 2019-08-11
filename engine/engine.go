@@ -24,7 +24,7 @@ type Engine struct {
 	Camera *camera.PerspectiveCamera
 
 	console *console.Console
-	consoleActive bool
+	ConsoleActive bool
 
 	renderer *render.Renderer
 
@@ -61,7 +61,7 @@ func (eng *Engine) Initialize() {
 	}
 
 	input.ListenToText(func(char rune) {
-		if eng.consoleActive {
+		if eng.ConsoleActive {
 			eng.console.AddToPrompt(char)
 		}
 	})
@@ -72,7 +72,7 @@ func (eng *Engine) Initialize() {
 	})
 	input.KeyTab.Listen(func(action input.Action) {
 		if action == input.Press {
-			eng.consoleActive = !eng.consoleActive
+			eng.ConsoleActive = !eng.ConsoleActive
 		}
 	})
 	input.KeyEnter.Listen(func(action input.Action) {
@@ -96,7 +96,7 @@ func (eng *Engine) Update(dt float32) {
 func (eng *Engine) React(dt float32) {
 	input.Update()  // TODO: make line order not matter
 
-	if eng.consoleActive {
+	if eng.ConsoleActive {
 		return
 	}
 
@@ -143,7 +143,7 @@ func (eng *Engine) React(dt float32) {
 func (eng *Engine) Render() {
 	eng.renderer.Clear()
 	eng.renderer.RenderScene(eng.Scene, eng.Camera)
-	if eng.consoleActive {
+	if eng.ConsoleActive {
 		eng.renderer.RenderText(math.Vec2{-1, +1}, eng.console.String(), 0.05, render.TopLeft)
 	}
 

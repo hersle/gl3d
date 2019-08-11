@@ -41,7 +41,9 @@ func main() {
 	}
 
 	input.KeySpace.Listen(func(action input.Action) {
-		eng.Scene.PointLights[0].Place(eng.Camera.Position)
+		if !eng.ConsoleActive {
+			eng.Scene.PointLights[0].Place(eng.Camera.Position)
+		}
 	})
 
 	eng.Run()
