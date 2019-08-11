@@ -24,6 +24,7 @@ type MeshRenderer struct {
 	depthProg *MeshProgram
 	ambientProg *MeshProgram
 	ssaoProg *ssaoProgram
+	ssaoBlurProg *ssaoBlurProgram
 	pointLitProg *MeshProgram
 	spotLitProg *MeshProgram
 	dirLitProg *MeshProgram
@@ -65,6 +66,8 @@ type MeshRenderer struct {
 	Wireframe bool
 
 	randomDirectionMap *graphics.Texture2D
+	aoMap *graphics.Texture2D
+	blurredAoMap *graphics.Texture2D
 }
 
 type MeshProgram struct {
@@ -106,6 +109,8 @@ type MeshProgram struct {
 	ShadowMap              *graphics.Uniform
 	ShadowFar              *graphics.Uniform
 	ShadowKernelSize       *graphics.Uniform
+
+	AoMap *graphics.Uniform
 }
 
 type ShadowMapProgram struct {
@@ -139,11 +144,21 @@ type ssaoProgram struct {
 	DirectionMap        *graphics.Uniform
 }
 
+type ssaoBlurProgram struct {
+	*graphics.Program
+
+	Color *graphics.Output
+	aoMap *graphics.Uniform
+	aoMapWidth *graphics.Uniform
+	aoMapHeight *graphics.Uniform
+}
+
 func NewMeshRenderer() (*MeshRenderer, error) {
 	var r MeshRenderer
 
 	r.depthProg = NewMeshProgram("DEPTH")
 	r.ssaoProg = NewSSAOProgram()
+	r.ssaoBlurProg = NewSSAOBlurProgram()
 	r.ambientProg = NewMeshProgram("AMBIENT")
 	r.pointLitProg = NewMeshProgram("POINT", "SHADOW", "PCF")
 	r.spotLitProg = NewMeshProgram("SPOT", "SHADOW", "PCF")
@@ -193,6 +208,9 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	}
 	r.randomDirectionMap.SetData(0, 0, w, h, directions)
 
+	r.aoMap = graphics.NewColorTexture2D(graphics.LinearFilter, graphics.RepeatWrap, 1920 / 1, 1080 / 1, 1, 8, false, false)
+	r.blurredAoMap = graphics.NewColorTexture2D(graphics.LinearFilter, graphics.RepeatWrap, 1920 / 1, 1080 / 1, 1, 8, false, false)
+
 	return &r, nil
 }
 
@@ -239,6 +257,8 @@ func NewMeshProgram(defines ...string) *MeshProgram {
 	sp.ShadowMap = sp.UniformByName("shadowMap")
 	sp.ShadowFar = sp.UniformByName("lightFar")
 	sp.ShadowKernelSize = sp.UniformByName("kernelSize")
+
+	sp.AoMap = sp.UniformByName("aoMap")
 
 	return &sp
 }
@@ -299,6 +319,21 @@ func NewSSAOProgram() *ssaoProgram {
 	return &sp
 }
 
+func NewSSAOBlurProgram() *ssaoBlurProgram {
+	var sp ssaoBlurProgram
+
+	vFile := "render/shaders/ssaoblurvshader.glsl" // TODO: make independent from executable directory
+	fFile := "render/shaders/ssaoblurfshader.glsl" // TODO: make independent from executable directory
+	sp.Program = graphics.ReadProgram(vFile, fFile, "")
+
+	sp.Color = sp.OutputColorByName("fragColor")
+	sp.aoMap = sp.UniformByName("aoMap")
+	sp.aoMapWidth = sp.UniformByName("aoMapWidth")
+	sp.aoMapHeight = sp.UniformByName("aoMapHeight")
+
+	return &sp
+}
+
 func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, depthTexture *graphics.Texture2D) {
 	r.renderOpts.Culling = graphics.BackCulling
 	r.renderOpts.Primitive = graphics.Triangles
@@ -322,11 +357,10 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.preparationPass(s, c)
 	r.shadowPass(s)
 	r.depthPass(s, c)
-	r.ambientPass(s, c)
 
 	r.renderOpts.Primitive = graphics.TriangleFan
 	r.renderOpts.Blending = graphics.NoBlending
-	r.ssaoProg.Color.Set(colorTexture)
+	r.ssaoProg.Color.Set(r.aoMap)
 	r.ssaoProg.DepthMap.Set(depthTexture)
 	r.ssaoProg.DepthMapWidth.Set(depthTexture.Width())
 	r.ssaoProg.DepthMapHeight.Set(depthTexture.Height())
@@ -341,7 +375,22 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 
 	r.ssaoProg.Render(6, r.renderOpts)
 
-	//r.lightPass(s, c)
+	r.blurAoMap()
+
+	r.ambientPass(s, c)
+
+	r.lightPass(s, c)
+}
+
+func (r *MeshRenderer) blurAoMap() {
+	r.ssaoBlurProg.aoMap.Set(r.aoMap)
+	r.ssaoBlurProg.aoMapWidth.Set(r.aoMap.Width())
+	r.ssaoBlurProg.aoMapHeight.Set(r.aoMap.Height())
+	r.ssaoBlurProg.Color.Set(r.blurredAoMap)
+
+	var opts graphics.RenderOptions
+	opts.Primitive = graphics.TriangleFan
+	r.ssaoBlurProg.Render(4, &opts)
 }
 
 func (r *MeshRenderer) preparationPass(s *scene.Scene, c camera.Camera) {
@@ -412,9 +461,11 @@ func (r *MeshRenderer) depthPass(s *scene.Scene, c camera.Camera) {
 }
 
 func (r *MeshRenderer) ambientPass(s *scene.Scene, c camera.Camera) {
+	r.renderOpts.Primitive = graphics.Triangles
 	r.renderOpts.Blending = graphics.NoBlending
 	r.renderOpts.DepthTest = graphics.EqualDepthTest
 
+	r.ambientProg.AoMap.Set(r.blurredAoMap)
 	r.ambientProg.LightColor.Set(s.AmbientLight.Color)
 	r.setCamera(r.ambientProg, c)
 	r.renderMeshes(s, c, r.ambientProg)

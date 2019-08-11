@@ -22,6 +22,7 @@ void main() {
 	float fraction = 0.0;
 	for (int i = 0; i < 16; i++) {
 		vec3 direction = texture(directionMap, vec2(texCoord.x + 0.9 * float(i), texCoord.y)).xyz;
+		direction *= abs(direction.x);
 		vec4 viewPos = viewPosition + vec4(direction * DIRECTION_LENGTH, 0);
 		vec4 projPos = projectionMatrix * viewPos;
 		projPos /= projPos.w; // perspective divide
@@ -36,8 +37,9 @@ void main() {
 		fraction += length(viewPos) > length(viewPosition2) ? 1.0 / 16.0 : 0.0;
 	}
 
-	fraction = fraction > 0.5 ? fraction : 0.0;
 	fraction = 1 - fraction;
+
+	fraction = pow(1.0 * (0.5 + fraction), 1.0);
 
 	fragColor = vec4(vec3(fraction), 1.0);
 }

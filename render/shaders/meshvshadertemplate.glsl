@@ -8,6 +8,7 @@ in vec3 bitangentV;
 
 out vec2 texCoordF;
 out vec3 worldPosition;
+out vec4 projPosition;
 
 uniform mat4 modelMatrix;
 uniform mat4 viewMatrix;
@@ -86,7 +87,8 @@ uniform float lightAttenuation;
 void main() {
 	worldPosition = vec3(modelMatrix * vec4(position, 1));
 	vec3 viewPosition = vec3(viewMatrix * vec4(worldPosition, 1));
-	gl_Position = projectionMatrix * vec4(viewPosition, 1);
+	projPosition = projectionMatrix * vec4(viewPosition, 1);
+	gl_Position = projPosition;
 
 	texCoordF = texCoordV;
 

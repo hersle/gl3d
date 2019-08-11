@@ -33,7 +33,7 @@ func TestMain(m *testing.M) {
 
 	eng.InitializeCustom = func() {
 		eng.Scene.AddMesh(sponza)
-		eng.Scene.AmbientLight = light.NewAmbientLight(math.Vec3{0.1, 0.1, 0.1})
+		eng.Scene.AmbientLight = light.NewAmbientLight(math.Vec3{0.8, 0.8, 0.8})
 		eng.Scene.AddPointLight(l1)
 		eng.Scene.AddSpotLight(l2)
 		eng.Scene.AddPointLight(l3)
