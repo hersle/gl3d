@@ -23,16 +23,11 @@ type MeshRenderer struct {
 	spotLitProg *MeshProgram
 	dirLitProg *MeshProgram
 
+	shadowMapRenderer *ShadowMapRenderer
+
 	resources *meshResourceManager
 
 	renderOpts *graphics.RenderOptions
-
-	shadowSp1             *ShadowMapProgram
-	shadowSp2             *ShadowMapProgram
-	shadowSp3             *ShadowMapProgram
-	shadowRenderOpts      *graphics.RenderOptions
-
-	shadowProjViewMat math.Mat4
 
 	pointLightMesh *object.Mesh
 	spotLightMesh *object.Mesh
@@ -72,6 +67,17 @@ type meshResourceManager struct {
 	whiteTexture *graphics.Texture2D
 	blackTexture *graphics.Texture2D
 	whiteCubeMap *graphics.CubeMap
+}
+
+type ShadowMapRenderer struct {
+	resources *meshResourceManager
+
+	shadowSp1             *ShadowMapProgram
+	shadowSp2             *ShadowMapProgram
+	shadowSp3             *ShadowMapProgram
+	shadowRenderOpts      *graphics.RenderOptions
+
+	shadowProjViewMat math.Mat4
 }
 
 type MeshProgram struct {
@@ -170,13 +176,9 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 
 	r.resources = newMeshResourceManager()
 
+	r.shadowMapRenderer = NewShadowMapRenderer(r.resources) // share resources
+
 	r.renderOpts = graphics.NewRenderOptions()
-
-	r.shadowSp1 = NewShadowMapProgram("POINT") // point light
-	r.shadowSp2 = NewShadowMapProgram("SPOT") // spot light
-	r.shadowSp3 = NewShadowMapProgram("DIR") // directional light
-
-	r.shadowRenderOpts = graphics.NewRenderOptions()
 
 	geo := object.NewSphere(math.Vec3{0, 0, 0}, 0.1).Geometry(6)
 	mtl := material.NewDefaultMaterial("")
@@ -207,6 +209,27 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.blurredAoMap = graphics.NewColorTexture2D(graphics.LinearFilter, graphics.RepeatWrap, 1920 / 1, 1080 / 1, 1, 8, false, false)
 
 	return &r, nil
+}
+
+func NewShadowMapRenderer(resources *meshResourceManager) *ShadowMapRenderer {
+	var r ShadowMapRenderer
+
+	if resources == nil {
+		r.resources = newMeshResourceManager()
+	} else {
+		r.resources = resources
+	}
+
+	r.shadowSp1 = NewShadowMapProgram("POINT") // point light
+	r.shadowSp2 = NewShadowMapProgram("SPOT") // spot light
+	r.shadowSp3 = NewShadowMapProgram("DIR") // directional light
+
+	r.shadowRenderOpts = graphics.NewRenderOptions()
+	r.shadowRenderOpts.DepthTest = graphics.LessDepthTest
+	r.shadowRenderOpts.Culling = graphics.BackCulling
+	r.shadowRenderOpts.Primitive = graphics.Triangles
+
+	return &r
 }
 
 func NewMeshProgram(defines ...string) *MeshProgram {
@@ -626,10 +649,11 @@ func (r *MeshRenderer) setSpotLight(sp *MeshProgram, l *light.SpotLight) {
 	sp.LightCosAngle.Set(float32(gomath.Cos(float64(l.FOV/2))))
 
 	if r.ShadowsEnabled && l.CastShadows {
-		r.shadowProjViewMat.Identity()
-		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
-		r.shadowProjViewMat.Mult(l.ViewMatrix())
-		sp.ShadowProjectionViewMatrix.Set(&r.shadowProjViewMat)
+		var m math.Mat4
+		m.Identity()
+		m.Mult(l.ProjectionMatrix())
+		m.Mult(l.ViewMatrix())
+		sp.ShadowProjectionViewMatrix.Set(&m)
 		sp.ShadowFar.Set(l.PerspectiveCamera.Far)
 		smap := r.resources.spotShadowMap(l)
 		sp.ShadowMap.Set(smap)
@@ -645,10 +669,11 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshProgram, l *light.Directional
 	sp.LightAttenuation.Set(float32(0))
 
 	if r.ShadowsEnabled && l.CastShadows {
-		r.shadowProjViewMat.Identity()
-		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
-		r.shadowProjViewMat.Mult(l.ViewMatrix())
-		sp.ShadowProjectionViewMatrix.Set(&r.shadowProjViewMat)
+		var m math.Mat4
+		m.Identity()
+		m.Mult(l.ProjectionMatrix())
+		m.Mult(l.ViewMatrix())
+		sp.ShadowProjectionViewMatrix.Set(&m)
 		smap := r.resources.dirShadowMap(l)
 		sp.ShadowMap.Set(smap)
 	} else {
@@ -659,7 +684,7 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshProgram, l *light.Directional
 
 // shadow stuff below
 
-func (r *MeshRenderer) setShadowCamera(sp *ShadowMapProgram, c camera.Camera) {
+func (r *ShadowMapRenderer) setCamera(sp *ShadowMapProgram, c camera.Camera) {
 	sp.ViewMatrix.Set(c.ViewMatrix())
 	sp.ProjectionMatrix.Set(c.ProjectionMatrix())
 
@@ -675,11 +700,11 @@ func (r *MeshRenderer) setShadowCamera(sp *ShadowMapProgram, c camera.Camera) {
 	}
 }
 
-func (r *MeshRenderer) setShadowMesh(sp *ShadowMapProgram, m *object.Mesh) {
+func (r *ShadowMapRenderer) setMesh(sp *ShadowMapProgram, m *object.Mesh) {
 	sp.ModelMatrix.Set(m.WorldMatrix())
 }
 
-func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapProgram, sm *object.SubMesh) {
+func (r *ShadowMapRenderer) setSubMesh(sp *ShadowMapProgram, sm *object.SubMesh) {
 	vbo := r.resources.vertexBuffer(sm)
 	ibo := r.resources.indexBuffer(sm)
 
@@ -688,31 +713,28 @@ func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapProgram, sm *object.SubMesh
 }
 
 func (r *MeshRenderer) shadowPass(s *scene.Scene) {
-	r.shadowRenderOpts.DepthTest = graphics.LessDepthTest
-	r.shadowRenderOpts.Culling = graphics.BackCulling
-	r.shadowRenderOpts.Primitive = graphics.Triangles
-
 	for _, l := range s.PointLights {
 		if l.CastShadows {
-			r.renderPointLightShadowMap(s, l)
+			smap := r.resources.pointShadowMap(l)
+			r.shadowMapRenderer.renderPointLightShadowMap(s, l, smap)
 		}
 	}
 	for _, l := range s.SpotLights {
 		if l.CastShadows {
-			r.renderSpotLightShadowMap(s, l)
+			smap := r.resources.spotShadowMap(l)
+			r.shadowMapRenderer.renderSpotLightShadowMap(s, l, smap)
 		}
 	}
 	for _, l := range s.DirectionalLights {
 		if l.CastShadows {
-			r.renderDirectionalLightShadowMap(s, l)
+			smap := r.resources.dirShadowMap(l)
+			r.shadowMapRenderer.renderDirectionalLightShadowMap(s, l, smap)
 		}
 	}
 }
 
 // render shadow map to l's shadow map
-func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
-	smap := r.resources.pointShadowMap(l)
-
+func (r *ShadowMapRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointLight, smap *graphics.CubeMap) {
 	// TODO: re-render also when objects have moved
 	/*
 		if !l.DirtyShadowMap {
@@ -751,12 +773,12 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	smap.Clear(math.Vec4{1, 1, 1, 1})
 	r.shadowSp1.Depth.Set(smap)
 
-	r.setShadowCamera(r.shadowSp1, c)
+	r.setCamera(r.shadowSp1, c)
 
 	for _, m := range s.Meshes {
-		r.setShadowMesh(r.shadowSp1, m)
+		r.setMesh(r.shadowSp1, m)
 		for _, subMesh := range m.SubMeshes {
-			r.setShadowSubMesh(r.shadowSp1, subMesh)
+			r.setSubMesh(r.shadowSp1, subMesh)
 
 			r.shadowSp1.Render(subMesh.Geo.Inds, r.shadowRenderOpts)
 		}
@@ -765,9 +787,7 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 	//l.DirtyShadowMap = false
 }
 
-func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
-	smap := r.resources.spotShadowMap(l)
-
+func (r *ShadowMapRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight, smap *graphics.Texture2D) {
 	// TODO: re-render also when objects have moved
 	//if !l.DirtyShadowMap {
 		//return
@@ -775,13 +795,13 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 
 	r.shadowSp2.Depth.Set(smap)
 	smap.Clear(math.Vec4{1, 1, 1, 1})
-	r.setShadowCamera(r.shadowSp2, &l.PerspectiveCamera)
+	r.setCamera(r.shadowSp2, &l.PerspectiveCamera)
 
 	for _, m := range s.Meshes {
-		r.setShadowMesh(r.shadowSp2, m)
+		r.setMesh(r.shadowSp2, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.PerspectiveCamera.Cull(subMesh) {
-				r.setShadowSubMesh(r.shadowSp2, subMesh)
+				r.setSubMesh(r.shadowSp2, subMesh)
 
 				r.shadowSp2.Render(subMesh.Geo.Inds, r.shadowRenderOpts)
 			}
@@ -791,9 +811,7 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 	//l.DirtyShadowMap = false
 }
 
-func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
-	smap := r.resources.dirShadowMap(l)
-
+func (r *ShadowMapRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight, smap *graphics.Texture2D) {
 	// TODO: re-render also when objects have moved
 	//if !l.DirtyShadowMap {
 		//return
@@ -801,13 +819,13 @@ func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.
 
 	r.shadowSp3.Depth.Set(smap)
 	smap.Clear(math.Vec4{1, 1, 1, 1})
-	r.setShadowCamera(r.shadowSp3, &l.OrthoCamera)
+	r.setCamera(r.shadowSp3, &l.OrthoCamera)
 
 	for _, m := range s.Meshes {
-		r.setShadowMesh(r.shadowSp3, m)
+		r.setMesh(r.shadowSp3, m)
 		for _, subMesh := range m.SubMeshes {
 			if !l.OrthoCamera.Cull(subMesh) {
-				r.setShadowSubMesh(r.shadowSp3, subMesh)
+				r.setSubMesh(r.shadowSp3, subMesh)
 
 				r.shadowSp3.Render(subMesh.Geo.Inds, r.shadowRenderOpts)
 			}
