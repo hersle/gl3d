@@ -14,12 +14,6 @@ import (
 	gomath "math"
 )
 
-var blueTexture *graphics.Texture2D
-var whiteTexture *graphics.Texture2D
-var blackTexture *graphics.Texture2D
-
-var whiteCubeMap *graphics.CubeMap
-
 type MeshRenderer struct {
 	depthProg *MeshProgram
 	ambientProg *MeshProgram
@@ -29,17 +23,9 @@ type MeshRenderer struct {
 	spotLitProg *MeshProgram
 	dirLitProg *MeshProgram
 
+	resources *meshResourceManager
+
 	renderOpts *graphics.RenderOptions
-
-	vboCache map[*object.Vertex]int
-	vbos     []*graphics.VertexBuffer
-	ibos     []*graphics.IndexBuffer
-
-	tex2ds map[image.Image]*graphics.Texture2D
-
-	pointLightShadowMaps map[int]*graphics.CubeMap
-	spotLightShadowMaps  map[int]*graphics.Texture2D
-	dirLightShadowMaps   map[int]*graphics.Texture2D
 
 	shadowSp1             *ShadowMapProgram
 	shadowSp2             *ShadowMapProgram
@@ -69,6 +55,23 @@ type MeshRenderer struct {
 	randomDirectionMap *graphics.Texture2D
 	aoMap *graphics.Texture2D
 	blurredAoMap *graphics.Texture2D
+}
+
+type meshResourceManager struct {
+	vbos map[*object.Vertex]*graphics.VertexBuffer
+	ibos map[*int32]*graphics.IndexBuffer
+
+	textures map[image.Image]*graphics.Texture2D
+
+	pointLightShadowMaps map[int]*graphics.CubeMap
+	spotLightShadowMaps  map[int]*graphics.Texture2D
+	dirLightShadowMaps   map[int]*graphics.Texture2D
+
+	// default textures
+	blueTexture *graphics.Texture2D
+	whiteTexture *graphics.Texture2D
+	blackTexture *graphics.Texture2D
+	whiteCubeMap *graphics.CubeMap
 }
 
 type MeshProgram struct {
@@ -165,13 +168,9 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.spotLitProg = NewMeshProgram("SPOT", "SHADOW", "PCF")
 	r.dirLitProg = NewMeshProgram("DIR", "SHADOW", "PCF")
 
-	r.renderOpts = graphics.NewRenderOptions()
+	r.resources = newMeshResourceManager()
 
-	r.vboCache = make(map[*object.Vertex]int)
-	r.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
-	r.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
-	r.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
-	r.tex2ds = make(map[image.Image]*graphics.Texture2D)
+	r.renderOpts = graphics.NewRenderOptions()
 
 	r.shadowSp1 = NewShadowMapProgram("POINT") // point light
 	r.shadowSp2 = NewShadowMapProgram("SPOT") // spot light
@@ -462,7 +461,7 @@ func (r *MeshRenderer) ambientPass(s *scene.Scene, c camera.Camera) {
 	if r.AmbientOcclusion {
 		r.ambientProg.AoMap.Set(r.blurredAoMap)
 	} else {
-		r.ambientProg.AoMap.Set(whiteTexture)
+		r.ambientProg.AoMap.Set(r.resources.whiteTexture)
 	}
 	r.ambientProg.LightColor.Set(s.AmbientLight.Color)
 	r.setCamera(r.ambientProg, c)
@@ -543,91 +542,56 @@ func (r *MeshRenderer) setSubMesh(sp *MeshProgram, sm *object.SubMesh) {
 	mtl := sm.Mtl
 
 	if r.MaterialAmbientEnabled {
-		tex, found := r.tex2ds[mtl.AmbientMap]
-		if !found {
-			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AmbientMap, true)
-			r.tex2ds[mtl.AmbientMap] = tex
-		}
+		tex := r.resources.texture(mtl.AmbientMap)
 		sp.MaterialAmbient.Set(mtl.Ambient)
 		sp.MaterialAmbientMap.Set(tex)
 	} else {
 		sp.MaterialAmbient.Set(math.Vec3{0, 0, 0})
-		sp.MaterialAmbientMap.Set(blackTexture)
+		sp.MaterialAmbientMap.Set(r.resources.blackTexture)
 	}
 
 	if r.MaterialDiffuseEnabled {
-		tex, found := r.tex2ds[mtl.DiffuseMap]
-		if !found {
-			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.DiffuseMap, true)
-			r.tex2ds[mtl.DiffuseMap] = tex
-		}
+		tex := r.resources.texture(mtl.DiffuseMap)
 		sp.MaterialDiffuse.Set(mtl.Diffuse)
 		sp.MaterialDiffuseMap.Set(tex)
 	} else {
 		sp.MaterialDiffuse.Set(math.Vec3{0, 0, 0})
-		sp.MaterialDiffuseMap.Set(blackTexture)
+		sp.MaterialDiffuseMap.Set(r.resources.blackTexture)
 	}
 
 	if r.MaterialSpecularEnabled {
-		tex, found := r.tex2ds[mtl.SpecularMap]
-		if !found {
-			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.SpecularMap, true)
-			r.tex2ds[mtl.SpecularMap] = tex
-		}
+		tex := r.resources.texture(mtl.SpecularMap)
 		sp.MaterialSpecular.Set(mtl.Specular)
 		sp.MaterialSpecularMap.Set(tex)
 		sp.MaterialShine.Set(mtl.Shine)
 	} else {
 		sp.MaterialSpecular.Set(math.Vec3{0, 0, 0})
-		sp.MaterialSpecularMap.Set(blackTexture)
+		sp.MaterialSpecularMap.Set(r.resources.blackTexture)
 		sp.MaterialShine.Set(float32(0))
 	}
 
 	if r.MaterialAlphaEnabled {
-		tex, found := r.tex2ds[mtl.AlphaMap]
-		if !found {
-			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.AlphaMap, true)
-			r.tex2ds[mtl.AlphaMap] = tex
-		}
+		tex := r.resources.texture(mtl.AlphaMap)
 		sp.MaterialAlpha.Set(mtl.Alpha)
 		sp.MaterialAlphaMap.Set(tex)
 	} else {
 		sp.MaterialAlpha.Set(float32(1.0))
-		sp.MaterialAlphaMap.Set(whiteTexture)
+		sp.MaterialAlphaMap.Set(r.resources.whiteTexture)
 	}
 
 	if r.MaterialNormalEnabled {
-		tex, found := r.tex2ds[mtl.BumpMap]
-		if !found {
-			tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, mtl.BumpMap, true)
-			r.tex2ds[mtl.BumpMap] = tex
-		}
+		tex := r.resources.texture(mtl.BumpMap)
 		sp.MaterialBumpMap.Set(tex)
 		sp.MaterialBumpMapWidth.Set(tex.Width())
 		sp.MaterialBumpMapHeight.Set(tex.Height())
 	} else {
-		sp.MaterialBumpMap.Set(whiteTexture)
-		sp.MaterialBumpMapWidth.Set(whiteTexture.Width())
-		sp.MaterialBumpMapHeight.Set(whiteTexture.Height())
+		sp.MaterialBumpMap.Set(r.resources.whiteTexture)
+		sp.MaterialBumpMapWidth.Set(r.resources.whiteTexture.Width())
+		sp.MaterialBumpMapHeight.Set(r.resources.whiteTexture.Height())
 	}
 
-	// upload to GPU
-	var vbo *graphics.VertexBuffer
-	var ibo *graphics.IndexBuffer
-	i, found := r.vboCache[&sm.Geo.Verts[0]]
-	if found {
-		vbo = r.vbos[i]
-		ibo = r.ibos[i]
-	} else {
-		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewIndexBuffer()
-		vbo.SetData(sm.Geo.Verts, 0)
-		ibo.SetData(sm.Geo.Faces, 0)
-
-		r.vbos = append(r.vbos, vbo)
-		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
-	}
+	vbo := r.resources.vertexBuffer(sm)
+	ibo := r.resources.indexBuffer(sm)
 
 	sp.Position.SetSourceVertex(vbo, 0)
 	sp.Normal.SetSourceVertex(vbo, 2)
@@ -645,14 +609,11 @@ func (r *MeshRenderer) setPointLight(sp *MeshProgram, l *light.PointLight) {
 	sp.LightColor.Set(l.Color.Scale(l.Intensity))
 	if r.ShadowsEnabled && l.CastShadows {
 		sp.ShadowFar.Set(l.ShadowFar)
-		smap, found := r.pointLightShadowMaps[l.ID]
-		if !found {
-			panic("set point light with no shadow map")
-		}
+		smap := r.resources.pointShadowMap(l)
 		sp.ShadowMap.Set(smap)
 	} else {
 		sp.ShadowFar.Set(float32(100))
-		sp.ShadowMap.Set(whiteCubeMap)
+		sp.ShadowMap.Set(r.resources.whiteCubeMap)
 	}
 	sp.LightAttenuation.Set(l.Attenuation)
 }
@@ -670,14 +631,11 @@ func (r *MeshRenderer) setSpotLight(sp *MeshProgram, l *light.SpotLight) {
 		r.shadowProjViewMat.Mult(l.ViewMatrix())
 		sp.ShadowProjectionViewMatrix.Set(&r.shadowProjViewMat)
 		sp.ShadowFar.Set(l.PerspectiveCamera.Far)
-		smap, found := r.spotLightShadowMaps[l.ID]
-		if !found {
-			panic("set spot light with no shadow map")
-		}
+		smap := r.resources.spotShadowMap(l)
 		sp.ShadowMap.Set(smap)
 	} else {
 		sp.ShadowFar.Set(float32(100))
-		sp.ShadowMap.Set(whiteTexture)
+		sp.ShadowMap.Set(r.resources.whiteTexture)
 	}
 }
 
@@ -691,14 +649,11 @@ func (r *MeshRenderer) setDirectionalLight(sp *MeshProgram, l *light.Directional
 		r.shadowProjViewMat.Mult(l.ProjectionMatrix())
 		r.shadowProjViewMat.Mult(l.ViewMatrix())
 		sp.ShadowProjectionViewMatrix.Set(&r.shadowProjViewMat)
-		smap, found := r.dirLightShadowMaps[l.ID]
-		if !found {
-			panic("set directional light with no shadow map")
-		}
+		smap := r.resources.dirShadowMap(l)
 		sp.ShadowMap.Set(smap)
 	} else {
 		sp.ShadowFar.Set(float32(100))
-		sp.ShadowMap.Set(whiteTexture)
+		sp.ShadowMap.Set(r.resources.whiteTexture)
 	}
 }
 
@@ -725,22 +680,8 @@ func (r *MeshRenderer) setShadowMesh(sp *ShadowMapProgram, m *object.Mesh) {
 }
 
 func (r *MeshRenderer) setShadowSubMesh(sp *ShadowMapProgram, sm *object.SubMesh) {
-	var vbo *graphics.VertexBuffer
-	var ibo *graphics.IndexBuffer
-	i, found := r.vboCache[&sm.Geo.Verts[0]]
-	if found {
-		vbo = r.vbos[i]
-		ibo = r.ibos[i]
-	} else {
-		vbo = graphics.NewVertexBuffer()
-		ibo = graphics.NewIndexBuffer()
-		vbo.SetData(sm.Geo.Verts, 0)
-		ibo.SetData(sm.Geo.Faces, 0)
-
-		r.vbos = append(r.vbos, vbo)
-		r.ibos = append(r.ibos, ibo)
-		r.vboCache[&sm.Geo.Verts[0]] = len(r.vbos) - 1
-	}
+	vbo := r.resources.vertexBuffer(sm)
+	ibo := r.resources.indexBuffer(sm)
 
 	sp.Position.SetSourceVertex(vbo, 0)
 	sp.SetIndices(ibo)
@@ -770,11 +711,7 @@ func (r *MeshRenderer) shadowPass(s *scene.Scene) {
 
 // render shadow map to l's shadow map
 func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointLight) {
-	smap, found := r.pointLightShadowMaps[l.ID]
-	if !found {
-		smap = graphics.NewCubeMap(graphics.DepthTexture, graphics.LinearFilter, 512, 512)
-		r.pointLightShadowMaps[l.ID] = smap
-	}
+	smap := r.resources.pointShadowMap(l)
 
 	// TODO: re-render also when objects have moved
 	/*
@@ -829,12 +766,7 @@ func (r *MeshRenderer) renderPointLightShadowMap(s *scene.Scene, l *light.PointL
 }
 
 func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLight) {
-	smap, found := r.spotLightShadowMaps[l.ID]
-	if !found {
-		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
-		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
-		r.spotLightShadowMaps[l.ID] = smap
-	}
+	smap := r.resources.spotShadowMap(l)
 
 	// TODO: re-render also when objects have moved
 	//if !l.DirtyShadowMap {
@@ -860,12 +792,7 @@ func (r *MeshRenderer) renderSpotLightShadowMap(s *scene.Scene, l *light.SpotLig
 }
 
 func (r *MeshRenderer) renderDirectionalLightShadowMap(s *scene.Scene, l *light.DirectionalLight) {
-	smap, found := r.dirLightShadowMaps[l.ID]
-	if !found {
-		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
-		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
-		r.dirLightShadowMaps[l.ID] = smap
-	}
+	smap := r.resources.dirShadowMap(l)
 
 	// TODO: re-render also when objects have moved
 	//if !l.DirtyShadowMap {
@@ -900,10 +827,78 @@ func pointLightInteracts(l *light.PointLight, sm *object.SubMesh) bool {
 	return dist*dist < (1/0.05-1)/l.Attenuation
 }
 
-func init() {
-	blueTexture = graphics.NewUniformTexture2D(math.Vec4{0.5, 0.5, 1, 0})
-	whiteTexture = graphics.NewUniformTexture2D(math.Vec4{1, 1, 1, 1})
-	blackTexture = graphics.NewUniformTexture2D(math.Vec4{0, 0, 0, 1})
+func newMeshResourceManager() *meshResourceManager {
+	var rman meshResourceManager
 
-	whiteCubeMap = graphics.NewUniformCubeMap(math.Vec4{1, 1, 1, 1})
+	rman.vbos = make(map[*object.Vertex]*graphics.VertexBuffer)
+	rman.ibos = make(map[*int32]*graphics.IndexBuffer)
+	rman.pointLightShadowMaps = make(map[int]*graphics.CubeMap)
+	rman.spotLightShadowMaps = make(map[int]*graphics.Texture2D)
+	rman.dirLightShadowMaps = make(map[int]*graphics.Texture2D)
+	rman.textures = make(map[image.Image]*graphics.Texture2D)
+
+	rman.blueTexture = graphics.NewUniformTexture2D(math.Vec4{0.5, 0.5, 1, 0})
+	rman.whiteTexture = graphics.NewUniformTexture2D(math.Vec4{1, 1, 1, 1})
+	rman.blackTexture = graphics.NewUniformTexture2D(math.Vec4{0, 0, 0, 1})
+	rman.whiteCubeMap = graphics.NewUniformCubeMap(math.Vec4{1, 1, 1, 1})
+
+	return &rman
+}
+
+func (rman *meshResourceManager) vertexBuffer(sm *object.SubMesh) *graphics.VertexBuffer {
+	vbo, found := rman.vbos[&sm.Geo.Verts[0]]
+	if !found {
+		vbo = graphics.NewVertexBuffer()
+		vbo.SetData(sm.Geo.Verts, 0)
+		rman.vbos[&sm.Geo.Verts[0]] = vbo
+	}
+	return vbo
+}
+
+func (rman *meshResourceManager) indexBuffer(sm *object.SubMesh) *graphics.IndexBuffer {
+	ibo, found := rman.ibos[&sm.Geo.Faces[0]]
+	if !found {
+		ibo = graphics.NewIndexBuffer()
+		ibo.SetData(sm.Geo.Faces, 0)
+		rman.ibos[&sm.Geo.Faces[0]] = ibo
+	}
+	return ibo
+}
+
+func (rman *meshResourceManager) texture(img image.Image) *graphics.Texture2D {
+	tex, found := rman.textures[img]
+	if !found {
+		tex = graphics.LoadTexture2D(graphics.ColorTexture, graphics.LinearFilter, graphics.RepeatWrap, img, true)
+		rman.textures[img] = tex
+	}
+	return tex
+}
+
+func (rman *meshResourceManager) pointShadowMap(l *light.PointLight) *graphics.CubeMap {
+	smap, found := rman.pointLightShadowMaps[l.ID]
+	if !found {
+		smap = graphics.NewCubeMap(graphics.DepthTexture, graphics.LinearFilter, 512, 512)
+		rman.pointLightShadowMaps[l.ID] = smap
+	}
+	return smap
+}
+
+func (rman *meshResourceManager) spotShadowMap(l *light.SpotLight) *graphics.Texture2D {
+	smap, found := rman.spotLightShadowMaps[l.ID]
+	if !found {
+		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
+		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
+		rman.spotLightShadowMaps[l.ID] = smap
+	}
+	return smap
+}
+
+func (rman *meshResourceManager) dirShadowMap(l *light.DirectionalLight) *graphics.Texture2D {
+	smap, found := rman.dirLightShadowMaps[l.ID]
+	if !found {
+		smap = graphics.NewTexture2D(graphics.DepthTexture, graphics.LinearFilter, graphics.BorderClampWrap, 512, 512, false)
+		smap.SetBorderColor(math.NewVec4(1, 1, 1, 1))
+		rman.dirLightShadowMaps[l.ID] = smap
+	}
+	return smap
 }
