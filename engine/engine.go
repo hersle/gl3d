@@ -210,6 +210,8 @@ func (eng *Engine) ExecuteCommand(cmd string) {
 		ptr = &eng.renderer.MeshRenderer.ShadowsEnabled
 	case "wireframe":
 		ptr = &eng.renderer.MeshRenderer.Wireframe
+	case "ambientocclusion":
+		ptr = &eng.renderer.MeshRenderer.AmbientOcclusion
 	default:
 		log.Print("invalid field: ", fields[0])
 		return

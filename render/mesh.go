@@ -65,6 +65,7 @@ type MeshRenderer struct {
 	ShadowsEnabled bool
 	Wireframe bool
 
+	AmbientOcclusion bool
 	randomDirectionMap *graphics.Texture2D
 	aoMap *graphics.Texture2D
 	blurredAoMap *graphics.Texture2D
@@ -192,6 +193,7 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.MaterialAlphaEnabled = true
 	r.MaterialNormalEnabled = true
 	r.ShadowsEnabled = true
+	r.AmbientOcclusion = true
 
 	w := 1920 / 1
 	h := 1080 / 1
@@ -346,6 +348,10 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 }
 
 func (r *MeshRenderer) ssaoPass(depthMap *graphics.Texture2D, c camera.Camera) {
+	if !r.AmbientOcclusion {
+		return
+	}
+
 	r.renderOpts.Primitive = graphics.TriangleFan
 	r.renderOpts.Blending = graphics.NoBlending
 	r.ssaoProg.Color.Set(r.aoMap)
@@ -367,6 +373,10 @@ func (r *MeshRenderer) ssaoPass(depthMap *graphics.Texture2D, c camera.Camera) {
 }
 
 func (r *MeshRenderer) blurAoMap() {
+	if !r.AmbientOcclusion {
+		return
+	}
+
 	r.ssaoBlurProg.aoMap.Set(r.aoMap)
 	r.ssaoBlurProg.aoMapWidth.Set(r.aoMap.Width())
 	r.ssaoBlurProg.aoMapHeight.Set(r.aoMap.Height())
@@ -449,7 +459,11 @@ func (r *MeshRenderer) ambientPass(s *scene.Scene, c camera.Camera) {
 	r.renderOpts.Blending = graphics.NoBlending
 	r.renderOpts.DepthTest = graphics.EqualDepthTest
 
-	r.ambientProg.AoMap.Set(r.blurredAoMap)
+	if r.AmbientOcclusion {
+		r.ambientProg.AoMap.Set(r.blurredAoMap)
+	} else {
+		r.ambientProg.AoMap.Set(whiteTexture)
+	}
 	r.ambientProg.LightColor.Set(s.AmbientLight.Color)
 	r.setCamera(r.ambientProg, c)
 	r.renderMeshes(s, c, r.ambientProg)
