@@ -193,12 +193,6 @@ func NewMeshRenderer() (*MeshRenderer, error) {
 	r.MaterialNormalEnabled = true
 	r.ShadowsEnabled = true
 
-	verts := []math.Vec2{
-		math.Vec2{-1, -1}, math.Vec2{+1, -1}, math.Vec2{+1, +1}, math.Vec2{-1, +1},
-	}
-	vbo := graphics.NewVertexBuffer()
-	vbo.SetData(verts, 0)
-	r.ssaoProg.Position.SetSourceVertex(vbo, 0)
 	w := 1920 / 1
 	h := 1080 / 1
 	r.randomDirectionMap = graphics.NewColorTexture2D(graphics.NearestFilter, graphics.RepeatWrap, w, h, 3, 32, true, false)
@@ -303,18 +297,7 @@ func NewSSAOProgram() *ssaoProgram {
 	sp.DepthMapHeight = sp.UniformByName("depthMapHeight")
 	sp.ProjectionMatrix = sp.UniformByName("projectionMatrix")
 	sp.InvProjectionMatrix = sp.UniformByName("invProjectionMatrix")
-
-	sp.Directions = make([]*graphics.Uniform, 16)
-	for i := 0; i < 16; i++ {
-		name := fmt.Sprintf("directions[%d]", i)
-		sp.Directions[i] = sp.UniformByName(name)
-	}
-
 	sp.DirectionMap = sp.UniformByName("directionMap")
-
-	for i := 0; i < 16; i++ {
-		sp.Directions[i].Set(utils.RandomDirection())
-	}
 
 	return &sp
 }
@@ -357,13 +340,18 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.preparationPass(s, c)
 	r.shadowPass(s)
 	r.depthPass(s, c)
+	r.ssaoPass(depthTexture, c)
+	r.ambientPass(s, c)
+	r.lightPass(s, c)
+}
 
+func (r *MeshRenderer) ssaoPass(depthMap *graphics.Texture2D, c camera.Camera) {
 	r.renderOpts.Primitive = graphics.TriangleFan
 	r.renderOpts.Blending = graphics.NoBlending
 	r.ssaoProg.Color.Set(r.aoMap)
-	r.ssaoProg.DepthMap.Set(depthTexture)
-	r.ssaoProg.DepthMapWidth.Set(depthTexture.Width())
-	r.ssaoProg.DepthMapHeight.Set(depthTexture.Height())
+	r.ssaoProg.DepthMap.Set(depthMap)
+	r.ssaoProg.DepthMapWidth.Set(depthMap.Width())
+	r.ssaoProg.DepthMapHeight.Set(depthMap.Height())
 
 	var mat math.Mat4
 	mat.Identity()
@@ -373,13 +361,9 @@ func (r *MeshRenderer) Render(s *scene.Scene, c camera.Camera, colorTexture, dep
 	r.ssaoProg.ProjectionMatrix.Set(c.ProjectionMatrix())
 	r.ssaoProg.DirectionMap.Set(r.randomDirectionMap)
 
-	r.ssaoProg.Render(6, r.renderOpts)
+	r.ssaoProg.Render(4, r.renderOpts)
 
 	r.blurAoMap()
-
-	r.ambientPass(s, c)
-
-	r.lightPass(s, c)
 }
 
 func (r *MeshRenderer) blurAoMap() {
