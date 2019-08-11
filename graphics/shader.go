@@ -295,7 +295,7 @@ func (prog *Program) inputByIndex(i int) *Input {
 	in.location = uint32(gl.GetAttribLocation(prog.id, gl.Str(in.name+"\x00")))
 
 	switch type_ {
-	case gl.FLOAT:
+	case gl.FLOAT, gl.INT:
 		in.componentCount = 1
 	case gl.FLOAT_VEC2:
 		in.componentCount = 2
