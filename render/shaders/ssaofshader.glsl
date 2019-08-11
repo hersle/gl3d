@@ -10,7 +10,7 @@ uniform mat4 invProjectionMatrix;
 uniform vec3 [16]directions;
 uniform sampler2D directionMap;
 
-const float DIRECTION_LENGTH = 0.2;
+const float DIRECTION_LENGTH = 0.5;
 
 void main() {
 	float x = -1.0 + 2.0 * texCoord.x;
